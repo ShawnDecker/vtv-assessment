@@ -41,10 +41,204 @@ module.exports = async (req, res) => {
   const url = req.url.replace(/^\/api/, '');
 
   try {
+    // GET /api/questions?email=xxx&mode=individual|relationship|leadership
+    if (req.method === 'GET' && url.startsWith('/questions')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = params.get('email');
+      const mode = params.get('mode') || 'individual';
+      const corePillars = ['time', 'people', 'influence', 'numbers', 'knowledge'];
+
+      // Check if question_bank table exists (migration may not have run yet)
+      let hasQuestionBank = false;
+      try {
+        await sql`SELECT 1 FROM question_bank LIMIT 1`;
+        hasQuestionBank = true;
+      } catch (e) { /* table doesn't exist yet */ }
+
+      if (!hasQuestionBank) {
+        return res.json({ questions: [], previouslyAnswered: [], isReturningUser: false, totalAvailableByPillar: {}, fallback: true });
+      }
+
+      let contact = null;
+      let answeredIds = [];
+      let isReturningUser = false;
+
+      if (email) {
+        const contactRows = await sql`SELECT * FROM contacts WHERE email = ${email} LIMIT 1`;
+        if (contactRows.length > 0) {
+          contact = contactRows[0];
+          const history = await sql`SELECT question_id, answered_at FROM answer_history WHERE contact_id = ${contact.id} ORDER BY answered_at ASC`;
+          answeredIds = history.map(h => h.question_id);
+          isReturningUser = answeredIds.length > 0;
+        }
+      }
+
+      // Get all active questions from the bank
+      const allQuestions = await sql`SELECT * FROM question_bank WHERE is_active = true ORDER BY sort_order ASC`;
+
+      // Separate core vs overlay
+      const coreQuestions = allQuestions.filter(q => !q.is_overlay);
+      const overlayQuestions = allQuestions.filter(q => q.is_overlay);
+
+      // Select 10 questions per pillar
+      // Strategy: prioritize unanswered questions, then randomly reincorporate
+      // some previously answered ones (oldest-answered first, with shuffle).
+      // This ensures returning users mostly see new content but also get a
+      // few familiar questions cycled back in for re-assessment.
+      const QUESTIONS_PER_PILLAR = 10;
+      const RECYCLE_RATIO = 0.3; // up to 30% of slots can be recycled old questions
+      const selectedQuestions = [];
+      const totalAvailableByPillar = {};
+
+      // Simple Fisher-Yates shuffle
+      function shuffle(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+
+      for (const pillar of corePillars) {
+        const pillarQs = coreQuestions.filter(q => q.pillar === pillar);
+        totalAvailableByPillar[pillar] = pillarQs.length;
+
+        const unanswered = shuffle(pillarQs.filter(q => !answeredIds.includes(q.id)));
+        const answered = pillarQs.filter(q => answeredIds.includes(q.id));
+
+        // Sort answered by oldest-answered-first, then shuffle to add variety
+        answered.sort((a, b) => {
+          const aIdx = answeredIds.indexOf(a.id);
+          const bIdx = answeredIds.indexOf(b.id);
+          return aIdx - bIdx;
+        });
+
+        let picked = [];
+
+        if (unanswered.length >= QUESTIONS_PER_PILLAR) {
+          // Plenty of new questions — reserve some slots for recycled old ones
+          const recycleSlots = Math.min(
+            Math.floor(QUESTIONS_PER_PILLAR * RECYCLE_RATIO),
+            answered.length
+          );
+          const newSlots = QUESTIONS_PER_PILLAR - recycleSlots;
+          picked = [
+            ...unanswered.slice(0, newSlots),
+            ...shuffle(answered).slice(0, recycleSlots),
+          ];
+        } else if (unanswered.length > 0) {
+          // Some new, backfill rest with oldest answered (shuffled)
+          picked = [...unanswered];
+          const remaining = QUESTIONS_PER_PILLAR - picked.length;
+          picked.push(...shuffle(answered).slice(0, remaining));
+        } else {
+          // All questions answered — full recycle, shuffled for fresh feel
+          picked = shuffle(answered).slice(0, QUESTIONS_PER_PILLAR);
+        }
+
+        // Final shuffle so recycled questions aren't always at the end
+        selectedQuestions.push(...shuffle(picked));
+      }
+
+      // Handle overlay questions for relationship/leadership modes
+      if (mode === 'relationship' || mode === 'leadership') {
+        const modeOverlays = overlayQuestions.filter(q => q.overlay_type === mode);
+        const unansweredOverlays = shuffle(modeOverlays.filter(q => !answeredIds.includes(q.id)));
+        const answeredOverlays = shuffle(modeOverlays.filter(q => answeredIds.includes(q.id)));
+
+        // Same logic: prioritize unanswered, recycle some old ones
+        let overlayPicked = [];
+        const overlayTarget = modeOverlays.length; // serve all overlay questions
+        if (unansweredOverlays.length >= overlayTarget) {
+          const recycleSlots = Math.min(Math.floor(overlayTarget * RECYCLE_RATIO), answeredOverlays.length);
+          overlayPicked = [...unansweredOverlays.slice(0, overlayTarget - recycleSlots), ...answeredOverlays.slice(0, recycleSlots)];
+        } else {
+          overlayPicked = [...unansweredOverlays, ...answeredOverlays.slice(0, overlayTarget - unansweredOverlays.length)];
+        }
+        selectedQuestions.push(...shuffle(overlayPicked));
+        totalAvailableByPillar[mode] = modeOverlays.length;
+      }
+
+      // Map DB rows to frontend format
+      const questions = selectedQuestions.map(q => ({
+        id: q.id,
+        pillar: q.pillar,
+        subCategory: q.sub_category,
+        fieldName: q.field_name,
+        question: q.question,
+        description: q.description,
+        options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+        ...(q.is_overlay ? { mode: q.overlay_type } : {}),
+      }));
+
+      // Identify which selected questions are recycled vs new
+      const selectedIds = questions.map(q => q.id);
+      const recycledIds = selectedIds.filter(id => answeredIds.includes(id));
+      const newIds = selectedIds.filter(id => !answeredIds.includes(id));
+
+      return res.json({
+        questions,
+        previouslyAnswered: answeredIds,
+        recycledQuestionIds: recycledIds,
+        newQuestionIds: newIds,
+        isReturningUser,
+        totalAvailableByPillar,
+        recycleRatio: RECYCLE_RATIO,
+      });
+    }
+
+    // GET /api/user/history?email=xxx
+    if (req.method === 'GET' && url.startsWith('/user/history')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = params.get('email');
+      if (!email) return res.json({ error: 'Email required', answered: [], assessments: [] });
+
+      const contactRows = await sql`SELECT * FROM contacts WHERE email = ${email} LIMIT 1`;
+      if (contactRows.length === 0) return res.json({ answered: [], assessments: [], isNewUser: true });
+
+      const contact = contactRows[0];
+
+      // Check if answer_history table exists
+      let history = [];
+      try {
+        history = await sql`SELECT ah.question_id, ah.answer_value, ah.answered_at, qb.pillar, qb.sub_category FROM answer_history ah JOIN question_bank qb ON ah.question_id = qb.id WHERE ah.contact_id = ${contact.id} ORDER BY ah.answered_at DESC`;
+      } catch (e) { /* tables may not exist yet */ }
+
+      let totalAvailable = 0;
+      try {
+        const countResult = await sql`SELECT COUNT(*) as cnt FROM question_bank WHERE is_active = true`;
+        totalAvailable = Number(countResult[0]?.cnt || 0);
+      } catch (e) { /* table may not exist */ }
+
+      const assessments = await sql`SELECT id, completed_at, mode, master_score, score_range, weakest_pillar FROM assessments WHERE contact_id = ${contact.id} ORDER BY completed_at DESC`;
+
+      return res.json({
+        answered: history.map(h => ({
+          questionId: h.question_id,
+          answerValue: h.answer_value,
+          answeredAt: h.answered_at,
+          pillar: h.pillar,
+          subCategory: h.sub_category,
+        })),
+        totalAnswered: history.length,
+        totalAvailable,
+        assessments: assessments.map(a => ({
+          id: a.id,
+          completedAt: a.completed_at,
+          mode: a.mode,
+          masterScore: a.master_score,
+          scoreRange: a.score_range,
+          weakestPillar: a.weakest_pillar,
+        })),
+        isNewUser: false,
+      });
+    }
+
     // POST /api/assessment
     if (req.method === 'POST' && url === '/assessment') {
       const b = req.body || {};
-      
+
       // Upsert contact
       let contactRows = await sql`SELECT * FROM contacts WHERE email = ${b.email || ''} LIMIT 1`;
       let contact;
@@ -55,11 +249,42 @@ module.exports = async (req, res) => {
         contact = rows[0];
       }
 
-      const tt = (b.timeAwareness||0)+(b.timeAllocation||0)+(b.timeProtection||0)+(b.timeLeverage||0)+(b.fiveHourLeak||0)+(b.valuePerHour||0)+(b.timeInvestment||0)+(b.downtimeQuality||0)+(b.foresight||0)+(b.timeReallocation||0);
-      const pt = (b.trustInvestment||0)+(b.boundaryQuality||0)+(b.networkDepth||0)+(b.relationalRoi||0)+(b.peopleAudit||0)+(b.allianceBuilding||0)+(b.loveBankDeposits||0)+(b.communicationClarity||0)+(b.restraintPractice||0)+(b.valueReplacement||0);
-      const it = (b.leadershipLevel||0)+(b.integrityAlignment||0)+(b.professionalCredibility||0)+(b.empatheticListening||0)+(b.gravitationalCenter||0)+(b.microHonesties||0)+(b.wordManagement||0)+(b.personalResponsibility||0)+(b.adaptiveInfluence||0)+(b.influenceMultiplier||0);
-      const nt = (b.financialAwareness||0)+(b.goalSpecificity||0)+(b.investmentLogic||0)+(b.measurementHabit||0)+(b.costVsValue||0)+(b.numberOneClarity||0)+(b.smallImprovements||0)+(b.negativeMath||0)+(b.incomeMultiplier||0)+(b.negotiationSkill||0);
-      const kt = (b.learningHours||0)+(b.applicationRate||0)+(b.biasAwareness||0)+(b.highestBestUse||0)+(b.supplyAndDemand||0)+(b.substitutionRisk||0)+(b.doubleJeopardy||0)+(b.knowledgeCompounding||0)+(b.weightedAnalysis||0)+(b.perceptionVsPerspective||0);
+      // Dynamic scoring: if questionIds provided, compute pillar totals from question_bank
+      let tt, pt, it, nt, kt;
+      const questionIds = b.questionIds || [];
+
+      if (questionIds.length > 0) {
+        // Dynamic scoring: look up pillar for each question and sum by pillar
+        let questionMeta = [];
+        try {
+          questionMeta = await sql`SELECT id, pillar, field_name FROM question_bank WHERE id = ANY(${questionIds})`;
+        } catch (e) { /* table may not exist, fall through to legacy */ }
+
+        if (questionMeta.length > 0) {
+          const pillarSums = { time: 0, people: 0, influence: 0, numbers: 0, knowledge: 0 };
+          for (const qm of questionMeta) {
+            const val = b[qm.field_name] || 0;
+            if (pillarSums.hasOwnProperty(qm.pillar)) {
+              pillarSums[qm.pillar] += val;
+            }
+          }
+          tt = pillarSums.time;
+          pt = pillarSums.people;
+          it = pillarSums.influence;
+          nt = pillarSums.numbers;
+          kt = pillarSums.knowledge;
+        }
+      }
+
+      // Legacy fallback: hardcoded field sums (backward compatible)
+      if (tt === undefined) {
+        tt = (b.timeAwareness||0)+(b.timeAllocation||0)+(b.timeProtection||0)+(b.timeLeverage||0)+(b.fiveHourLeak||0)+(b.valuePerHour||0)+(b.timeInvestment||0)+(b.downtimeQuality||0)+(b.foresight||0)+(b.timeReallocation||0);
+        pt = (b.trustInvestment||0)+(b.boundaryQuality||0)+(b.networkDepth||0)+(b.relationalRoi||0)+(b.peopleAudit||0)+(b.allianceBuilding||0)+(b.loveBankDeposits||0)+(b.communicationClarity||0)+(b.restraintPractice||0)+(b.valueReplacement||0);
+        it = (b.leadershipLevel||0)+(b.integrityAlignment||0)+(b.professionalCredibility||0)+(b.empatheticListening||0)+(b.gravitationalCenter||0)+(b.microHonesties||0)+(b.wordManagement||0)+(b.personalResponsibility||0)+(b.adaptiveInfluence||0)+(b.influenceMultiplier||0);
+        nt = (b.financialAwareness||0)+(b.goalSpecificity||0)+(b.investmentLogic||0)+(b.measurementHabit||0)+(b.costVsValue||0)+(b.numberOneClarity||0)+(b.smallImprovements||0)+(b.negativeMath||0)+(b.incomeMultiplier||0)+(b.negotiationSkill||0);
+        kt = (b.learningHours||0)+(b.applicationRate||0)+(b.biasAwareness||0)+(b.highestBestUse||0)+(b.supplyAndDemand||0)+(b.substitutionRisk||0)+(b.doubleJeopardy||0)+(b.knowledgeCompounding||0)+(b.weightedAnalysis||0)+(b.perceptionVsPerspective||0);
+      }
+
       const rawScore = tt + pt + it + nt + kt;
       const tm = Math.max(0.1, Math.min(2.0, b.timeMultiplier || 1.0));
       const masterScore = Math.round(rawScore * tm * 10) / 10;
@@ -85,9 +310,27 @@ module.exports = async (req, res) => {
 
       const d = aData;
       const rows = await sql`INSERT INTO assessments (contact_id, completed_at, mode, team_id, is_team_creator, time_awareness, time_allocation, time_protection, time_leverage, five_hour_leak, value_per_hour, time_investment, downtime_quality, foresight, time_reallocation, time_total, trust_investment, boundary_quality, network_depth, relational_roi, people_audit, alliance_building, love_bank_deposits, communication_clarity, restraint_practice, value_replacement, people_total, leadership_level, integrity_alignment, professional_credibility, empathetic_listening, gravitational_center, micro_honesties, word_management, personal_responsibility, adaptive_influence, influence_multiplier, influence_total, financial_awareness, goal_specificity, investment_logic, measurement_habit, cost_vs_value, number_one_clarity, small_improvements, negative_math, income_multiplier, negotiation_skill, numbers_total, learning_hours, application_rate, bias_awareness, highest_best_use, supply_and_demand, substitution_risk, double_jeopardy, knowledge_compounding, weighted_analysis, perception_vs_perspective, knowledge_total, time_multiplier, raw_score, master_score, score_range, weakest_pillar, prescription, overlay_answers, overlay_total) VALUES (${d.contact_id}, ${d.completed_at}, ${d.mode}, ${d.team_id}, ${d.is_team_creator}, ${d.time_awareness}, ${d.time_allocation}, ${d.time_protection}, ${d.time_leverage}, ${d.five_hour_leak}, ${d.value_per_hour}, ${d.time_investment}, ${d.downtime_quality}, ${d.foresight}, ${d.time_reallocation}, ${d.time_total}, ${d.trust_investment}, ${d.boundary_quality}, ${d.network_depth}, ${d.relational_roi}, ${d.people_audit}, ${d.alliance_building}, ${d.love_bank_deposits}, ${d.communication_clarity}, ${d.restraint_practice}, ${d.value_replacement}, ${d.people_total}, ${d.leadership_level}, ${d.integrity_alignment}, ${d.professional_credibility}, ${d.empathetic_listening}, ${d.gravitational_center}, ${d.micro_honesties}, ${d.word_management}, ${d.personal_responsibility}, ${d.adaptive_influence}, ${d.influence_multiplier}, ${d.influence_total}, ${d.financial_awareness}, ${d.goal_specificity}, ${d.investment_logic}, ${d.measurement_habit}, ${d.cost_vs_value}, ${d.number_one_clarity}, ${d.small_improvements}, ${d.negative_math}, ${d.income_multiplier}, ${d.negotiation_skill}, ${d.numbers_total}, ${d.learning_hours}, ${d.application_rate}, ${d.bias_awareness}, ${d.highest_best_use}, ${d.supply_and_demand}, ${d.substitution_risk}, ${d.double_jeopardy}, ${d.knowledge_compounding}, ${d.weighted_analysis}, ${d.perception_vs_perspective}, ${d.knowledge_total}, ${d.time_multiplier}, ${d.raw_score}, ${d.master_score}, ${d.score_range}, ${d.weakest_pillar}, ${d.prescription}, ${d.overlay_answers}, ${d.overlay_total}) RETURNING *`;
-      
+
       const assessment = rows[0];
-      // TODO: Send results email (will be handled via HubSpot workflow or separate email service)
+
+      // Upsert answer_history for each question answered in this session
+      if (questionIds.length > 0) {
+        try {
+          const questionMeta = await sql`SELECT id, field_name FROM question_bank WHERE id = ANY(${questionIds})`;
+          for (const qm of questionMeta) {
+            const val = b[qm.field_name];
+            if (val && typeof val === 'number') {
+              await sql`INSERT INTO answer_history (contact_id, question_id, answer_value, assessment_id, answered_at)
+                VALUES (${contact.id}, ${qm.id}, ${val}, ${assessment.id}, NOW())
+                ON CONFLICT (contact_id, question_id)
+                DO UPDATE SET answer_value = EXCLUDED.answer_value, assessment_id = EXCLUDED.assessment_id, answered_at = NOW()`;
+            }
+          }
+        } catch (e) {
+          console.error('answer_history upsert error (non-fatal):', e.message);
+        }
+      }
+
       // Map snake_case back to camelCase for frontend compatibility
       const mapped = mapAssessment(assessment);
       return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name } });
@@ -187,6 +430,72 @@ module.exports = async (req, res) => {
     // POST /api/admin/hubspot-sync (placeholder)
     if (req.method === 'POST' && url === '/admin/hubspot-sync') {
       return res.json({ synced: 0, failed: 0, total: 0, message: "HubSpot sync coming soon" });
+    }
+
+    // GET /api/admin/question-bank
+    if (req.method === 'GET' && url === '/admin/question-bank') {
+      try {
+        const questions = await sql`
+          SELECT qb.*,
+            COALESCE(stats.answer_count, 0) as answer_count,
+            COALESCE(stats.avg_score, 0) as avg_score
+          FROM question_bank qb
+          LEFT JOIN (
+            SELECT question_id, COUNT(*) as answer_count, AVG(answer_value) as avg_score
+            FROM answer_history GROUP BY question_id
+          ) stats ON qb.id = stats.question_id
+          ORDER BY qb.sort_order ASC
+        `;
+        return res.json(questions.map(q => ({
+          id: q.id,
+          pillar: q.pillar,
+          subCategory: q.sub_category,
+          fieldName: q.field_name,
+          question: q.question,
+          description: q.description,
+          options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+          isActive: q.is_active,
+          isOverlay: q.is_overlay,
+          overlayType: q.overlay_type,
+          sortOrder: q.sort_order,
+          createdAt: q.created_at,
+          answerCount: Number(q.answer_count),
+          avgScore: Math.round(Number(q.avg_score) * 10) / 10,
+        })));
+      } catch (e) {
+        return res.json({ error: 'Question bank not initialized. Run /api/migrate-question-system first.', details: e.message });
+      }
+    }
+
+    // POST /api/admin/questions — add new questions to the bank
+    if (req.method === 'POST' && url === '/admin/questions') {
+      const b = req.body || {};
+      const questions = b.questions || [];
+      if (!Array.isArray(questions) || questions.length === 0) {
+        return res.status(400).json({ error: 'Provide a questions array' });
+      }
+
+      const results = [];
+      for (const q of questions) {
+        if (!q.id || !q.pillar || !q.fieldName || !q.question || !q.options) {
+          results.push({ id: q.id, error: 'Missing required fields (id, pillar, fieldName, question, options)' });
+          continue;
+        }
+        try {
+          const opts = typeof q.options === 'string' ? q.options : JSON.stringify(q.options);
+          await sql`INSERT INTO question_bank (id, pillar, sub_category, field_name, question, description, options, is_overlay, overlay_type, sort_order)
+            VALUES (${q.id}, ${q.pillar}, ${q.subCategory || q.fieldName}, ${q.fieldName}, ${q.question}, ${q.description || ''}, ${opts}::jsonb, ${q.isOverlay || false}, ${q.overlayType || null}, ${q.sortOrder || 0})
+            ON CONFLICT (id) DO UPDATE SET
+              question = EXCLUDED.question,
+              description = EXCLUDED.description,
+              options = EXCLUDED.options,
+              is_active = true`;
+          results.push({ id: q.id, success: true });
+        } catch (e) {
+          results.push({ id: q.id, error: e.message });
+        }
+      }
+      return res.json({ results, added: results.filter(r => r.success).length, failed: results.filter(r => r.error).length });
     }
 
     return res.status(404).json({ error: 'Not found' });

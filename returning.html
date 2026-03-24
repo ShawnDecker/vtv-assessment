@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+  <title>The Value Engine — Returning User</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .container { max-width: 480px; width: 100%; padding: 2rem; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .subtitle { color: #a1a1aa; margin-bottom: 2rem; font-size: 0.95rem; }
+    .form-group { margin-bottom: 1.5rem; }
+    label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: #d4d4d8; }
+    input { width: 100%; padding: 0.75rem 1rem; background: #18181b; border: 1px solid #27272a; border-radius: 0.5rem; color: #fff; font-size: 1rem; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    input:focus { border-color: #3b82f6; }
+    .btn { width: 100%; padding: 0.875rem; background: #3b82f6; color: #fff; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .btn:hover { background: #2563eb; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .error { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; }
+    .stats { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .stats h2 { font-size: 1.125rem; margin-bottom: 1rem; }
+    .stat-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #27272a; }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { color: #a1a1aa; }
+    .stat-value { font-weight: 600; }
+    .new-questions { color: #22c55e; font-weight: 600; }
+    .link { color: #3b82f6; text-decoration: none; font-size: 0.875rem; display: inline-block; margin-top: 1rem; }
+    .link:hover { text-decoration: underline; }
+    .mode-select { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .mode-btn { flex: 1; padding: 0.625rem; background: #18181b; border: 1px solid #27272a; border-radius: 0.5rem; color: #a1a1aa; font-size: 0.8rem; cursor: pointer; text-align: center; font-family: inherit; transition: all 0.2s; }
+    .mode-btn.active { background: #1e3a5f; border-color: #3b82f6; color: #fff; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome Back</h1>
+    <p class="subtitle">Enter your email to continue your Value Engine journey. You'll get fresh questions plus a few revisited ones to track your growth.</p>
+
+    <div id="emailForm">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+        <div id="emailError" class="error hidden"></div>
+      </div>
+      <button class="btn" id="lookupBtn" onclick="lookupUser()">Look Up My History</button>
+      <a href="/" class="link">First time? Start fresh</a>
+    </div>
+
+    <div id="historyView" class="hidden">
+      <div class="stats">
+        <h2>Your Assessment History</h2>
+        <div class="stat-row">
+          <span class="stat-label">Questions Answered</span>
+          <span class="stat-value" id="answeredCount">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Total Available</span>
+          <span class="stat-value" id="totalAvailable">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">New Questions Ready</span>
+          <span class="stat-value new-questions" id="newQuestions">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Recycled for Re-Assessment</span>
+          <span class="stat-value" id="recycledCount" style="color:#3b82f6;">up to 30%</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Assessments Completed</span>
+          <span class="stat-value" id="assessmentCount">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Latest Score</span>
+          <span class="stat-value" id="latestScore">—</span>
+        </div>
+      </div>
+
+      <label style="margin-bottom: 0.5rem; display: block;">Assessment Mode</label>
+      <div class="mode-select">
+        <button class="mode-btn active" data-mode="individual" onclick="selectMode(this)">Individual</button>
+        <button class="mode-btn" data-mode="relationship" onclick="selectMode(this)">Relationship</button>
+        <button class="mode-btn" data-mode="leadership" onclick="selectMode(this)">Leadership</button>
+      </div>
+
+      <p style="color:#71717a;font-size:0.8rem;margin-bottom:1rem;">Your next assessment will prioritize questions you haven't seen, with a few past questions mixed back in so you can measure how you've grown.</p>
+      <button class="btn" onclick="startAssessment()">Start My Next Assessment</button>
+      <a href="/" class="link">Start fresh instead (no history)</a>
+    </div>
+  </div>
+
+  <script>
+    var userEmail = '';
+    var selectedMode = 'individual';
+
+    function selectMode(btn) {
+      document.querySelectorAll('.mode-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectedMode = btn.getAttribute('data-mode');
+    }
+
+    async function lookupUser() {
+      var email = document.getElementById('email').value.trim().toLowerCase();
+      if (!email) {
+        showError('Please enter your email address.');
+        return;
+      }
+      userEmail = email;
+      document.getElementById('lookupBtn').disabled = true;
+      document.getElementById('lookupBtn').textContent = 'Looking up...';
+
+      try {
+        var res = await fetch('/api/user/history?email=' + encodeURIComponent(email));
+        var data = await res.json();
+
+        if (data.isNewUser || data.totalAnswered === 0) {
+          window.location.href = '/?email=' + encodeURIComponent(email);
+          return;
+        }
+
+        document.getElementById('answeredCount').textContent = data.totalAnswered;
+        document.getElementById('totalAvailable').textContent = data.totalAvailable;
+        var newCount = Math.max(0, data.totalAvailable - data.totalAnswered);
+        document.getElementById('newQuestions').textContent = newCount;
+        var recycledEstimate = newCount >= 50 ? 'up to 15' : Math.min(50 - newCount, data.totalAnswered);
+        document.getElementById('recycledCount').textContent = '~' + recycledEstimate + ' questions';
+        document.getElementById('assessmentCount').textContent = data.assessments.length;
+        if (data.assessments.length > 0) {
+          var latest = data.assessments[0];
+          document.getElementById('latestScore').textContent = latest.masterScore + ' (' + latest.scoreRange + ')';
+        }
+
+        document.getElementById('emailForm').classList.add('hidden');
+        document.getElementById('historyView').classList.remove('hidden');
+      } catch (e) {
+        showError('Could not look up your history. Please try again.');
+        document.getElementById('lookupBtn').disabled = false;
+        document.getElementById('lookupBtn').textContent = 'Look Up My History';
+      }
+    }
+
+    function startAssessment() {
+      window.location.href = '/?email=' + encodeURIComponent(userEmail) + '&mode=' + encodeURIComponent(selectedMode);
+    }
+
+    function showError(msg) {
+      var el = document.getElementById('emailError');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    // Auto-fill from localStorage
+    try {
+      var saved = localStorage.getItem('ve_email');
+      if (saved) document.getElementById('email').value = saved;
+    } catch(e) {}
+  </script>
+</body>
+</html>

@@ -10,6 +10,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
     <title>The Value Engine — P.I.N.K. Assessment</title>
     <meta name="description" content="Score your life across 5 pillars: Time, People, Influence, Numbers, and Knowledge. Get a personalized prescription to increase your Master Value Score." />
+    <script>
+    // Dynamic question loader — fetches personalized questions before bundle executes
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var savedEmail = null;
+      try { savedEmail = localStorage.getItem('ve_email'); } catch(e) {}
+      var email = params.get('email') || savedEmail;
+      var mode = params.get('mode') || 'individual';
+
+      if (email) {
+        try { localStorage.setItem('ve_email', email); } catch(e) {}
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/questions?email=' + encodeURIComponent(email) + '&mode=' + encodeURIComponent(mode), false); // synchronous
+        try {
+          xhr.send();
+          if (xhr.status === 200) {
+            var data = JSON.parse(xhr.responseText);
+            if (data.questions && data.questions.length > 0) {
+              window.__veQuestions = data.questions;
+              window.__veUserHistory = data;
+            }
+          }
+        } catch(e) {
+          console.warn('Dynamic question load failed, using defaults:', e);
+        }
+      }
+    })();
+    </script>
     <script type="module" crossorigin src="./assets/index-DXoDn4Oe.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-CHzibysT.css">
   </head>

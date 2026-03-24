@@ -2,8 +2,10 @@
   "version": 2,
   "routes": [
     { "src": "/api/setup-db", "dest": "/api/setup-db.js" },
+    { "src": "/api/migrate-question-system", "dest": "/api/migrate-question-system.js" },
     { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "handle": "filesystem" },
+    { "src": "/returning", "dest": "/returning.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
