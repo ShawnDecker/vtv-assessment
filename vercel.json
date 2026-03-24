@@ -5,6 +5,8 @@
     { "src": "/api/migrate-question-system", "dest": "/api/migrate-question-system.js" },
     { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "handle": "filesystem" },
+    { "src": "/report/(.*)", "dest": "/report.html" },
+    { "src": "/challenge", "dest": "/challenge.html" },
     { "src": "/returning", "dest": "/returning.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]

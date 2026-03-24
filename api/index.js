@@ -498,6 +498,347 @@ module.exports = async (req, res) => {
       return res.json({ results, added: results.filter(r => r.success).length, failed: results.filter(r => r.error).length });
     }
 
+    // GET /api/benchmarks?assessmentId={id}
+    if (req.method === 'GET' && url.startsWith('/benchmarks')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const assessmentId = params.get('assessmentId');
+      if (!assessmentId) return res.status(400).json({ error: 'assessmentId required' });
+
+      const aRows = await sql`SELECT * FROM assessments WHERE id = ${assessmentId} LIMIT 1`;
+      if (aRows.length === 0) return res.status(404).json({ error: 'Assessment not found' });
+      const a = aRows[0];
+
+      const totalRows = await sql`SELECT COUNT(*) as cnt FROM assessments`;
+      const total = Number(totalRows[0].cnt);
+
+      const belowMaster = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE master_score < ${a.master_score}`;
+      const belowTime = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE time_total < ${a.time_total}`;
+      const belowPeople = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE people_total < ${a.people_total}`;
+      const belowInfluence = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE influence_total < ${a.influence_total}`;
+      const belowNumbers = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE numbers_total < ${a.numbers_total}`;
+      const belowKnowledge = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE knowledge_total < ${a.knowledge_total}`;
+
+      const pct = (below) => total > 0 ? Math.round((Number(below[0].cnt) / total) * 100) : 0;
+
+      return res.json({
+        assessmentId: Number(assessmentId),
+        totalAssessments: total,
+        percentiles: {
+          masterScore: pct(belowMaster),
+          time: pct(belowTime),
+          people: pct(belowPeople),
+          influence: pct(belowInfluence),
+          numbers: pct(belowNumbers),
+          knowledge: pct(belowKnowledge),
+        }
+      });
+    }
+
+    // GET /api/report/{assessmentId}
+    if (req.method === 'GET' && url.match(/^\/report\/\d+$/)) {
+      const assessmentId = parseInt(url.split('/report/')[1]);
+
+      const aRows = await sql`SELECT a.*, c.first_name, c.last_name, c.email FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE a.id = ${assessmentId} LIMIT 1`;
+      if (aRows.length === 0) return res.status(404).json({ error: 'Assessment not found' });
+      const a = aRows[0];
+      const assessment = mapAssessment(a);
+      const prescription = typeof a.prescription === 'string' ? JSON.parse(a.prescription) : a.prescription;
+
+      // Benchmarks
+      const totalRows = await sql`SELECT COUNT(*) as cnt FROM assessments`;
+      const total = Number(totalRows[0].cnt);
+      const belowMaster = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE master_score < ${a.master_score}`;
+      const belowTime = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE time_total < ${a.time_total}`;
+      const belowPeople = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE people_total < ${a.people_total}`;
+      const belowInfluence = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE influence_total < ${a.influence_total}`;
+      const belowNumbers = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE numbers_total < ${a.numbers_total}`;
+      const belowKnowledge = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE knowledge_total < ${a.knowledge_total}`;
+      const pct = (below) => total > 0 ? Math.round((Number(below[0].cnt) / total) * 100) : 0;
+      const percentiles = {
+        masterScore: pct(belowMaster),
+        time: pct(belowTime),
+        people: pct(belowPeople),
+        influence: pct(belowInfluence),
+        numbers: pct(belowNumbers),
+        knowledge: pct(belowKnowledge),
+      };
+
+      // Fitness question answers
+      const fitnessQuestionIds = ['time-21','time-22','people-21','people-22','influence-21','influence-22','numbers-21','numbers-22','knowledge-21','knowledge-22'];
+      let fitnessAnswers = [];
+      let hasFitnessFlag = false;
+      try {
+        fitnessAnswers = await sql`SELECT question_id, answer_value FROM answer_history WHERE contact_id = ${a.contact_id} AND question_id = ANY(${fitnessQuestionIds})`;
+        hasFitnessFlag = fitnessAnswers.some(fa => fa.answer_value <= 2);
+      } catch (e) { /* table may not exist */ }
+
+      // Profiling question answers for cognitive insights
+      const profilingIds = [
+        'numbers-12','numbers-13','numbers-14','numbers-15','numbers-18','numbers-19','time-13',
+        'time-15','influence-11','influence-14','influence-20','knowledge-13','knowledge-20',
+        'time-18','time-12','numbers-17',
+        'people-14','people-17','people-18','knowledge-11','knowledge-12',
+        'people-15','people-16','influence-12','influence-15'
+      ];
+      let profilingAnswers = [];
+      try {
+        profilingAnswers = await sql`SELECT question_id, answer_value FROM answer_history WHERE contact_id = ${a.contact_id} AND question_id = ANY(${profilingIds})`;
+      } catch (e) { /* table may not exist */ }
+
+      // Generate cognitive insights
+      const answerMap = {};
+      profilingAnswers.forEach(pa => { answerMap[pa.question_id] = pa.answer_value; });
+      const insights = [];
+      if (answerMap['time-15'] && answerMap['time-15'] <= 2) insights.push("You're in survival mode. The prescription isn't more hustle — it's better systems.");
+      if (answerMap['numbers-12'] && answerMap['numbers-12'] <= 2) insights.push("Your financial runway is dangerously short. This limits every decision you make.");
+      if (answerMap['people-15'] && answerMap['people-15'] <= 2) insights.push("You're trying to do this alone. The data says that cuts your success rate by 95%.");
+      if (answerMap['people-16'] && answerMap['people-16'] <= 2) insights.push("Your inner circle isn't pushing you forward. That's a ceiling on every pillar.");
+      if (answerMap['influence-12'] && answerMap['influence-12'] <= 2) insights.push("Your ideas don't have a platform. That caps your influence at arm's length.");
+      if (answerMap['influence-11'] && answerMap['influence-11'] <= 2) insights.push("Your income depends on someone else's brand. That's a vulnerability.");
+      if (answerMap['knowledge-20'] && answerMap['knowledge-20'] <= 2) insights.push("You're getting paid for labor, not expertise. That's the wrong side of the value equation.");
+
+      // Product recommendation based on score range
+      const scoreRange = a.score_range;
+      const productRecommendations = {
+        Crisis: { title: 'Start Here', product: 'The Value Engine Book', price: '$29', description: 'The diagnostic that shows you exactly where your life is undervalued.' },
+        Survival: { title: 'Build Your Foundation', product: 'Book + VictoryPath Membership', price: '$29 + $47/mo', description: 'The tools and community to move from Survival to Growth.' },
+        Growth: { title: 'Accelerate Your Growth', product: 'VictoryPath Membership', price: '$47/mo', description: 'Structured tools, community accountability, and monthly progress tracking.' },
+        Momentum: { title: 'Break Through', product: 'Value Builder or 1:1 Coaching', price: '$79/mo or $300/hr (20% off first session)', description: 'Direct coaching to break through the ceiling.' },
+        Mastery: { title: 'Go Elite', product: 'Victory VIP', price: '$397/mo', description: '50% off coaching, complimentary monthly session, and direct author access.' },
+      };
+      const recommendation = productRecommendations[scoreRange] || productRecommendations.Growth;
+
+      // Challenge status
+      let challenge = null;
+      try {
+        const challengeRows = await sql`SELECT * FROM challenges WHERE contact_id = ${a.contact_id} ORDER BY enrolled_at DESC LIMIT 1`;
+        if (challengeRows.length > 0) {
+          const c = challengeRows[0];
+          const now = new Date();
+          const day90 = new Date(c.day_90_date);
+          const daysRemaining = Math.max(0, Math.ceil((day90 - now) / (1000 * 60 * 60 * 24)));
+          challenge = { id: c.id, status: c.status, enrolledAt: c.enrolled_at, day90Date: c.day_90_date, daysRemaining, baselineAssessmentId: c.baseline_assessment_id, reassessmentId: c.reassessment_id };
+        }
+      } catch (e) { /* table may not exist */ }
+
+      // Total questions info
+      let totalAvailable = 0;
+      let totalAnswered = 0;
+      try {
+        const countResult = await sql`SELECT COUNT(*) as cnt FROM question_bank WHERE is_active = true`;
+        totalAvailable = Number(countResult[0]?.cnt || 0);
+        const answeredResult = await sql`SELECT COUNT(*) as cnt FROM answer_history WHERE contact_id = ${a.contact_id}`;
+        totalAnswered = Number(answeredResult[0]?.cnt || 0);
+      } catch (e) { /* tables may not exist */ }
+
+      return res.json({
+        assessment,
+        contact: { firstName: a.first_name, lastName: a.last_name, email: a.email },
+        prescription,
+        percentiles,
+        totalAssessments: total,
+        fitnessAnswers: fitnessAnswers.map(fa => ({ questionId: fa.question_id, value: fa.answer_value })),
+        hasFitnessFlag,
+        insights,
+        recommendation,
+        challenge,
+        questionsAnswered: totalAnswered,
+        questionsAvailable: totalAvailable,
+      });
+    }
+
+    // POST /api/send-report
+    if (req.method === 'POST' && url === '/send-report') {
+      const b = req.body || {};
+      const assessmentId = b.assessmentId;
+      if (!assessmentId) return res.status(400).json({ error: 'assessmentId required' });
+
+      const aRows = await sql`SELECT a.*, c.first_name, c.last_name, c.email FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE a.id = ${assessmentId} LIMIT 1`;
+      if (aRows.length === 0) return res.status(404).json({ error: 'Assessment not found' });
+      const a = aRows[0];
+
+      if (!a.email) return res.status(400).json({ error: 'No email on file for this contact' });
+
+      const firstName = a.first_name || 'there';
+      const masterScore = a.master_score;
+      const scoreRange = a.score_range;
+      const weakestPillar = a.weakest_pillar;
+      const prescription = typeof a.prescription === 'string' ? JSON.parse(a.prescription) : (a.prescription || {});
+
+      // Product recommendation text by range
+      const recTexts = {
+        Crisis: "YOUR NEXT STEP: You need the full system. Start with The Value Engine book — the diagnostic that shows you exactly where your life is undervalued. $29 at valuetovictory.com",
+        Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Value Engine book ($29) plus VictoryPath membership ($47/mo) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
+        Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($47/mo) — structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
+        Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($79/mo) or 1:1 coaching ($300/hr, 20% off your first session) will break through the ceiling. valuetovictory.com",
+        Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($397/mo) gives you 50% off coaching, a complimentary monthly session, and direct author access. valuetovictory.com",
+      };
+      const productRec = recTexts[scoreRange] || recTexts.Growth;
+
+      // FitCarna section
+      const fitnessQuestionIds = ['time-21','time-22','people-21','people-22','influence-21','influence-22','numbers-21','numbers-22','knowledge-21','knowledge-22'];
+      let fitcarnaSection = '';
+      try {
+        const fitnessAnswers = await sql`SELECT question_id, answer_value FROM answer_history WHERE contact_id = ${a.contact_id} AND question_id = ANY(${fitnessQuestionIds})`;
+        if (fitnessAnswers.some(fa => fa.answer_value <= 2)) {
+          fitcarnaSection = "\nYOUR BODY IS CAPPING YOUR SCORE: Your fitness answers reveal a gap that's limiting every other pillar. We partner with one coach who builds programs for people in your exact position — no gimmicks, just structured accountability and results. See what Cameron builds: valuetovictory.com/fitcarna/\n";
+        }
+      } catch (e) { /* table may not exist */ }
+
+      const emailBody = `${firstName},
+
+Your Value Engine Assessment is complete.
+
+MASTER VALUE SCORE: ${masterScore} (${scoreRange})
+
+Pillar Breakdown:
+  Time:      ${a.time_total}/50
+  People:    ${a.people_total}/50
+  Influence: ${a.influence_total}/50
+  Numbers:   ${a.numbers_total}/50
+  Knowledge: ${a.knowledge_total}/50
+
+Your weakest pillar is ${weakestPillar}. ${prescription.diagnosis || ''}
+
+View your full diagnostic report:
+https://assessment.valuetovictory.com/report/${assessmentId}
+
+${productRec}
+${fitcarnaSection}
+Your report includes:
+- Detailed sub-category breakdown across all 50 dimensions
+- Where you rank against other Value Engine users
+- Personalized prescription with specific tools to run
+- Your recommended next step
+
+Don't guess. Run the system.
+
+— The Value Engine
+   ValueToVictory.com`;
+
+      const subject = `Your Value Engine Score: ${masterScore} (${scoreRange}) — Personal Report Ready`;
+
+      // Check if email credentials are configured
+      if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+        return res.json({ sent: false, reason: 'Email credentials not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD environment variables.', subject, body: emailBody, reportUrl: `https://assessment.valuetovictory.com/report/${assessmentId}` });
+      }
+
+      try {
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+        });
+        await transporter.sendMail({
+          from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
+          to: a.email,
+          subject,
+          text: emailBody,
+        });
+        return res.json({ sent: true, to: a.email, reportUrl: `https://assessment.valuetovictory.com/report/${assessmentId}` });
+      } catch (emailErr) {
+        console.error('Email send error:', emailErr.message);
+        return res.json({ sent: false, reason: emailErr.message, reportUrl: `https://assessment.valuetovictory.com/report/${assessmentId}` });
+      }
+    }
+
+    // POST /api/challenge/enroll
+    if (req.method === 'POST' && url === '/challenge/enroll') {
+      const b = req.body || {};
+      const assessmentId = b.assessmentId;
+      if (!assessmentId) return res.status(400).json({ error: 'assessmentId required' });
+
+      const aRows = await sql`SELECT a.*, c.email FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE a.id = ${assessmentId} LIMIT 1`;
+      if (aRows.length === 0) return res.status(404).json({ error: 'Assessment not found' });
+      const a = aRows[0];
+
+      const day90 = new Date();
+      day90.setDate(day90.getDate() + 90);
+
+      try {
+        const rows = await sql`INSERT INTO challenges (contact_id, baseline_assessment_id, day_90_date)
+          VALUES (${a.contact_id}, ${assessmentId}, ${day90.toISOString()})
+          ON CONFLICT (contact_id, baseline_assessment_id) DO UPDATE SET status = 'active', day_90_date = EXCLUDED.day_90_date, enrolled_at = NOW()
+          RETURNING *`;
+        const c = rows[0];
+        return res.json({ enrolled: true, challengeId: c.id, day90Date: c.day_90_date, enrolledAt: c.enrolled_at });
+      } catch (e) {
+        return res.status(500).json({ error: 'Could not enroll. Ensure migration has been run.', details: e.message });
+      }
+    }
+
+    // GET /api/challenge/status?email={email}
+    if (req.method === 'GET' && url.startsWith('/challenge/status')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = params.get('email');
+      if (!email) return res.status(400).json({ error: 'email required' });
+
+      const contactRows = await sql`SELECT * FROM contacts WHERE email = ${email} LIMIT 1`;
+      if (contactRows.length === 0) return res.status(404).json({ error: 'Contact not found' });
+      const contact = contactRows[0];
+
+      try {
+        const challengeRows = await sql`SELECT ch.*, a_base.master_score as baseline_score, a_base.score_range as baseline_range, a_base.time_total as baseline_time, a_base.people_total as baseline_people, a_base.influence_total as baseline_influence, a_base.numbers_total as baseline_numbers, a_base.knowledge_total as baseline_knowledge FROM challenges ch JOIN assessments a_base ON ch.baseline_assessment_id = a_base.id WHERE ch.contact_id = ${contact.id} ORDER BY ch.enrolled_at DESC LIMIT 1`;
+
+        if (challengeRows.length === 0) return res.json({ enrolled: false });
+
+        const ch = challengeRows[0];
+        const now = new Date();
+        const day90 = new Date(ch.day_90_date);
+        const daysRemaining = Math.max(0, Math.ceil((day90 - now) / (1000 * 60 * 60 * 24)));
+        const daysElapsed = 90 - daysRemaining;
+        const isWithin7Days = daysRemaining <= 7;
+        const isExpired = daysRemaining === 0;
+
+        // Check if status should be updated
+        if (isExpired && ch.status === 'active') {
+          await sql`UPDATE challenges SET status = 'expired' WHERE id = ${ch.id}`;
+          ch.status = 'expired';
+        }
+
+        // Get latest assessment for comparison
+        let currentScore = null;
+        const latestRows = await sql`SELECT master_score, score_range, time_total, people_total, influence_total, numbers_total, knowledge_total FROM assessments WHERE contact_id = ${contact.id} ORDER BY completed_at DESC LIMIT 1`;
+        if (latestRows.length > 0) {
+          const l = latestRows[0];
+          currentScore = {
+            masterScore: l.master_score,
+            scoreRange: l.score_range,
+            time: l.time_total,
+            people: l.people_total,
+            influence: l.influence_total,
+            numbers: l.numbers_total,
+            knowledge: l.knowledge_total,
+          };
+        }
+
+        return res.json({
+          enrolled: true,
+          challengeId: ch.id,
+          status: ch.status,
+          enrolledAt: ch.enrolled_at,
+          day90Date: ch.day_90_date,
+          daysRemaining,
+          daysElapsed,
+          isWithin7Days,
+          isExpired,
+          baseline: {
+            assessmentId: ch.baseline_assessment_id,
+            masterScore: ch.baseline_score,
+            scoreRange: ch.baseline_range,
+            time: ch.baseline_time,
+            people: ch.baseline_people,
+            influence: ch.baseline_influence,
+            numbers: ch.baseline_numbers,
+            knowledge: ch.baseline_knowledge,
+          },
+          current: currentScore,
+        });
+      } catch (e) {
+        return res.json({ enrolled: false, error: 'Challenge system not initialized. Run migration first.', details: e.message });
+      }
+    }
+
     return res.status(404).json({ error: 'Not found' });
   } catch (err) {
     console.error('API Error:', err);

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Value Engine — Diagnostic Report</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+    .loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .loading-text { color: #a1a1aa; font-size: 1.125rem; }
+    .error-view { display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+    .error-view h2 { color: #ef4444; margin-bottom: 1rem; }
+    .error-view a { color: #3b82f6; }
+    .report { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* Header */
+    .report-header { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid #27272a; margin-bottom: 2rem; }
+    .report-header .brand { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    .report-header .title { font-family: 'Instrument Serif', serif; font-size: 1.5rem; font-style: italic; color: #d4d4d8; margin-bottom: 1.5rem; }
+    .report-header .name { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .report-header .date { font-size: 0.875rem; color: #a1a1aa; }
+
+    /* Score Hero */
+    .score-hero { text-align: center; padding: 2.5rem 0; margin-bottom: 2rem; }
+    .master-score { font-size: 5rem; font-weight: 900; line-height: 1; margin-bottom: 0.5rem; }
+    .score-badge { display: inline-block; padding: 0.375rem 1.25rem; border-radius: 2rem; font-size: 0.875rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1rem; }
+    .score-detail { font-size: 0.875rem; color: #a1a1aa; }
+    .score-detail span { color: #d4d4d8; font-weight: 600; }
+    .percentile-note { font-size: 0.8rem; color: #71717a; margin-top: 0.75rem; }
+
+    /* Score range colors */
+    .range-crisis { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+    .range-survival { background: rgba(249,115,22,0.15); color: #f97316; border: 1px solid rgba(249,115,22,0.3); }
+    .range-growth { background: rgba(234,179,8,0.15); color: #eab308; border: 1px solid rgba(234,179,8,0.3); }
+    .range-momentum { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+    .range-mastery { background: rgba(212,168,71,0.15); color: #D4A847; border: 1px solid rgba(212,168,71,0.3); }
+    .score-crisis { color: #ef4444; }
+    .score-survival { color: #f97316; }
+    .score-growth { color: #eab308; }
+    .score-momentum { color: #22c55e; }
+    .score-mastery { color: #D4A847; }
+
+    /* Section */
+    .section { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; margin-bottom: 1.25rem; font-weight: 700; }
+    .section h3 { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.75rem; }
+
+    /* Pillar bars */
+    .pillar-bars { display: flex; flex-direction: column; gap: 1rem; }
+    .pillar-bar { display: flex; align-items: center; gap: 1rem; }
+    .pillar-label { width: 90px; font-size: 0.8rem; font-weight: 600; flex-shrink: 0; }
+    .pillar-track { flex: 1; height: 28px; background: #27272a; border-radius: 0.375rem; position: relative; overflow: hidden; }
+    .pillar-fill { height: 100%; border-radius: 0.375rem; transition: width 0.8s ease; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.5rem; }
+    .pillar-fill span { font-size: 0.75rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    .pillar-time { background: linear-gradient(90deg, #D4A847, #b8942e); }
+    .pillar-people { background: linear-gradient(90deg, #f472b6, #db2777); }
+    .pillar-influence { background: linear-gradient(90deg, #2dd4bf, #0d9488); }
+    .pillar-numbers { background: linear-gradient(90deg, #60a5fa, #2563eb); }
+    .pillar-knowledge { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
+
+    /* Sub-category heatmap */
+    .pillar-deep-dive { margin-bottom: 1.5rem; }
+    .pillar-deep-dive:last-child { margin-bottom: 0; }
+    .pillar-dd-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #27272a; }
+    .pillar-dd-name { font-weight: 700; font-size: 1rem; }
+    .pillar-dd-score { font-weight: 700; font-size: 0.9rem; }
+    .sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; background: #0a0a0a; }
+    .sub-item .sub-name { color: #d4d4d8; }
+    .sub-item .sub-score { font-weight: 700; min-width: 20px; text-align: center; }
+    .sub-low { border-left: 3px solid #ef4444; }
+    .sub-low .sub-score { color: #ef4444; }
+    .sub-mid { border-left: 3px solid #71717a; }
+    .sub-mid .sub-score { color: #a1a1aa; }
+    .sub-high { border-left: 3px solid #22c55e; }
+    .sub-high .sub-score { color: #22c55e; }
+    .sub-top { border-left: 3px solid #D4A847; }
+    .sub-top .sub-score { color: #D4A847; }
+
+    /* Prescription */
+    .rx-label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #71717a; margin-bottom: 0.25rem; font-weight: 600; }
+    .rx-value { margin-bottom: 1.25rem; font-size: 0.95rem; color: #d4d4d8; }
+    .rx-value:last-child { margin-bottom: 0; }
+    .rx-diagnosis { font-size: 1rem; color: #fff; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #27272a; }
+
+    /* Percentile bars */
+    .pct-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .pct-label { width: 90px; font-size: 0.8rem; font-weight: 600; flex-shrink: 0; }
+    .pct-track { flex: 1; height: 20px; background: #27272a; border-radius: 0.25rem; position: relative; overflow: hidden; }
+    .pct-fill { height: 100%; background: #3b82f6; border-radius: 0.25rem; transition: width 0.8s ease; min-width: 2px; }
+    .pct-val { width: 40px; font-size: 0.8rem; font-weight: 700; color: #3b82f6; text-align: right; flex-shrink: 0; }
+
+    /* Insights */
+    .insight-item { padding: 1rem; background: #0a0a0a; border-left: 3px solid #D4A847; border-radius: 0 0.375rem 0.375rem 0; margin-bottom: 0.75rem; font-size: 0.9rem; color: #d4d4d8; }
+    .insight-item:last-child { margin-bottom: 0; }
+
+    /* Product Rec */
+    .product-card { text-align: center; padding: 2rem; background: linear-gradient(135deg, #1e293b 0%, #18181b 100%); border: 1px solid #334155; border-radius: 0.75rem; }
+    .product-card .rec-title { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.75rem; }
+    .product-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    .product-card .price { font-size: 1.5rem; font-weight: 900; color: #3b82f6; margin-bottom: 0.75rem; }
+    .product-card .desc { color: #a1a1aa; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .product-card .cta-btn { display: inline-block; padding: 0.75rem 2rem; background: #3b82f6; color: #fff; border-radius: 0.5rem; font-weight: 700; text-decoration: none; font-size: 0.95rem; transition: background 0.2s; }
+    .product-card .cta-btn:hover { background: #2563eb; }
+
+    /* Fitness flag */
+    .fitness-flag { background: linear-gradient(135deg, #1a1a2e 0%, #18181b 100%); border: 1px solid #f97316; border-radius: 0.75rem; padding: 1.75rem; }
+    .fitness-flag .ff-title { color: #f97316; font-weight: 700; margin-bottom: 0.75rem; }
+    .fitness-flag p { color: #d4d4d8; font-size: 0.9rem; margin-bottom: 1rem; }
+    .fitness-flag a { color: #f97316; font-weight: 600; text-decoration: none; }
+    .fitness-flag a:hover { text-decoration: underline; }
+
+    /* Re-assessment CTA */
+    .reassess { text-align: center; padding: 2rem; border: 1px dashed #27272a; border-radius: 0.75rem; }
+    .reassess p { color: #a1a1aa; font-size: 0.9rem; margin-bottom: 1rem; }
+    .reassess .progress-text { color: #d4d4d8; font-weight: 600; margin-bottom: 1.25rem; font-size: 0.95rem; }
+    .reassess a { display: inline-block; padding: 0.75rem 2rem; background: transparent; border: 1px solid #3b82f6; color: #3b82f6; border-radius: 0.5rem; font-weight: 600; text-decoration: none; transition: all 0.2s; }
+    .reassess a:hover { background: #3b82f6; color: #fff; }
+
+    /* Footer */
+    .report-footer { text-align: center; padding: 3rem 0 2rem; border-top: 1px solid #27272a; margin-top: 2rem; }
+    .report-footer .tagline { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1.125rem; color: #D4A847; margin-bottom: 1rem; }
+    .report-footer .copy { color: #71717a; font-size: 0.8rem; }
+    .report-footer a { color: #3b82f6; text-decoration: none; }
+
+    @media (max-width: 520px) {
+      .report { padding: 1.5rem 1rem 3rem; }
+      .master-score { font-size: 3.5rem; }
+      .sub-grid { grid-template-columns: 1fr; }
+      .pillar-label, .pct-label { width: 70px; font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">
+    <span class="loading-text">Loading your report...</span>
+  </div>
+  <div id="error" class="error-view" style="display:none;">
+    <div>
+      <h2>Report Not Found</h2>
+      <p style="color:#a1a1aa;margin-bottom:1rem;">This assessment could not be loaded.</p>
+      <a href="https://assessment.valuetovictory.com">Take the Assessment</a>
+    </div>
+  </div>
+  <div id="report" class="report" style="display:none;">
+
+    <!-- Header -->
+    <div class="report-header">
+      <div class="brand">THE VALUE ENGINE</div>
+      <div class="title">Personal Diagnostic Report</div>
+      <div class="name" id="reportName"></div>
+      <div class="date" id="reportDate"></div>
+    </div>
+
+    <!-- Section 1: Score Overview -->
+    <div class="score-hero">
+      <div class="master-score" id="masterScore"></div>
+      <div id="scoreBadge" class="score-badge"></div>
+      <div class="score-detail">
+        Raw Score: <span id="rawScore"></span> &nbsp;&middot;&nbsp; Time Multiplier: <span id="timeMult"></span>
+      </div>
+      <div class="percentile-note" id="masterPct"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Pillar Breakdown</div>
+      <div class="pillar-bars" id="pillarBars"></div>
+    </div>
+
+    <!-- Section 2: Pillar Deep Dive -->
+    <div class="section">
+      <div class="section-title">Sub-Category Heatmap</div>
+      <div id="pillarDeepDive"></div>
+    </div>
+
+    <!-- Section 3: Prescription -->
+    <div class="section">
+      <div class="section-title">Your Diagnosis</div>
+      <div id="prescriptionContent"></div>
+    </div>
+
+    <!-- Section 4: Benchmarks -->
+    <div class="section">
+      <div class="section-title">Where You Stand</div>
+      <div id="benchmarks"></div>
+    </div>
+
+    <!-- Section 5: Insights -->
+    <div id="insightsSection" class="section" style="display:none;">
+      <div class="section-title">Inferred Insights</div>
+      <div id="insightsList"></div>
+    </div>
+
+    <!-- Section 6: Product Recommendation -->
+    <div id="productSection" class="section" style="padding:0;border:none;background:none;">
+      <div class="product-card" id="productCard"></div>
+    </div>
+
+    <!-- Section 7: Fitness Flag -->
+    <div id="fitnessSection" class="section" style="display:none;padding:0;border:none;background:none;">
+      <div class="fitness-flag">
+        <div class="ff-title">Your Physical Discipline Is Working Against Your Other Pillars</div>
+        <p>Energy is the container for everything. Your fitness question scores reveal a gap that's limiting every other pillar. We partner with one coach who builds programs for people in your exact position.</p>
+        <a href="https://valuetovictory.com/fitcarna/">See what Cameron builds &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Section 8: Re-Assessment CTA -->
+    <div class="section" style="padding:0;border:none;background:none;">
+      <div class="reassess">
+        <div class="section-title">Keep Moving</div>
+        <div class="progress-text" id="progressText"></div>
+        <p>Come back in 30 days and see how your score moves.</p>
+        <a href="https://assessment.valuetovictory.com/returning">Take Your Next Assessment</a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="report-footer">
+      <div class="tagline">"Don't guess. Run the system."</div>
+      <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>
+    </div>
+  </div>
+
+  <script>
+    var pillarColors = {
+      Time: '#D4A847', People: '#f472b6', Influence: '#2dd4bf',
+      Numbers: '#60a5fa', Knowledge: '#a78bfa'
+    };
+    var pillarClasses = {
+      Time: 'pillar-time', People: 'pillar-people', Influence: 'pillar-influence',
+      Numbers: 'pillar-numbers', Knowledge: 'pillar-knowledge'
+    };
+    var rangeColors = {
+      Crisis: 'score-crisis', Survival: 'score-survival', Growth: 'score-growth',
+      Momentum: 'score-momentum', Mastery: 'score-mastery'
+    };
+    var rangeBadge = {
+      Crisis: 'range-crisis', Survival: 'range-survival', Growth: 'range-growth',
+      Momentum: 'range-momentum', Mastery: 'range-mastery'
+    };
+
+    var subCategoryMap = {
+      Time: [
+        ['Time Awareness','timeAwareness'],['Time Allocation','timeAllocation'],['Time Protection','timeProtection'],['Time Leverage','timeLeverage'],['Five-Hour Leak','fiveHourLeak'],
+        ['Value Per Hour','valuePerHour'],['Time Investment','timeInvestment'],['Downtime Quality','downtimeQuality'],['Foresight','foresight'],['Time Reallocation','timeReallocation']
+      ],
+      People: [
+        ['Trust Investment','trustInvestment'],['Boundary Quality','boundaryQuality'],['Network Depth','networkDepth'],['Relational ROI','relationalRoi'],['People Audit','peopleAudit'],
+        ['Alliance Building','allianceBuilding'],['Love Bank Deposits','loveBankDeposits'],['Communication Clarity','communicationClarity'],['Restraint Practice','restraintPractice'],['Value Replacement','valueReplacement']
+      ],
+      Influence: [
+        ['Leadership Level','leadershipLevel'],['Integrity Alignment','integrityAlignment'],['Professional Credibility','professionalCredibility'],['Empathetic Listening','empatheticListening'],['Gravitational Center','gravitationalCenter'],
+        ['Micro-Honesties','microHonesties'],['Word Management','wordManagement'],['Personal Responsibility','personalResponsibility'],['Adaptive Influence','adaptiveInfluence'],['Influence Multiplier','influenceMultiplier']
+      ],
+      Numbers: [
+        ['Financial Awareness','financialAwareness'],['Goal Specificity','goalSpecificity'],['Investment Logic','investmentLogic'],['Measurement Habit','measurementHabit'],['Cost vs Value','costVsValue'],
+        ['Number One Clarity','numberOneClarity'],['Small Improvements','smallImprovements'],['Negative Math','negativeMath'],['Income Multiplier','incomeMultiplier'],['Negotiation Skill','negotiationSkill']
+      ],
+      Knowledge: [
+        ['Learning Hours','learningHours'],['Application Rate','applicationRate'],['Bias Awareness','biasAwareness'],['Highest & Best Use','highestBestUse'],['Supply & Demand','supplyAndDemand'],
+        ['Substitution Risk','substitutionRisk'],['Double Jeopardy','doubleJeopardy'],['Knowledge Compounding','knowledgeCompounding'],['Weighted Analysis','weightedAnalysis'],['Perception vs Perspective','perceptionVsPerspective']
+      ]
+    };
+
+    (async function() {
+      // Extract assessmentId from URL path
+      var path = window.location.pathname;
+      var match = path.match(/\/report\/(\d+)/);
+      if (!match) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'flex';
+        return;
+      }
+      var assessmentId = match[1];
+
+      try {
+        var resp = await fetch('/api/report/' + assessmentId);
+        if (!resp.ok) throw new Error('not found');
+        var data = await resp.json();
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('report').style.display = 'block';
+        renderReport(data);
+      } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'flex';
+      }
+    })();
+
+    function renderReport(data) {
+      var a = data.assessment;
+      var rx = data.prescription || {};
+      var pct = data.percentiles || {};
+      var rec = data.recommendation || {};
+
+      // Header
+      document.getElementById('reportName').textContent = (data.contact.firstName || '') + ' ' + (data.contact.lastName || '');
+      var d = new Date(a.completedAt);
+      document.getElementById('reportDate').textContent = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      // Score Hero
+      var scoreEl = document.getElementById('masterScore');
+      scoreEl.textContent = a.masterScore;
+      scoreEl.className = 'master-score ' + (rangeColors[a.scoreRange] || '');
+      var badge = document.getElementById('scoreBadge');
+      badge.textContent = a.scoreRange;
+      badge.className = 'score-badge ' + (rangeBadge[a.scoreRange] || '');
+      document.getElementById('rawScore').textContent = a.rawScore;
+      document.getElementById('timeMult').textContent = a.timeMultiplier + 'x';
+      if (pct.masterScore !== undefined) {
+        document.getElementById('masterPct').textContent = 'Your Master Score ranks higher than ' + pct.masterScore + '% of all Value Engine users';
+      }
+
+      // Pillar Bars
+      var pillars = [
+        { name: 'Time', score: a.timeTotal, key: 'time' },
+        { name: 'People', score: a.peopleTotal, key: 'people' },
+        { name: 'Influence', score: a.influenceTotal, key: 'influence' },
+        { name: 'Numbers', score: a.numbersTotal, key: 'numbers' },
+        { name: 'Knowledge', score: a.knowledgeTotal, key: 'knowledge' }
+      ];
+      var barsHtml = '';
+      pillars.forEach(function(p) {
+        var pctWidth = Math.min(100, (p.score / 50) * 100);
+        barsHtml += '<div class="pillar-bar">' +
+          '<div class="pillar-label" style="color:' + pillarColors[p.name] + '">' + p.name + '</div>' +
+          '<div class="pillar-track"><div class="pillar-fill ' + pillarClasses[p.name] + '" style="width:' + pctWidth + '%"><span>' + p.score + '/50</span></div></div>' +
+          '</div>';
+      });
+      document.getElementById('pillarBars').innerHTML = barsHtml;
+
+      // Pillar Deep Dive
+      var ddHtml = '';
+      pillars.forEach(function(p) {
+        var subs = subCategoryMap[p.name] || [];
+        ddHtml += '<div class="pillar-deep-dive">' +
+          '<div class="pillar-dd-header"><span class="pillar-dd-name" style="color:' + pillarColors[p.name] + '">' + p.name + '</span><span class="pillar-dd-score">' + p.score + '/50</span></div>' +
+          '<div class="sub-grid">';
+        subs.forEach(function(sub) {
+          var val = a[sub[1]] || 0;
+          var cls = val <= 2 ? 'sub-low' : (val === 3 ? 'sub-mid' : (val === 5 ? 'sub-top' : 'sub-high'));
+          ddHtml += '<div class="sub-item ' + cls + '"><span class="sub-name">' + sub[0] + '</span><span class="sub-score">' + val + '</span></div>';
+        });
+        ddHtml += '</div></div>';
+      });
+      document.getElementById('pillarDeepDive').innerHTML = ddHtml;
+
+      // Prescription
+      var rxHtml = '';
+      if (rx.diagnosis) {
+        rxHtml += '<div class="rx-diagnosis">' + rx.diagnosis + '</div>';
+      }
+      rxHtml += '<div class="rx-label">Weakest Pillar</div><div class="rx-value"><strong>' + (rx.weakestPillar || '') + '</strong> (' + (rx.weakestScore || '') + '/50) — weakest sub-category: ' + (rx.weakestSubCategory || '') + ' (' + (rx.weakestSubScore || '') + '/5)</div>';
+      rxHtml += '<div class="rx-label">Immediate Action</div><div class="rx-value">' + (rx.immediate || '') + '</div>';
+      rxHtml += '<div class="rx-label">Your Tool</div><div class="rx-value">' + (rx.tool || '') + '</div>';
+      rxHtml += '<div class="rx-label">30-Day Plan</div><div class="rx-value">' + (rx.thirtyDay || '') + '</div>';
+      document.getElementById('prescriptionContent').innerHTML = rxHtml;
+
+      // Benchmarks
+      var benchHtml = '';
+      var pctPillars = [
+        { name: 'Master Score', val: pct.masterScore },
+        { name: 'Time', val: pct.time },
+        { name: 'People', val: pct.people },
+        { name: 'Influence', val: pct.influence },
+        { name: 'Numbers', val: pct.numbers },
+        { name: 'Knowledge', val: pct.knowledge }
+      ];
+      pctPillars.forEach(function(pp) {
+        var v = pp.val || 0;
+        benchHtml += '<div class="pct-row">' +
+          '<div class="pct-label">' + pp.name + '</div>' +
+          '<div class="pct-track"><div class="pct-fill" style="width:' + v + '%"></div></div>' +
+          '<div class="pct-val">' + v + '%</div></div>';
+      });
+      benchHtml += '<p style="color:#71717a;font-size:0.75rem;margin-top:0.5rem;">Percentile rank vs. all Value Engine users (' + (data.totalAssessments || 0) + ' assessments)</p>';
+      document.getElementById('benchmarks').innerHTML = benchHtml;
+
+      // Insights
+      if (data.insights && data.insights.length > 0) {
+        document.getElementById('insightsSection').style.display = 'block';
+        var insHtml = '';
+        data.insights.forEach(function(ins) {
+          insHtml += '<div class="insight-item">' + ins + '</div>';
+        });
+        document.getElementById('insightsList').innerHTML = insHtml;
+      }
+
+      // Product Recommendation
+      var prodHtml = '<div class="rec-title">' + (rec.title || 'Your Next Step') + '</div>' +
+        '<h3>' + (rec.product || '') + '</h3>' +
+        '<div class="price">' + (rec.price || '') + '</div>' +
+        '<div class="desc">' + (rec.description || '') + '</div>' +
+        '<a class="cta-btn" href="https://valuetovictory.com">Learn More at ValueToVictory.com</a>';
+      document.getElementById('productCard').innerHTML = prodHtml;
+
+      // Fitness Flag
+      if (data.hasFitnessFlag) {
+        document.getElementById('fitnessSection').style.display = 'block';
+      }
+
+      // Re-assessment CTA
+      var answered = data.questionsAnswered || 0;
+      var available = data.questionsAvailable || 0;
+      document.getElementById('progressText').textContent = answered + ' of ' + available + ' questions answered';
+    }
+  </script>
+</body>
+</html>

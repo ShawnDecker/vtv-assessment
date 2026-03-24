@@ -43,6 +43,22 @@ module.exports = async (req, res) => {
     await sql`CREATE INDEX IF NOT EXISTS idx_answer_history_question ON answer_history(question_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_question_bank_pillar ON question_bank(pillar)`;
 
+    // Create challenges table for 90-day challenge system
+    await sql`
+      CREATE TABLE IF NOT EXISTS challenges (
+        id SERIAL PRIMARY KEY,
+        contact_id INTEGER NOT NULL REFERENCES contacts(id),
+        baseline_assessment_id INTEGER NOT NULL REFERENCES assessments(id),
+        enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+        day_90_date TIMESTAMPTZ NOT NULL,
+        reassessment_id INTEGER REFERENCES assessments(id),
+        status TEXT DEFAULT 'active',
+        UNIQUE(contact_id, baseline_assessment_id)
+      )
+    `;
+    await sql`CREATE INDEX IF NOT EXISTS idx_challenges_contact ON challenges(contact_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_challenges_status ON challenges(status)`;
+
     // Seed questions (upsert to be idempotent)
     let inserted = 0;
     let skipped = 0;
@@ -60,7 +76,7 @@ module.exports = async (req, res) => {
     res.json({
       success: true,
       message: 'Migration complete',
-      tables_created: ['question_bank', 'answer_history'],
+      tables_created: ['question_bank', 'answer_history', 'challenges'],
       questions_inserted: inserted,
       questions_skipped: skipped,
       total_seed_questions: SEED_QUESTIONS.length
