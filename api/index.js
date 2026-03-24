@@ -1,11 +1,4 @@
-// Vercel serverless function - handles all /api/* routes
-// Uses in-memory storage (resets on cold start, but good for testing)
-
-const assessments = [];
-const contacts = [];
-const teams = [];
-const peerRatings = [];
-let nextId = 1;
+const { neon } = require('@neondatabase/serverless');
 
 function getScoreRange(score) {
   if (score <= 50) return "Crisis";
@@ -17,23 +10,25 @@ function getScoreRange(score) {
 
 function generatePrescription(a) {
   const pillars = [
-    { name: "Time", score: a.timeTotal },
-    { name: "People", score: a.peopleTotal },
-    { name: "Influence", score: a.influenceTotal },
-    { name: "Numbers", score: a.numbersTotal },
-    { name: "Knowledge", score: a.knowledgeTotal },
+    { name: "Time", score: a.time_total, subs: { "Time Awareness": a.time_awareness, "Time Allocation": a.time_allocation, "Time Protection": a.time_protection, "Time Leverage": a.time_leverage, "Five-Hour Leak": a.five_hour_leak, "Value Per Hour": a.value_per_hour, "Time Investment": a.time_investment, "Downtime Quality": a.downtime_quality, "Foresight": a.foresight, "Time Reallocation": a.time_reallocation } },
+    { name: "People", score: a.people_total, subs: { "Trust Investment": a.trust_investment, "Boundary Quality": a.boundary_quality, "Network Depth": a.network_depth, "Relational ROI": a.relational_roi, "People Audit": a.people_audit, "Alliance Building": a.alliance_building, "Love Bank Deposits": a.love_bank_deposits, "Communication Clarity": a.communication_clarity, "Restraint Practice": a.restraint_practice, "Value Replacement": a.value_replacement } },
+    { name: "Influence", score: a.influence_total, subs: { "Leadership Level": a.leadership_level, "Integrity Alignment": a.integrity_alignment, "Professional Credibility": a.professional_credibility, "Empathetic Listening": a.empathetic_listening, "Gravitational Center": a.gravitational_center, "Micro-Honesties": a.micro_honesties, "Word Management": a.word_management, "Personal Responsibility": a.personal_responsibility, "Adaptive Influence": a.adaptive_influence, "Influence Multiplier": a.influence_multiplier } },
+    { name: "Numbers", score: a.numbers_total, subs: { "Financial Awareness": a.financial_awareness, "Goal Specificity": a.goal_specificity, "Investment Logic": a.investment_logic, "Measurement Habit": a.measurement_habit, "Cost vs Value": a.cost_vs_value, "Number One Clarity": a.number_one_clarity, "Small Improvements": a.small_improvements, "Negative Math": a.negative_math, "Income Multiplier": a.income_multiplier, "Negotiation Skill": a.negotiation_skill } },
+    { name: "Knowledge", score: a.knowledge_total, subs: { "Learning Hours": a.learning_hours, "Application Rate": a.application_rate, "Bias Awareness": a.bias_awareness, "Highest & Best Use": a.highest_best_use, "Supply & Demand": a.supply_and_demand, "Substitution Risk": a.substitution_risk, "Double Jeopardy": a.double_jeopardy, "Knowledge Compounding": a.knowledge_compounding, "Weighted Analysis": a.weighted_analysis, "Perception vs Perspective": a.perception_vs_perspective } },
   ];
   const sorted = [...pillars].sort((x, y) => x.score - y.score);
   const weakest = sorted[0];
   const strongest = sorted[sorted.length - 1];
+  const weakestSubs = Object.entries(weakest.subs).sort(([,a],[,b]) => a - b);
   const prescriptions = {
-    Time: { diagnosis: "Your Time pillar is your biggest constraint. You're likely losing 5+ hours per week to low-value activities.", immediate: "Run the Time Audit. Track every hour for 3 days. Find your Five-Hour Leak.", tool: "Time Reallocation Planner — Sort activities by Covey Quadrant.", thirtyDay: "Eliminate 3 Q3/Q4 activities. Protect peak hours. Calculate Value Per Hour." },
-    People: { diagnosis: "Your People pillar needs work. You may be over-investing in Takers or under-investing in Exchangers.", immediate: "Run the People Audit. Map your top 15-20 relationships against the four types.", tool: "Relationship Matrix — Classify your network by alliance type.", thirtyDay: "Use the Value Replacement Map to redirect relational energy." },
-    Influence: { diagnosis: "Your Influence pillar needs work. There may be a gap between stated and lived values.", immediate: "Run the Influence Ladder. Identify which of Maxwell's five levels you operate at.", tool: "Gravitational Center Alignment — Audit calendar and bank statement against core values.", thirtyDay: "Score the gap between stated and lived values. One alignment action per week." },
-    Numbers: { diagnosis: "Your Numbers pillar is weakest. You may not be tracking what matters.", immediate: "Run the Financial Snapshot. Document income, expenses, surplus/deficit.", tool: "Value Per Hour Calculator — Calculate actual vs potential hourly worth.", thirtyDay: "Use the Income Multiplier Model to map compound improvements over 90 days." },
-    Knowledge: { diagnosis: "Your Knowledge pillar is the biggest gap. You may be consuming without applying.", immediate: "Run the Knowledge ROI Calculator. Calculate hours invested vs return.", tool: "Map knowledge gaps against the 1,800-hour framework.", thirtyDay: "Commit to one high-ROI learning track. Apply the Rule of Double Jeopardy." },
+    Time: { diagnosis: "Your Time pillar is your biggest constraint. You're likely losing 5+ hours per week to low-value activities without realizing it.", immediate: "Run the Time Audit (Tool #2). Track every hour for 3 days. Find your Five-Hour Leak.", tool: "Time Reallocation Planner (Tool #9) — Sort your activities by Covey Quadrant. Schedule Q2 priorities first.", thirtyDay: "Eliminate or reduce 3 specific Q3/Q4 activities. Protect your peak hours. Calculate your Value Per Hour." },
+    People: { diagnosis: "Your People pillar is dragging your score. You may be over-investing in Takers or under-investing in Exchangers who could multiply your results.", immediate: "Run the People Audit (Tool #3). Map your top 15-20 relationships against the four types: Givers, Receivers, Exchangers, Takers.", tool: "Relationship Matrix (Tool #6) — Classify your network by alliance type: Confidants, Constituents, Comrades, Companions.", thirtyDay: "Use the Value Replacement Map (Tool #10) to redirect relational energy from low-ROI to high-ROI relationships." },
+    Influence: { diagnosis: "Your Influence pillar needs work. You may be operating at a lower level of leadership than your experience warrants, or there's a gap between your stated and lived values.", immediate: "Run the Influence Ladder (Tool #8). Identify which of Maxwell's five levels you currently operate at.", tool: "Gravitational Center Alignment (Tool #11) — Audit your calendar and bank statement against your core values.", thirtyDay: "Score the gap between stated and lived values. Create one specific alignment action per week." },
+    Numbers: { diagnosis: "Your Numbers pillar is your weakest area. You're likely not tracking what matters, or there's a disconnect between your goals and your financial reality.", immediate: "Run the Financial Snapshot (Tool #4). Document actual income, expenses, surplus/deficit, and real cost per hour.", tool: "Value Per Hour Calculator (Tool #5) — Calculate your actual hourly worth and your potential hourly worth.", thirtyDay: "Use the Income Multiplier Model (Tool #12) to map compound improvements over 90 days." },
+    Knowledge: { diagnosis: "Your Knowledge pillar is your biggest gap. You may be consuming information without applying it, or investing learning hours in areas that don't compound.", immediate: "Run the Knowledge ROI Calculator (Tool #7). Calculate hours invested vs. income and opportunity return.", tool: "Map your knowledge gaps against the 1,800-hour framework. Identify the single most expensive gap.", thirtyDay: "Commit to one high-ROI learning track. Apply the Rule of Double Jeopardy — never pay for the same mistake twice." },
   };
-  return { weakestPillar: weakest.name, weakestScore: weakest.score, strongestPillar: strongest.name, strongestScore: strongest.score, ...prescriptions[weakest.name], pillars };
+  const rx = prescriptions[weakest.name];
+  return { weakestPillar: weakest.name, weakestScore: weakest.score, strongestPillar: strongest.name, strongestScore: strongest.score, weakestSubCategory: weakestSubs[0][0], weakestSubScore: weakestSubs[0][1], ...rx, pillars: pillars.map(p => ({ name: p.name, score: p.score })) };
 }
 
 module.exports = async (req, res) => {
@@ -42,95 +37,177 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  const sql = neon(process.env.DATABASE_URL);
   const url = req.url.replace(/^\/api/, '');
 
-  // POST /api/assessment
-  if (req.method === 'POST' && url === '/assessment') {
-    const body = req.body || {};
-    const fields = ['timeAwareness','timeAllocation','timeProtection','timeLeverage','fiveHourLeak','valuePerHour','timeInvestment','downtimeQuality','foresight','timeReallocation','trustInvestment','boundaryQuality','networkDepth','relationalRoi','peopleAudit','allianceBuilding','loveBankDeposits','communicationClarity','restraintPractice','valueReplacement','leadershipLevel','integrityAlignment','professionalCredibility','empatheticListening','gravitationalCenter','microHonesties','wordManagement','personalResponsibility','adaptiveInfluence','influenceMultiplier','financialAwareness','goalSpecificity','investmentLogic','measurementHabit','costVsValue','numberOneClarity','smallImprovements','negativeMath','incomeMultiplier','negotiationSkill','learningHours','applicationRate','biasAwareness','highestBestUse','supplyAndDemand','substitutionRisk','doubleJeopardy','knowledgeCompounding','weightedAnalysis','perceptionVsPerspective'];
-    
-    const timeTotal = (body.timeAwareness||0)+(body.timeAllocation||0)+(body.timeProtection||0)+(body.timeLeverage||0)+(body.fiveHourLeak||0)+(body.valuePerHour||0)+(body.timeInvestment||0)+(body.downtimeQuality||0)+(body.foresight||0)+(body.timeReallocation||0);
-    const peopleTotal = (body.trustInvestment||0)+(body.boundaryQuality||0)+(body.networkDepth||0)+(body.relationalRoi||0)+(body.peopleAudit||0)+(body.allianceBuilding||0)+(body.loveBankDeposits||0)+(body.communicationClarity||0)+(body.restraintPractice||0)+(body.valueReplacement||0);
-    const influenceTotal = (body.leadershipLevel||0)+(body.integrityAlignment||0)+(body.professionalCredibility||0)+(body.empatheticListening||0)+(body.gravitationalCenter||0)+(body.microHonesties||0)+(body.wordManagement||0)+(body.personalResponsibility||0)+(body.adaptiveInfluence||0)+(body.influenceMultiplier||0);
-    const numbersTotal = (body.financialAwareness||0)+(body.goalSpecificity||0)+(body.investmentLogic||0)+(body.measurementHabit||0)+(body.costVsValue||0)+(body.numberOneClarity||0)+(body.smallImprovements||0)+(body.negativeMath||0)+(body.incomeMultiplier||0)+(body.negotiationSkill||0);
-    const knowledgeTotal = (body.learningHours||0)+(body.applicationRate||0)+(body.biasAwareness||0)+(body.highestBestUse||0)+(body.supplyAndDemand||0)+(body.substitutionRisk||0)+(body.doubleJeopardy||0)+(body.knowledgeCompounding||0)+(body.weightedAnalysis||0)+(body.perceptionVsPerspective||0);
-    
-    const rawScore = timeTotal + peopleTotal + influenceTotal + numbersTotal + knowledgeTotal;
-    const timeMultiplier = Math.max(0.1, Math.min(2.0, body.timeMultiplier || 1.0));
-    const masterScore = Math.round(rawScore * timeMultiplier * 10) / 10;
-    
-    const contact = { id: nextId++, firstName: body.firstName || '', lastName: body.lastName || '', email: body.email || '', phone: body.phone || '', createdAt: new Date().toISOString() };
-    contacts.push(contact);
-    
-    const assessmentData = { ...body, id: nextId++, contactId: contact.id, completedAt: new Date().toISOString(), timeTotal, peopleTotal, influenceTotal, numbersTotal, knowledgeTotal, rawScore, masterScore, timeMultiplier, scoreRange: getScoreRange(masterScore), mode: body.mode || 'individual' };
-    
-    const prescription = generatePrescription(assessmentData);
-    assessmentData.weakestPillar = prescription.weakestPillar;
-    assessmentData.prescription = JSON.stringify(prescription);
-    assessments.push(assessmentData);
-    
-    return res.json({ assessment: assessmentData, prescription, contact: { id: contact.id, firstName: contact.firstName, lastName: contact.lastName } });
-  }
+  try {
+    // POST /api/assessment
+    if (req.method === 'POST' && url === '/assessment') {
+      const b = req.body || {};
+      
+      // Upsert contact
+      let contactRows = await sql`SELECT * FROM contacts WHERE email = ${b.email || ''} LIMIT 1`;
+      let contact;
+      if (contactRows.length > 0) {
+        contact = contactRows[0];
+      } else {
+        const rows = await sql`INSERT INTO contacts (first_name, last_name, email, phone, created_at) VALUES (${b.firstName || ''}, ${b.lastName || ''}, ${b.email || ''}, ${b.phone || null}, ${new Date().toISOString()}) RETURNING *`;
+        contact = rows[0];
+      }
 
-  // POST /api/teams
-  if (req.method === 'POST' && url === '/teams') {
-    const body = req.body || {};
-    const code = Math.random().toString(36).substring(2, 10);
-    const team = { id: nextId++, name: body.name, mode: body.mode, createdBy: body.contactId, inviteCode: code, createdAt: new Date().toISOString() };
-    teams.push(team);
-    return res.json(team);
-  }
+      const tt = (b.timeAwareness||0)+(b.timeAllocation||0)+(b.timeProtection||0)+(b.timeLeverage||0)+(b.fiveHourLeak||0)+(b.valuePerHour||0)+(b.timeInvestment||0)+(b.downtimeQuality||0)+(b.foresight||0)+(b.timeReallocation||0);
+      const pt = (b.trustInvestment||0)+(b.boundaryQuality||0)+(b.networkDepth||0)+(b.relationalRoi||0)+(b.peopleAudit||0)+(b.allianceBuilding||0)+(b.loveBankDeposits||0)+(b.communicationClarity||0)+(b.restraintPractice||0)+(b.valueReplacement||0);
+      const it = (b.leadershipLevel||0)+(b.integrityAlignment||0)+(b.professionalCredibility||0)+(b.empatheticListening||0)+(b.gravitationalCenter||0)+(b.microHonesties||0)+(b.wordManagement||0)+(b.personalResponsibility||0)+(b.adaptiveInfluence||0)+(b.influenceMultiplier||0);
+      const nt = (b.financialAwareness||0)+(b.goalSpecificity||0)+(b.investmentLogic||0)+(b.measurementHabit||0)+(b.costVsValue||0)+(b.numberOneClarity||0)+(b.smallImprovements||0)+(b.negativeMath||0)+(b.incomeMultiplier||0)+(b.negotiationSkill||0);
+      const kt = (b.learningHours||0)+(b.applicationRate||0)+(b.biasAwareness||0)+(b.highestBestUse||0)+(b.supplyAndDemand||0)+(b.substitutionRisk||0)+(b.doubleJeopardy||0)+(b.knowledgeCompounding||0)+(b.weightedAnalysis||0)+(b.perceptionVsPerspective||0);
+      const rawScore = tt + pt + it + nt + kt;
+      const tm = Math.max(0.1, Math.min(2.0, b.timeMultiplier || 1.0));
+      const masterScore = Math.round(rawScore * tm * 10) / 10;
+      const scoreRange = getScoreRange(masterScore);
+      const mode = b.mode || 'individual';
 
-  // GET /api/teams/invite/:code
-  if (req.method === 'GET' && url.startsWith('/teams/invite/')) {
-    const code = url.split('/teams/invite/')[1];
-    const team = teams.find(t => t.inviteCode === code);
-    if (!team) return res.status(404).json({ error: 'Team not found' });
-    const creator = contacts.find(c => c.id === team.createdBy);
-    return res.json({ ...team, creatorName: creator ? `${creator.firstName} ${creator.lastName}` : 'Unknown' });
-  }
+      const aData = {
+        contact_id: contact.id, completed_at: new Date().toISOString(), mode,
+        team_id: b.teamId || null, is_team_creator: b.isTeamCreator ? 1 : 0,
+        time_awareness: b.timeAwareness||1, time_allocation: b.timeAllocation||1, time_protection: b.timeProtection||1, time_leverage: b.timeLeverage||1, five_hour_leak: b.fiveHourLeak||1, value_per_hour: b.valuePerHour||1, time_investment: b.timeInvestment||1, downtime_quality: b.downtimeQuality||1, foresight: b.foresight||1, time_reallocation: b.timeReallocation||1, time_total: tt,
+        trust_investment: b.trustInvestment||1, boundary_quality: b.boundaryQuality||1, network_depth: b.networkDepth||1, relational_roi: b.relationalRoi||1, people_audit: b.peopleAudit||1, alliance_building: b.allianceBuilding||1, love_bank_deposits: b.loveBankDeposits||1, communication_clarity: b.communicationClarity||1, restraint_practice: b.restraintPractice||1, value_replacement: b.valueReplacement||1, people_total: pt,
+        leadership_level: b.leadershipLevel||1, integrity_alignment: b.integrityAlignment||1, professional_credibility: b.professionalCredibility||1, empathetic_listening: b.empatheticListening||1, gravitational_center: b.gravitationalCenter||1, micro_honesties: b.microHonesties||1, word_management: b.wordManagement||1, personal_responsibility: b.personalResponsibility||1, adaptive_influence: b.adaptiveInfluence||1, influence_multiplier: b.influenceMultiplier||1, influence_total: it,
+        financial_awareness: b.financialAwareness||1, goal_specificity: b.goalSpecificity||1, investment_logic: b.investmentLogic||1, measurement_habit: b.measurementHabit||1, cost_vs_value: b.costVsValue||1, number_one_clarity: b.numberOneClarity||1, small_improvements: b.smallImprovements||1, negative_math: b.negativeMath||1, income_multiplier: b.incomeMultiplier||1, negotiation_skill: b.negotiationSkill||1, numbers_total: nt,
+        learning_hours: b.learningHours||1, application_rate: b.applicationRate||1, bias_awareness: b.biasAwareness||1, highest_best_use: b.highestBestUse||1, supply_and_demand: b.supplyAndDemand||1, substitution_risk: b.substitutionRisk||1, double_jeopardy: b.doubleJeopardy||1, knowledge_compounding: b.knowledgeCompounding||1, weighted_analysis: b.weightedAnalysis||1, perception_vs_perspective: b.perceptionVsPerspective||1, knowledge_total: kt,
+        time_multiplier: tm, raw_score: rawScore, master_score: masterScore, score_range: scoreRange,
+        overlay_answers: b.overlayAnswers ? (typeof b.overlayAnswers === 'string' ? b.overlayAnswers : JSON.stringify(b.overlayAnswers)) : null,
+        overlay_total: b.overlayTotal || null,
+      };
 
-  // GET /api/admin/contacts
-  if (req.method === 'GET' && url === '/admin/contacts') {
-    const enriched = contacts.map(c => {
-      const ca = assessments.filter(a => a.contactId === c.id);
-      return { ...c, latestAssessment: ca[0] || null, assessmentCount: ca.length };
-    });
-    return res.json(enriched);
-  }
+      const prescription = generatePrescription(aData);
+      aData.weakest_pillar = prescription.weakestPillar;
+      aData.prescription = JSON.stringify(prescription);
 
-  // GET /api/admin/contacts/:id
-  if (req.method === 'GET' && url.match(/^\/admin\/contacts\/\d+$/)) {
-    const id = parseInt(url.split('/').pop());
-    const contact = contacts.find(c => c.id === id);
-    if (!contact) return res.status(404).json({ error: 'Not found' });
-    const ca = assessments.filter(a => a.contactId === id);
-    return res.json({ contact, assessments: ca });
-  }
+      const d = aData;
+      const rows = await sql`INSERT INTO assessments (contact_id, completed_at, mode, team_id, is_team_creator, time_awareness, time_allocation, time_protection, time_leverage, five_hour_leak, value_per_hour, time_investment, downtime_quality, foresight, time_reallocation, time_total, trust_investment, boundary_quality, network_depth, relational_roi, people_audit, alliance_building, love_bank_deposits, communication_clarity, restraint_practice, value_replacement, people_total, leadership_level, integrity_alignment, professional_credibility, empathetic_listening, gravitational_center, micro_honesties, word_management, personal_responsibility, adaptive_influence, influence_multiplier, influence_total, financial_awareness, goal_specificity, investment_logic, measurement_habit, cost_vs_value, number_one_clarity, small_improvements, negative_math, income_multiplier, negotiation_skill, numbers_total, learning_hours, application_rate, bias_awareness, highest_best_use, supply_and_demand, substitution_risk, double_jeopardy, knowledge_compounding, weighted_analysis, perception_vs_perspective, knowledge_total, time_multiplier, raw_score, master_score, score_range, weakest_pillar, prescription, overlay_answers, overlay_total) VALUES (${d.contact_id}, ${d.completed_at}, ${d.mode}, ${d.team_id}, ${d.is_team_creator}, ${d.time_awareness}, ${d.time_allocation}, ${d.time_protection}, ${d.time_leverage}, ${d.five_hour_leak}, ${d.value_per_hour}, ${d.time_investment}, ${d.downtime_quality}, ${d.foresight}, ${d.time_reallocation}, ${d.time_total}, ${d.trust_investment}, ${d.boundary_quality}, ${d.network_depth}, ${d.relational_roi}, ${d.people_audit}, ${d.alliance_building}, ${d.love_bank_deposits}, ${d.communication_clarity}, ${d.restraint_practice}, ${d.value_replacement}, ${d.people_total}, ${d.leadership_level}, ${d.integrity_alignment}, ${d.professional_credibility}, ${d.empathetic_listening}, ${d.gravitational_center}, ${d.micro_honesties}, ${d.word_management}, ${d.personal_responsibility}, ${d.adaptive_influence}, ${d.influence_multiplier}, ${d.influence_total}, ${d.financial_awareness}, ${d.goal_specificity}, ${d.investment_logic}, ${d.measurement_habit}, ${d.cost_vs_value}, ${d.number_one_clarity}, ${d.small_improvements}, ${d.negative_math}, ${d.income_multiplier}, ${d.negotiation_skill}, ${d.numbers_total}, ${d.learning_hours}, ${d.application_rate}, ${d.bias_awareness}, ${d.highest_best_use}, ${d.supply_and_demand}, ${d.substitution_risk}, ${d.double_jeopardy}, ${d.knowledge_compounding}, ${d.weighted_analysis}, ${d.perception_vs_perspective}, ${d.knowledge_total}, ${d.time_multiplier}, ${d.raw_score}, ${d.master_score}, ${d.score_range}, ${d.weakest_pillar}, ${d.prescription}, ${d.overlay_answers}, ${d.overlay_total}) RETURNING *`;
+      
+      const assessment = rows[0];
+      // Map snake_case back to camelCase for frontend compatibility
+      const mapped = mapAssessment(assessment);
+      return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name } });
+    }
 
-  // GET /api/admin/analytics
-  if (req.method === 'GET' && url === '/admin/analytics') {
-    const dist = {};
-    assessments.forEach(a => { dist[a.scoreRange] = (dist[a.scoreRange] || 0) + 1; });
-    const distribution = Object.entries(dist).map(([range, count]) => ({ range, count }));
-    const n = assessments.length || 1;
-    const averages = [
-      { pillar: 'Time', avg: Math.round(assessments.reduce((s,a) => s + a.timeTotal, 0) / n * 10) / 10 },
-      { pillar: 'People', avg: Math.round(assessments.reduce((s,a) => s + a.peopleTotal, 0) / n * 10) / 10 },
-      { pillar: 'Influence', avg: Math.round(assessments.reduce((s,a) => s + a.influenceTotal, 0) / n * 10) / 10 },
-      { pillar: 'Numbers', avg: Math.round(assessments.reduce((s,a) => s + a.numbersTotal, 0) / n * 10) / 10 },
-      { pillar: 'Knowledge', avg: Math.round(assessments.reduce((s,a) => s + a.knowledgeTotal, 0) / n * 10) / 10 },
-    ];
-    return res.json({ distribution, averages, recent: assessments.slice(0, 10), totalContacts: contacts.length, totalAssessments: assessments.length });
-  }
+    // POST /api/teams
+    if (req.method === 'POST' && url === '/teams') {
+      const b = req.body || {};
+      const code = Math.random().toString(36).substring(2, 10);
+      const rows = await sql`INSERT INTO teams (name, mode, created_by, invite_code, created_at) VALUES (${b.name}, ${b.mode}, ${b.contactId}, ${code}, ${new Date().toISOString()}) RETURNING *`;
+      return res.json(rows[0]);
+    }
 
-  // POST /api/peer-rating
-  if (req.method === 'POST' && url === '/peer-rating') {
-    const body = req.body || {};
-    const rating = { id: nextId++, ...body, ratingsTotal: Object.values(body.ratings || {}).reduce((s,v) => s + v, 0), createdAt: new Date().toISOString() };
-    peerRatings.push(rating);
-    return res.json(rating);
-  }
+    // GET /api/teams/invite/:code
+    if (req.method === 'GET' && url.startsWith('/teams/invite/')) {
+      const code = url.split('/teams/invite/')[1];
+      const rows = await sql`SELECT * FROM teams WHERE invite_code = ${code} LIMIT 1`;
+      if (rows.length === 0) return res.status(404).json({ error: 'Team not found' });
+      const team = rows[0];
+      const creator = await sql`SELECT * FROM contacts WHERE id = ${team.created_by} LIMIT 1`;
+      return res.json({ ...team, creatorName: creator.length > 0 ? `${creator[0].first_name} ${creator[0].last_name}` : 'Unknown' });
+    }
 
-  return res.status(404).json({ error: 'Not found' });
+    // GET /api/teams/:id/results
+    if (req.method === 'GET' && url.match(/^\/teams\/\d+\/results$/)) {
+      const teamId = parseInt(url.split('/')[2]);
+      const members = await sql`SELECT a.*, c.first_name, c.last_name, c.email FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE a.team_id = ${teamId} ORDER BY a.completed_at DESC`;
+      const ratings = await sql`SELECT * FROM peer_ratings WHERE team_id = ${teamId}`;
+      return res.json({ members: members.map(mapAssessment), ratings });
+    }
+
+    // POST /api/peer-rating
+    if (req.method === 'POST' && url === '/peer-rating') {
+      const b = req.body || {};
+      const ratingsJson = typeof b.ratings === 'string' ? b.ratings : JSON.stringify(b.ratings || {});
+      const total = typeof b.ratings === 'object' ? Object.values(b.ratings).reduce((s,v) => s + v, 0) : 0;
+      const rows = await sql`INSERT INTO peer_ratings (team_id, rater_id, target_id, ratings, ratings_total, created_at) VALUES (${b.teamId}, ${b.raterId}, ${b.targetId}, ${ratingsJson}, ${total}, ${new Date().toISOString()}) RETURNING *`;
+      return res.json(rows[0]);
+    }
+
+    // GET /api/admin/contacts
+    if (req.method === 'GET' && url === '/admin/contacts') {
+      const allContacts = await sql`SELECT * FROM contacts ORDER BY created_at DESC`;
+      const enriched = [];
+      for (const c of allContacts) {
+        const ca = await sql`SELECT * FROM assessments WHERE contact_id = ${c.id} ORDER BY completed_at DESC`;
+        enriched.push({ ...c, firstName: c.first_name, lastName: c.last_name, latestAssessment: ca.length > 0 ? mapAssessment(ca[0]) : null, assessmentCount: ca.length });
+      }
+      return res.json(enriched);
+    }
+
+    // GET /api/admin/contacts/:id
+    if (req.method === 'GET' && url.match(/^\/admin\/contacts\/\d+$/)) {
+      const id = parseInt(url.split('/').pop());
+      const rows = await sql`SELECT * FROM contacts WHERE id = ${id} LIMIT 1`;
+      if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+      const contact = { ...rows[0], firstName: rows[0].first_name, lastName: rows[0].last_name };
+      const ca = await sql`SELECT * FROM assessments WHERE contact_id = ${id} ORDER BY completed_at DESC`;
+      return res.json({ contact, assessments: ca.map(mapAssessment) });
+    }
+
+    // GET /api/admin/analytics
+    if (req.method === 'GET' && url === '/admin/analytics') {
+      const dist = await sql`SELECT score_range as range, COUNT(*) as count FROM assessments GROUP BY score_range`;
+      const avgs = await sql`SELECT AVG(time_total) as t, AVG(people_total) as p, AVG(influence_total) as i, AVG(numbers_total) as n, AVG(knowledge_total) as k FROM assessments`;
+      const recent = await sql`SELECT a.*, c.first_name, c.last_name, c.email FROM assessments a JOIN contacts c ON a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 10`;
+      const totalC = await sql`SELECT COUNT(*) as count FROM contacts`;
+      const totalA = await sql`SELECT COUNT(*) as count FROM assessments`;
+      const a = avgs[0] || {};
+      return res.json({
+        distribution: dist.map(r => ({ range: r.range, count: Number(r.count) })),
+        averages: [
+          { pillar: "Time", avg: Math.round((Number(a.t)||0)*10)/10 },
+          { pillar: "People", avg: Math.round((Number(a.p)||0)*10)/10 },
+          { pillar: "Influence", avg: Math.round((Number(a.i)||0)*10)/10 },
+          { pillar: "Numbers", avg: Math.round((Number(a.n)||0)*10)/10 },
+          { pillar: "Knowledge", avg: Math.round((Number(a.k)||0)*10)/10 },
+        ],
+        recent: recent.map(r => ({ ...mapAssessment(r), contact: { firstName: r.first_name, lastName: r.last_name, email: r.email } })),
+        totalContacts: Number(totalC[0]?.count || 0),
+        totalAssessments: Number(totalA[0]?.count || 0),
+      });
+    }
+
+    // GET /api/admin/export (CSV)
+    if (req.method === 'GET' && url === '/admin/export') {
+      const all = await sql`SELECT a.*, c.first_name, c.last_name, c.email, c.phone FROM assessments a JOIN contacts c ON a.contact_id = c.id ORDER BY a.completed_at DESC`;
+      let csv = "First Name,Last Name,Email,Phone,Date,Time,People,Influence,Numbers,Knowledge,Raw,Multiplier,Master Score,Range,Weakest\n";
+      for (const r of all) {
+        csv += `"${r.first_name}","${r.last_name}","${r.email}","${r.phone||''}","${r.completed_at}",${r.time_total},${r.people_total},${r.influence_total},${r.numbers_total},${r.knowledge_total},${r.raw_score},${r.time_multiplier},${r.master_score},"${r.score_range}","${r.weakest_pillar}"\n`;
+      }
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=value-engine-export.csv');
+      return res.send(csv);
+    }
+
+    // POST /api/admin/hubspot-sync (placeholder)
+    if (req.method === 'POST' && url === '/admin/hubspot-sync') {
+      return res.json({ synced: 0, failed: 0, total: 0, message: "HubSpot sync coming soon" });
+    }
+
+    return res.status(404).json({ error: 'Not found' });
+  } catch (err) {
+    console.error('API Error:', err);
+    return res.status(500).json({ error: err.message });
+  }
 };
+
+// Map snake_case DB columns to camelCase for frontend
+function mapAssessment(a) {
+  if (!a) return a;
+  return {
+    id: a.id, contactId: a.contact_id, completedAt: a.completed_at, mode: a.mode, teamId: a.team_id, isTeamCreator: a.is_team_creator,
+    timeAwareness: a.time_awareness, timeAllocation: a.time_allocation, timeProtection: a.time_protection, timeLeverage: a.time_leverage, fiveHourLeak: a.five_hour_leak, valuePerHour: a.value_per_hour, timeInvestment: a.time_investment, downtimeQuality: a.downtime_quality, foresight: a.foresight, timeReallocation: a.time_reallocation, timeTotal: a.time_total,
+    trustInvestment: a.trust_investment, boundaryQuality: a.boundary_quality, networkDepth: a.network_depth, relationalRoi: a.relational_roi, peopleAudit: a.people_audit, allianceBuilding: a.alliance_building, loveBankDeposits: a.love_bank_deposits, communicationClarity: a.communication_clarity, restraintPractice: a.restraint_practice, valueReplacement: a.value_replacement, peopleTotal: a.people_total,
+    leadershipLevel: a.leadership_level, integrityAlignment: a.integrity_alignment, professionalCredibility: a.professional_credibility, empatheticListening: a.empathetic_listening, gravitationalCenter: a.gravitational_center, microHonesties: a.micro_honesties, wordManagement: a.word_management, personalResponsibility: a.personal_responsibility, adaptiveInfluence: a.adaptive_influence, influenceMultiplier: a.influence_multiplier, influenceTotal: a.influence_total,
+    financialAwareness: a.financial_awareness, goalSpecificity: a.goal_specificity, investmentLogic: a.investment_logic, measurementHabit: a.measurement_habit, costVsValue: a.cost_vs_value, numberOneClarity: a.number_one_clarity, smallImprovements: a.small_improvements, negativeMath: a.negative_math, incomeMultiplier: a.income_multiplier, negotiationSkill: a.negotiation_skill, numbersTotal: a.numbers_total,
+    learningHours: a.learning_hours, applicationRate: a.application_rate, biasAwareness: a.bias_awareness, highestBestUse: a.highest_best_use, supplyAndDemand: a.supply_and_demand, substitutionRisk: a.substitution_risk, doubleJeopardy: a.double_jeopardy, knowledgeCompounding: a.knowledge_compounding, weightedAnalysis: a.weighted_analysis, perceptionVsPerspective: a.perception_vs_perspective, knowledgeTotal: a.knowledge_total,
+    timeMultiplier: a.time_multiplier, rawScore: a.raw_score, masterScore: a.master_score, scoreRange: a.score_range, weakestPillar: a.weakest_pillar, prescription: a.prescription,
+    overlayAnswers: a.overlay_answers, overlayTotal: a.overlay_total,
+    // Pass through any join fields
+    ...(a.first_name ? { firstName: a.first_name, lastName: a.last_name, email: a.email } : {}),
+  };
+}
