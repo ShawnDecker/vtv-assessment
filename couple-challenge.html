@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>The Value Engine — 30-Day Couple Challenge</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
+    .container { max-width: 560px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .center-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .brand { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .subtitle { color: #a1a1aa; margin-bottom: 2rem; font-size: 0.95rem; }
+    .hidden { display: none; }
+    .error { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; }
+    .success { color: #22c55e; font-size: 0.875rem; margin-top: 0.5rem; }
+    label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: #d4d4d8; }
+    input[type="email"] { width: 100%; padding: 0.75rem 1rem; background: #18181b; border: 1px solid #27272a; border-radius: 0.5rem; color: #fff; font-size: 1rem; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    input[type="email"]:focus { border-color: #3b82f6; }
+    textarea { width: 100%; padding: 0.75rem 1rem; background: #18181b; border: 1px solid #27272a; border-radius: 0.5rem; color: #fff; font-size: 0.95rem; font-family: inherit; outline: none; resize: vertical; min-height: 80px; transition: border-color 0.2s; }
+    textarea:focus { border-color: #3b82f6; }
+    .btn { width: 100%; padding: 0.875rem; background: #3b82f6; color: #fff; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .btn:hover { background: #2563eb; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-gold { background: #D4A847; }
+    .btn-gold:hover { background: #b8942e; }
+    .btn-outline { background: transparent; border: 1px solid #3b82f6; color: #3b82f6; padding: 0.875rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; width: 100%; text-align: center; text-decoration: none; display: block; transition: all 0.2s; }
+    .btn-outline:hover { background: #3b82f6; color: #fff; }
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; margin-bottom: 1rem; font-weight: 700; }
+    .link { color: #3b82f6; text-decoration: none; font-size: 0.875rem; display: inline-block; margin-top: 1rem; }
+    .link:hover { text-decoration: underline; }
+    .form-group { margin-bottom: 1.5rem; }
+
+    /* Progress ring */
+    .progress-container { text-align: center; margin-bottom: 1.5rem; }
+    .progress-ring { position: relative; display: inline-block; width: 160px; height: 160px; }
+    .progress-ring svg { transform: rotate(-90deg); }
+    .progress-ring circle { fill: none; stroke-width: 8; }
+    .progress-ring .track { stroke: #27272a; }
+    .progress-ring .fill { stroke: #D4A847; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
+    .progress-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .progress-center .days-num { font-size: 2.5rem; font-weight: 900; color: #D4A847; line-height: 1; }
+    .progress-center .days-label { font-size: 0.7rem; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.1em; }
+
+    /* Today's prompt */
+    .today-card { background: linear-gradient(135deg, #2a2210 0%, #18181b 100%); border: 1px solid #D4A847; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .today-day { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; font-weight: 700; margin-bottom: 0.5rem; }
+    .today-prompt { font-family: 'Instrument Serif', serif; font-size: 1.125rem; font-style: italic; color: #d4d4d8; margin-bottom: 1.25rem; line-height: 1.5; }
+
+    /* Prompt list */
+    .prompt-list { list-style: none; }
+    .prompt-item { display: flex; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid #1a1a1e; align-items: flex-start; }
+    .prompt-item:last-child { border-bottom: none; }
+    .prompt-day-num { min-width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+    .day-completed { background: #D4A847; color: #0a0a0a; }
+    .day-current { background: #3b82f6; color: #fff; }
+    .day-pending { background: #27272a; color: #71717a; }
+    .day-weekly { background: transparent; border: 2px solid #D4A847; color: #D4A847; }
+    .prompt-text { font-size: 0.8rem; color: #a1a1aa; line-height: 1.4; flex: 1; }
+    .prompt-text.completed { color: #d4d4d8; }
+    .prompt-check { color: #22c55e; font-size: 1rem; flex-shrink: 0; }
+    .prompt-partner-check { color: #3b82f6; font-size: 0.7rem; flex-shrink: 0; margin-left: auto; }
+
+    /* Stat rows */
+    .stat-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #27272a; font-size: 0.875rem; }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { color: #a1a1aa; }
+    .stat-value { font-weight: 600; }
+
+    /* Enroll card */
+    .enroll-features { list-style: none; margin: 1.25rem 0; }
+    .enroll-features li { padding: 0.375rem 0; color: #d4d4d8; font-size: 0.9rem; }
+    .enroll-features li::before { content: "\2713"; color: #D4A847; font-weight: 700; margin-right: 0.5rem; }
+
+    .footer { text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #27272a; font-size: 0.75rem; color: #71717a; }
+
+    @media (max-width: 480px) {
+      .container { padding: 1.5rem; }
+      h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Lookup View -->
+  <div class="center-wrap" id="lookupWrap">
+    <div class="container">
+      <div class="brand">THE VALUE ENGINE</div>
+      <h1>30-Day Couple Challenge</h1>
+      <p class="subtitle">30 days of intentional growth, one prompt at a time.</p>
+
+      <div id="lookupView">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+          <div id="emailError" class="error hidden"></div>
+        </div>
+        <button class="btn" id="lookupBtn" onclick="checkChallenge()">Check My Challenge</button>
+        <a href="/relationship-hub" class="link">Back to Hub</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enrollment View -->
+  <div class="container hidden" id="enrollView">
+    <div class="brand">THE VALUE ENGINE</div>
+    <h1>Start Your 30-Day Challenge</h1>
+    <p class="subtitle">Commit to 30 days of intentional growth with your partner.</p>
+
+    <div class="card">
+      <p style="color:#d4d4d8;font-size:0.95rem;margin-bottom:1rem;">For 30 consecutive days, you and your partner will each receive a daily prompt designed to strengthen gratitude, communication, sacrifice, and connection.</p>
+      <ul class="enroll-features">
+        <li>30 daily prompts for both partners</li>
+        <li>Weekly reflection check-ins (Day 7, 14, 21, 28)</li>
+        <li>Before/after matrix comparison</li>
+        <li>Partner progress tracking</li>
+        <li>Growth accountability built in</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="stat-row">
+        <span class="stat-label">Partner Status</span>
+        <span class="stat-value" id="enrollPartner">—</span>
+      </div>
+    </div>
+
+    <div id="noPartnerMsg" class="hidden" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:0.5rem;padding:1rem;margin-bottom:1rem;">
+      <p style="color:#ef4444;font-size:0.875rem;">You need a linked partner to start the challenge. Ask your partner to sign up and link accounts from the Relationship Hub.</p>
+    </div>
+
+    <button class="btn btn-gold" id="enrollBtn" onclick="startChallenge()">Lock In — Start the 30-Day Challenge</button>
+    <div id="enrollError" class="error hidden"></div>
+    <div id="enrollSuccess" class="success hidden"></div>
+    <a href="/relationship-hub" class="link">Back to Hub</a>
+
+    <div class="footer">Value to Victory &mdash; Shawn E. Decker</div>
+  </div>
+
+  <!-- Active Challenge View -->
+  <div class="container hidden" id="activeView">
+    <div class="brand">THE VALUE ENGINE</div>
+    <h1>Couple Challenge</h1>
+    <p class="subtitle" id="activeSubtitle">Day 1 of 30</p>
+
+    <!-- Progress Ring -->
+    <div class="progress-container">
+      <div class="progress-ring">
+        <svg width="160" height="160">
+          <circle class="track" cx="80" cy="80" r="70"></circle>
+          <circle class="fill" id="progressCircle" cx="80" cy="80" r="70" stroke-dasharray="439.82" stroke-dashoffset="439.82"></circle>
+        </svg>
+        <div class="progress-center">
+          <div class="days-num" id="dayNum">1</div>
+          <div class="days-label">of 30 days</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Prompt -->
+    <div class="today-card" id="todayCard">
+      <div class="today-day" id="todayLabel">Today — Day 1</div>
+      <div class="today-prompt" id="todayPrompt">Loading...</div>
+      <textarea id="responseInput" placeholder="Write your response here..."></textarea>
+      <button class="btn btn-gold" id="respondBtn" onclick="submitResponse()" style="margin-top:0.75rem;">Submit Today's Response</button>
+      <div id="respondError" class="error hidden"></div>
+      <div id="respondSuccess" class="success hidden"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="card">
+      <div class="section-title">Challenge Progress</div>
+      <div class="stat-row">
+        <span class="stat-label">Days Completed</span>
+        <span class="stat-value" id="statCompleted">0 / 30</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Status</span>
+        <span class="stat-value" id="statStatus">Active</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Started</span>
+        <span class="stat-value" id="statStart">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Ends</span>
+        <span class="stat-value" id="statEnd">—</span>
+      </div>
+    </div>
+
+    <!-- Prompt List -->
+    <div class="card">
+      <div class="section-title">All 30 Days</div>
+      <ul class="prompt-list" id="promptList">
+        <li style="color:#71717a;font-size:0.875rem;">Loading prompts...</li>
+      </ul>
+    </div>
+
+    <a href="/relationship-hub" class="btn-outline">Back to Hub</a>
+
+    <div class="footer">Value to Victory &mdash; Shawn E. Decker</div>
+  </div>
+
+  <script>
+    var userEmail = '';
+    var userProfile = null;
+    var challengeData = null;
+    var promptsData = [];
+    var currentDay = 1;
+
+    // Weekly check-in days
+    var WEEKLY_DAYS = [7, 14, 21, 28];
+
+    // Auto-fill email
+    try {
+      var saved = localStorage.getItem('ve_email');
+      if (saved) document.getElementById('email').value = saved;
+    } catch(e) {}
+
+    function showError(id, msg) {
+      var el = document.getElementById(id);
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+    function hideError(id) { document.getElementById(id).classList.add('hidden'); }
+
+    async function checkChallenge() {
+      var email = document.getElementById('email').value.trim().toLowerCase();
+      if (!email) { showError('emailError', 'Please enter your email address.'); return; }
+      userEmail = email;
+
+      var btn = document.getElementById('lookupBtn');
+      btn.disabled = true;
+      btn.textContent = 'Checking...';
+      hideError('emailError');
+
+      try {
+        // Get profile
+        var profResp = await fetch('/api/r/profile?email=' + encodeURIComponent(email));
+        if (!profResp.ok) {
+          showError('emailError', 'No profile found. Complete onboarding first.');
+          btn.disabled = false;
+          btn.textContent = 'Check My Challenge';
+          return;
+        }
+        var profData = await profResp.json();
+        userProfile = profData.profile;
+
+        // Check challenge status
+        var statusResp = await fetch('/api/r/couple-challenge/status?contactId=' + userProfile.contact_id);
+        var statusData = await statusResp.json();
+
+        if (statusData.active) {
+          challengeData = statusData;
+          currentDay = Math.min(statusData.currentDay, 30);
+          showActiveChallenge();
+        } else {
+          showEnrollView();
+        }
+      } catch(e) {
+        showError('emailError', 'Could not check your status. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Check My Challenge';
+      }
+    }
+
+    function showEnrollView() {
+      document.getElementById('lookupWrap').classList.add('hidden');
+      document.getElementById('enrollView').classList.remove('hidden');
+
+      if (userProfile.partner_id) {
+        document.getElementById('enrollPartner').textContent = 'Linked';
+        document.getElementById('enrollPartner').style.color = '#22c55e';
+      } else {
+        document.getElementById('enrollPartner').textContent = 'Not linked';
+        document.getElementById('enrollPartner').style.color = '#ef4444';
+        document.getElementById('noPartnerMsg').classList.remove('hidden');
+        document.getElementById('enrollBtn').disabled = true;
+        document.getElementById('enrollBtn').style.opacity = '0.5';
+      }
+    }
+
+    async function startChallenge() {
+      var btn = document.getElementById('enrollBtn');
+      btn.disabled = true;
+      btn.textContent = 'Starting...';
+      hideError('enrollError');
+
+      try {
+        var resp = await fetch('/api/r/couple-challenge/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contactId: userProfile.contact_id, durationDays: 30 })
+        });
+        var data = await resp.json();
+
+        if (!resp.ok) {
+          showError('enrollError', data.error || 'Could not start challenge.');
+          btn.disabled = false;
+          btn.textContent = 'Lock In — Start the 30-Day Challenge';
+          return;
+        }
+
+        document.getElementById('enrollSuccess').textContent = 'Challenge started! Loading...';
+        document.getElementById('enrollSuccess').classList.remove('hidden');
+
+        // Reload
+        setTimeout(function() {
+          window.location.reload();
+        }, 800);
+      } catch(e) {
+        showError('enrollError', 'Something went wrong. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Lock In — Start the 30-Day Challenge';
+      }
+    }
+
+    async function showActiveChallenge() {
+      document.getElementById('lookupWrap').classList.add('hidden');
+      document.getElementById('activeView').classList.remove('hidden');
+
+      var ch = challengeData.challenge;
+      var completed = challengeData.completedResponses || 0;
+
+      // Subtitle
+      document.getElementById('activeSubtitle').textContent = 'Day ' + currentDay + ' of 30';
+
+      // Progress ring
+      var progress = currentDay / 30;
+      document.getElementById('dayNum').textContent = currentDay;
+      var circumference = 2 * Math.PI * 70;
+      var offset = circumference * (1 - progress);
+      document.getElementById('progressCircle').style.strokeDashoffset = offset;
+
+      // Stats
+      document.getElementById('statCompleted').textContent = completed + ' / 30';
+      document.getElementById('statStatus').textContent = (ch.status || 'active').charAt(0).toUpperCase() + (ch.status || 'active').slice(1);
+      var sd = new Date(ch.start_date);
+      document.getElementById('statStart').textContent = sd.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      var ed = new Date(ch.end_date);
+      document.getElementById('statEnd').textContent = ed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+      // Load prompts
+      try {
+        var promptResp = await fetch('/api/r/couple-challenge/prompts?challengeId=' + ch.id + '&contactId=' + userProfile.contact_id);
+        var promptData = await promptResp.json();
+        promptsData = promptData.prompts || [];
+        renderPrompts();
+        renderTodayPrompt();
+      } catch(e) {
+        document.getElementById('promptList').innerHTML = '<li style="color:#ef4444;font-size:0.875rem;">Could not load prompts.</li>';
+      }
+    }
+
+    function renderTodayPrompt() {
+      if (promptsData.length === 0) return;
+      var today = promptsData[currentDay - 1];
+      if (!today) return;
+
+      var isWeekly = WEEKLY_DAYS.indexOf(currentDay) !== -1;
+      document.getElementById('todayLabel').textContent = (isWeekly ? 'Weekly Check-In — ' : 'Today — ') + 'Day ' + currentDay;
+      document.getElementById('todayPrompt').textContent = today.promptText;
+
+      if (today.completed && today.responseText) {
+        document.getElementById('responseInput').value = today.responseText;
+        document.getElementById('respondBtn').textContent = 'Update Response';
+      }
+    }
+
+    function renderPrompts() {
+      var html = '';
+      promptsData.forEach(function(p) {
+        var isWeekly = WEEKLY_DAYS.indexOf(p.dayNumber) !== -1;
+        var isCurrent = p.dayNumber === currentDay;
+        var isPast = p.dayNumber < currentDay;
+
+        var dayClass = 'day-pending';
+        if (p.completed) dayClass = 'day-completed';
+        else if (isCurrent) dayClass = 'day-current';
+        if (isWeekly && !p.completed) dayClass = 'day-weekly';
+
+        var textClass = p.completed ? 'completed' : '';
+        var truncated = p.promptText.length > 80 ? p.promptText.substring(0, 80) + '...' : p.promptText;
+
+        html += '<li class="prompt-item">';
+        html += '<div class="prompt-day-num ' + dayClass + '">' + p.dayNumber + '</div>';
+        html += '<div class="prompt-text ' + textClass + '">' + truncated + '</div>';
+        if (p.completed) html += '<div class="prompt-check">&#10003;</div>';
+        html += '</li>';
+      });
+
+      document.getElementById('promptList').innerHTML = html;
+    }
+
+    async function submitResponse() {
+      var text = document.getElementById('responseInput').value.trim();
+      if (!text) {
+        showError('respondError', 'Please write a response before submitting.');
+        return;
+      }
+
+      var btn = document.getElementById('respondBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+      hideError('respondError');
+
+      try {
+        var resp = await fetch('/api/r/couple-challenge/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            challengeId: challengeData.challenge.id,
+            contactId: userProfile.contact_id,
+            dayNumber: currentDay,
+            responseText: text
+          })
+        });
+
+        var data = await resp.json();
+        if (!resp.ok) {
+          showError('respondError', data.error || 'Submission failed.');
+          btn.disabled = false;
+          btn.textContent = 'Submit Today\'s Response';
+          return;
+        }
+
+        document.getElementById('respondSuccess').textContent = 'Response saved!';
+        document.getElementById('respondSuccess').classList.remove('hidden');
+        btn.textContent = 'Update Response';
+        btn.disabled = false;
+
+        // Update the prompt in local data
+        if (promptsData[currentDay - 1]) {
+          promptsData[currentDay - 1].completed = true;
+          promptsData[currentDay - 1].responseText = text;
+          renderPrompts();
+
+          // Update stat
+          var completedCount = promptsData.filter(function(p) { return p.completed; }).length;
+          document.getElementById('statCompleted').textContent = completedCount + ' / 30';
+        }
+      } catch(e) {
+        showError('respondError', 'Something went wrong. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Submit Today\'s Response';
+      }
+    }
+  </script>
+</body>
+</html>

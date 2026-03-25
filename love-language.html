@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>The Value Engine — Love Language Assessment</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
+    .container { max-width: 560px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .brand { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .subtitle { color: #a1a1aa; margin-bottom: 2rem; font-size: 0.95rem; }
+    .hidden { display: none; }
+    .loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; color: #a1a1aa; font-size: 1.125rem; }
+    .error { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; }
+    .btn { width: 100%; padding: 0.875rem; background: #3b82f6; color: #fff; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .btn:hover { background: #2563eb; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-gold { background: #D4A847; }
+    .btn-gold:hover { background: #b8942e; }
+    .btn-outline { background: transparent; border: 1px solid #3b82f6; color: #3b82f6; padding: 0.875rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; width: 100%; text-align: center; text-decoration: none; display: block; transition: all 0.2s; }
+    .btn-outline:hover { background: #3b82f6; color: #fff; }
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; margin-bottom: 1rem; font-weight: 700; }
+
+    /* Progress bar */
+    .progress-bar { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+    .progress-segment { flex: 1; height: 4px; background: #27272a; border-radius: 2px; transition: background 0.3s; }
+    .progress-segment.active { background: #3b82f6; }
+    .progress-segment.done { background: #D4A847; }
+    .step-counter { font-size: 0.8rem; color: #71717a; margin-bottom: 0.75rem; }
+
+    /* Language card */
+    .lang-title { font-family: 'Instrument Serif', serif; font-size: 1.25rem; font-style: italic; color: #d4d4d8; margin-bottom: 1.25rem; }
+    .lang-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+
+    /* Question block */
+    .q-block { margin-bottom: 1.75rem; }
+    .q-block:last-child { margin-bottom: 0; }
+    .q-direction { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #3b82f6; margin-bottom: 0.375rem; font-weight: 700; }
+    .q-direction.receive { color: #D4A847; }
+    .q-text { font-size: 0.95rem; color: #d4d4d8; margin-bottom: 0.75rem; line-height: 1.5; }
+
+    /* Likert scale */
+    .likert { display: flex; gap: 0.5rem; }
+    .likert-option { flex: 1; text-align: center; cursor: pointer; }
+    .likert-option input { display: none; }
+    .likert-btn { display: block; padding: 0.5rem 0.25rem; background: #18181b; border: 1px solid #27272a; border-radius: 0.5rem; font-size: 0.7rem; font-family: inherit; color: #a1a1aa; transition: all 0.2s; line-height: 1.3; }
+    .likert-option input:checked + .likert-btn { border-color: #3b82f6; background: #1e3a5f; color: #fff; }
+    .likert-option:hover .likert-btn { border-color: #3b82f6; }
+    .likert-num { font-size: 1rem; font-weight: 700; display: block; margin-bottom: 0.125rem; }
+
+    /* Results */
+    .result-hero { text-align: center; padding: 2rem 0 1.5rem; }
+    .result-hero h2 { font-size: 1.125rem; margin-bottom: 0.5rem; }
+    .primary-lang { font-family: 'Instrument Serif', serif; font-size: 1.75rem; font-style: italic; }
+    .primary-give { color: #3b82f6; }
+    .primary-receive { color: #D4A847; }
+    .result-pair { display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 2rem; }
+    .result-col { flex: 1; max-width: 220px; text-align: center; }
+    .result-label-type { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; margin-bottom: 0.5rem; }
+    .result-label-give { color: #3b82f6; }
+    .result-label-receive { color: #D4A847; }
+
+    /* Bar chart */
+    .lang-bar-row { margin-bottom: 0.75rem; }
+    .lang-bar-label { font-size: 0.8rem; font-weight: 600; color: #d4d4d8; margin-bottom: 0.25rem; }
+    .lang-bar-pair { display: flex; gap: 0.375rem; }
+    .lang-bar-track { flex: 1; height: 24px; background: #27272a; border-radius: 0.25rem; overflow: hidden; position: relative; }
+    .lang-bar-fill { height: 100%; border-radius: 0.25rem; transition: width 0.6s ease; display: flex; align-items: center; padding-left: 0.5rem; }
+    .lang-bar-fill span { font-size: 0.7rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    .fill-give { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+    .fill-receive { background: linear-gradient(90deg, #D4A847, #b8942e); }
+    .bar-legend { display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 1.25rem; font-size: 0.8rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.375rem; color: #a1a1aa; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+    .legend-give { background: #3b82f6; }
+    .legend-receive { background: #D4A847; }
+
+    .footer { text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #27272a; font-size: 0.75rem; color: #71717a; }
+
+    @media (max-width: 480px) {
+      .container { padding: 1.5rem; }
+      h1 { font-size: 1.5rem; }
+      .likert { gap: 0.25rem; }
+      .likert-btn { font-size: 0.6rem; padding: 0.375rem 0.125rem; }
+      .likert-num { font-size: 0.85rem; }
+      .result-pair { flex-direction: column; align-items: center; gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loadingView">Loading...</div>
+
+  <div class="container hidden" id="mainView">
+    <div class="brand">THE VALUE ENGINE</div>
+    <h1>Love Language Assessment</h1>
+    <p class="subtitle">Discover how you give and receive love.</p>
+
+    <!-- Assessment View -->
+    <div id="assessmentView">
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-segment active"></div>
+        <div class="progress-segment"></div>
+        <div class="progress-segment"></div>
+        <div class="progress-segment"></div>
+        <div class="progress-segment"></div>
+      </div>
+
+      <div id="langContainer"></div>
+
+      <div style="display:flex;gap:0.75rem;margin-top:1.5rem;">
+        <button class="btn-outline" id="prevBtn" onclick="prevLang()" style="display:none;">Back</button>
+        <button class="btn" id="nextBtn" onclick="nextLang()">Next</button>
+      </div>
+      <div id="assessError" class="error hidden"></div>
+    </div>
+
+    <!-- Results View -->
+    <div id="resultsView" class="hidden">
+      <div class="result-pair">
+        <div class="result-col">
+          <div class="result-label-type result-label-give">How You Give Love</div>
+          <div class="primary-lang primary-give" id="primaryGive">—</div>
+        </div>
+        <div class="result-col">
+          <div class="result-label-type result-label-receive">How You Receive Love</div>
+          <div class="primary-lang primary-receive" id="primaryReceive">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Full Breakdown</div>
+        <div class="bar-legend">
+          <div class="legend-item"><div class="legend-dot legend-give"></div> Giving</div>
+          <div class="legend-item"><div class="legend-dot legend-receive"></div> Receiving</div>
+        </div>
+        <div id="langBars"></div>
+      </div>
+
+      <a href="/relationship-hub" class="btn-outline">Back to Hub</a>
+    </div>
+
+    <div class="footer">Value to Victory &mdash; Shawn E. Decker</div>
+  </div>
+
+  <script>
+    var profile = null;
+    var currentLang = 0;
+    var answers = {};
+
+    var LANGUAGES = [
+      { key: 'wordsOfAffirmation', name: 'Words of Affirmation', icon: '&#128172;',
+        give: "I enjoy telling my partner specifically what I appreciate about them.",
+        receive: "I love when my partner tells me specifically what they appreciate about me." },
+      { key: 'qualityTime', name: 'Quality Time', icon: '&#9203;',
+        give: "I enjoy setting aside time where my partner gets my full attention.",
+        receive: "I love when my partner sets aside time where I get their full attention." },
+      { key: 'actsOfService', name: 'Acts of Service', icon: '&#128736;',
+        give: "I enjoy doing small things that make my partner's day easier.",
+        receive: "I love when my partner does small things that make my day easier." },
+      { key: 'gifts', name: 'Giving & Receiving Gifts', icon: '&#127873;',
+        give: "I enjoy picking out or creating little gifts that show I've been thinking about my partner.",
+        receive: "I love when my partner picks out or creates little gifts that show they've been thinking about me." },
+      { key: 'physicalTouch', name: 'Physical Touch', icon: '&#129309;',
+        give: "I enjoy being physically close to my partner (hugs, holding hands, sitting near them).",
+        receive: "I love when my partner is physically close to me (hugs, holding hands, sitting near me)." }
+    ];
+
+    var LIKERT_LABELS = ['Rarely', 'Sometimes', 'Often', 'Very Often', 'Almost Always'];
+
+    async function init() {
+      var email = '';
+      try { email = localStorage.getItem('ve_email') || ''; } catch(e) {}
+      if (!email) { window.location.href = '/onboarding'; return; }
+
+      try {
+        var resp = await fetch('/api/r/profile?email=' + encodeURIComponent(email));
+        if (!resp.ok) { window.location.href = '/onboarding'; return; }
+        var data = await resp.json();
+        profile = data.profile;
+
+        LANGUAGES.forEach(function(l) {
+          answers[l.key + 'Give'] = 0;
+          answers[l.key + 'Receive'] = 0;
+        });
+
+        renderLanguage(0);
+        document.getElementById('loadingView').classList.add('hidden');
+        document.getElementById('mainView').classList.remove('hidden');
+      } catch(e) {
+        window.location.href = '/onboarding';
+      }
+    }
+
+    function renderLanguage(idx) {
+      var l = LANGUAGES[idx];
+      var giveKey = l.key + 'Give';
+      var receiveKey = l.key + 'Receive';
+
+      var html = '<div class="step-counter">Language ' + (idx + 1) + ' of 5</div>';
+      html += '<div class="lang-icon">' + l.icon + '</div>';
+      html += '<div class="lang-title">' + l.name + '</div>';
+
+      // Give question
+      html += '<div class="q-block">';
+      html += '<div class="q-direction">Giving</div>';
+      html += '<div class="q-text">' + l.give + '</div>';
+      html += '<div class="likert">';
+      for (var i = 1; i <= 5; i++) {
+        var checked = answers[giveKey] === i ? 'checked' : '';
+        html += '<label class="likert-option"><input type="radio" name="give" value="' + i + '" ' + checked + ' onchange="setAnswer(\'' + giveKey + '\',' + i + ')" />';
+        html += '<span class="likert-btn"><span class="likert-num">' + i + '</span>' + LIKERT_LABELS[i-1] + '</span></label>';
+      }
+      html += '</div></div>';
+
+      // Receive question
+      html += '<div class="q-block">';
+      html += '<div class="q-direction receive">Receiving</div>';
+      html += '<div class="q-text">' + l.receive + '</div>';
+      html += '<div class="likert">';
+      for (var i = 1; i <= 5; i++) {
+        var checked = answers[receiveKey] === i ? 'checked' : '';
+        html += '<label class="likert-option"><input type="radio" name="receive" value="' + i + '" ' + checked + ' onchange="setAnswer(\'' + receiveKey + '\',' + i + ')" />';
+        html += '<span class="likert-btn"><span class="likert-num">' + i + '</span>' + LIKERT_LABELS[i-1] + '</span></label>';
+      }
+      html += '</div></div>';
+
+      document.getElementById('langContainer').innerHTML = html;
+
+      // Update progress
+      var segments = document.querySelectorAll('.progress-segment');
+      segments.forEach(function(seg, i) {
+        seg.className = 'progress-segment';
+        if (i < idx) seg.classList.add('done');
+        if (i === idx) seg.classList.add('active');
+      });
+
+      document.getElementById('prevBtn').style.display = idx === 0 ? 'none' : 'block';
+      document.getElementById('nextBtn').textContent = idx === LANGUAGES.length - 1 ? 'Submit' : 'Next';
+    }
+
+    function setAnswer(key, value) {
+      answers[key] = value;
+    }
+
+    function nextLang() {
+      var l = LANGUAGES[currentLang];
+      if (!answers[l.key + 'Give'] || !answers[l.key + 'Receive']) {
+        document.getElementById('assessError').textContent = 'Please answer both questions before continuing.';
+        document.getElementById('assessError').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('assessError').classList.add('hidden');
+
+      if (currentLang < LANGUAGES.length - 1) {
+        currentLang++;
+        renderLanguage(currentLang);
+      } else {
+        submitLoveLanguage();
+      }
+    }
+
+    function prevLang() {
+      if (currentLang > 0) {
+        currentLang--;
+        renderLanguage(currentLang);
+      }
+    }
+
+    async function submitLoveLanguage() {
+      var btn = document.getElementById('nextBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      try {
+        var resp = await fetch('/api/r/love-language', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contactId: profile.contact_id,
+            wordsOfAffirmationGive: answers.wordsOfAffirmationGive,
+            wordsOfAffirmationReceive: answers.wordsOfAffirmationReceive,
+            qualityTimeGive: answers.qualityTimeGive,
+            qualityTimeReceive: answers.qualityTimeReceive,
+            actsOfServiceGive: answers.actsOfServiceGive,
+            actsOfServiceReceive: answers.actsOfServiceReceive,
+            giftsGive: answers.giftsGive,
+            giftsReceive: answers.giftsReceive,
+            physicalTouchGive: answers.physicalTouchGive,
+            physicalTouchReceive: answers.physicalTouchReceive
+          })
+        });
+
+        var data = await resp.json();
+        if (!resp.ok) {
+          document.getElementById('assessError').textContent = data.error || 'Submission failed.';
+          document.getElementById('assessError').classList.remove('hidden');
+          btn.disabled = false;
+          btn.textContent = 'Submit';
+          return;
+        }
+
+        showResults(data.loveLanguage);
+      } catch(e) {
+        document.getElementById('assessError').textContent = 'Something went wrong. Please try again.';
+        document.getElementById('assessError').classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+      }
+    }
+
+    function formatLangName(dbName) {
+      var map = {
+        'words_of_affirmation': 'Words of Affirmation',
+        'quality_time': 'Quality Time',
+        'acts_of_service': 'Acts of Service',
+        'gifts': 'Gifts',
+        'physical_touch': 'Physical Touch'
+      };
+      return map[dbName] || dbName;
+    }
+
+    function showResults(ll) {
+      document.getElementById('assessmentView').classList.add('hidden');
+      document.getElementById('resultsView').classList.remove('hidden');
+
+      document.getElementById('primaryGive').textContent = formatLangName(ll.primary_give_language);
+      document.getElementById('primaryReceive').textContent = formatLangName(ll.primary_receive_language);
+
+      var langs = [
+        { name: 'Words of Affirmation', give: ll.words_of_affirmation_give, receive: ll.words_of_affirmation_receive },
+        { name: 'Quality Time', give: ll.quality_time_give, receive: ll.quality_time_receive },
+        { name: 'Acts of Service', give: ll.acts_of_service_give, receive: ll.acts_of_service_receive },
+        { name: 'Gifts', give: ll.gifts_give, receive: ll.gifts_receive },
+        { name: 'Physical Touch', give: ll.physical_touch_give, receive: ll.physical_touch_receive }
+      ];
+
+      var html = '';
+      langs.forEach(function(l) {
+        var giveW = (l.give / 5 * 100);
+        var recW = (l.receive / 5 * 100);
+        html += '<div class="lang-bar-row">';
+        html += '<div class="lang-bar-label">' + l.name + '</div>';
+        html += '<div class="lang-bar-pair">';
+        html += '<div class="lang-bar-track"><div class="lang-bar-fill fill-give" style="width:' + giveW + '%"><span>' + l.give + '</span></div></div>';
+        html += '<div class="lang-bar-track"><div class="lang-bar-fill fill-receive" style="width:' + recW + '%"><span>' + l.receive + '</span></div></div>';
+        html += '</div></div>';
+      });
+
+      document.getElementById('langBars').innerHTML = html;
+    }
+
+    init();
+  </script>
+</body>
+</html>

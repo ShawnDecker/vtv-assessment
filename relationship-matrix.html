@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>The Value Engine — Relationship Contribution Matrix</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
+    .container { max-width: 560px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .brand { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .subtitle { color: #a1a1aa; margin-bottom: 2rem; font-size: 0.95rem; }
+    .hidden { display: none; }
+    .loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; color: #a1a1aa; font-size: 1.125rem; }
+    .error { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; }
+    .btn { width: 100%; padding: 0.875rem; background: #3b82f6; color: #fff; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .btn:hover { background: #2563eb; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-gold { background: #D4A847; }
+    .btn-gold:hover { background: #b8942e; }
+    .btn-outline { background: transparent; border: 1px solid #3b82f6; color: #3b82f6; padding: 0.875rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; width: 100%; text-align: center; text-decoration: none; display: block; transition: all 0.2s; }
+    .btn-outline:hover { background: #3b82f6; color: #fff; }
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; margin-bottom: 1rem; font-weight: 700; }
+    .link { color: #3b82f6; text-decoration: none; font-size: 0.875rem; display: inline-block; margin-top: 1rem; }
+    .link:hover { text-decoration: underline; }
+
+    /* Progress bar */
+    .progress-bar { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+    .progress-segment { flex: 1; height: 4px; background: #27272a; border-radius: 2px; transition: background 0.3s; }
+    .progress-segment.active { background: #3b82f6; }
+    .progress-segment.done { background: #D4A847; }
+    .step-counter { font-size: 0.8rem; color: #71717a; margin-bottom: 0.75rem; }
+
+    /* Domain card */
+    .domain-title { font-family: 'Instrument Serif', serif; font-size: 1.25rem; font-style: italic; color: #d4d4d8; margin-bottom: 0.75rem; }
+    .domain-question { font-size: 0.95rem; color: #d4d4d8; margin-bottom: 1.5rem; line-height: 1.6; }
+
+    /* Sliders */
+    .slider-group { margin-bottom: 1.5rem; }
+    .slider-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    .slider-label-text { font-size: 0.875rem; font-weight: 600; color: #d4d4d8; }
+    .slider-value { font-size: 1.25rem; font-weight: 900; color: #3b82f6; min-width: 2rem; text-align: right; }
+    input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #27272a; border-radius: 4px; outline: none; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #3b82f6; cursor: pointer; border: 2px solid #0a0a0a; }
+    input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; background: #3b82f6; cursor: pointer; border: 2px solid #0a0a0a; }
+    .slider-scale { display: flex; justify-content: space-between; font-size: 0.7rem; color: #71717a; margin-top: 0.25rem; }
+
+    /* Results */
+    .score-hero { text-align: center; padding: 2rem 0; }
+    .score-big { font-size: 3.5rem; font-weight: 900; line-height: 1; }
+    .score-blue { color: #3b82f6; }
+    .score-gold { color: #D4A847; }
+    .score-label { font-size: 0.8rem; color: #a1a1aa; margin-top: 0.25rem; }
+    .scores-row { display: flex; justify-content: center; gap: 3rem; margin-bottom: 2rem; }
+
+    /* Domain bars */
+    .domain-bar-row { margin-bottom: 1rem; }
+    .domain-bar-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.375rem; }
+    .domain-bar-name { font-weight: 600; color: #d4d4d8; }
+    .domain-bar-values { color: #a1a1aa; }
+    .bar-pair { display: flex; gap: 0.375rem; }
+    .bar-track { flex: 1; height: 20px; background: #27272a; border-radius: 0.25rem; overflow: hidden; }
+    .bar-fill-give { height: 100%; background: linear-gradient(90deg, #3b82f6, #2563eb); border-radius: 0.25rem; transition: width 0.6s ease; }
+    .bar-fill-receive { height: 100%; background: linear-gradient(90deg, #D4A847, #b8942e); border-radius: 0.25rem; transition: width 0.6s ease; }
+    .bar-legend { display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 1.5rem; font-size: 0.8rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.375rem; color: #a1a1aa; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+    .legend-give { background: #3b82f6; }
+    .legend-receive { background: #D4A847; }
+
+    /* RBI */
+    .rbi-card { background: linear-gradient(135deg, #1e3a5f 0%, #18181b 100%); border: 1px solid #3b82f6; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center; }
+    .rbi-card h3 { color: #3b82f6; margin-bottom: 0.5rem; }
+    .rbi-score { font-size: 2.5rem; font-weight: 900; color: #3b82f6; }
+    .rbi-desc { font-size: 0.85rem; color: #a1a1aa; margin-top: 0.5rem; }
+
+    .stat-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #27272a; font-size: 0.875rem; }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { color: #a1a1aa; }
+    .stat-value { font-weight: 600; }
+
+    .footer { text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #27272a; font-size: 0.75rem; color: #71717a; }
+
+    @media (max-width: 480px) {
+      .container { padding: 1.5rem; }
+      h1 { font-size: 1.5rem; }
+      .scores-row { gap: 2rem; }
+      .score-big { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loadingView">Loading...</div>
+
+  <div class="container hidden" id="mainView">
+    <div class="brand">THE VALUE ENGINE</div>
+    <h1>Relationship Contribution Matrix</h1>
+    <p class="subtitle">Score what you give and receive across 5 key domains.</p>
+
+    <!-- Assessment View -->
+    <div id="assessmentView">
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-segment active"></div>
+        <div class="progress-segment"></div>
+        <div class="progress-segment"></div>
+        <div class="progress-segment"></div>
+        <div class="progress-segment"></div>
+      </div>
+
+      <div id="domainContainer"></div>
+
+      <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+        <button class="btn-outline" id="prevBtn" onclick="prevDomain()" style="display:none;">Back</button>
+        <button class="btn" id="nextBtn" onclick="nextDomain()">Next</button>
+      </div>
+      <div id="assessError" class="error hidden"></div>
+    </div>
+
+    <!-- Results View -->
+    <div id="resultsView" class="hidden">
+      <div class="scores-row">
+        <div style="text-align:center;">
+          <div class="score-big score-blue" id="giveScore">0</div>
+          <div class="score-label">Contribution Score</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="score-big score-gold" id="receiveScore">0</div>
+          <div class="score-label">Receipt Score</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Domain Breakdown</div>
+        <div class="bar-legend">
+          <div class="legend-item"><div class="legend-dot legend-give"></div> What I Give</div>
+          <div class="legend-item"><div class="legend-dot legend-receive"></div> What I Receive</div>
+        </div>
+        <div id="domainBars"></div>
+      </div>
+
+      <div id="rbiSection" class="hidden"></div>
+
+      <div class="card" id="gapCard">
+        <div class="section-title">Domain Gaps</div>
+        <div id="gapRows"></div>
+      </div>
+
+      <a href="/relationship-hub" class="btn-outline" style="margin-top:0.5rem;">Back to Hub</a>
+    </div>
+
+    <div class="footer">Value to Victory &mdash; Shawn E. Decker</div>
+  </div>
+
+  <script>
+    var profile = null;
+    var currentDomain = 0;
+    var scores = {};
+
+    var DOMAINS = [
+      { key: 'practical', name: 'Practical Support & Household Labor',
+        male: "As a man, how often do you personally take the lead on practical tasks (chores, repairs, errands) to lighten your partner's load without being asked?",
+        female: "As a woman, how often do you take on daily tasks and household responsibilities so your partner doesn't have to worry about them?" },
+      { key: 'mentalLoad', name: 'Mental Load & Emotional Labor',
+        male: "As a man, how often do you notice your partner's stress and initiate check-ins or conversations so she does not carry the emotional load alone?",
+        female: "As a woman, how often do you carry the 'mental list' for the relationship or family (remembering dates, appointments, etc.)?" },
+      { key: 'financial', name: 'Financial Contribution & Stress Buffering',
+        male: "As a man, how much do you actively carry or share the financial weight for the two of you?",
+        female: "As a woman, how much do you actively contribute to or manage the money side (income, bills, budgeting)?" },
+      { key: 'relational', name: 'Relational Maintenance & Appreciation',
+        male: "As a man, how often do you plan time together, apologize first when needed, or intentionally invest in the relationship?",
+        female: "As a woman, how often are you the one who brings up issues, initiates emotional talks, or works to repair things?" },
+      { key: 'growth', name: 'Growth, Sacrifice & Flexibility',
+        male: "As a man, how often do you adjust your schedule, comfort zone, or lifestyle to support your partner's goals?",
+        female: "As a woman, how often do you put your own needs, time, or comfort on hold to support your partner's goals?" }
+    ];
+
+    async function init() {
+      var email = '';
+      try { email = localStorage.getItem('ve_email') || ''; } catch(e) {}
+      if (!email) { window.location.href = '/onboarding'; return; }
+
+      try {
+        var resp = await fetch('/api/r/profile?email=' + encodeURIComponent(email));
+        if (!resp.ok) { window.location.href = '/onboarding'; return; }
+        var data = await resp.json();
+        profile = data.profile;
+
+        // Init scores
+        DOMAINS.forEach(function(d) {
+          scores[d.key + 'Give'] = 5;
+          scores[d.key + 'Receive'] = 5;
+        });
+
+        renderDomain(0);
+        document.getElementById('loadingView').classList.add('hidden');
+        document.getElementById('mainView').classList.remove('hidden');
+      } catch(e) {
+        window.location.href = '/onboarding';
+      }
+    }
+
+    function renderDomain(idx) {
+      var d = DOMAINS[idx];
+      var gender = profile.gender || 'male';
+      var question = gender === 'female' ? d.female : d.male;
+
+      var giveKey = d.key + 'Give';
+      var receiveKey = d.key + 'Receive';
+
+      var html = '<div class="step-counter">Domain ' + (idx + 1) + ' of 5</div>';
+      html += '<div class="domain-title">' + d.name + '</div>';
+      html += '<div class="domain-question">' + question + '</div>';
+
+      html += '<div class="slider-group">';
+      html += '<div class="slider-label"><span class="slider-label-text">What I Give</span><span class="slider-value" id="giveVal">' + scores[giveKey] + '</span></div>';
+      html += '<input type="range" min="0" max="10" step="1" value="' + scores[giveKey] + '" id="giveSlider" oninput="updateSlider(\'give\')" />';
+      html += '<div class="slider-scale"><span>0 — Never</span><span>5 — Sometimes</span><span>10 — Always</span></div>';
+      html += '</div>';
+
+      html += '<div class="slider-group">';
+      html += '<div class="slider-label"><span class="slider-label-text">What I Receive</span><span class="slider-value" id="receiveVal">' + scores[receiveKey] + '</span></div>';
+      html += '<input type="range" min="0" max="10" step="1" value="' + scores[receiveKey] + '" id="receiveSlider" oninput="updateSlider(\'receive\')" />';
+      html += '<div class="slider-scale"><span>0 — Never</span><span>5 — Sometimes</span><span>10 — Always</span></div>';
+      html += '</div>';
+
+      document.getElementById('domainContainer').innerHTML = html;
+
+      // Update progress bar
+      var segments = document.querySelectorAll('.progress-segment');
+      segments.forEach(function(seg, i) {
+        seg.className = 'progress-segment';
+        if (i < idx) seg.classList.add('done');
+        if (i === idx) seg.classList.add('active');
+      });
+
+      // Show/hide buttons
+      document.getElementById('prevBtn').style.display = idx === 0 ? 'none' : 'block';
+      document.getElementById('nextBtn').textContent = idx === DOMAINS.length - 1 ? 'Submit' : 'Next';
+    }
+
+    function updateSlider(type) {
+      var d = DOMAINS[currentDomain];
+      if (type === 'give') {
+        var val = document.getElementById('giveSlider').value;
+        document.getElementById('giveVal').textContent = val;
+        scores[d.key + 'Give'] = parseInt(val);
+      } else {
+        var val = document.getElementById('receiveSlider').value;
+        document.getElementById('receiveVal').textContent = val;
+        scores[d.key + 'Receive'] = parseInt(val);
+      }
+    }
+
+    function nextDomain() {
+      if (currentDomain < DOMAINS.length - 1) {
+        currentDomain++;
+        renderDomain(currentDomain);
+      } else {
+        submitMatrix();
+      }
+    }
+
+    function prevDomain() {
+      if (currentDomain > 0) {
+        currentDomain--;
+        renderDomain(currentDomain);
+      }
+    }
+
+    async function submitMatrix() {
+      var btn = document.getElementById('nextBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      try {
+        var resp = await fetch('/api/r/matrix', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contactId: profile.contact_id,
+            gender: profile.gender,
+            practicalGive: scores.practicalGive,
+            practicalReceive: scores.practicalReceive,
+            mentalLoadGive: scores.mentalLoadGive,
+            mentalLoadReceive: scores.mentalLoadReceive,
+            financialGive: scores.financialGive,
+            financialReceive: scores.financialReceive,
+            relationalGive: scores.relationalGive,
+            relationalReceive: scores.relationalReceive,
+            growthGive: scores.growthGive,
+            growthReceive: scores.growthReceive
+          })
+        });
+
+        var data = await resp.json();
+        if (!resp.ok) {
+          document.getElementById('assessError').textContent = data.error || 'Submission failed.';
+          document.getElementById('assessError').classList.remove('hidden');
+          btn.disabled = false;
+          btn.textContent = 'Submit';
+          return;
+        }
+
+        showResults(data);
+      } catch(e) {
+        document.getElementById('assessError').textContent = 'Something went wrong. Please try again.';
+        document.getElementById('assessError').classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+      }
+    }
+
+    function showResults(data) {
+      document.getElementById('assessmentView').classList.add('hidden');
+      document.getElementById('resultsView').classList.remove('hidden');
+
+      var m = data.matrix;
+      document.getElementById('giveScore').textContent = m.give_total;
+      document.getElementById('receiveScore').textContent = m.receive_total;
+
+      // Domain bars
+      var domains = [
+        { name: 'Practical Support', give: m.practical_give, receive: m.practical_receive },
+        { name: 'Mental Load', give: m.mental_load_give, receive: m.mental_load_receive },
+        { name: 'Financial', give: m.financial_give, receive: m.financial_receive },
+        { name: 'Relational', give: m.relational_give, receive: m.relational_receive },
+        { name: 'Growth', give: m.growth_give, receive: m.growth_receive }
+      ];
+
+      var barsHtml = '';
+      var gapHtml = '';
+      domains.forEach(function(d) {
+        var giveW = (d.give / 10 * 100);
+        var recW = (d.receive / 10 * 100);
+        var gap = Math.abs(d.give - d.receive);
+
+        barsHtml += '<div class="domain-bar-row">';
+        barsHtml += '<div class="domain-bar-label"><span class="domain-bar-name">' + d.name + '</span><span class="domain-bar-values">' + d.give + ' / ' + d.receive + '</span></div>';
+        barsHtml += '<div class="bar-pair">';
+        barsHtml += '<div class="bar-track"><div class="bar-fill-give" style="width:' + giveW + '%"></div></div>';
+        barsHtml += '<div class="bar-track"><div class="bar-fill-receive" style="width:' + recW + '%"></div></div>';
+        barsHtml += '</div></div>';
+
+        gapHtml += '<div class="stat-row"><span class="stat-label">' + d.name + '</span><span class="stat-value" style="color:' + (gap > 3 ? '#ef4444' : gap > 1 ? '#f97316' : '#22c55e') + ';">' + gap + '</span></div>';
+      });
+
+      document.getElementById('domainBars').innerHTML = barsHtml;
+      document.getElementById('gapRows').innerHTML = gapHtml;
+
+      // RBI if available
+      if (data.rbi !== undefined && data.rbi !== null) {
+        var rbiHtml = '<div class="rbi-card">';
+        rbiHtml += '<h3>Relationship Balance Index</h3>';
+        rbiHtml += '<div class="rbi-score">' + data.rbi.toFixed(1) + '</div>';
+        rbiHtml += '<div class="rbi-desc">Average domain gap across both partners. Lower is more balanced.</div>';
+        rbiHtml += '</div>';
+        document.getElementById('rbiSection').innerHTML = rbiHtml;
+        document.getElementById('rbiSection').classList.remove('hidden');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

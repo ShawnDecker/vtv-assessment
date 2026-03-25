@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>The Value Engine — Relationship Onboarding</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .container { max-width: 520px; width: 100%; padding: 2rem; }
+    .brand { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .subtitle { color: #a1a1aa; margin-bottom: 2rem; font-size: 0.95rem; }
+    .form-group { margin-bottom: 1.5rem; }
+    label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: #d4d4d8; }
+    input[type="email"], input[type="date"] { width: 100%; padding: 0.75rem 1rem; background: #18181b; border: 1px solid #27272a; border-radius: 0.5rem; color: #fff; font-size: 1rem; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    input:focus { border-color: #3b82f6; }
+    .btn { width: 100%; padding: 0.875rem; background: #3b82f6; color: #fff; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .btn:hover { background: #2563eb; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-gold { background: #D4A847; }
+    .btn-gold:hover { background: #b8942e; }
+    .error { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; }
+    .success { color: #22c55e; font-size: 0.875rem; margin-top: 0.5rem; }
+    .hidden { display: none; }
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+
+    /* Step indicator */
+    .steps { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+    .step-dot { width: 100%; height: 4px; background: #27272a; border-radius: 2px; transition: background 0.3s; }
+    .step-dot.active { background: #3b82f6; }
+    .step-dot.done { background: #D4A847; }
+
+    /* Gender buttons */
+    .gender-select { display: flex; gap: 1rem; margin-bottom: 0.5rem; }
+    .gender-btn { flex: 1; padding: 1.25rem 1rem; background: #18181b; border: 2px solid #27272a; border-radius: 0.75rem; color: #a1a1aa; font-size: 1rem; font-weight: 600; cursor: pointer; text-align: center; font-family: inherit; transition: all 0.2s; }
+    .gender-btn:hover { border-color: #3b82f6; color: #d4d4d8; }
+    .gender-btn.selected { border-color: #3b82f6; background: #1e3a5f; color: #fff; }
+    .gender-icon { font-size: 1.75rem; display: block; margin-bottom: 0.25rem; }
+
+    /* Age badge */
+    .age-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.8rem; font-weight: 700; margin-top: 0.75rem; }
+    .age-blocked { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+    .age-teen { background: rgba(249,115,22,0.15); color: #f97316; border: 1px solid rgba(249,115,22,0.3); }
+    .age-adult { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+    .age-full { background: rgba(212,168,71,0.15); color: #D4A847; border: 1px solid rgba(212,168,71,0.3); }
+
+    /* Block screen */
+    .block-screen { text-align: center; padding: 3rem 1rem; }
+    .block-screen .block-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.6; }
+    .block-screen h2 { color: #ef4444; font-size: 1.25rem; margin-bottom: 0.75rem; }
+    .block-screen p { color: #a1a1aa; font-size: 0.95rem; }
+
+    /* Checkbox */
+    .checkbox-group { display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 1.25rem; cursor: pointer; }
+    .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; min-width: 20px; margin-top: 2px; accent-color: #3b82f6; cursor: pointer; }
+    .checkbox-group span { color: #d4d4d8; font-size: 0.875rem; line-height: 1.5; }
+
+    .disclaimer-box { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+    .disclaimer-box .disc-title { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.75rem; font-weight: 700; }
+
+    .footer { text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #27272a; font-size: 0.75rem; color: #71717a; }
+
+    @media (max-width: 480px) {
+      .container { padding: 1.5rem; }
+      h1 { font-size: 1.5rem; }
+      .gender-btn { padding: 1rem 0.75rem; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">THE VALUE ENGINE</div>
+    <h1>Relationship Profile</h1>
+    <p class="subtitle">Set up your profile to unlock the relationship tools.</p>
+
+    <div class="steps">
+      <div class="step-dot active" id="dot1"></div>
+      <div class="step-dot" id="dot2"></div>
+      <div class="step-dot" id="dot3"></div>
+      <div class="step-dot" id="dot4"></div>
+    </div>
+
+    <!-- Step 1: Email -->
+    <div id="step1">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+      </div>
+      <button class="btn" onclick="goToStep2()">Continue</button>
+      <div id="step1Error" class="error hidden"></div>
+    </div>
+
+    <!-- Step 2: Date of Birth -->
+    <div id="step2" class="hidden">
+      <div class="form-group">
+        <label for="dob">Date of Birth</label>
+        <input type="date" id="dob" />
+      </div>
+      <div id="ageResult" class="hidden">
+        <div id="ageBadge"></div>
+      </div>
+      <div id="step2Error" class="error hidden"></div>
+      <button class="btn" id="step2Btn" onclick="goToStep3()" style="margin-top:1rem;">Continue</button>
+    </div>
+
+    <!-- Age blocked screen -->
+    <div id="blockedView" class="hidden">
+      <div class="block-screen">
+        <div class="block-icon">&#9888;</div>
+        <h2>Access Restricted</h2>
+        <p>This program is not available for children under 13. No data will be collected.</p>
+      </div>
+    </div>
+
+    <!-- Step 3: Gender -->
+    <div id="step3" class="hidden">
+      <label>I identify as</label>
+      <div class="gender-select">
+        <button class="gender-btn" id="genderMale" onclick="selectGender('male')">
+          <span class="gender-icon">&#9794;</span>
+          Male
+        </button>
+        <button class="gender-btn" id="genderFemale" onclick="selectGender('female')">
+          <span class="gender-icon">&#9792;</span>
+          Female
+        </button>
+      </div>
+      <div id="step3Error" class="error hidden"></div>
+      <button class="btn" id="step3Btn" onclick="goToStep4()" style="margin-top:1rem;">Continue</button>
+    </div>
+
+    <!-- Step 4: Disclaimers + Consent -->
+    <div id="step4" class="hidden">
+      <div class="disclaimer-box">
+        <div class="disc-title">Faith-Based & Private Program Notice</div>
+        <p style="color:#a1a1aa;font-size:0.875rem;margin-bottom:1rem;">This assessment is intentionally designed for relationships between one male partner and one female partner. This reflects the faith-based values of our program. This is a private program.</p>
+        <label class="checkbox-group" onclick="checkReady()">
+          <input type="checkbox" id="faithCheck" />
+          <span>I understand this is a private, faith-based program designed for relationships between one male partner and one female partner.</span>
+        </label>
+      </div>
+
+      <div class="disclaimer-box">
+        <div class="disc-title">Assessment Consent</div>
+        <label class="checkbox-group" onclick="checkReady()">
+          <input type="checkbox" id="consentCheck" />
+          <span>I acknowledge and accept the terms, conditions, and limiting conditions of this assessment. I understand this is a private, faith-based program.</span>
+        </label>
+      </div>
+
+      <div id="teenNotice" class="hidden" style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);border-radius:0.5rem;padding:1rem;margin-bottom:1rem;">
+        <p style="color:#f97316;font-size:0.875rem;">&#9888; Teen Mode: Some tools are restricted for users under 18. A parent or guardian should be aware of your participation.</p>
+      </div>
+
+      <button class="btn btn-gold" id="submitBtn" onclick="submitProfile()" disabled>Complete Profile</button>
+      <div id="step4Error" class="error hidden"></div>
+      <div id="step4Success" class="success hidden"></div>
+    </div>
+
+    <div class="footer">Value to Victory &mdash; Shawn E. Decker</div>
+  </div>
+
+  <script>
+    var profileData = { email: '', contactId: null, dob: '', age: 0, ageGroup: '', gender: '' };
+
+    // Auto-fill email from localStorage
+    try {
+      var saved = localStorage.getItem('ve_email');
+      if (saved) document.getElementById('email').value = saved;
+    } catch(e) {}
+
+    function showError(id, msg) {
+      var el = document.getElementById(id);
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+    function hideError(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function updateSteps(current) {
+      for (var i = 1; i <= 4; i++) {
+        var dot = document.getElementById('dot' + i);
+        dot.className = 'step-dot';
+        if (i < current) dot.classList.add('done');
+        if (i === current) dot.classList.add('active');
+      }
+    }
+
+    async function goToStep2() {
+      var email = document.getElementById('email').value.trim().toLowerCase();
+      if (!email || !email.includes('@')) { showError('step1Error', 'Please enter a valid email address.'); return; }
+      hideError('step1Error');
+      profileData.email = email;
+
+      // Check if profile exists
+      try {
+        var resp = await fetch('/api/r/profile?email=' + encodeURIComponent(email));
+        if (resp.ok) {
+          var data = await resp.json();
+          if (data.profile) {
+            // Profile exists, redirect to hub
+            try { localStorage.setItem('ve_email', email); } catch(e) {}
+            window.location.href = '/relationship-hub';
+            return;
+          }
+        }
+      } catch(e) { /* no profile, continue */ }
+
+      // Need to look up or create contact first
+      try {
+        var histResp = await fetch('/api/user/history?email=' + encodeURIComponent(email));
+        var histData = await histResp.json();
+        if (!histData.isNewUser && histData.assessments && histData.assessments.length > 0) {
+          // Existing user, get contact ID from assessment
+          profileData.contactId = histData.assessments[0].contactId;
+        }
+      } catch(e) {}
+
+      try { localStorage.setItem('ve_email', email); } catch(e) {}
+
+      document.getElementById('step1').classList.add('hidden');
+      document.getElementById('step2').classList.remove('hidden');
+      updateSteps(2);
+    }
+
+    function goToStep3() {
+      var dob = document.getElementById('dob').value;
+      if (!dob) { showError('step2Error', 'Please enter your date of birth.'); return; }
+      hideError('step2Error');
+
+      var birth = new Date(dob);
+      var today = new Date();
+      var age = today.getFullYear() - birth.getFullYear();
+      var m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+
+      profileData.dob = dob;
+      profileData.age = age;
+
+      if (age < 13) {
+        profileData.ageGroup = 'blocked';
+        document.getElementById('step2').classList.add('hidden');
+        document.getElementById('blockedView').classList.remove('hidden');
+        document.querySelector('.steps').classList.add('hidden');
+        return;
+      } else if (age <= 17) {
+        profileData.ageGroup = 'teen';
+      } else if (age <= 20) {
+        profileData.ageGroup = 'adult';
+      } else {
+        profileData.ageGroup = 'full';
+      }
+
+      document.getElementById('step2').classList.add('hidden');
+      document.getElementById('step3').classList.remove('hidden');
+      updateSteps(3);
+    }
+
+    function selectGender(g) {
+      profileData.gender = g;
+      document.getElementById('genderMale').classList.toggle('selected', g === 'male');
+      document.getElementById('genderFemale').classList.toggle('selected', g === 'female');
+    }
+
+    function goToStep4() {
+      if (!profileData.gender) { showError('step3Error', 'Please select your gender.'); return; }
+      hideError('step3Error');
+
+      document.getElementById('step3').classList.add('hidden');
+      document.getElementById('step4').classList.remove('hidden');
+      updateSteps(4);
+
+      if (profileData.ageGroup === 'teen') {
+        document.getElementById('teenNotice').classList.remove('hidden');
+      }
+    }
+
+    function checkReady() {
+      setTimeout(function() {
+        var faith = document.getElementById('faithCheck').checked;
+        var consent = document.getElementById('consentCheck').checked;
+        document.getElementById('submitBtn').disabled = !(faith && consent);
+      }, 10);
+    }
+
+    async function submitProfile() {
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Setting up...';
+      hideError('step4Error');
+
+      try {
+        // If we don't have a contactId, create contact via assessment endpoint
+        if (!profileData.contactId) {
+          var contactResp = await fetch('/api/assessment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: profileData.email,
+              firstName: '',
+              lastName: '',
+              // Minimal assessment to create contact — we just need the contact ID
+              timeAwareness: 0, timeAllocation: 0, timeProtection: 0, timeLeverage: 0,
+              fiveHourLeak: 0, valuePerHour: 0, timeInvestment: 0, downtimeQuality: 0,
+              foresight: 0, timeReallocation: 0,
+              trustInvestment: 0, boundaryQuality: 0, networkDepth: 0, relationalRoi: 0,
+              peopleAudit: 0, allianceBuilding: 0, loveBankDeposits: 0, communicationClarity: 0,
+              restraintPractice: 0, valueReplacement: 0,
+              leadershipLevel: 0, integrityAlignment: 0, professionalCredibility: 0,
+              empatheticListening: 0, gravitationalCenter: 0, microHonesties: 0,
+              wordManagement: 0, personalResponsibility: 0, adaptiveInfluence: 0,
+              influenceMultiplier: 0,
+              financialAwareness: 0, goalSpecificity: 0, investmentLogic: 0,
+              measurementHabit: 0, costVsValue: 0, numberOneClarity: 0,
+              smallImprovements: 0, negativeMath: 0, incomeMultiplier: 0,
+              negotiationSkill: 0,
+              learningHours: 0, applicationRate: 0, biasAwareness: 0,
+              highestBestUse: 0, supplyAndDemand: 0, substitutionRisk: 0,
+              doubleJeopardy: 0, knowledgeCompounding: 0, weightedAnalysis: 0,
+              perceptionVsPerspective: 0,
+              timeMultiplier: 1
+            })
+          });
+          var contactData = await contactResp.json();
+          profileData.contactId = contactData.contactId;
+        }
+
+        if (!profileData.contactId) {
+          showError('step4Error', 'Could not create your profile. Please try again.');
+          btn.disabled = false;
+          btn.textContent = 'Complete Profile';
+          return;
+        }
+
+        // Create/update profile
+        var profileResp = await fetch('/api/r/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contactId: profileData.contactId,
+            dob: profileData.dob,
+            gender: profileData.gender,
+            membershipTier: 'free'
+          })
+        });
+        var profileResult = await profileResp.json();
+
+        if (!profileResp.ok) {
+          showError('step4Error', profileResult.error || 'Could not create profile.');
+          btn.disabled = false;
+          btn.textContent = 'Complete Profile';
+          return;
+        }
+
+        // Record consent
+        await fetch('/api/r/consent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contactId: profileData.contactId,
+            faithDisclaimer: true,
+            consent: true
+          })
+        });
+
+        document.getElementById('step4Success').textContent = 'Profile created! Redirecting...';
+        document.getElementById('step4Success').classList.remove('hidden');
+
+        setTimeout(function() {
+          window.location.href = '/relationship-hub';
+        }, 800);
+      } catch (e) {
+        showError('step4Error', 'Something went wrong. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Complete Profile';
+      }
+    }
+  </script>
+</body>
+</html>

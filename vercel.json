@@ -3,11 +3,21 @@
   "routes": [
     { "src": "/api/setup-db", "dest": "/api/setup-db.js" },
     { "src": "/api/migrate-question-system", "dest": "/api/migrate-question-system.js" },
+    { "src": "/api/migrate-relationships", "dest": "/api/migrate-relationships.js" },
+    { "src": "/api/r/(.*)", "dest": "/api/relationships.js" },
+    { "src": "/api/checkout/webhook", "dest": "/api/checkout.js" },
+    { "src": "/api/checkout", "dest": "/api/checkout.js" },
     { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "handle": "filesystem" },
+    { "src": "/pricing", "dest": "/pricing.html" },
     { "src": "/report/(.*)", "dest": "/report.html" },
     { "src": "/challenge", "dest": "/challenge.html" },
     { "src": "/returning", "dest": "/returning.html" },
+    { "src": "/onboarding", "dest": "/onboarding.html" },
+    { "src": "/relationship-hub", "dest": "/relationship-hub.html" },
+    { "src": "/relationship-matrix", "dest": "/relationship-matrix.html" },
+    { "src": "/love-language", "dest": "/love-language.html" },
+    { "src": "/couple-challenge-hub", "dest": "/couple-challenge.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

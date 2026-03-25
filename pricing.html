@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Pricing — The Value Engine</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+
+    /* Header */
+    .page-header { text-align: center; padding: 3rem 1.5rem 2rem; }
+    .page-header .brand { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.75rem; }
+    .page-header h1 { font-family: 'Instrument Serif', serif; font-size: 2.5rem; font-style: italic; color: #fff; margin-bottom: 0.75rem; }
+    .page-header .subtitle { font-size: 1.05rem; color: #a1a1aa; max-width: 600px; margin: 0 auto; }
+
+    /* Pricing grid */
+    .pricing-container { max-width: 1180px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; align-items: start; }
+
+    /* Card base */
+    .pricing-card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 1rem;
+      padding: 2.25rem 1.75rem 2rem;
+      position: relative;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .pricing-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+
+    /* Recommended card */
+    .pricing-card.recommended {
+      border: 2px solid #D4A847;
+      box-shadow: 0 0 30px rgba(212,168,71,0.12);
+    }
+    .pricing-card.recommended:hover {
+      box-shadow: 0 12px 40px rgba(212,168,71,0.18);
+    }
+
+    /* Premium card */
+    .pricing-card.premium-tier {
+      background: linear-gradient(160deg, #1c1917 0%, #18181b 40%, #1a1710 100%);
+      border: 1px solid rgba(212,168,71,0.4);
+    }
+    .pricing-card.premium-tier:hover {
+      box-shadow: 0 12px 40px rgba(212,168,71,0.15);
+    }
+
+    /* Badge */
+    .badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #0a0a0a;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.35rem 1.25rem;
+      border-radius: 2rem;
+      white-space: nowrap;
+    }
+
+    /* Card header */
+    .card-tier {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #71717a;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    .card-name {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #fff;
+    }
+    .premium-tier .card-name {
+      color: #D4A847;
+    }
+    .card-price {
+      display: flex;
+      align-items: baseline;
+      gap: 0.25rem;
+      margin-bottom: 0.25rem;
+    }
+    .card-price .amount {
+      font-size: 2.75rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .premium-tier .card-price .amount {
+      color: #D4A847;
+    }
+    .card-price .period {
+      font-size: 1rem;
+      color: #71717a;
+      font-weight: 500;
+    }
+    .price-note {
+      font-size: 0.8rem;
+      color: #52525b;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Divider */
+    .card-divider {
+      border: none;
+      height: 1px;
+      background: #27272a;
+      margin-bottom: 1.5rem;
+    }
+    .recommended .card-divider { background: rgba(212,168,71,0.3); }
+    .premium-tier .card-divider { background: rgba(212,168,71,0.3); }
+
+    /* Benefits */
+    .benefits-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #52525b;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .benefits { list-style: none; margin-bottom: 2rem; }
+    .benefits li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.4rem 0;
+      font-size: 0.88rem;
+      color: #d4d4d8;
+      line-height: 1.45;
+    }
+    .benefits li .check {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(59,130,246,0.12);
+      color: #3b82f6;
+      font-size: 0.7rem;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+    .recommended .benefits li .check {
+      background: rgba(212,168,71,0.12);
+      color: #D4A847;
+    }
+    .premium-tier .benefits li .check {
+      background: rgba(212,168,71,0.15);
+      color: #D4A847;
+    }
+
+    /* CTA Button */
+    .cta-btn {
+      display: block;
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      border: none;
+      border-radius: 0.625rem;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .cta-btn.primary {
+      background: #3b82f6;
+      color: #fff;
+    }
+    .cta-btn.primary:hover { background: #2563eb; }
+    .cta-btn.gold {
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #0a0a0a;
+    }
+    .cta-btn.gold:hover { background: linear-gradient(135deg, #e0b84f, #c9a33a); }
+    .cta-btn.premium-btn {
+      background: linear-gradient(135deg, #D4A847 0%, #f5d98a 50%, #D4A847 100%);
+      background-size: 200% auto;
+      color: #0a0a0a;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+    .cta-btn.premium-btn:hover { opacity: 0.92; }
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% center; }
+      50% { background-position: 100% center; }
+    }
+
+    /* Includes label for tier 2/3 */
+    .includes-note {
+      font-size: 0.78rem;
+      color: #71717a;
+      font-style: italic;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #27272a;
+    }
+    .premium-tier .includes-note {
+      border-bottom-color: rgba(212,168,71,0.2);
+    }
+
+    /* Global Notes Section */
+    .global-notes {
+      max-width: 780px;
+      margin: 3.5rem auto 0;
+      padding: 2rem 1.75rem;
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+    }
+    .global-notes .section-title {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #D4A847;
+      margin-bottom: 1.25rem;
+      font-weight: 700;
+    }
+    .global-notes p {
+      font-size: 0.88rem;
+      color: #a1a1aa;
+      margin-bottom: 0.75rem;
+      line-height: 1.55;
+    }
+    .global-notes p:last-child { margin-bottom: 0; }
+
+    /* FAQ */
+    .faq-section {
+      max-width: 780px;
+      margin: 2.5rem auto 0;
+      padding: 0 1.5rem;
+    }
+    .faq-section .section-title {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #D4A847;
+      margin-bottom: 1.5rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    .faq-item {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .faq-item:hover { border-color: #3f3f46; }
+    .faq-question {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #e4e4e7;
+    }
+    .faq-question .arrow {
+      font-size: 0.8rem;
+      color: #71717a;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-left: 1rem;
+    }
+    .faq-item.open .faq-question .arrow { transform: rotate(180deg); }
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      font-size: 0.88rem;
+      color: #a1a1aa;
+      line-height: 1.55;
+    }
+    .faq-item.open .faq-answer {
+      max-height: 200px;
+      padding-top: 0.75rem;
+    }
+
+    /* Footer */
+    .page-footer {
+      text-align: center;
+      padding: 3rem 1.5rem 2.5rem;
+      border-top: 1px solid #27272a;
+      margin-top: 3rem;
+    }
+    .page-footer .tagline {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 1.125rem;
+      color: #D4A847;
+      margin-bottom: 1rem;
+    }
+    .page-footer .copy {
+      color: #71717a;
+      font-size: 0.8rem;
+    }
+    .page-footer a { color: #3b82f6; text-decoration: none; }
+    .page-footer a:hover { text-decoration: underline; }
+
+    /* Mobile */
+    @media (max-width: 900px) {
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        max-width: 440px;
+        margin: 0 auto;
+      }
+      .pricing-card.recommended {
+        order: -1;
+      }
+      .page-header h1 { font-size: 2rem; }
+    }
+    @media (max-width: 520px) {
+      .page-header { padding: 2rem 1rem 1.5rem; }
+      .page-header h1 { font-size: 1.75rem; }
+      .pricing-container { padding: 1.5rem 1rem; }
+      .pricing-card { padding: 1.75rem 1.25rem 1.5rem; }
+      .card-price .amount { font-size: 2.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="brand">THE VALUE ENGINE</div>
+    <h1>Choose Your Path</h1>
+    <p class="subtitle">Invest in yourself, your relationship, and the value you bring to the people who matter most.</p>
+  </header>
+
+  <!-- Pricing Cards -->
+  <section class="pricing-container">
+    <div class="pricing-grid">
+
+      <!-- Tier 1: Individual -->
+      <div class="pricing-card">
+        <div class="card-tier">Tier 1</div>
+        <div class="card-name">Individual Path</div>
+        <div class="card-price">
+          <span class="amount">$29</span>
+          <span class="period">/mo</span>
+        </div>
+        <p class="price-note">Solo assessment &amp; personal growth tools</p>
+        <hr class="card-divider" />
+        <div class="benefits-label">What's included</div>
+        <ul class="benefits">
+          <li><span class="check">&#10003;</span> Full Value Engine / Time For P.I.N.K. core assessment</li>
+          <li><span class="check">&#10003;</span> P.I.N.K. Master Score and pillar breakdown</li>
+          <li><span class="check">&#10003;</span> Core self-coaching tools and exercises</li>
+          <li><span class="check">&#10003;</span> 30-day Personal Value Challenge (individual)</li>
+          <li><span class="check">&#10003;</span> Teen-friendly design (13+) with age-gate and faith-based framing</li>
+          <li><span class="check">&#10003;</span> Free access for kids under 18 under parent account</li>
+          <li><span class="check">&#10003;</span> Monthly Value to Victory Webinar (live or replay)</li>
+          <li><span class="check">&#10003;</span> Email updates and future tool improvements</li>
+        </ul>
+        <a href="/api/checkout?tier=individual" class="cta-btn primary">Start My Path &mdash; $29/mo</a>
+      </div>
+
+      <!-- Tier 2: Couple (Recommended) -->
+      <div class="pricing-card recommended">
+        <div class="badge">MOST POPULAR</div>
+        <div class="card-tier">Tier 2</div>
+        <div class="card-name">Couple Value Path</div>
+        <div class="card-price">
+          <span class="amount">$79</span>
+          <span class="period">/mo</span>
+        </div>
+        <p class="price-note">For both partners &mdash; full relationship toolkit</p>
+        <hr class="card-divider" />
+        <div class="benefits-label">Everything in Individual, plus</div>
+        <ul class="benefits">
+          <li><span class="check">&#10003;</span> Everything in Individual Path, for <strong>both partners</strong></li>
+          <li><span class="check">&#10003;</span> Linked couple profiles with shared relationship reports</li>
+          <li><span class="check">&#10003;</span> Full Relationship mode (male/female partner versions)</li>
+          <li><span class="check">&#10003;</span> Relationship Contribution Matrix (50 pts per partner, 5 domains)</li>
+          <li><span class="check">&#10003;</span> Cherish &amp; Honor Matrix (Love vs Respect separation)</li>
+          <li><span class="check">&#10003;</span> Full 30&ndash;90 Day Couple Challenge (daily prompts, weekly check-ins, before/after)</li>
+          <li><span class="check">&#10003;</span> Teen-filter logic for family</li>
+          <li><span class="check">&#10003;</span> Optional 21+ Intimacy &amp; Physical Connection section</li>
+          <li><span class="check">&#10003;</span> Monthly webinar for both partners</li>
+          <li><span class="check">&#10003;</span> Priority notice of couple-only events</li>
+        </ul>
+        <a href="/api/checkout?tier=couple" class="cta-btn gold">Start Together &mdash; $79/mo</a>
+      </div>
+
+      <!-- Tier 3: Premium -->
+      <div class="pricing-card premium-tier">
+        <div class="card-tier">Tier 3</div>
+        <div class="card-name">Premium Couple Path</div>
+        <div class="card-price">
+          <span class="amount">$497</span>
+          <span class="period">/mo</span>
+        </div>
+        <p class="price-note">White-glove experience with live sessions</p>
+        <hr class="card-divider" />
+        <p class="includes-note">Everything in Tiers 1 and 2, plus:</p>
+        <ul class="benefits">
+          <li><span class="check">&#10003;</span> Advanced relationship reporting (trends, contribution balance by domain)</li>
+          <li><span class="check">&#10003;</span> Extended assessments and overlays</li>
+          <li><span class="check">&#10003;</span> Premium Couple Implementation Sessions (live calls with Shawn Decker)</li>
+          <li><span class="check">&#10003;</span> VIP webinar status (priority Q&amp;A, VIP-only after-segment)</li>
+          <li><span class="check">&#10003;</span> Downloadable templates, checklists, scripts</li>
+          <li><span class="check">&#10003;</span> Bonus mini-challenges (7-day Money &amp; Respect reset, 7-day Time &amp; Presence reset)</li>
+          <li><span class="check">&#10003;</span> Early access to new tools and modules</li>
+          <li><span class="check">&#10003;</span> Priority support channel</li>
+        </ul>
+        <a href="/api/checkout?tier=premium" class="cta-btn premium-btn">Go Premium &mdash; $497/mo</a>
+      </div>
+
+    </div>
+
+    <!-- Global Notes -->
+    <div class="global-notes">
+      <div class="section-title">Program Notes</div>
+      <p><strong>Faith-Based &amp; Private Program Notice:</strong> This assessment is intentionally designed for relationships between one male partner and one female partner. This reflects the faith-based values of our program. This is a private program.</p>
+      <p><strong>Consent:</strong> All users must accept the terms, conditions, and limiting conditions of this assessment before submitting results. By subscribing, you acknowledge this is a private, faith-based program.</p>
+      <p><strong>COPPA Compliance:</strong> This program is not available for children under 13. No data will be collected for minors under 13. Teens aged 13&ndash;17 may participate with teen-safe tools under a parent account.</p>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <div class="section-title">Frequently Asked Questions</div>
+
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-question">
+          How does billing work?
+          <span class="arrow">&#9660;</span>
+        </div>
+        <div class="faq-answer">
+          All plans are billed monthly through Stripe. Your subscription renews automatically each month. You can cancel at any time from your account settings and retain access through the end of your billing period.
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-question">
+          How do I share access with my partner?
+          <span class="arrow">&#9660;</span>
+        </div>
+        <div class="faq-answer">
+          On the Couple or Premium plan, both partners create their own profiles and link accounts using each other's email address. Once linked, you'll see shared reports and can start the Couple Challenge together.
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-question">
+          Can I add my teen to my account?
+          <span class="arrow">&#9660;</span>
+        </div>
+        <div class="faq-answer">
+          Yes. Any paying parent can add children aged 13&ndash;17 for free as dependents under their account. Teens will only see age-appropriate, teen-safe tools and assessments. Children under 13 cannot be added.
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-question">
+          Can I cancel my subscription?
+          <span class="arrow">&#9660;</span>
+        </div>
+        <div class="faq-answer">
+          Absolutely. You can cancel anytime. You'll continue to have access to your plan's features until the end of your current billing cycle. There are no long-term contracts or cancellation fees.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="page-footer">
+    <div class="tagline">Value to Victory</div>
+    <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>
+  </footer>
+
+</body>
+</html>
