@@ -2,9 +2,12 @@ const Stripe = require('stripe');
 const { neon } = require('@neondatabase/serverless');
 
 const TIER_CONFIG = {
-  individual: { amount: 2900, name: 'Individual Path', tier: 'individual' },
-  couple: { amount: 7900, name: 'Couple Value Path', tier: 'couple' },
-  premium: { amount: 49700, name: 'Premium Couple Path', tier: 'premium' }
+  victorypath: { amount: 4700, name: 'VictoryPath Membership', tier: 'victorypath', envKey: 'STRIPE_PRICE_INDIVIDUAL' },
+  individual: { amount: 4700, name: 'VictoryPath Membership', tier: 'victorypath', envKey: 'STRIPE_PRICE_INDIVIDUAL' },
+  builder: { amount: 7900, name: 'Value Builder', tier: 'builder', envKey: 'STRIPE_PRICE_COUPLE' },
+  couple: { amount: 7900, name: 'Value Builder', tier: 'builder', envKey: 'STRIPE_PRICE_COUPLE' },
+  vip: { amount: 49700, name: 'Victory VIP', tier: 'vip', envKey: 'STRIPE_PRICE_PREMIUM' },
+  premium: { amount: 49700, name: 'Victory VIP', tier: 'vip', envKey: 'STRIPE_PRICE_PREMIUM' }
 };
 
 const BASE_URL = 'https://assessment.valuetovictory.com';
@@ -136,14 +139,14 @@ module.exports = async (req, res) => {
       const email = params.get('email');
 
       if (!tier || !TIER_CONFIG[tier]) {
-        return res.status(400).json({ error: 'Invalid tier. Must be: individual, couple, or premium' });
+        return res.status(400).json({ error: 'Invalid tier. Must be: victorypath, builder, or vip' });
       }
 
       const config = TIER_CONFIG[tier];
 
       // Resolve price ID: use env var if set, otherwise create price dynamically
       let priceId;
-      const envPriceKey = `STRIPE_PRICE_${tier.toUpperCase()}`;
+      const envPriceKey = config.envKey || `STRIPE_PRICE_${tier.toUpperCase()}`;
       const envPriceId = process.env[envPriceKey];
 
       if (envPriceId) {
