@@ -97,6 +97,55 @@
     .insight-item { padding: 1rem; background: #0a0a0a; border-left: 3px solid #D4A847; border-radius: 0 0.375rem 0.375rem 0; margin-bottom: 0.75rem; font-size: 0.9rem; color: #d4d4d8; }
     .insight-item:last-child { margin-bottom: 0; }
 
+    /* Five-Matrix Heatmap */
+    .matrix-heatmap { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-bottom: 1.5rem; }
+    .matrix-cell { text-align: center; padding: 1rem 0.5rem; border-radius: 0.5rem; }
+    .matrix-cell .matrix-pillar { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.25rem; }
+    .matrix-cell .matrix-score { font-size: 1.5rem; font-weight: 900; }
+    .matrix-cell .matrix-pct { font-size: 0.65rem; margin-top: 0.25rem; opacity: 0.7; }
+    .matrix-crisis { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .matrix-low { background: rgba(249,115,22,0.15); color: #f97316; }
+    .matrix-mid { background: rgba(234,179,8,0.15); color: #eab308; }
+    .matrix-high { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .matrix-top { background: rgba(212,168,71,0.15); color: #D4A847; }
+
+    /* First Three Moves */
+    .moves-list { display: flex; flex-direction: column; gap: 1rem; }
+    .move-item { padding: 1.25rem; background: #0a0a0a; border-radius: 0.5rem; border-left: 3px solid #D4A847; }
+    .move-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+    .move-number { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: #D4A847; font-weight: 700; }
+    .move-urgency { font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 1rem; background: rgba(212,168,71,0.15); color: #D4A847; border: 1px solid rgba(212,168,71,0.3); font-weight: 600; }
+    .move-title { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+    .move-desc { font-size: 0.85rem; color: #a1a1aa; margin-bottom: 0.5rem; }
+    .move-tool { font-size: 0.75rem; color: #71717a; }
+    .move-tool strong { color: #a1a1aa; }
+
+    /* Training Recommendations */
+    .training-card { padding: 1.25rem; background: #0a0a0a; border-radius: 0.5rem; margin-bottom: 0.75rem; border: 1px solid #27272a; }
+    .training-card h4 { font-size: 0.95rem; margin-bottom: 0.375rem; }
+    .training-card .training-type { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: #D4A847; font-weight: 700; margin-bottom: 0.5rem; }
+    .training-card .training-desc { font-size: 0.8rem; color: #a1a1aa; margin-bottom: 0.75rem; }
+    .training-card .training-reason { font-size: 0.75rem; color: #71717a; font-style: italic; }
+    .training-modules { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
+    .training-module { display: flex; justify-content: space-between; padding: 0.5rem 0.75rem; background: #18181b; border-radius: 0.25rem; font-size: 0.8rem; }
+    .training-module .mod-title { color: #d4d4d8; }
+    .training-module .mod-duration { color: #71717a; font-size: 0.7rem; }
+
+    /* Wealth Triggers */
+    .wealth-trigger { padding: 1.25rem; border-radius: 0.5rem; margin-bottom: 0.75rem; border: 1px solid rgba(212,168,71,0.3); background: linear-gradient(135deg, rgba(212,168,71,0.05) 0%, #0a0a0a 100%); }
+    .wealth-trigger .wt-type { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: #D4A847; font-weight: 700; margin-bottom: 0.5rem; }
+    .wealth-trigger .wt-reason { font-size: 0.85rem; color: #d4d4d8; margin-bottom: 0.5rem; }
+    .wealth-trigger .wt-action { font-size: 0.85rem; color: #a1a1aa; }
+    .wealth-trigger .wt-cta { display: inline-block; margin-top: 0.75rem; padding: 0.5rem 1rem; background: rgba(212,168,71,0.15); color: #D4A847; border: 1px solid rgba(212,168,71,0.3); border-radius: 0.375rem; font-size: 0.8rem; font-weight: 600; text-decoration: none; cursor: pointer; }
+
+    /* Path Decision */
+    .path-decision { text-align: center; padding: 2rem; background: linear-gradient(135deg, #1a1a2e 0%, #18181b 100%); border: 1px solid #27272a; border-radius: 0.75rem; margin-bottom: 1.5rem; }
+    .path-decision .pd-tagline { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1.25rem; color: #D4A847; margin-bottom: 1rem; line-height: 1.4; }
+    .path-decision .pd-pillars { display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; }
+    .path-decision .pd-pillar { text-align: center; }
+    .path-decision .pd-pillar-icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .path-decision .pd-pillar-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #a1a1aa; font-weight: 700; }
+
     /* Product Rec */
     .product-card { text-align: center; padding: 2rem; background: linear-gradient(135deg, #1e293b 0%, #18181b 100%); border: 1px solid #334155; border-radius: 0.75rem; }
     .product-card .rec-title { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.75rem; }
@@ -194,7 +243,41 @@
       <div id="insightsList"></div>
     </div>
 
-    <!-- Section 6: Product Recommendation -->
+    <!-- Section 6: Five-Matrix Heatmap -->
+    <div class="section">
+      <div class="section-title">Your P.I.N.K. Value Matrix</div>
+      <div id="matrixHeatmap" class="matrix-heatmap"></div>
+    </div>
+
+    <!-- Section 7: First Three Moves -->
+    <div class="section">
+      <div class="section-title">Your First Three Moves</div>
+      <div id="firstThreeMoves" class="moves-list"></div>
+    </div>
+
+    <!-- Section 8: Path Decision Engine -->
+    <div class="path-decision">
+      <div class="pd-tagline">"The Value Engine helps people decide their next path with better knowledge, understanding, and resources."</div>
+      <div class="pd-pillars">
+        <div class="pd-pillar"><div class="pd-pillar-icon">&#9733;</div><div class="pd-pillar-label">Knowledge</div></div>
+        <div class="pd-pillar"><div class="pd-pillar-icon">&#9878;</div><div class="pd-pillar-label">Understanding</div></div>
+        <div class="pd-pillar"><div class="pd-pillar-icon">&#9889;</div><div class="pd-pillar-label">Resources</div></div>
+      </div>
+    </div>
+
+    <!-- Section 9: Training Recommendations -->
+    <div id="trainingSection" class="section" style="display:none;">
+      <div class="section-title">Recommended Training Paths</div>
+      <div id="trainingList"></div>
+    </div>
+
+    <!-- Section 10: Wealth Architecture Triggers -->
+    <div id="wealthSection" class="section" style="display:none;">
+      <div class="section-title">Wealth Architecture Opportunities</div>
+      <div id="wealthList"></div>
+    </div>
+
+    <!-- Section 11: Product Recommendation -->
     <div id="productSection" class="section" style="padding:0;border:none;background:none;">
       <div class="product-card" id="productCard"></div>
     </div>
@@ -407,6 +490,94 @@
       var answered = data.questionsAnswered || 0;
       var available = data.questionsAvailable || 0;
       document.getElementById('progressText').textContent = answered + ' of ' + available + ' questions answered';
+
+      // Five-Matrix Heatmap
+      renderMatrixHeatmap(pillars, pct);
+
+      // Fetch and render training recommendations + first three moves
+      fetchTrainingData(a.id);
+    }
+
+    function renderMatrixHeatmap(pillars, pct) {
+      var html = '';
+      pillars.forEach(function(p) {
+        var cls = p.score <= 10 ? 'matrix-crisis' : p.score <= 20 ? 'matrix-low' : p.score <= 30 ? 'matrix-mid' : p.score <= 40 ? 'matrix-high' : 'matrix-top';
+        var pctVal = pct[p.key] || 0;
+        html += '<div class="matrix-cell ' + cls + '">' +
+          '<div class="matrix-pillar">' + p.name + '</div>' +
+          '<div class="matrix-score">' + p.score + '</div>' +
+          '<div class="matrix-pct">Top ' + (100 - pctVal) + '%</div>' +
+          '</div>';
+      });
+      document.getElementById('matrixHeatmap').innerHTML = html;
+    }
+
+    async function fetchTrainingData(assessmentId) {
+      try {
+        var resp = await fetch('/api/enterprise/training-recommendations/' + assessmentId);
+        if (!resp.ok) return;
+        var data = await resp.json();
+
+        // First Three Moves
+        if (data.firstThreeMoves && data.firstThreeMoves.length > 0) {
+          var movesHtml = '';
+          data.firstThreeMoves.forEach(function(move, i) {
+            movesHtml += '<div class="move-item">' +
+              '<div class="move-header"><span class="move-number">Move ' + (i + 1) + '</span><span class="move-urgency">' + (move.urgency || '') + '</span></div>' +
+              '<div class="move-title">' + move.move + '</div>' +
+              '<div class="move-desc">' + move.description + '</div>' +
+              '<div class="move-tool"><strong>Tool:</strong> ' + (move.tool || '') + '</div>' +
+              '</div>';
+          });
+          document.getElementById('firstThreeMoves').innerHTML = movesHtml;
+        }
+
+        // Training Paths
+        if (data.trainingPaths && data.trainingPaths.length > 0) {
+          document.getElementById('trainingSection').style.display = 'block';
+          var trainHtml = '';
+          data.trainingPaths.forEach(function(tp) {
+            trainHtml += '<div class="training-card">' +
+              '<div class="training-type">' + tp.type + ' — ' + tp.category.replace(/-/g, ' ') + '</div>' +
+              '<h4>' + tp.name + '</h4>' +
+              '<div class="training-desc">' + tp.description + '</div>' +
+              '<div class="training-reason">' + (tp.matchReason || '') + '</div>';
+            if (tp.content && tp.content.length > 0) {
+              trainHtml += '<div class="training-modules">';
+              tp.content.forEach(function(mod) {
+                trainHtml += '<div class="training-module"><span class="mod-title">' + mod.title + '</span><span class="mod-duration">' + (mod.duration || '') + '</span></div>';
+              });
+              trainHtml += '</div>';
+            }
+            trainHtml += '</div>';
+          });
+          document.getElementById('trainingList').innerHTML = trainHtml;
+        }
+
+        // Wealth Triggers
+        if (data.wealthTriggers && data.wealthTriggers.length > 0) {
+          document.getElementById('wealthSection').style.display = 'block';
+          var wealthHtml = '';
+          data.wealthTriggers.forEach(function(wt) {
+            var typeLabels = {
+              priority_coaching: 'Priority Financial Coaching',
+              asset_protection: 'Asset Protection',
+              advanced_wealth: 'Advanced Wealth Architecture',
+              financial_stress_intervention: 'Financial Stress Intervention'
+            };
+            wealthHtml += '<div class="wealth-trigger">' +
+              '<div class="wt-type">' + (typeLabels[wt.trigger_type] || wt.trigger_type) + '</div>' +
+              '<div class="wt-reason">' + wt.trigger_reason + '</div>' +
+              '<div class="wt-action">' + (wt.details ? wt.details.recommendation : '') + '</div>' +
+              '<a class="wt-cta" href="https://valuetovictory.com">Learn More</a>' +
+              '</div>';
+          });
+          document.getElementById('wealthList').innerHTML = wealthHtml;
+        }
+      } catch (e) {
+        // Training data is supplementary — don't break the report if it fails
+        console.log('Training data not available:', e.message);
+      }
     }
   </script>
 </body>

@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <title>Value Engine — Enterprise Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+
+    /* Auth Screen */
+    .auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .auth-card { background: #18181b; border: 1px solid #27272a; border-radius: 1rem; padding: 2.5rem; width: 100%; max-width: 420px; margin: 1rem; }
+    .auth-card .brand { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; text-align: center; }
+    .auth-card h2 { font-family: 'Instrument Serif', serif; font-size: 1.5rem; font-style: italic; color: #d4d4d8; text-align: center; margin-bottom: 2rem; }
+    .auth-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; background: #27272a; border-radius: 0.5rem; overflow: hidden; }
+    .auth-tab { flex: 1; padding: 0.625rem; text-align: center; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: #71717a; border: none; background: transparent; transition: all 0.2s; }
+    .auth-tab.active { background: #D4A847; color: #0a0a0a; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.75rem; font-weight: 600; color: #a1a1aa; margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-group input, .form-group select { width: 100%; padding: 0.625rem 0.875rem; background: #0a0a0a; border: 1px solid #27272a; border-radius: 0.5rem; color: #fff; font-size: 0.875rem; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    .form-group input:focus, .form-group select:focus { border-color: #D4A847; }
+    .form-group select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; }
+    .btn-primary { width: 100%; padding: 0.75rem; background: #D4A847; color: #0a0a0a; border: none; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .auth-error { color: #ef4444; font-size: 0.8rem; margin-top: 0.5rem; text-align: center; }
+
+    /* Dashboard Layout */
+    .dashboard { display: none; }
+    .dashboard.visible { display: block; }
+    .dash-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: #18181b; border-bottom: 1px solid #27272a; }
+    .dash-header .brand-line { display: flex; align-items: center; gap: 1rem; }
+    .dash-header .brand-name { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; }
+    .dash-header .tenant-name { font-weight: 700; font-size: 1rem; }
+    .dash-header .tenant-badge { font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 1rem; background: rgba(212,168,71,0.15); color: #D4A847; border: 1px solid rgba(212,168,71,0.3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+    .dash-header-right { display: flex; align-items: center; gap: 1rem; }
+    .btn-secondary { padding: 0.5rem 1rem; background: transparent; border: 1px solid #27272a; color: #d4d4d8; border-radius: 0.5rem; font-size: 0.8rem; cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.2s; }
+    .btn-secondary:hover { border-color: #D4A847; color: #D4A847; }
+    .btn-danger { padding: 0.5rem 1rem; background: transparent; border: 1px solid #ef4444; color: #ef4444; border-radius: 0.5rem; font-size: 0.75rem; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
+
+    .dash-nav { display: flex; gap: 0; background: #18181b; border-bottom: 1px solid #27272a; padding: 0 2rem; overflow-x: auto; }
+    .nav-tab { padding: 0.75rem 1.25rem; font-size: 0.8rem; font-weight: 600; color: #71717a; border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; font-family: inherit; }
+    .nav-tab.active { color: #D4A847; border-bottom-color: #D4A847; }
+    .nav-tab:hover { color: #d4d4d8; }
+
+    .dash-content { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.25rem; }
+    .stat-card .stat-label { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: #71717a; margin-bottom: 0.5rem; font-weight: 700; }
+    .stat-card .stat-value { font-size: 2rem; font-weight: 900; color: #D4A847; }
+    .stat-card .stat-sub { font-size: 0.75rem; color: #a1a1aa; margin-top: 0.25rem; }
+    .stat-card.positive .stat-sub { color: #22c55e; }
+    .stat-card.negative .stat-sub { color: #ef4444; }
+
+    /* Sections */
+    .section { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; margin-bottom: 1.25rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+
+    /* Pillar bars */
+    .pillar-bars { display: flex; flex-direction: column; gap: 1rem; }
+    .pillar-bar { display: flex; align-items: center; gap: 1rem; }
+    .pillar-label { width: 90px; font-size: 0.8rem; font-weight: 600; flex-shrink: 0; }
+    .pillar-track { flex: 1; height: 28px; background: #27272a; border-radius: 0.375rem; position: relative; overflow: hidden; }
+    .pillar-fill { height: 100%; border-radius: 0.375rem; transition: width 0.8s ease; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.5rem; }
+    .pillar-fill span { font-size: 0.75rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    .pillar-time { background: linear-gradient(90deg, #D4A847, #b8942e); }
+    .pillar-people { background: linear-gradient(90deg, #f472b6, #db2777); }
+    .pillar-influence { background: linear-gradient(90deg, #2dd4bf, #0d9488); }
+    .pillar-numbers { background: linear-gradient(90deg, #60a5fa, #2563eb); }
+    .pillar-knowledge { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
+
+    /* Heatmap */
+    .heatmap-grid { display: grid; grid-template-columns: 150px repeat(5, 1fr) auto; gap: 2px; font-size: 0.75rem; }
+    .heatmap-header { padding: 0.5rem 0.75rem; font-weight: 700; color: #a1a1aa; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em; }
+    .heatmap-cell { padding: 0.5rem 0.75rem; text-align: center; border-radius: 0.25rem; font-weight: 600; }
+    .heatmap-label { padding: 0.5rem 0.75rem; color: #d4d4d8; font-weight: 600; }
+    .heat-low { background: rgba(239,68,68,0.2); color: #ef4444; }
+    .heat-mid-low { background: rgba(249,115,22,0.15); color: #f97316; }
+    .heat-mid { background: rgba(234,179,8,0.15); color: #eab308; }
+    .heat-mid-high { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .heat-high { background: rgba(212,168,71,0.15); color: #D4A847; }
+
+    /* Table */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .data-table th { text-align: left; padding: 0.75rem; border-bottom: 1px solid #27272a; color: #71717a; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+    .data-table td { padding: 0.75rem; border-bottom: 1px solid rgba(39,39,42,0.5); color: #d4d4d8; }
+    .data-table tr:hover td { background: rgba(39,39,42,0.3); }
+
+    /* Alerts */
+    .alert-item { display: flex; gap: 1rem; align-items: flex-start; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.5rem; }
+    .alert-critical { background: rgba(239,68,68,0.1); border-left: 3px solid #ef4444; }
+    .alert-warning { background: rgba(249,115,22,0.1); border-left: 3px solid #f97316; }
+    .alert-info { background: rgba(59,130,246,0.1); border-left: 3px solid #3b82f6; }
+    .alert-item .alert-title { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.25rem; }
+    .alert-item .alert-msg { font-size: 0.8rem; color: #a1a1aa; }
+    .alert-item .alert-time { font-size: 0.7rem; color: #52525b; margin-top: 0.25rem; }
+
+    /* Distribution bars */
+    .dist-bars { display: flex; gap: 0.5rem; align-items: flex-end; height: 120px; padding-top: 1rem; }
+    .dist-bar-item { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+    .dist-bar { width: 100%; border-radius: 0.25rem 0.25rem 0 0; transition: height 0.5s ease; }
+    .dist-bar-label { font-size: 0.65rem; color: #71717a; margin-top: 0.5rem; font-weight: 600; }
+    .dist-bar-count { font-size: 0.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+
+    /* Invite section */
+    .invite-box { background: #0a0a0a; border: 1px dashed #27272a; border-radius: 0.5rem; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    .invite-box code { font-family: monospace; font-size: 1rem; color: #D4A847; background: rgba(212,168,71,0.1); padding: 0.375rem 0.75rem; border-radius: 0.25rem; flex: 1; overflow: hidden; text-overflow: ellipsis; }
+    .btn-copy { padding: 0.375rem 0.75rem; background: #27272a; border: none; color: #d4d4d8; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer; font-family: inherit; font-weight: 600; }
+
+    /* CSV Upload */
+    .upload-zone { border: 2px dashed #27272a; border-radius: 0.75rem; padding: 2rem; text-align: center; margin-bottom: 1rem; cursor: pointer; transition: border-color 0.2s; }
+    .upload-zone:hover { border-color: #D4A847; }
+    .upload-zone.dragover { border-color: #D4A847; background: rgba(212,168,71,0.05); }
+    .upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .upload-text { color: #a1a1aa; font-size: 0.85rem; }
+    .upload-text strong { color: #D4A847; }
+
+    /* Mapping UI */
+    .mapping-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.5rem; align-items: center; margin-bottom: 1rem; }
+    .mapping-label { font-size: 0.8rem; color: #d4d4d8; font-weight: 600; }
+    .mapping-arrow { color: #D4A847; }
+    .mapping-select { padding: 0.5rem; background: #0a0a0a; border: 1px solid #27272a; border-radius: 0.375rem; color: #fff; font-size: 0.8rem; font-family: inherit; }
+
+    /* Financial stress gauge */
+    .stress-gauge { display: flex; gap: 2px; border-radius: 0.5rem; overflow: hidden; height: 32px; margin-bottom: 0.5rem; }
+    .stress-gauge div { display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; transition: width 0.5s ease; }
+    .stress-high { background: #ef4444; color: #fff; }
+    .stress-moderate { background: #f97316; color: #fff; }
+    .stress-mild { background: #eab308; color: #0a0a0a; }
+    .stress-low { background: #22c55e; color: #fff; }
+
+    .stress-legend { display: flex; gap: 1rem; font-size: 0.7rem; color: #71717a; }
+    .stress-legend span::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.25rem; vertical-align: middle; }
+    .stress-legend .sh::before { background: #ef4444; }
+    .stress-legend .sm::before { background: #f97316; }
+    .stress-legend .sl::before { background: #eab308; }
+    .stress-legend .sn::before { background: #22c55e; }
+
+    /* Tab panels */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .dash-header { flex-direction: column; gap: 0.75rem; padding: 1rem; }
+      .dash-content { padding: 1rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .heatmap-grid { font-size: 0.65rem; grid-template-columns: 100px repeat(5, 1fr) auto; }
+      .data-table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Auth Screen -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="brand">THE VALUE ENGINE</div>
+    <h2>Enterprise Dashboard</h2>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+    </div>
+
+    <!-- Login Form -->
+    <div id="loginForm">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="admin@company.com" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Your password" />
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+      <div id="loginError" class="auth-error" style="display:none"></div>
+    </div>
+
+    <!-- Register Form -->
+    <div id="registerForm" style="display:none">
+      <div class="form-group">
+        <label>Organization Name</label>
+        <input type="text" id="regTenantName" placeholder="Acme Corp or Grace Church" />
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="regTenantType">
+          <option value="corporate">Company / Corporation</option>
+          <option value="church">Church / Faith Community</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="regName" placeholder="John Smith" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="admin@organization.com" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="Choose a strong password" />
+      </div>
+      <button class="btn-primary" onclick="doRegister()">Create Account</button>
+      <div id="regError" class="auth-error" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="dashboard">
+  <div class="dash-header">
+    <div class="brand-line">
+      <span class="brand-name">THE VALUE ENGINE</span>
+      <span class="tenant-name" id="tenantNameDisplay"></span>
+      <span class="tenant-badge" id="tenantTierDisplay"></span>
+    </div>
+    <div class="dash-header-right">
+      <button class="btn-secondary" id="inviteCodeBtn" onclick="copyInviteCode()">Copy Invite Code</button>
+      <button class="btn-danger" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="dash-nav">
+    <button class="nav-tab active" onclick="switchTab('overview')">Overview</button>
+    <button class="nav-tab" onclick="switchTab('members')">Members</button>
+    <button class="nav-tab" onclick="switchTab('heatmap')">Heatmap</button>
+    <button class="nav-tab" onclick="switchTab('training')">Training</button>
+    <button class="nav-tab" onclick="switchTab('invites')">Invites</button>
+    <button class="nav-tab" onclick="switchTab('import')">CSV Import</button>
+    <button class="nav-tab" onclick="switchTab('alerts')">Alerts</button>
+    <button class="nav-tab" onclick="switchTab('settings')">Settings</button>
+  </div>
+
+  <div class="dash-content">
+
+    <!-- Overview Tab -->
+    <div id="tab-overview" class="tab-panel active">
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="section">
+          <div class="section-title">Pillar Averages</div>
+          <div id="pillarAvgs" class="pillar-bars"></div>
+        </div>
+        <div class="section">
+          <div class="section-title">Score Distribution</div>
+          <div id="scoreDist" class="dist-bars"></div>
+        </div>
+      </div>
+
+      <div class="section" id="financialStressSection" style="display:none;">
+        <div class="section-title">Financial Stress Indicator (Anonymized)</div>
+        <div id="stressGauge" class="stress-gauge"></div>
+        <div class="stress-legend">
+          <span class="sh">High Stress</span>
+          <span class="sm">Moderate</span>
+          <span class="sl">Mild</span>
+          <span class="sn">Low/None</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Recent Assessments</div>
+        <table class="data-table" id="recentTable">
+          <thead><tr><th>Name</th><th>Dept/Campus</th><th>Score</th><th>Range</th><th>Weakest</th><th>Date</th></tr></thead>
+          <tbody id="recentBody"></tbody>
+        </table>
+      </div>
+
+      <div class="section" id="alertsOverview">
+        <div class="section-title">Active Alerts</div>
+        <div id="alertsList"></div>
+      </div>
+    </div>
+
+    <!-- Members Tab -->
+    <div id="tab-members" class="tab-panel">
+      <div class="section">
+        <div class="section-title">
+          <span>All Members</span>
+          <button class="btn-secondary" onclick="exportData()">Export CSV</button>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Dept/Campus</th><th>Score</th><th>Range</th><th>Weakest</th><th>Assessments</th></tr></thead>
+          <tbody id="membersBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Heatmap Tab -->
+    <div id="tab-heatmap" class="tab-panel">
+      <div class="section">
+        <div class="section-title" id="heatmapTitle">Department / Campus Heatmap</div>
+        <div id="heatmapGrid" class="heatmap-grid"></div>
+        <p style="font-size: 0.75rem; color: #52525b; margin-top: 1rem;">Groups with fewer members than the anonymity threshold are not shown to protect individual privacy.</p>
+      </div>
+    </div>
+
+    <!-- Training Tab -->
+    <div id="tab-training" class="tab-panel">
+      <div class="section">
+        <div class="section-title">Training Completion Tracking</div>
+        <table class="data-table">
+          <thead><tr><th>Training Path</th><th>Type</th><th>Assigned</th><th>In Progress</th><th>Completed</th><th>Completion Rate</th></tr></thead>
+          <tbody id="trainingBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Invites Tab -->
+    <div id="tab-invites" class="tab-panel">
+      <div class="section">
+        <div class="section-title">Default Invite Link</div>
+        <div class="invite-box">
+          <code id="defaultInviteUrl"></code>
+          <button class="btn-copy" onclick="copyInviteCode()">Copy</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Create Custom Invite</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end;">
+          <div class="form-group">
+            <label id="inviteGroupLabel">Department</label>
+            <input type="text" id="inviteDept" placeholder="e.g. Engineering" />
+          </div>
+          <div class="form-group">
+            <label>Max Uses</label>
+            <input type="number" id="inviteMaxUses" placeholder="Unlimited" />
+          </div>
+          <button class="btn-primary" style="width:auto;padding:0.625rem 1.5rem" onclick="createInvite()">Create</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Active Invites</div>
+        <table class="data-table">
+          <thead><tr><th>Link</th><th>Dept/Campus</th><th>Uses</th><th>Created</th></tr></thead>
+          <tbody id="invitesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CSV Import Tab -->
+    <div id="tab-import" class="tab-panel">
+      <div class="section">
+        <div class="section-title">Upload Member Data</div>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-icon">+</div>
+          <div class="upload-text">Drop your <strong>CSV or Excel</strong> file here, or click to browse</div>
+          <div style="font-size:0.7rem; color:#52525b; margin-top:0.5rem;">Accepted: .csv, .xlsx, .xls</div>
+        </div>
+        <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleFileUpload(event)" />
+      </div>
+
+      <div class="section" id="mappingSection" style="display:none">
+        <div class="section-title">Column Mapping</div>
+        <p style="font-size:0.8rem; color:#a1a1aa; margin-bottom:1rem;">Map your file columns to Value Engine fields:</p>
+        <div id="mappingGrid" class="mapping-grid"></div>
+        <div style="display:flex;gap:1rem;margin-top:1rem;">
+          <button class="btn-primary" style="width:auto;padding:0.625rem 2rem" onclick="processImport()">Import Data</button>
+          <button class="btn-secondary" onclick="cancelImport()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="section" id="importResultSection" style="display:none">
+        <div class="section-title">Import Results</div>
+        <div id="importResults"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Import History</div>
+        <table class="data-table">
+          <thead><tr><th>File</th><th>Rows</th><th>Success</th><th>Errors</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody id="importHistoryBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Alerts Tab -->
+    <div id="tab-alerts" class="tab-panel">
+      <div class="section">
+        <div class="section-title">All Alerts</div>
+        <div id="allAlertsList"></div>
+      </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="tab-settings" class="tab-panel">
+      <div class="section">
+        <div class="section-title">Organization Settings</div>
+        <div class="form-group">
+          <label>Organization Name</label>
+          <input type="text" id="settingsName" />
+        </div>
+        <div class="form-group">
+          <label>Primary Color</label>
+          <input type="color" id="settingsPrimaryColor" value="#D4A847" style="height:40px" />
+        </div>
+        <div class="form-group">
+          <label>Anonymity Threshold (minimum group size for heatmaps)</label>
+          <input type="number" id="settingsThreshold" min="2" max="50" value="5" />
+        </div>
+        <button class="btn-primary" style="width:auto;padding:0.625rem 2rem" onclick="saveSettings()">Save Settings</button>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Product Tier</div>
+        <div id="tierDisplay"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+// State
+// =============================================
+let authToken = localStorage.getItem('ve_admin_token');
+let tenantData = null;
+let dashboardData = null;
+let uploadedData = null;
+let uploadedColumns = [];
+
+const API = '/api/enterprise';
+
+// =============================================
+// Auth
+// =============================================
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  try {
+    const r = await fetch(API + '/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+    authToken = data.token;
+    tenantData = data.tenant;
+    localStorage.setItem('ve_admin_token', authToken);
+    localStorage.setItem('ve_tenant', JSON.stringify(tenantData));
+    showDashboard();
+  } catch (e) {
+    document.getElementById('loginError').textContent = e.message;
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+
+async function doRegister() {
+  const tenantName = document.getElementById('regTenantName').value;
+  const tenantType = document.getElementById('regTenantType').value;
+  const name = document.getElementById('regName').value;
+  const email = document.getElementById('regEmail').value;
+  const password = document.getElementById('regPassword').value;
+  try {
+    const r = await fetch(API + '/auth/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenantName, tenantType, email, password, name })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+    authToken = data.token;
+    tenantData = data.tenant;
+    localStorage.setItem('ve_admin_token', authToken);
+    localStorage.setItem('ve_tenant', JSON.stringify(tenantData));
+    showDashboard();
+  } catch (e) {
+    document.getElementById('regError').textContent = e.message;
+    document.getElementById('regError').style.display = 'block';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('ve_admin_token');
+  localStorage.removeItem('ve_tenant');
+  authToken = null;
+  tenantData = null;
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('dashboard').classList.remove('visible');
+}
+
+async function apiFetch(path, opts = {}) {
+  return fetch(API + path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + authToken, ...(opts.headers || {}) },
+  });
+}
+
+// =============================================
+// Dashboard
+// =============================================
+async function showDashboard() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('dashboard').classList.add('visible');
+
+  if (!tenantData) {
+    try { tenantData = JSON.parse(localStorage.getItem('ve_tenant')); } catch(e) {}
+  }
+
+  if (tenantData) {
+    document.getElementById('tenantNameDisplay').textContent = tenantData.name;
+    document.getElementById('tenantTierDisplay').textContent = tenantData.tier;
+    document.getElementById('defaultInviteUrl').textContent = 'https://assessment.valuetovictory.com/join/' + tenantData.inviteCode;
+
+    // Update church-specific labels
+    if (tenantData.type === 'church') {
+      document.getElementById('inviteGroupLabel').textContent = 'Campus / Ministry';
+      document.getElementById('inviteDept').placeholder = 'e.g. Main Campus';
+    }
+  }
+
+  loadDashboard();
+}
+
+async function loadDashboard() {
+  try {
+    const r = await apiFetch('/dashboard');
+    if (!r.ok) { if (r.status === 401) return doLogout(); throw new Error('Failed to load'); }
+    dashboardData = await r.json();
+    renderOverview();
+  } catch (e) {
+    console.error('Dashboard load error:', e);
+  }
+}
+
+function renderOverview() {
+  const d = dashboardData;
+  if (!d) return;
+
+  // Stats cards
+  const deltaClass = d.scoreDelta.delta > 0 ? 'positive' : d.scoreDelta.delta < 0 ? 'negative' : '';
+  const deltaSign = d.scoreDelta.delta > 0 ? '+' : '';
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Members</div><div class="stat-value">${d.stats.totalMembers}</div></div>
+    <div class="stat-card"><div class="stat-label">Assessments</div><div class="stat-value">${d.stats.totalAssessments}</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Master Score</div><div class="stat-value">${d.stats.avgMasterScore}</div></div>
+    <div class="stat-card ${deltaClass}"><div class="stat-label">90-Day Score Delta</div><div class="stat-value">${deltaSign}${d.scoreDelta.delta}</div><div class="stat-sub">${d.scoreDelta.current90DayAvg} current vs ${d.scoreDelta.prior90DayAvg} prior</div></div>
+    <div class="stat-card"><div class="stat-label">Training Assigned</div><div class="stat-value">${d.training.total}</div><div class="stat-sub">${d.training.completed} completed, ${d.training.inProgress} in progress</div></div>
+  `;
+
+  // Pillar averages
+  const pillarHtml = d.averages.map(p => {
+    const pct = Math.round((p.avg / 50) * 100);
+    const cls = p.pillar.toLowerCase();
+    return `<div class="pillar-bar"><div class="pillar-label">${p.pillar}</div><div class="pillar-track"><div class="pillar-fill pillar-${cls}" style="width:${pct}%"><span>${p.avg}/50</span></div></div></div>`;
+  }).join('');
+  document.getElementById('pillarAvgs').innerHTML = pillarHtml;
+
+  // Score distribution
+  const ranges = ['Crisis', 'Survival', 'Growth', 'Momentum', 'Mastery'];
+  const colors = { Crisis: '#ef4444', Survival: '#f97316', Growth: '#eab308', Momentum: '#22c55e', Mastery: '#D4A847' };
+  const maxCount = Math.max(...d.distribution.map(dd => dd.count), 1);
+  let distHtml = '';
+  for (const range of ranges) {
+    const item = d.distribution.find(dd => dd.range === range);
+    const count = item ? item.count : 0;
+    const h = Math.max(5, (count / maxCount) * 100);
+    distHtml += `<div class="dist-bar-item"><div class="dist-bar-count" style="color:${colors[range]}">${count}</div><div class="dist-bar" style="height:${h}%;background:${colors[range]}"></div><div class="dist-bar-label">${range}</div></div>`;
+  }
+  document.getElementById('scoreDist').innerHTML = distHtml;
+
+  // Recent assessments
+  let recentHtml = '';
+  for (const r of d.recent) {
+    recentHtml += `<tr><td>${r.name}</td><td>${r.department || r.campus || '—'}</td><td style="font-weight:700">${r.masterScore}</td><td>${r.scoreRange}</td><td>${r.weakestPillar}</td><td style="color:#71717a">${new Date(r.completedAt).toLocaleDateString()}</td></tr>`;
+  }
+  document.getElementById('recentBody').innerHTML = recentHtml || '<tr><td colspan="6" style="text-align:center;color:#52525b">No assessments yet</td></tr>';
+
+  // Alerts
+  let alertsHtml = '';
+  for (const a of d.alerts) {
+    alertsHtml += `<div class="alert-item alert-${a.severity}"><div><div class="alert-title">${a.title}</div><div class="alert-msg">${a.message}</div><div class="alert-time">${new Date(a.createdAt).toLocaleDateString()}</div></div></div>`;
+  }
+  document.getElementById('alertsList').innerHTML = alertsHtml || '<p style="color:#52525b;font-size:0.85rem">No active alerts</p>';
+}
+
+// =============================================
+// Tab Navigation
+// =============================================
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+
+  // Load data for tab
+  if (tab === 'members') loadMembers();
+  if (tab === 'heatmap') loadHeatmap();
+  if (tab === 'training') loadTraining();
+  if (tab === 'invites') loadInvites();
+  if (tab === 'import') loadImportHistory();
+  if (tab === 'alerts') loadAlerts();
+  if (tab === 'settings') loadSettings();
+}
+
+// =============================================
+// Members
+// =============================================
+async function loadMembers() {
+  const r = await apiFetch('/members');
+  const members = await r.json();
+  let html = '';
+  for (const m of members) {
+    html += `<tr><td>${m.firstName} ${m.lastName}</td><td>${m.email}</td><td>${m.department || m.campus || '—'}</td><td style="font-weight:700">${m.latestScore || '—'}</td><td>${m.latestRange || '—'}</td><td>${m.weakestPillar || '—'}</td><td>${m.assessmentCount}</td></tr>`;
+  }
+  document.getElementById('membersBody').innerHTML = html || '<tr><td colspan="7" style="text-align:center;color:#52525b">No members yet. Share your invite code to get started.</td></tr>';
+}
+
+// =============================================
+// Heatmap
+// =============================================
+async function loadHeatmap() {
+  const r = await apiFetch('/heatmap');
+  const data = await r.json();
+  document.getElementById('heatmapTitle').textContent = (data.groupBy === 'campus' ? 'Campus' : 'Department') + ' Heatmap';
+
+  let html = '<div class="heatmap-header"></div><div class="heatmap-header">Time</div><div class="heatmap-header">People</div><div class="heatmap-header">Influence</div><div class="heatmap-header">Numbers</div><div class="heatmap-header">Knowledge</div><div class="heatmap-header">Master</div>';
+
+  for (const g of data.groups) {
+    html += `<div class="heatmap-label">${g.name} (${g.memberCount})</div>`;
+    const pillars = ['time', 'people', 'influence', 'numbers', 'knowledge'];
+    for (const p of pillars) {
+      const v = g.averages[p];
+      const cls = v <= 15 ? 'heat-low' : v <= 25 ? 'heat-mid-low' : v <= 35 ? 'heat-mid' : v <= 42 ? 'heat-mid-high' : 'heat-high';
+      html += `<div class="heatmap-cell ${cls}">${v}</div>`;
+    }
+    const mc = g.averages.master;
+    const mCls = mc <= 50 ? 'heat-low' : mc <= 100 ? 'heat-mid-low' : mc <= 150 ? 'heat-mid' : mc <= 200 ? 'heat-mid-high' : 'heat-high';
+    html += `<div class="heatmap-cell ${mCls}">${mc}</div>`;
+  }
+
+  document.getElementById('heatmapGrid').innerHTML = html || '<p style="color:#52525b;grid-column:1/-1;text-align:center">Not enough data to display heatmap. Need at least 5 members per group.</p>';
+}
+
+// =============================================
+// Training
+// =============================================
+async function loadTraining() {
+  const r = await apiFetch('/training/stats');
+  const stats = await r.json();
+  let html = '';
+  for (const s of stats) {
+    const rateColor = s.completionRate >= 75 ? '#22c55e' : s.completionRate >= 50 ? '#eab308' : '#ef4444';
+    html += `<tr><td>${s.name}</td><td>${s.type}</td><td>${s.assigned}</td><td>${s.inProgress}</td><td>${s.completed}</td><td style="font-weight:700;color:${rateColor}">${s.completionRate}%</td></tr>`;
+  }
+  document.getElementById('trainingBody').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#52525b">No training assignments yet</td></tr>';
+}
+
+// =============================================
+// Invites
+// =============================================
+async function loadInvites() {
+  const r = await apiFetch('/invites');
+  const invites = await r.json();
+  let html = '';
+  for (const i of invites) {
+    html += `<tr><td><code style="font-size:0.75rem;color:#D4A847">${i.inviteUrl}</code></td><td>${i.department || i.campus || 'General'}</td><td>${i.useCount}${i.maxUses ? '/' + i.maxUses : ''}</td><td style="color:#71717a">${new Date(i.createdAt).toLocaleDateString()}</td></tr>`;
+  }
+  document.getElementById('invitesBody').innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:#52525b">No custom invites created</td></tr>';
+}
+
+async function createInvite() {
+  const isChurch = tenantData?.type === 'church';
+  const dept = document.getElementById('inviteDept').value;
+  const maxUses = parseInt(document.getElementById('inviteMaxUses').value) || null;
+  const body = { maxUses };
+  if (isChurch) body.campus = dept; else body.department = dept;
+  await apiFetch('/invites', { method: 'POST', body: JSON.stringify(body) });
+  loadInvites();
+  document.getElementById('inviteDept').value = '';
+  document.getElementById('inviteMaxUses').value = '';
+}
+
+function copyInviteCode() {
+  const url = document.getElementById('defaultInviteUrl').textContent;
+  navigator.clipboard.writeText(url);
+  const btn = document.getElementById('inviteCodeBtn');
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy Invite Code', 2000);
+}
+
+// =============================================
+// CSV Import
+// =============================================
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    const lines = text.split('\n').filter(l => l.trim());
+    if (lines.length < 2) return alert('File appears empty');
+
+    uploadedColumns = lines[0].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+    uploadedData = lines.slice(1).map(line => {
+      const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      const row = {};
+      uploadedColumns.forEach((col, i) => { row[col] = vals[i] || ''; });
+      return row;
+    });
+
+    renderMapping();
+  };
+  reader.readAsText(file);
+}
+
+const veFields = [
+  { key: 'email', label: 'Email (required)', required: true },
+  { key: 'firstName', label: 'First Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'department', label: 'Department' },
+  { key: 'campus', label: 'Campus' },
+  { key: 'smallGroup', label: 'Small Group' },
+  { key: 'ministry', label: 'Ministry' },
+  { key: 'employeeId', label: 'Employee ID' },
+  { key: 'roleTitle', label: 'Role / Title' },
+];
+
+function renderMapping() {
+  document.getElementById('mappingSection').style.display = 'block';
+  let html = '';
+  for (const field of veFields) {
+    const options = uploadedColumns.map(c => {
+      const selected = c.toLowerCase().includes(field.key.toLowerCase()) ? 'selected' : '';
+      return `<option value="${c}" ${selected}>${c}</option>`;
+    }).join('');
+    html += `
+      <div class="mapping-label">${field.label}</div>
+      <div class="mapping-arrow">→</div>
+      <select class="mapping-select" data-field="${field.key}">
+        <option value="">— Skip —</option>
+        ${options}
+      </select>
+    `;
+  }
+  document.getElementById('mappingGrid').innerHTML = html;
+}
+
+async function processImport() {
+  const mapping = {};
+  document.querySelectorAll('.mapping-select').forEach(sel => {
+    if (sel.value) mapping[sel.dataset.field] = sel.value;
+  });
+
+  if (!mapping.email) return alert('Email column mapping is required');
+
+  const r = await apiFetch('/csv/upload', {
+    method: 'POST',
+    body: JSON.stringify({
+      data: uploadedData,
+      columnMapping: mapping,
+      filename: document.getElementById('fileInput').files[0]?.name || 'upload.csv'
+    })
+  });
+  const result = await r.json();
+
+  document.getElementById('importResultSection').style.display = 'block';
+  document.getElementById('importResults').innerHTML = `
+    <div class="stats-grid" style="margin-bottom:0">
+      <div class="stat-card"><div class="stat-label">Total Rows</div><div class="stat-value">${result.totalRows}</div></div>
+      <div class="stat-card positive"><div class="stat-label">Success</div><div class="stat-value" style="color:#22c55e">${result.successCount}</div></div>
+      <div class="stat-card ${result.errorCount > 0 ? 'negative' : ''}"><div class="stat-label">Errors</div><div class="stat-value" style="color:${result.errorCount > 0 ? '#ef4444' : '#22c55e'}">${result.errorCount}</div></div>
+    </div>
+  `;
+  document.getElementById('mappingSection').style.display = 'none';
+  loadImportHistory();
+}
+
+function cancelImport() {
+  document.getElementById('mappingSection').style.display = 'none';
+  uploadedData = null;
+  uploadedColumns = [];
+}
+
+async function loadImportHistory() {
+  const r = await apiFetch('/csv/imports');
+  const imports = await r.json();
+  let html = '';
+  for (const i of imports) {
+    const statusColor = i.status === 'completed' ? '#22c55e' : i.status === 'failed' ? '#ef4444' : '#eab308';
+    html += `<tr><td>${i.filename}</td><td>${i.rowCount}</td><td style="color:#22c55e">${i.successCount}</td><td style="color:#ef4444">${i.errorCount}</td><td style="color:${statusColor};font-weight:700">${i.status}</td><td style="color:#71717a">${new Date(i.createdAt).toLocaleDateString()}</td></tr>`;
+  }
+  document.getElementById('importHistoryBody').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#52525b">No imports yet</td></tr>';
+}
+
+// =============================================
+// Alerts
+// =============================================
+async function loadAlerts() {
+  const r = await apiFetch('/alerts');
+  const alerts = await r.json();
+  let html = '';
+  for (const a of alerts) {
+    html += `<div class="alert-item alert-${a.severity}"><div><div class="alert-title">${a.title}</div><div class="alert-msg">${a.message}</div><div class="alert-time">${new Date(a.createdAt).toLocaleDateString()}</div></div></div>`;
+  }
+  document.getElementById('allAlertsList').innerHTML = html || '<p style="color:#52525b;font-size:0.85rem">No alerts</p>';
+}
+
+// =============================================
+// Settings
+// =============================================
+function loadSettings() {
+  if (tenantData) {
+    document.getElementById('settingsName').value = tenantData.name || '';
+  }
+
+  const tiers = {
+    starter: { name: 'Starter', features: ['Health assessment', 'Basic reports', 'Invite links'] },
+    growth: { name: 'Growth', features: ['+ Ministry/Dept heatmaps', '+ Campus/department scorecards', '+ CSV uploads'] },
+    pro: { name: 'Pro', features: ['+ Training path mapping', '+ Wealth triggers', '+ Advanced analytics'] },
+    enterprise: { name: 'Enterprise', features: ['+ 90-day transformation sprints', '+ Executive sponsorship tools', '+ Custom integrations'] },
+    integration: { name: 'Integration', features: ['+ API access', '+ Real-time HRIS sync', '+ Custom webhooks'] },
+  };
+
+  const tier = tiers[tenantData?.tier || 'starter'];
+  document.getElementById('tierDisplay').innerHTML = `
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
+      <span style="font-size:1.25rem;font-weight:900;color:#D4A847">${tier.name}</span>
+      <span style="font-size:0.75rem;color:#71717a">Current Plan</span>
+    </div>
+    <ul style="list-style:none;font-size:0.85rem;color:#a1a1aa">${tier.features.map(f => `<li style="margin-bottom:0.375rem">&#10003; ${f}</li>`).join('')}</ul>
+    <p style="font-size:0.8rem;color:#52525b;margin-top:1rem">Contact sales@valuetovictory.com to upgrade your tier.</p>
+  `;
+}
+
+async function saveSettings() {
+  const name = document.getElementById('settingsName').value;
+  const primaryColor = document.getElementById('settingsPrimaryColor').value;
+  const threshold = parseInt(document.getElementById('settingsThreshold').value);
+  await apiFetch('/settings', {
+    method: 'PUT',
+    body: JSON.stringify({ name, primaryColor, anonymityThreshold: threshold })
+  });
+  tenantData.name = name;
+  document.getElementById('tenantNameDisplay').textContent = name;
+  localStorage.setItem('ve_tenant', JSON.stringify(tenantData));
+  alert('Settings saved');
+}
+
+function exportData() {
+  window.open(API + '/export?token=' + authToken, '_blank');
+}
+
+// =============================================
+// Drag & drop for CSV upload
+// =============================================
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const input = document.getElementById('fileInput');
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    handleFileUpload({ target: input });
+  }
+});
+
+// =============================================
+// Init
+// =============================================
+if (authToken) {
+  try { tenantData = JSON.parse(localStorage.getItem('ve_tenant')); } catch(e) {}
+  showDashboard();
+}
+</script>
+</body>
+</html>

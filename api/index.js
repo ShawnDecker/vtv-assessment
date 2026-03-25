@@ -141,8 +141,8 @@ module.exports = async (req, res) => {
         selectedQuestions.push(...shuffle(picked));
       }
 
-      // Handle overlay questions for relationship/leadership modes
-      if (mode === 'relationship' || mode === 'leadership') {
+      // Handle overlay questions for relationship/leadership/church/corporate modes
+      if (mode === 'relationship' || mode === 'leadership' || mode === 'church' || mode === 'corporate') {
         const modeOverlays = overlayQuestions.filter(q => q.overlay_type === mode);
         const unansweredOverlays = shuffle(modeOverlays.filter(q => !answeredIds.includes(q.id)));
         const answeredOverlays = shuffle(modeOverlays.filter(q => answeredIds.includes(q.id)));
@@ -304,12 +304,23 @@ module.exports = async (req, res) => {
         overlay_total: b.overlayTotal || null,
       };
 
+      // Resolve tenant_id from contact or request body
+      let tenantId = b.tenantId || null;
+      if (!tenantId && contact.tenant_id) tenantId = contact.tenant_id;
+      if (!tenantId) {
+        try {
+          const tmRows = await sql`SELECT tenant_id FROM tenant_members WHERE contact_id = ${contact.id} LIMIT 1`;
+          if (tmRows.length > 0) tenantId = tmRows[0].tenant_id;
+        } catch (e) { /* tenant_members may not exist yet */ }
+      }
+      aData.tenant_id = tenantId;
+
       const prescription = generatePrescription(aData);
       aData.weakest_pillar = prescription.weakestPillar;
       aData.prescription = JSON.stringify(prescription);
 
       const d = aData;
-      const rows = await sql`INSERT INTO assessments (contact_id, completed_at, mode, team_id, is_team_creator, time_awareness, time_allocation, time_protection, time_leverage, five_hour_leak, value_per_hour, time_investment, downtime_quality, foresight, time_reallocation, time_total, trust_investment, boundary_quality, network_depth, relational_roi, people_audit, alliance_building, love_bank_deposits, communication_clarity, restraint_practice, value_replacement, people_total, leadership_level, integrity_alignment, professional_credibility, empathetic_listening, gravitational_center, micro_honesties, word_management, personal_responsibility, adaptive_influence, influence_multiplier, influence_total, financial_awareness, goal_specificity, investment_logic, measurement_habit, cost_vs_value, number_one_clarity, small_improvements, negative_math, income_multiplier, negotiation_skill, numbers_total, learning_hours, application_rate, bias_awareness, highest_best_use, supply_and_demand, substitution_risk, double_jeopardy, knowledge_compounding, weighted_analysis, perception_vs_perspective, knowledge_total, time_multiplier, raw_score, master_score, score_range, weakest_pillar, prescription, overlay_answers, overlay_total) VALUES (${d.contact_id}, ${d.completed_at}, ${d.mode}, ${d.team_id}, ${d.is_team_creator}, ${d.time_awareness}, ${d.time_allocation}, ${d.time_protection}, ${d.time_leverage}, ${d.five_hour_leak}, ${d.value_per_hour}, ${d.time_investment}, ${d.downtime_quality}, ${d.foresight}, ${d.time_reallocation}, ${d.time_total}, ${d.trust_investment}, ${d.boundary_quality}, ${d.network_depth}, ${d.relational_roi}, ${d.people_audit}, ${d.alliance_building}, ${d.love_bank_deposits}, ${d.communication_clarity}, ${d.restraint_practice}, ${d.value_replacement}, ${d.people_total}, ${d.leadership_level}, ${d.integrity_alignment}, ${d.professional_credibility}, ${d.empathetic_listening}, ${d.gravitational_center}, ${d.micro_honesties}, ${d.word_management}, ${d.personal_responsibility}, ${d.adaptive_influence}, ${d.influence_multiplier}, ${d.influence_total}, ${d.financial_awareness}, ${d.goal_specificity}, ${d.investment_logic}, ${d.measurement_habit}, ${d.cost_vs_value}, ${d.number_one_clarity}, ${d.small_improvements}, ${d.negative_math}, ${d.income_multiplier}, ${d.negotiation_skill}, ${d.numbers_total}, ${d.learning_hours}, ${d.application_rate}, ${d.bias_awareness}, ${d.highest_best_use}, ${d.supply_and_demand}, ${d.substitution_risk}, ${d.double_jeopardy}, ${d.knowledge_compounding}, ${d.weighted_analysis}, ${d.perception_vs_perspective}, ${d.knowledge_total}, ${d.time_multiplier}, ${d.raw_score}, ${d.master_score}, ${d.score_range}, ${d.weakest_pillar}, ${d.prescription}, ${d.overlay_answers}, ${d.overlay_total}) RETURNING *`;
+      const rows = await sql`INSERT INTO assessments (contact_id, completed_at, mode, team_id, is_team_creator, tenant_id, time_awareness, time_allocation, time_protection, time_leverage, five_hour_leak, value_per_hour, time_investment, downtime_quality, foresight, time_reallocation, time_total, trust_investment, boundary_quality, network_depth, relational_roi, people_audit, alliance_building, love_bank_deposits, communication_clarity, restraint_practice, value_replacement, people_total, leadership_level, integrity_alignment, professional_credibility, empathetic_listening, gravitational_center, micro_honesties, word_management, personal_responsibility, adaptive_influence, influence_multiplier, influence_total, financial_awareness, goal_specificity, investment_logic, measurement_habit, cost_vs_value, number_one_clarity, small_improvements, negative_math, income_multiplier, negotiation_skill, numbers_total, learning_hours, application_rate, bias_awareness, highest_best_use, supply_and_demand, substitution_risk, double_jeopardy, knowledge_compounding, weighted_analysis, perception_vs_perspective, knowledge_total, time_multiplier, raw_score, master_score, score_range, weakest_pillar, prescription, overlay_answers, overlay_total) VALUES (${d.contact_id}, ${d.completed_at}, ${d.mode}, ${d.team_id}, ${d.is_team_creator}, ${d.tenant_id}, ${d.time_awareness}, ${d.time_allocation}, ${d.time_protection}, ${d.time_leverage}, ${d.five_hour_leak}, ${d.value_per_hour}, ${d.time_investment}, ${d.downtime_quality}, ${d.foresight}, ${d.time_reallocation}, ${d.time_total}, ${d.trust_investment}, ${d.boundary_quality}, ${d.network_depth}, ${d.relational_roi}, ${d.people_audit}, ${d.alliance_building}, ${d.love_bank_deposits}, ${d.communication_clarity}, ${d.restraint_practice}, ${d.value_replacement}, ${d.people_total}, ${d.leadership_level}, ${d.integrity_alignment}, ${d.professional_credibility}, ${d.empathetic_listening}, ${d.gravitational_center}, ${d.micro_honesties}, ${d.word_management}, ${d.personal_responsibility}, ${d.adaptive_influence}, ${d.influence_multiplier}, ${d.influence_total}, ${d.financial_awareness}, ${d.goal_specificity}, ${d.investment_logic}, ${d.measurement_habit}, ${d.cost_vs_value}, ${d.number_one_clarity}, ${d.small_improvements}, ${d.negative_math}, ${d.income_multiplier}, ${d.negotiation_skill}, ${d.numbers_total}, ${d.learning_hours}, ${d.application_rate}, ${d.bias_awareness}, ${d.highest_best_use}, ${d.supply_and_demand}, ${d.substitution_risk}, ${d.double_jeopardy}, ${d.knowledge_compounding}, ${d.weighted_analysis}, ${d.perception_vs_perspective}, ${d.knowledge_total}, ${d.time_multiplier}, ${d.raw_score}, ${d.master_score}, ${d.score_range}, ${d.weakest_pillar}, ${d.prescription}, ${d.overlay_answers}, ${d.overlay_total}) RETURNING *`;
 
       const assessment = rows[0];
 
@@ -858,6 +869,7 @@ function mapAssessment(a) {
     learningHours: a.learning_hours, applicationRate: a.application_rate, biasAwareness: a.bias_awareness, highestBestUse: a.highest_best_use, supplyAndDemand: a.supply_and_demand, substitutionRisk: a.substitution_risk, doubleJeopardy: a.double_jeopardy, knowledgeCompounding: a.knowledge_compounding, weightedAnalysis: a.weighted_analysis, perceptionVsPerspective: a.perception_vs_perspective, knowledgeTotal: a.knowledge_total,
     timeMultiplier: a.time_multiplier, rawScore: a.raw_score, masterScore: a.master_score, scoreRange: a.score_range, weakestPillar: a.weakest_pillar, prescription: a.prescription,
     overlayAnswers: a.overlay_answers, overlayTotal: a.overlay_total,
+    tenantId: a.tenant_id,
     // Pass through any join fields
     ...(a.first_name ? { firstName: a.first_name, lastName: a.last_name, email: a.email } : {}),
   };

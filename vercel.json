@@ -3,11 +3,17 @@
   "routes": [
     { "src": "/api/setup-db", "dest": "/api/setup-db.js" },
     { "src": "/api/migrate-question-system", "dest": "/api/migrate-question-system.js" },
+    { "src": "/api/migrate-enterprise", "dest": "/api/migrate-enterprise.js" },
+    { "src": "/api/seed-enterprise", "dest": "/api/seed-enterprise.js" },
+    { "src": "/api/enterprise/(.*)", "dest": "/api/enterprise.js" },
     { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "handle": "filesystem" },
     { "src": "/report/(.*)", "dest": "/report.html" },
     { "src": "/challenge", "dest": "/challenge.html" },
     { "src": "/returning", "dest": "/returning.html" },
+    { "src": "/admin", "dest": "/admin-dashboard.html" },
+    { "src": "/admin/(.*)", "dest": "/admin-dashboard.html" },
+    { "src": "/join/(.*)", "dest": "/join.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
