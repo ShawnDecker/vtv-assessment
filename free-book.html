@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <title>Free Book — Running From Miracles by Shawn Decker</title>
+  <meta name="description" content="Get a free digital copy of Running From Miracles — Shawn Decker's personal story of struggle, purpose, and the unfinished journey." />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+
+    /* Hero */
+    .hero {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 3rem;
+      text-align: center;
+    }
+    .hero .brand {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #D4A847;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 2.75rem;
+      color: #fff;
+      margin-bottom: 0.5rem;
+      line-height: 1.2;
+    }
+    .hero .subtitle {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 1.25rem;
+      color: #D4A847;
+      margin-bottom: 2rem;
+    }
+    .hero .divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #D4A847, transparent);
+      margin: 0 auto 2rem;
+    }
+
+    /* Story section */
+    .story {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+    }
+    .story p {
+      font-size: 1.05rem;
+      color: #a1a1aa;
+      line-height: 1.75;
+      margin-bottom: 1.25rem;
+    }
+    .story p strong {
+      color: #e4e4e7;
+    }
+    .story .highlight {
+      color: #D4A847;
+      font-weight: 500;
+    }
+    .story blockquote {
+      border-left: 3px solid #D4A847;
+      padding: 1rem 0 1rem 1.5rem;
+      margin: 2rem 0;
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 1.2rem;
+      color: #e4e4e7;
+      line-height: 1.5;
+    }
+
+    /* Form section */
+    .form-section {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+    }
+    .form-card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 1rem;
+      padding: 2.5rem 2rem;
+      text-align: center;
+    }
+    .form-card h2 {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 1.75rem;
+      color: #fff;
+      margin-bottom: 0.75rem;
+    }
+    .form-card .form-subtitle {
+      font-size: 0.95rem;
+      color: #a1a1aa;
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.4rem;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.5rem;
+      color: #fff;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus {
+      border-color: #D4A847;
+    }
+    .form-group input::placeholder {
+      color: #52525b;
+    }
+    .submit-btn {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #0a0a0a;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 0.625rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .submit-btn:hover { opacity: 0.9; }
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .form-note {
+      font-size: 0.8rem;
+      color: #52525b;
+      margin-top: 1rem;
+      line-height: 1.5;
+    }
+    .form-message {
+      margin-top: 1rem;
+      padding: 0.875rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .form-message.success {
+      display: block;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #22c55e;
+    }
+    .form-message.error {
+      display: block;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+    }
+
+    /* Assessment CTA */
+    .assessment-cta {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+      text-align: center;
+    }
+    .assessment-cta .cta-card {
+      background: linear-gradient(160deg, #1c1917 0%, #18181b 40%, #1a1710 100%);
+      border: 1px solid rgba(212, 168, 71, 0.3);
+      border-radius: 1rem;
+      padding: 2.5rem 2rem;
+    }
+    .assessment-cta h3 {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 1.35rem;
+      color: #D4A847;
+      margin-bottom: 0.75rem;
+    }
+    .assessment-cta p {
+      font-size: 0.95rem;
+      color: #a1a1aa;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .assessment-cta a {
+      display: inline-block;
+      background: #3b82f6;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-decoration: none;
+      padding: 0.875rem 2rem;
+      border-radius: 0.625rem;
+      transition: background 0.2s;
+    }
+    .assessment-cta a:hover { background: #2563eb; }
+
+    /* Footer */
+    .page-footer {
+      text-align: center;
+      padding: 3rem 1.5rem 2.5rem;
+      border-top: 1px solid #27272a;
+    }
+    .page-footer .tagline {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 1.125rem;
+      color: #D4A847;
+      margin-bottom: 1rem;
+    }
+    .page-footer .copy {
+      color: #71717a;
+      font-size: 0.8rem;
+    }
+    .page-footer a { color: #3b82f6; text-decoration: none; }
+    .page-footer a:hover { text-decoration: underline; }
+
+    /* Mobile */
+    @media (max-width: 520px) {
+      .hero { padding: 2.5rem 1rem 2rem; }
+      .hero h1 { font-size: 2rem; }
+      .hero .subtitle { font-size: 1.05rem; }
+      .story { padding: 0 1rem 2rem; }
+      .form-section { padding: 0 1rem 2rem; }
+      .form-card { padding: 2rem 1.25rem; }
+      .assessment-cta { padding: 0 1rem 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="brand">VALUE TO VICTORY</div>
+    <h1>Running From Miracles</h1>
+    <div class="subtitle">A free digital book by Shawn Decker</div>
+    <div class="divider"></div>
+  </section>
+
+  <!-- Story -->
+  <section class="story">
+    <p>
+      If you're tired of feeling stuck but don't have the money, time, or connections to buy your way forward,
+      <span class="highlight">you're exactly who this was built for.</span>
+    </p>
+    <p>
+      Most people don't fail because they're lazy. They fail because no one ever put the right tools in
+      their hands early enough to make a difference.
+    </p>
+    <blockquote>
+      "I wrote this book because I needed it first. Before the framework, before the assessment,
+      before any of this &mdash; there was just a guy running from every miracle God put in front of him."
+    </blockquote>
+    <p>
+      <strong>Running From Miracles</strong> is Shawn Decker's personal story of struggle, purpose,
+      and the unfinished journey. It's raw. It's real. And it's the foundation everything else was built on.
+    </p>
+    <p>
+      This isn't a self-help book. It's a mirror. And it's yours &mdash; completely free.
+    </p>
+  </section>
+
+  <!-- Email Capture Form -->
+  <section class="form-section">
+    <div class="form-card">
+      <h2>Get Your Free Copy</h2>
+      <p class="form-subtitle">Enter your name and email below. We'll send a quick verification email &mdash; click the link and your book arrives instantly.</p>
+      <form id="free-book-form" onsubmit="return handleSubmit(event)">
+        <div class="form-group">
+          <label for="name">First Name</label>
+          <input type="text" id="name" name="name" placeholder="Your first name" required />
+        </div>
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" required />
+        </div>
+        <button type="submit" class="submit-btn" id="submit-btn">Send Me My Free Copy</button>
+        <p class="form-note">We'll send a quick verification email first &mdash; just click the link to confirm and your book arrives instantly.</p>
+      </form>
+      <div id="form-message" class="form-message"></div>
+    </div>
+  </section>
+
+  <!-- Assessment CTA -->
+  <section class="assessment-cta">
+    <div class="cta-card">
+      <h3>Ready to Go Deeper?</h3>
+      <p>Take the free P.I.N.K. Value Engine Assessment and discover exactly where you're leaking value &mdash; and what to do about it.</p>
+      <a href="https://assessment.valuetovictory.com">Take the Free Assessment</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="page-footer">
+    <div class="tagline">Value to Victory</div>
+    <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>
+  </footer>
+
+  <script>
+    async function handleSubmit(e) {
+      e.preventDefault();
+      var btn = document.getElementById('submit-btn');
+      var msg = document.getElementById('form-message');
+      var name = document.getElementById('name').value.trim();
+      var email = document.getElementById('email').value.trim();
+
+      if (!name || !email) return false;
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      msg.className = 'form-message';
+      msg.style.display = 'none';
+
+      try {
+        var resp = await fetch('/api/free-book-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name, email: email }),
+        });
+        var data = await resp.json();
+
+        if (resp.ok && data.success) {
+          msg.className = 'form-message success';
+          msg.textContent = data.message || 'Verification email sent! Check your inbox.';
+          msg.style.display = 'block';
+          btn.textContent = 'Email Sent!';
+        } else {
+          msg.className = 'form-message error';
+          msg.textContent = data.error || 'Something went wrong. Please try again.';
+          msg.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Send Me My Free Copy';
+        }
+      } catch (err) {
+        msg.className = 'form-message error';
+        msg.textContent = 'Network error. Please check your connection and try again.';
+        msg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Send Me My Free Copy';
+      }
+
+      return false;
+    }
+  </script>
+
+</body>
+</html>
