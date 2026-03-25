@@ -333,7 +333,89 @@ module.exports = async (req, res) => {
 
       // Map snake_case back to camelCase for frontend compatibility
       const mapped = mapAssessment(assessment);
-      return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name } });
+
+      // === AUTO-EMAIL: Send report email automatically after assessment submission ===
+      let emailSent = false;
+      const contactEmail = contact.email;
+      if (contactEmail && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        try {
+          const nodemailer = require('nodemailer');
+          const efName = contact.first_name || 'there';
+          const eMasterScore = masterScore;
+          const eScoreRange = scoreRange;
+          const eWeakestPillar = prescription.weakestPillar;
+
+          const recTexts = {
+            Crisis: "YOUR NEXT STEP: You need the full system. Start with The Value Engine book — the diagnostic that shows you exactly where your life is undervalued. $29 at valuetovictory.com",
+            Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Value Engine book ($29) plus VictoryPath membership ($47/mo) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
+            Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($47/mo) — structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
+            Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($79/mo) or 1:1 coaching ($300/hr, 20% off your first session) will break through the ceiling. valuetovictory.com",
+            Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($397/mo) gives you 50% off coaching, a complimentary monthly session, and direct author access. valuetovictory.com",
+          };
+          const productRec = recTexts[eScoreRange] || recTexts.Growth;
+
+          // FitCarna check
+          const fitnessQuestionIds = ['time-21','time-22','people-21','people-22','influence-21','influence-22','numbers-21','numbers-22','knowledge-21','knowledge-22'];
+          let fitcarnaSection = '';
+          try {
+            const fitnessAnswers = await sql`SELECT question_id, answer_value FROM answer_history WHERE contact_id = ${contact.id} AND question_id = ANY(${fitnessQuestionIds})`;
+            if (fitnessAnswers.some(fa => fa.answer_value <= 2)) {
+              fitcarnaSection = "\nYOUR BODY IS CAPPING YOUR SCORE: Your fitness answers reveal a gap that's limiting every other pillar. We partner with one coach who builds programs for people in your exact position — no gimmicks, just structured accountability and results. See what Cameron builds: valuetovictory.com/fitcarna/\n";
+            }
+          } catch (e) { /* table may not exist */ }
+
+          const emailBody = `${efName},
+
+Your Value Engine Assessment is complete.
+
+MASTER VALUE SCORE: ${eMasterScore} (${eScoreRange})
+
+Pillar Breakdown:
+  Time:      ${tt}/50
+  People:    ${pt}/50
+  Influence: ${it}/50
+  Numbers:   ${nt}/50
+  Knowledge: ${kt}/50
+
+Your weakest pillar is ${eWeakestPillar}. ${prescription.diagnosis || ''}
+
+View your full diagnostic report:
+https://assessment.valuetovictory.com/report/${assessment.id}
+
+${productRec}
+${fitcarnaSection}
+Your report includes:
+- Detailed sub-category breakdown across all 50 dimensions
+- Where you rank against other Value Engine users
+- Personalized prescription with specific tools to run
+- Your recommended next step
+
+Don't guess. Run the system.
+
+— The Value Engine
+   ValueToVictory.com`;
+
+          const subject = `Your Value Engine Score: ${eMasterScore} (${eScoreRange}) — Personal Report Ready`;
+
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+          });
+          await transporter.sendMail({
+            from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
+            to: contactEmail,
+            subject,
+            text: emailBody,
+          });
+          emailSent = true;
+          console.log(`Auto-email sent to ${contactEmail} for assessment ${assessment.id}`);
+        } catch (emailErr) {
+          console.error('Auto-email error (non-fatal):', emailErr.message);
+        }
+      }
+      // === END AUTO-EMAIL ===
+
+      return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name }, emailSent });
     }
 
     // POST /api/teams
