@@ -51,7 +51,7 @@ module.exports = async (req, res) => {
         auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
       });
 
-      const downloadUrl = 'https://valuetovictory.com/books/running-from-miracles-digital.pdf';
+      const downloadUrl = 'https://assessment.valuetovictory.com/running-from-miracles.pdf';
       const assessmentUrl = 'https://assessment.valuetovictory.com';
 
       await transporter.sendMail({
@@ -169,7 +169,7 @@ module.exports = async (req, res) => {
       <p>Your free copy of <strong style="color:#D4A847;">Running From Miracles</strong> is on its way to <strong>${signup.email}</strong>.</p>
       <p style="margin-top:16px;">Check your inbox in the next few minutes. If you don't see it, check your spam or promotions folder.</p>
       <div style="margin-top:32px;">
-        <a href="${'https://valuetovictory.com/books/running-from-miracles-digital.pdf'}" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:15px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Download Now</a>
+        <a href="${'https://assessment.valuetovictory.com/running-from-miracles.pdf'}" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:15px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Download Now</a>
       </div>
       <p style="margin-top:32px;color:#a1a1aa;">While you wait, why not take the free Value Engine Assessment?</p>
       <div style="margin-top:12px;">
