@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Value Engine — Premium Reports</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+    .loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .loading-text { color: #a1a1aa; font-size: 1.125rem; }
+    .error-view { display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+    .error-view h2 { color: #ef4444; margin-bottom: 1rem; }
+    .error-view a { color: #3b82f6; }
+    .page { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    .page-header { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid #27272a; margin-bottom: 2rem; }
+    .page-header .brand { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    .page-header .title { font-family: 'Instrument Serif', serif; font-size: 1.75rem; font-style: italic; color: #d4d4d8; margin-bottom: 0.5rem; }
+    .page-header .subtitle { color: #a1a1aa; font-size: 0.9rem; }
+    .page-header .name { font-size: 1.125rem; font-weight: 600; margin-top: 1rem; }
+    .page-header .score-inline { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem; font-weight: 700; margin-top: 0.5rem; }
+
+    .range-crisis { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+    .range-survival { background: rgba(249,115,22,0.15); color: #f97316; border: 1px solid rgba(249,115,22,0.3); }
+    .range-growth { background: rgba(234,179,8,0.15); color: #eab308; border: 1px solid rgba(234,179,8,0.3); }
+    .range-momentum { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+    .range-mastery { background: rgba(212,168,71,0.15); color: #D4A847; border: 1px solid rgba(212,168,71,0.3); }
+
+    /* Membership check */
+    .membership-check { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 2rem; text-align: center; }
+    .membership-check h3 { font-size: 1rem; margin-bottom: 0.75rem; color: #D4A847; }
+    .membership-check p { color: #a1a1aa; font-size: 0.85rem; margin-bottom: 1rem; }
+    .membership-form { display: flex; gap: 0.5rem; max-width: 400px; margin: 0 auto; }
+    .membership-form input { flex: 1; padding: 0.625rem 1rem; background: #0a0a0a; border: 1px solid #3f3f46; border-radius: 0.5rem; color: #fff; font-size: 0.9rem; font-family: inherit; }
+    .membership-form input:focus { outline: none; border-color: #D4A847; }
+    .membership-form button { padding: 0.625rem 1.5rem; background: #D4A847; color: #0a0a0a; border: none; border-radius: 0.5rem; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 0.9rem; white-space: nowrap; }
+    .membership-form button:hover { background: #b8942e; }
+    .membership-status { margin-top: 1rem; font-size: 0.85rem; padding: 0.75rem; border-radius: 0.5rem; display: none; }
+    .membership-active { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+    .membership-inactive { background: rgba(239,68,68,0.05); color: #a1a1aa; border: 1px solid #27272a; }
+
+    /* Report cards */
+    .cards { display: grid; gap: 1.5rem; }
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.75rem; position: relative; overflow: hidden; }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .card-action::before { background: linear-gradient(90deg, #D4A847, #b8942e); }
+    .card-counselor::before { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+    .card-team::before { background: linear-gradient(90deg, #2dd4bf, #0d9488); }
+    .card-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+    .card h3 { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .card .card-desc { color: #a1a1aa; font-size: 0.875rem; margin-bottom: 1rem; }
+    .card .card-preview { font-size: 0.8rem; color: #71717a; margin-bottom: 1.25rem; }
+    .card .card-preview strong { color: #d4d4d8; }
+    .card-btn { display: inline-block; padding: 0.625rem 1.5rem; border-radius: 0.5rem; font-weight: 700; text-decoration: none; font-size: 0.875rem; transition: all 0.2s; }
+    .btn-gold { background: #D4A847; color: #0a0a0a; }
+    .btn-gold:hover { background: #b8942e; }
+    .btn-blue { background: #3b82f6; color: #fff; }
+    .btn-blue:hover { background: #2563eb; }
+    .btn-teal { background: #2dd4bf; color: #0a0a0a; }
+    .btn-teal:hover { background: #0d9488; color: #fff; }
+    .btn-pay { background: transparent; border: 1px solid #D4A847; color: #D4A847; }
+    .btn-pay:hover { background: #D4A847; color: #0a0a0a; }
+    .card-price { display: inline-block; font-size: 0.8rem; color: #a1a1aa; margin-left: 0.75rem; vertical-align: middle; }
+
+    /* Membership upsell */
+    .upsell { text-align: center; padding: 2rem; border: 1px dashed #27272a; border-radius: 0.75rem; margin-top: 2rem; }
+    .upsell h3 { color: #D4A847; font-size: 1rem; margin-bottom: 0.5rem; }
+    .upsell p { color: #a1a1aa; font-size: 0.85rem; margin-bottom: 1rem; }
+    .upsell a { color: #3b82f6; text-decoration: none; font-weight: 600; }
+    .upsell a:hover { text-decoration: underline; }
+
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: #a1a1aa; text-decoration: none; font-size: 0.85rem; }
+    .back-link:hover { color: #D4A847; }
+
+    .page-footer { text-align: center; padding: 3rem 0 2rem; border-top: 1px solid #27272a; margin-top: 2rem; }
+    .page-footer .tagline { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1.125rem; color: #D4A847; margin-bottom: 1rem; }
+    .page-footer .copy { color: #71717a; font-size: 0.8rem; }
+    .page-footer a { color: #3b82f6; text-decoration: none; }
+
+    @media (max-width: 520px) {
+      .page { padding: 1.5rem 1rem 3rem; }
+      .membership-form { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">
+    <span class="loading-text">Loading premium reports...</span>
+  </div>
+  <div id="error" class="error-view" style="display:none;">
+    <div>
+      <h2>Assessment Not Found</h2>
+      <p style="color:#a1a1aa;margin-bottom:1rem;">This assessment could not be loaded.</p>
+      <a href="https://assessment.valuetovictory.com">Take the Assessment</a>
+    </div>
+  </div>
+  <div id="content" class="page" style="display:none;">
+    <a class="back-link" id="backLink" href="#">&larr; Back to Free Report</a>
+
+    <div class="page-header">
+      <div class="brand">THE VALUE ENGINE</div>
+      <div class="title">Premium Reports</div>
+      <div class="subtitle">Unlock deeper insights from your assessment</div>
+      <div class="name" id="userName"></div>
+      <div id="scoreBadge" class="score-inline"></div>
+    </div>
+
+    <!-- Membership Check -->
+    <div class="membership-check">
+      <h3>Already a Member?</h3>
+      <p>VictoryPath, Value Builder, and Victory VIP members get unlimited access to all premium reports.</p>
+      <div class="membership-form">
+        <input type="email" id="memberEmail" placeholder="Enter your email" />
+        <button onclick="checkMembership()">Check</button>
+      </div>
+      <div id="membershipStatus" class="membership-status"></div>
+    </div>
+
+    <!-- Report Cards -->
+    <div class="cards">
+      <div class="card card-action">
+        <div class="card-icon">&#9889;</div>
+        <h3>Personal Action Plan</h3>
+        <div class="card-desc">Specific daily and weekly action goals based on your weaknesses. Each low-scoring sub-category gets a targeted exercise you can start today.</div>
+        <div class="card-preview">
+          <strong>What's inside:</strong> Personalized actions for every weakness &bull; Value Engine tool references &bull; Chapter-by-chapter reading plan &bull; Weekly accountability structure
+        </div>
+        <div id="actionBtn"></div>
+      </div>
+
+      <div class="card card-counselor">
+        <div class="card-icon">&#128203;</div>
+        <h3>Counselor/Coach Handoff Report</h3>
+        <div class="card-desc">A clinical-style summary designed for therapists, coaches, and mentors. Share your results with a professional in a format they understand.</div>
+        <div class="card-preview">
+          <strong>What's inside:</strong> Score summary &bull; Areas requiring attention with clinical interpretations &bull; Strengths inventory &bull; Recommended focus areas &bull; Suggested interventions
+        </div>
+        <div id="counselorBtn"></div>
+      </div>
+
+      <div class="card card-team">
+        <div class="card-icon">&#128101;</div>
+        <h3>Company/Team Analysis</h3>
+        <div class="card-desc">Anonymous, aggregated team data showing collective strengths, blind spots, and specific recommendations for team improvement.</div>
+        <div class="card-preview">
+          <strong>What's inside:</strong> Team averages &bull; Score distribution &bull; Sub-category heatmap &bull; Top 5 blind spots with interpretations &bull; Team-specific interventions
+        </div>
+        <div id="teamBtn"></div>
+      </div>
+    </div>
+
+    <!-- Membership Upsell -->
+    <div class="upsell" id="upsellSection">
+      <h3>Get Unlimited Access to All Premium Reports</h3>
+      <p>VictoryPath membership ($47/mo) includes all 3 premium reports, plus tools, community, and monthly progress tracking.</p>
+      <a href="https://valuetovictory.com">Learn More at ValueToVictory.com &rarr;</a>
+    </div>
+
+    <div class="page-footer">
+      <div class="tagline">"Don't guess. Run the system."</div>
+      <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>
+    </div>
+  </div>
+
+  <script>
+    var assessmentId = null;
+    var teamId = null;
+    var isMember = false;
+
+    (async function() {
+      var path = window.location.pathname;
+      var match = path.match(/\/premium\/(\d+)/);
+      if (!match) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'flex';
+        return;
+      }
+      assessmentId = match[1];
+
+      try {
+        var resp = await fetch('/api/report/' + assessmentId);
+        if (!resp.ok) throw new Error('not found');
+        var data = await resp.json();
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+
+        var a = data.assessment;
+        var name = (data.contact.firstName || '') + ' ' + (data.contact.lastName || '');
+        document.getElementById('userName').textContent = name;
+        document.getElementById('backLink').href = '/report/' + assessmentId;
+
+        var rangeBadge = { Crisis: 'range-crisis', Survival: 'range-survival', Growth: 'range-growth', Momentum: 'range-momentum', Mastery: 'range-mastery' };
+        var badge = document.getElementById('scoreBadge');
+        badge.textContent = a.masterScore + ' — ' + a.scoreRange;
+        badge.className = 'score-inline ' + (rangeBadge[a.scoreRange] || '');
+
+        teamId = a.teamId;
+        renderButtons(false);
+      } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'flex';
+      }
+    })();
+
+    function renderButtons(memberAccess) {
+      var actionHtml, counselorHtml, teamHtml;
+      if (memberAccess) {
+        actionHtml = '<a class="card-btn btn-gold" href="/action-plan/' + assessmentId + '">View Action Plan</a>';
+        counselorHtml = '<a class="card-btn btn-blue" href="/counselor-report/' + assessmentId + '">View Counselor Report</a>';
+        teamHtml = teamId
+          ? '<a class="card-btn btn-teal" href="/team-report/' + teamId + '">View Team Report</a>'
+          : '<span style="color:#71717a;font-size:0.8rem;">Requires a team assessment</span>';
+        document.getElementById('upsellSection').style.display = 'none';
+      } else {
+        actionHtml = '<a class="card-btn btn-pay" href="https://buy.stripe.com/aFa4gy9oEbmkaBr43W6oo04">Get This Report — $1.99</a>';
+        counselorHtml = '<a class="card-btn btn-pay" href="https://buy.stripe.com/fZu9ASdEU9ec10R1VO6oo05">Get This Report — $1.99</a>';
+        teamHtml = teamId
+          ? '<a class="card-btn btn-pay" href="https://buy.stripe.com/28E14m0S82POeRH5806oo06">Get This Report — $1.99</a>'
+          : '<span style="color:#71717a;font-size:0.8rem;">Requires a team assessment</span>';
+      }
+      document.getElementById('actionBtn').innerHTML = actionHtml;
+      document.getElementById('counselorBtn').innerHTML = counselorHtml;
+      document.getElementById('teamBtn').innerHTML = teamHtml;
+    }
+
+    async function checkMembership() {
+      var email = document.getElementById('memberEmail').value.trim();
+      if (!email) return;
+
+      var statusEl = document.getElementById('membershipStatus');
+      statusEl.style.display = 'block';
+      statusEl.className = 'membership-status';
+      statusEl.textContent = 'Checking membership...';
+
+      try {
+        var resp = await fetch('/api/premium/check-membership?email=' + encodeURIComponent(email));
+        var data = await resp.json();
+
+        if (data.isMember) {
+          isMember = true;
+          statusEl.className = 'membership-status membership-active';
+          statusEl.textContent = '✓ Active ' + (data.tier || 'Member') + ' — All premium reports unlocked!';
+          renderButtons(true);
+        } else {
+          statusEl.className = 'membership-status membership-inactive';
+          statusEl.textContent = 'No active membership found for this email. Purchase individual reports below or join VictoryPath for unlimited access.';
+          renderButtons(false);
+        }
+      } catch (e) {
+        statusEl.className = 'membership-status membership-inactive';
+        statusEl.textContent = 'Could not verify membership. You can still purchase individual reports below.';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Value Engine — Counselor/Coach Handoff Report</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+    .loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .loading-text { color: #a1a1aa; font-size: 1.125rem; }
+    .error-view { display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+    .error-view h2 { color: #ef4444; margin-bottom: 1rem; }
+    .error-view a { color: #3b82f6; }
+    .report { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: #a1a1aa; text-decoration: none; font-size: 0.85rem; }
+    .back-link:hover { color: #D4A847; }
+
+    .report-header { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid #27272a; margin-bottom: 2rem; }
+    .report-header .brand { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    .report-header .title { font-family: 'Instrument Serif', serif; font-size: 1.5rem; font-style: italic; color: #d4d4d8; margin-bottom: 0.25rem; }
+    .report-header .subtitle { font-size: 0.8rem; color: #71717a; font-style: italic; margin-bottom: 1.5rem; }
+    .client-info { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; text-align: left; max-width: 400px; margin: 0 auto; }
+    .client-info .label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #71717a; font-weight: 600; }
+    .client-info .value { font-size: 0.9rem; color: #d4d4d8; margin-bottom: 0.75rem; }
+
+    .section { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; margin-bottom: 1.25rem; font-weight: 700; }
+    .section-number { display: inline-block; width: 24px; height: 24px; background: #D4A847; color: #0a0a0a; border-radius: 50%; text-align: center; line-height: 24px; font-size: 0.75rem; font-weight: 700; margin-right: 0.5rem; }
+
+    /* Score summary */
+    .score-summary { text-align: center; padding: 1.5rem 0; }
+    .master-score-lg { font-size: 3.5rem; font-weight: 900; line-height: 1; }
+    .score-range-text { font-size: 1rem; font-weight: 700; margin-top: 0.25rem; }
+    .score-context { font-size: 0.8rem; color: #71717a; margin-top: 0.5rem; }
+
+    .score-crisis { color: #ef4444; }
+    .score-survival { color: #f97316; }
+    .score-growth { color: #eab308; }
+    .score-momentum { color: #22c55e; }
+    .score-mastery { color: #D4A847; }
+
+    /* Pillar bars */
+    .pillar-bars { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.25rem; }
+    .pillar-bar { display: flex; align-items: center; gap: 0.75rem; }
+    .pillar-label { width: 80px; font-size: 0.8rem; font-weight: 600; flex-shrink: 0; }
+    .pillar-track { flex: 1; height: 24px; background: #27272a; border-radius: 0.375rem; overflow: hidden; }
+    .pillar-fill { height: 100%; border-radius: 0.375rem; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.5rem; }
+    .pillar-fill span { font-size: 0.7rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    .pillar-time { background: linear-gradient(90deg, #D4A847, #b8942e); }
+    .pillar-people { background: linear-gradient(90deg, #f472b6, #db2777); }
+    .pillar-influence { background: linear-gradient(90deg, #2dd4bf, #0d9488); }
+    .pillar-numbers { background: linear-gradient(90deg, #60a5fa, #2563eb); }
+    .pillar-knowledge { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
+
+    /* Attention items */
+    .attention-group { margin-bottom: 1.25rem; }
+    .attention-group:last-child { margin-bottom: 0; }
+    .attention-group-header { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; padding-bottom: 0.375rem; border-bottom: 1px solid #27272a; }
+    .attention-item { padding: 0.75rem; background: #0a0a0a; border-left: 3px solid #ef4444; border-radius: 0 0.375rem 0.375rem 0; margin-bottom: 0.5rem; }
+    .attention-item .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+    .attention-item .item-name { font-weight: 700; font-size: 0.85rem; color: #d4d4d8; }
+    .attention-item .item-score { font-size: 0.75rem; font-weight: 700; color: #ef4444; }
+    .attention-item .item-flag { font-size: 0.8rem; color: #a1a1aa; font-style: italic; }
+
+    /* Strengths */
+    .strength-item { padding: 0.75rem; background: #0a0a0a; border-left: 3px solid #22c55e; border-radius: 0 0.375rem 0.375rem 0; margin-bottom: 0.5rem; }
+    .strength-item .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+    .strength-item .item-name { font-weight: 700; font-size: 0.85rem; color: #d4d4d8; }
+    .strength-item .item-score { font-size: 0.75rem; font-weight: 700; color: #22c55e; }
+    .strength-item .item-flag { font-size: 0.8rem; color: #a1a1aa; font-style: italic; }
+
+    /* Focus areas */
+    .focus-item { padding: 1rem; background: #0a0a0a; border-left: 3px solid #f97316; border-radius: 0 0.375rem 0.375rem 0; margin-bottom: 0.75rem; }
+    .focus-item h4 { font-size: 0.9rem; color: #f97316; margin-bottom: 0.375rem; }
+    .focus-item p { font-size: 0.825rem; color: #a1a1aa; }
+
+    /* Interventions */
+    .intervention-item { padding: 0.75rem; background: #0a0a0a; border-radius: 0.375rem; margin-bottom: 0.5rem; font-size: 0.85rem; }
+    .intervention-item .int-source { font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem; }
+    .int-ve { color: #D4A847; }
+    .int-general { color: #71717a; }
+    .intervention-item .int-text { color: #d4d4d8; }
+
+    .disclaimer { background: #0a0a0a; border: 1px solid #27272a; border-radius: 0.5rem; padding: 1rem; margin-top: 1.5rem; }
+    .disclaimer p { font-size: 0.75rem; color: #71717a; margin-bottom: 0.25rem; }
+    .disclaimer p:last-child { margin-bottom: 0; }
+    .disclaimer a { color: #3b82f6; text-decoration: none; }
+
+    .report-footer { text-align: center; padding: 3rem 0 2rem; border-top: 1px solid #27272a; margin-top: 2rem; }
+    .report-footer .tagline { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1.125rem; color: #D4A847; margin-bottom: 1rem; }
+    .report-footer .copy { color: #71717a; font-size: 0.8rem; }
+    .report-footer a { color: #3b82f6; text-decoration: none; }
+
+    @media print {
+      body { background: #fff; color: #000; }
+      .back-link { display: none; }
+      .section { border-color: #ddd; }
+      .attention-item, .strength-item, .focus-item, .intervention-item { background: #f9f9f9; }
+    }
+    @media (max-width: 520px) {
+      .report { padding: 1.5rem 1rem 3rem; }
+      .client-info { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading"><span class="loading-text">Loading counselor report...</span></div>
+  <div id="error" class="error-view" style="display:none;">
+    <div><h2>Report Not Found</h2><p style="color:#a1a1aa;margin-bottom:1rem;">This assessment could not be loaded.</p><a href="https://assessment.valuetovictory.com">Take the Assessment</a></div>
+  </div>
+  <div id="report" class="report" style="display:none;"></div>
+
+  <script>
+    var pillarColors = { Time: '#D4A847', People: '#f472b6', Influence: '#2dd4bf', Numbers: '#60a5fa', Knowledge: '#a78bfa' };
+    var pillarClasses = { Time: 'pillar-time', People: 'pillar-people', Influence: 'pillar-influence', Numbers: 'pillar-numbers', Knowledge: 'pillar-knowledge' };
+    var rangeColors = { Crisis: 'score-crisis', Survival: 'score-survival', Growth: 'score-growth', Momentum: 'score-momentum', Mastery: 'score-mastery' };
+
+    var subCategoryMap = {
+      Time: [['Time Awareness','timeAwareness'],['Time Allocation','timeAllocation'],['Time Protection','timeProtection'],['Time Leverage','timeLeverage'],['Five-Hour Leak','fiveHourLeak'],['Value Per Hour','valuePerHour'],['Time Investment','timeInvestment'],['Downtime Quality','downtimeQuality'],['Foresight','foresight'],['Time Reallocation','timeReallocation']],
+      People: [['Trust Investment','trustInvestment'],['Boundary Quality','boundaryQuality'],['Network Depth','networkDepth'],['Relational ROI','relationalRoi'],['People Audit','peopleAudit'],['Alliance Building','allianceBuilding'],['Love Bank Deposits','loveBankDeposits'],['Communication Clarity','communicationClarity'],['Restraint Practice','restraintPractice'],['Value Replacement','valueReplacement']],
+      Influence: [['Leadership Level','leadershipLevel'],['Integrity Alignment','integrityAlignment'],['Professional Credibility','professionalCredibility'],['Empathetic Listening','empatheticListening'],['Gravitational Center','gravitationalCenter'],['Micro-Honesties','microHonesties'],['Word Management','wordManagement'],['Personal Responsibility','personalResponsibility'],['Adaptive Influence','adaptiveInfluence'],['Influence Multiplier','influenceMultiplier']],
+      Numbers: [['Financial Awareness','financialAwareness'],['Goal Specificity','goalSpecificity'],['Investment Logic','investmentLogic'],['Measurement Habit','measurementHabit'],['Cost vs Value','costVsValue'],['Number One Clarity','numberOneClarity'],['Small Improvements','smallImprovements'],['Negative Math','negativeMath'],['Income Multiplier','incomeMultiplier'],['Negotiation Skill','negotiationSkill']],
+      Knowledge: [['Learning Hours','learningHours'],['Application Rate','applicationRate'],['Bias Awareness','biasAwareness'],['Highest & Best Use','highestBestUse'],['Supply & Demand','supplyAndDemand'],['Substitution Risk','substitutionRisk'],['Double Jeopardy','doubleJeopardy'],['Knowledge Compounding','knowledgeCompounding'],['Weighted Analysis','weightedAnalysis'],['Perception vs Perspective','perceptionVsPerspective']]
+    };
+
+    // Clinical-style descriptions for low-scoring sub-categories
+    var clinicalDescriptions = {
+      "Time Awareness": "Client reports inability to account for time usage. Suggests potential issues with executive function, avoidance patterns, or lack of structured routine.",
+      "Time Allocation": "Client reports poor prioritization of important tasks. May indicate overwhelm, lack of clear goals, or reactive rather than proactive behavior patterns.",
+      "Time Protection": "Client reports inability to protect scheduled time. Suggests boundary issues, people-pleasing tendencies, or lack of assertiveness.",
+      "Time Leverage": "Client reports doing tasks below their capability level. May indicate control issues, trust deficits with delegation, or unclear role boundaries.",
+      "Five-Hour Leak": "Client reports significant time lost to low-value activities. Suggests possible avoidance behavior, digital addiction patterns, or lack of awareness.",
+      "Value Per Hour": "Client reports not knowing their actual hourly worth. May indicate disconnection from financial reality or avoidance of self-evaluation.",
+      "Time Investment": "Client does not evaluate time commitments by expected return. Suggests lack of strategic thinking about time as a resource.",
+      "Downtime Quality": "Client reports poor quality rest and recovery time. May indicate inability to disconnect, avoidance through passive consumption, or burnout symptoms.",
+      "Foresight": "Client reports lack of proactive planning. Suggests reactive living patterns, potential anxiety about future, or executive function challenges.",
+      "Time Reallocation": "Client reports inability to redesign schedule around priorities. May indicate learned helplessness or fear of change.",
+      "Trust Investment": "Client reports low trust in key relationships. May indicate past betrayal, attachment issues, or inability to assess trustworthiness.",
+      "Boundary Quality": "Client reports weak personal boundaries. Suggests codependency patterns, low self-worth, or conflict avoidance.",
+      "Network Depth": "Client reports shallow professional and personal relationships. May indicate social anxiety, isolation patterns, or relational skill deficits.",
+      "Relational ROI": "Client reports investing in relationships that drain rather than energize. Suggests poor relationship evaluation skills or guilt-driven maintenance.",
+      "People Audit": "Client has not systematically evaluated relationship quality. May indicate avoidance of confronting relational patterns.",
+      "Alliance Building": "Client reports gaps in key alliance types. Suggests difficulty forming deep professional bonds or unclear understanding of relationship functions.",
+      "Love Bank Deposits": "Client reports underinvesting in key relationships. May indicate emotional unavailability, burnout, or taking relationships for granted.",
+      "Communication Clarity": "Client reports frequent miscommunications. Suggests possible assumptions in communication, listening deficits, or unclear expression.",
+      "Restraint Practice": "Client reports difficulty with communication restraint. May indicate emotional reactivity, impulsivity, or unprocessed anger.",
+      "Value Replacement": "Client reports difficulty exiting draining relationships. Suggests guilt, fear of conflict, or unclear understanding of healthy relationship standards.",
+      "Leadership Level": "Client reports operating at a low leadership level. May indicate lack of mentorship, unclear leadership identity, or positional dependence.",
+      "Integrity Alignment": "Client reports gap between stated and lived values. Suggests cognitive dissonance, values confusion, or situational ethics patterns.",
+      "Professional Credibility": "Client reports low professional credibility. May indicate imposter syndrome, lack of follow-through, or unclear personal brand.",
+      "Empathetic Listening": "Client reports poor listening skills. Suggests self-focus in conversations, attention deficits, or lack of empathy development.",
+      "Gravitational Center": "Client reports unclear core values. May indicate identity confusion, values inherited rather than chosen, or life transition.",
+      "Micro-Honesties": "Client reports patterns of small dishonesty. Suggests anxiety about perception, people-pleasing through exaggeration, or integrity erosion.",
+      "Word Management": "Client reports inconsistency between commitments and follow-through. May indicate over-commitment, poor self-awareness, or boundary issues.",
+      "Personal Responsibility": "Client reports tendency to externalize blame. Suggests victim mindset, learned helplessness, or lack of agency.",
+      "Adaptive Influence": "Client reports difficulty adjusting communication to audience. May indicate rigid thinking patterns or low social-emotional intelligence.",
+      "Influence Multiplier": "Client reports limited influence on others. Suggests leadership ceiling, potential isolation, or underdeveloped influence skills.",
+      "Financial Awareness": "Client reports inability to articulate financial position. May indicate avoidance, financial anxiety, or disorganization.",
+      "Goal Specificity": "Client reports no measurable goals. May indicate decision paralysis, fear of commitment, or lack of clarity on values.",
+      "Investment Logic": "Client reports spending without evaluating returns. Suggests impulsive financial behavior or lack of financial literacy.",
+      "Measurement Habit": "Client does not track key metrics. May indicate avoidance of accountability or lack of structured approach to improvement.",
+      "Cost vs Value": "Client does not distinguish between costs and investments. Suggests underdeveloped financial reasoning or consumption-focused mindset.",
+      "Number One Clarity": "Client reports unclear top priority. May indicate decision paralysis, competing commitments, or lack of strategic clarity.",
+      "Small Improvements": "Client reports not making incremental improvements. Suggests all-or-nothing thinking, perfectionism, or lack of growth mindset.",
+      "Negative Math": "Client reports maintaining negative-ROI commitments. Suggests sunk cost fallacy thinking or fear of change.",
+      "Income Multiplier": "Client reports no strategy for income growth. May indicate fixed mindset about earning, learned helplessness, or career stagnation.",
+      "Negotiation Skill": "Client reports discomfort with negotiation. May indicate conflict avoidance, low self-worth, or lack of practice.",
+      "Learning Hours": "Client reports minimal intentional learning. Suggests lack of growth orientation, time constraints, or unclear development path.",
+      "Application Rate": "Client reports learning without applying. May indicate information hoarding, fear of failure, or knowing-doing gap.",
+      "Bias Awareness": "Client reports low awareness of cognitive biases. Suggests overconfidence in own judgment or lack of exposure to diverse thinking.",
+      "Highest & Best Use": "Client reports spending time on activities below their capability. May indicate poor delegation, unclear strengths, or lack of strategic self-deployment.",
+      "Supply & Demand": "Client reports not understanding their market value. Suggests disconnection from industry, undervaluing own skills, or stagnation.",
+      "Substitution Risk": "Client reports high vulnerability to replacement by AI or cheaper labor. May indicate lack of specialized skills or failure to evolve.",
+      "Double Jeopardy": "Client reports repeating similar mistakes. Suggests lack of reflection practice, poor learning systems, or emotional decision patterns.",
+      "Knowledge Compounding": "Client reports inability to connect knowledge across domains. May indicate narrow thinking patterns or isolated learning.",
+      "Weighted Analysis": "Client reports making decisions without structured analysis. Suggests impulsive decision-making or lack of analytical frameworks.",
+      "Perception vs Perspective": "Client reports difficulty seeing situations from other viewpoints. May indicate cognitive rigidity, echo chamber effects, or empathy deficits."
+    };
+
+    // Interventions by pillar (Value Engine first)
+    var interventionsByPillar = {
+      Time: [
+        { source: "Value Engine", text: "Time Audit (Tool #2) — structured time tracking exercise to establish baseline awareness" },
+        { source: "Value Engine", text: "Value Per Hour Calculator (Tool #5) — quantify the cost of misallocated time" },
+        { source: "Value Engine", text: "Time Reallocation Planner (Tool #9) — redesign weekly schedule around highest-value activities" },
+        { source: "General", text: "Cognitive behavioral approaches for time management and procrastination" },
+        { source: "General", text: "Executive function coaching if time awareness is persistently low" },
+        { source: "General", text: "Mindfulness-based stress reduction for overwhelm-driven time mismanagement" }
+      ],
+      People: [
+        { source: "Value Engine", text: "People Audit (Tool #3) — relationship mapping by type (Givers, Receivers, Exchangers, Takers)" },
+        { source: "Value Engine", text: "Relationship Matrix (Tool #6) — classify network by alliance type" },
+        { source: "Value Engine", text: "Value Replacement Map (Tool #10) — strategic relational energy reallocation" },
+        { source: "General", text: "Attachment theory assessment for relationship pattern analysis" },
+        { source: "General", text: "Assertiveness training for boundary-setting difficulties" },
+        { source: "General", text: "Emotionally Focused Therapy approaches for key relationship repair" }
+      ],
+      Influence: [
+        { source: "Value Engine", text: "Influence Ladder (Tool #8) — identify current leadership level and development path" },
+        { source: "Value Engine", text: "Gravitational Center Alignment (Tool #11) — values audit and integrity alignment" },
+        { source: "Value Engine", text: "4 Questions Filter — structured communication restraint tool" },
+        { source: "General", text: "Leadership development coaching focused on permission-based influence" },
+        { source: "General", text: "Emotional intelligence assessment and development" },
+        { source: "General", text: "Values clarification exercises if gravitational center is unclear" }
+      ],
+      Numbers: [
+        { source: "Value Engine", text: "Financial Snapshot (Tool #4) — document actual income, expenses, surplus/deficit" },
+        { source: "Value Engine", text: "Income Multiplier Model (Tool #12) — map compound improvements over 90 days" },
+        { source: "Value Engine", text: "Number One Clarity principle — establish single priority focus" },
+        { source: "General", text: "Goal-setting frameworks (SMART goals augmented by Value Engine principles)" },
+        { source: "General", text: "Financial therapy approaches if financial avoidance is present" },
+        { source: "General", text: "Decision-making frameworks for analysis paralysis" }
+      ],
+      Knowledge: [
+        { source: "Value Engine", text: "Knowledge ROI Calculator (Tool #7) — measure returns on learning investment" },
+        { source: "Value Engine", text: "Double Jeopardy principle — structured mistake-to-lesson conversion" },
+        { source: "Value Engine", text: "Highest & Best Use framework — strategic skill deployment" },
+        { source: "General", text: "Learning style assessment to optimize knowledge acquisition" },
+        { source: "General", text: "Cognitive flexibility exercises for perspective-taking deficits" },
+        { source: "General", text: "Career development coaching for supply/demand positioning" }
+      ]
+    };
+
+    (async function() {
+      var path = window.location.pathname;
+      var match = path.match(/\/counselor-report\/(\d+)/);
+      if (!match) { document.getElementById('loading').style.display='none'; document.getElementById('error').style.display='flex'; return; }
+      var assessmentId = match[1];
+
+      try {
+        var resp = await fetch('/api/report/' + assessmentId);
+        if (!resp.ok) throw new Error('not found');
+        var data = await resp.json();
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('report').style.display = 'block';
+        renderCounselorReport(data, assessmentId);
+      } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'flex';
+      }
+    })();
+
+    function renderCounselorReport(data, assessmentId) {
+      var a = data.assessment;
+      var rx = data.prescription || {};
+      var pct = data.percentiles || {};
+      var name = (data.contact.firstName || '') + ' ' + (data.contact.lastName || '');
+      var d = new Date(a.completedAt);
+
+      var html = '';
+      html += '<a class="back-link" href="/premium/' + assessmentId + '">&larr; Back to Premium Reports</a>';
+
+      // Header
+      html += '<div class="report-header">';
+      html += '<div class="brand">VALUE ENGINE</div>';
+      html += '<div class="title">Client Assessment Summary</div>';
+      html += '<div class="subtitle">Prepared for use by counselors, therapists, coaches, and mentors</div>';
+      html += '<div class="client-info">';
+      html += '<div><div class="label">Client Name</div><div class="value">' + name + '</div></div>';
+      html += '<div><div class="label">Assessment Date</div><div class="value">' + d.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }) + '</div></div>';
+      html += '<div><div class="label">Assessment ID</div><div class="value">#' + a.id + '</div></div>';
+      html += '<div><div class="label">Assessment Mode</div><div class="value">' + (a.mode || 'Individual') + '</div></div>';
+      html += '</div></div>';
+
+      // Section 1: Score Summary
+      html += '<div class="section">';
+      html += '<div class="section-title"><span class="section-number">1</span> Score Summary</div>';
+      html += '<div class="score-summary">';
+      html += '<div class="master-score-lg ' + (rangeColors[a.scoreRange] || '') + '">' + a.masterScore + '</div>';
+      html += '<div class="score-range-text ' + (rangeColors[a.scoreRange] || '') + '">' + a.scoreRange + ' Range</div>';
+      html += '<div class="score-context">Master Value Score: ' + a.masterScore + '/250 (Raw: ' + a.rawScore + ', Time Multiplier: ' + a.timeMultiplier + 'x)</div>';
+      if (pct.masterScore !== undefined) {
+        html += '<div class="score-context">Ranks higher than ' + pct.masterScore + '% of all assessment takers</div>';
+      }
+      html += '</div>';
+      // Pillar bars
+      html += '<div class="pillar-bars">';
+      var pillars = [
+        { name: 'Time', score: a.timeTotal },
+        { name: 'People', score: a.peopleTotal },
+        { name: 'Influence', score: a.influenceTotal },
+        { name: 'Numbers', score: a.numbersTotal },
+        { name: 'Knowledge', score: a.knowledgeTotal }
+      ];
+      pillars.forEach(function(p) {
+        var pctWidth = Math.min(100, (p.score / 50) * 100);
+        html += '<div class="pillar-bar"><div class="pillar-label" style="color:' + pillarColors[p.name] + '">' + p.name + '</div>';
+        html += '<div class="pillar-track"><div class="pillar-fill ' + pillarClasses[p.name] + '" style="width:' + pctWidth + '%"><span>' + p.score + '/50</span></div></div></div>';
+      });
+      html += '</div></div>';
+
+      // Section 2: Areas Requiring Attention (scores 1-2)
+      html += '<div class="section">';
+      html += '<div class="section-title"><span class="section-number">2</span> Areas Requiring Attention</div>';
+      var hasAttention = false;
+      ['Time','People','Influence','Numbers','Knowledge'].forEach(function(pillarName) {
+        var subs = subCategoryMap[pillarName] || [];
+        var lowSubs = [];
+        subs.forEach(function(sub) {
+          var val = a[sub[1]] || 0;
+          if (val <= 2) lowSubs.push({ name: sub[0], score: val });
+        });
+        if (lowSubs.length > 0) {
+          hasAttention = true;
+          html += '<div class="attention-group">';
+          html += '<div class="attention-group-header" style="color:' + pillarColors[pillarName] + '">' + pillarName + '</div>';
+          lowSubs.forEach(function(ls) {
+            var desc = clinicalDescriptions[ls.name] || 'Client self-reported low functioning in this area.';
+            html += '<div class="attention-item">';
+            html += '<div class="item-header"><span class="item-name">' + ls.name + '</span><span class="item-score">' + ls.score + '/5</span></div>';
+            html += '<div class="item-flag">' + desc + '</div>';
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+      });
+      if (!hasAttention) {
+        html += '<p style="color:#22c55e;font-size:0.9rem;">No sub-categories scored in the critical range (1-2). Client shows baseline competency across all areas.</p>';
+      }
+      html += '</div>';
+
+      // Section 3: Strengths (scores 4-5)
+      html += '<div class="section">';
+      html += '<div class="section-title"><span class="section-number">3</span> Client Strengths</div>';
+      var hasStrengths = false;
+      ['Time','People','Influence','Numbers','Knowledge'].forEach(function(pillarName) {
+        var subs = subCategoryMap[pillarName] || [];
+        var highSubs = [];
+        subs.forEach(function(sub) {
+          var val = a[sub[1]] || 0;
+          if (val >= 4) highSubs.push({ name: sub[0], score: val });
+        });
+        if (highSubs.length > 0) {
+          hasStrengths = true;
+          html += '<div class="attention-group">';
+          html += '<div class="attention-group-header" style="color:' + pillarColors[pillarName] + '">' + pillarName + '</div>';
+          highSubs.forEach(function(hs) {
+            html += '<div class="strength-item">';
+            html += '<div class="item-header"><span class="item-name">' + hs.name + '</span><span class="item-score">' + hs.score + '/5</span></div>';
+            html += '<div class="item-flag">Client self-reported high functioning in this area.</div>';
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+      });
+      if (!hasStrengths) {
+        html += '<p style="color:#a1a1aa;font-size:0.9rem;">No sub-categories scored 4 or above. Focus on building from current levels.</p>';
+      }
+      html += '</div>';
+
+      // Section 4: Recommended Focus Areas (top 3 lowest)
+      html += '<div class="section">';
+      html += '<div class="section-title"><span class="section-number">4</span> Recommended Focus Areas</div>';
+      var allSubs = [];
+      ['Time','People','Influence','Numbers','Knowledge'].forEach(function(pillarName) {
+        var subs = subCategoryMap[pillarName] || [];
+        subs.forEach(function(sub) {
+          allSubs.push({ pillar: pillarName, name: sub[0], score: a[sub[1]] || 0 });
+        });
+      });
+      allSubs.sort(function(x, y) { return x.score - y.score; });
+      var focusAreas = allSubs.slice(0, 3);
+      focusAreas.forEach(function(fa) {
+        var desc = clinicalDescriptions[fa.name] || 'Client self-reported low functioning in this area.';
+        html += '<div class="focus-item">';
+        html += '<h4>' + fa.name + ' (' + fa.score + '/5) — ' + fa.pillar + ' Pillar</h4>';
+        html += '<p>' + desc + '</p>';
+        html += '</div>';
+      });
+      html += '</div>';
+
+      // Section 5: Suggested Interventions
+      html += '<div class="section">';
+      html += '<div class="section-title"><span class="section-number">5</span> Suggested Interventions</div>';
+      // Get interventions for the weakest 2 pillars
+      var sortedPillars = [...pillars].sort(function(a, b) { return a.score - b.score; });
+      var weakPillars = [sortedPillars[0].name];
+      if (sortedPillars[1].score < 30) weakPillars.push(sortedPillars[1].name);
+
+      weakPillars.forEach(function(pn) {
+        var ints = interventionsByPillar[pn] || [];
+        html += '<p style="font-weight:700;font-size:0.85rem;margin-bottom:0.75rem;color:' + pillarColors[pn] + '">' + pn + ' Pillar Interventions:</p>';
+        ints.forEach(function(int) {
+          var srcClass = int.source === 'Value Engine' ? 'int-ve' : 'int-general';
+          html += '<div class="intervention-item">';
+          html += '<div class="int-source ' + srcClass + '">' + int.source + '</div>';
+          html += '<div class="int-text">' + int.text + '</div>';
+          html += '</div>';
+        });
+      });
+      html += '</div>';
+
+      // Disclaimer / Footer
+      html += '<div class="disclaimer">';
+      html += '<p><strong>This report was generated by The Value Engine P.I.N.K. Assessment System</strong></p>';
+      html += '<p>For the full framework, refer to "The Lost Art of Value: Time for P.I.N.K." by Shawn E. Decker</p>';
+      html += '<p><a href="https://valuetovictory.com">valuetovictory.com</a></p>';
+      html += '<p style="margin-top:0.75rem;"><strong>Disclaimer:</strong> This is a self-assessment tool and should not be used as a clinical diagnosis. Results reflect the client\'s self-reported perceptions at the time of assessment.</p>';
+      html += '</div>';
+
+      html += '<div class="report-footer">';
+      html += '<div class="tagline">"Don\'t guess. Run the system."</div>';
+      html += '<div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>';
+      html += '</div>';
+
+      document.getElementById('report').innerHTML = html;
+    }
+  </script>
+</body>
+</html>

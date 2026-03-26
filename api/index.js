@@ -313,6 +313,32 @@ module.exports = async (req, res) => {
 
       const assessment = rows[0];
 
+      // Auto-insert feedback row for weakness tracking (Feature 4)
+      try {
+        const allSubs = [
+          ...Object.entries(prescription.pillars ? {} : {})  // unused, just for structure
+        ];
+        // Collect all sub-category scores to find weakest 5
+        const subScores = [];
+        const pillarSubs = {
+          Time: { "Time Awareness": d.time_awareness, "Time Allocation": d.time_allocation, "Time Protection": d.time_protection, "Time Leverage": d.time_leverage, "Five-Hour Leak": d.five_hour_leak, "Value Per Hour": d.value_per_hour, "Time Investment": d.time_investment, "Downtime Quality": d.downtime_quality, "Foresight": d.foresight, "Time Reallocation": d.time_reallocation },
+          People: { "Trust Investment": d.trust_investment, "Boundary Quality": d.boundary_quality, "Network Depth": d.network_depth, "Relational ROI": d.relational_roi, "People Audit": d.people_audit, "Alliance Building": d.alliance_building, "Love Bank Deposits": d.love_bank_deposits, "Communication Clarity": d.communication_clarity, "Restraint Practice": d.restraint_practice, "Value Replacement": d.value_replacement },
+          Influence: { "Leadership Level": d.leadership_level, "Integrity Alignment": d.integrity_alignment, "Professional Credibility": d.professional_credibility, "Empathetic Listening": d.empathetic_listening, "Gravitational Center": d.gravitational_center, "Micro-Honesties": d.micro_honesties, "Word Management": d.word_management, "Personal Responsibility": d.personal_responsibility, "Adaptive Influence": d.adaptive_influence, "Influence Multiplier": d.influence_multiplier },
+          Numbers: { "Financial Awareness": d.financial_awareness, "Goal Specificity": d.goal_specificity, "Investment Logic": d.investment_logic, "Measurement Habit": d.measurement_habit, "Cost vs Value": d.cost_vs_value, "Number One Clarity": d.number_one_clarity, "Small Improvements": d.small_improvements, "Negative Math": d.negative_math, "Income Multiplier": d.income_multiplier, "Negotiation Skill": d.negotiation_skill },
+          Knowledge: { "Learning Hours": d.learning_hours, "Application Rate": d.application_rate, "Bias Awareness": d.bias_awareness, "Highest & Best Use": d.highest_best_use, "Supply & Demand": d.supply_and_demand, "Substitution Risk": d.substitution_risk, "Double Jeopardy": d.double_jeopardy, "Knowledge Compounding": d.knowledge_compounding, "Weighted Analysis": d.weighted_analysis, "Perception vs Perspective": d.perception_vs_perspective }
+        };
+        for (const [pillar, subs] of Object.entries(pillarSubs)) {
+          for (const [name, score] of Object.entries(subs)) {
+            subScores.push({ pillar, name, score });
+          }
+        }
+        const weakest5 = subScores.filter(s => s.score <= 2).sort((a, b) => a.score - b.score).slice(0, 5);
+        await sql`INSERT INTO feedback (contact_id, assessment_id, weakest_pillar, weakest_sub_categories, score_range)
+          VALUES (${contact.id}, ${assessment.id}, ${prescription.weakestPillar}, ${JSON.stringify(weakest5)}, ${scoreRange})`;
+      } catch (feedbackErr) {
+        console.error('Feedback insert error (non-fatal):', feedbackErr.message);
+      }
+
       // Upsert answer_history for each question answered in this session
       if (questionIds.length > 0) {
         try {
@@ -919,6 +945,826 @@ Don't guess. Run the system.
       } catch (e) {
         return res.json({ enrolled: false, error: 'Challenge system not initialized. Run migration first.', details: e.message });
       }
+    }
+
+    // GET /api/admin/feedback-summary — aggregated feedback data (Feature 4)
+    if (req.method === 'GET' && url === '/admin/feedback-summary') {
+      try {
+        const totalFeedback = await sql`SELECT COUNT(*) as cnt FROM feedback`;
+        const total = Number(totalFeedback[0].cnt);
+        const pillarDist = await sql`SELECT weakest_pillar, COUNT(*) as cnt FROM feedback GROUP BY weakest_pillar ORDER BY cnt DESC`;
+        const rangeDist = await sql`SELECT score_range, COUNT(*) as cnt FROM feedback GROUP BY score_range ORDER BY cnt DESC`;
+        // Aggregate weakest sub-categories across all feedback
+        const allFeedback = await sql`SELECT weakest_sub_categories FROM feedback WHERE weakest_sub_categories IS NOT NULL`;
+        const subCounts = {};
+        for (const row of allFeedback) {
+          const subs = typeof row.weakest_sub_categories === 'string' ? JSON.parse(row.weakest_sub_categories) : row.weakest_sub_categories;
+          if (Array.isArray(subs)) {
+            for (const s of subs) {
+              const key = s.name || s.pillar;
+              subCounts[key] = (subCounts[key] || 0) + 1;
+            }
+          }
+        }
+        const topWeakSubs = Object.entries(subCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, count]) => ({ name, count, percent: total > 0 ? Math.round((count / total) * 100) : 0 }));
+        return res.json({
+          totalFeedbackRows: total,
+          weakestPillarDistribution: pillarDist.map(r => ({ pillar: r.weakest_pillar, count: Number(r.cnt), percent: total > 0 ? Math.round((Number(r.cnt) / total) * 100) : 0 })),
+          scoreRangeDistribution: rangeDist.map(r => ({ range: r.score_range, count: Number(r.cnt) })),
+          topWeakestSubCategories: topWeakSubs,
+        });
+      } catch (e) {
+        return res.json({ error: 'Feedback table not initialized. Run migration first.', details: e.message });
+      }
+    }
+
+    // GET /api/recommendations?pillar={pillar}&subCategory={subCategory} (Feature 5)
+    if (req.method === 'GET' && url.startsWith('/recommendations')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const pillar = params.get('pillar') || 'Time';
+      const subCategory = params.get('subCategory') || '';
+
+      // Get aggregate weakness data from feedback table
+      let percentWeak = 0;
+      try {
+        const totalRows = await sql`SELECT COUNT(*) as cnt FROM feedback`;
+        const total = Number(totalRows[0].cnt);
+        if (total > 0) {
+          const weakRows = await sql`SELECT COUNT(*) as cnt FROM feedback WHERE weakest_pillar = ${pillar}`;
+          percentWeak = Math.round((Number(weakRows[0].cnt) / total) * 100);
+        }
+      } catch (e) { /* table may not exist */ }
+
+      // Comprehensive recommendations database — Value Engine tools ALWAYS first
+      const recommendationsDB = {
+        Time: {
+          "Time Awareness": [
+            {rank:1,source:"Value Engine",action:"Run the Time Audit (Tool #2) — track every hour for 3 days to find where your time actually goes",reference:"Chapter 1, p.24"},
+            {rank:2,source:"Value Engine",action:"Calculate your Value Per Hour using Tool #5 — know what each hour is actually worth",reference:"Chapter 1, p.42"},
+            {rank:3,source:"Value Engine",action:"Use the Time Reallocation Planner (Tool #9) to redesign your week based on audit results",reference:"Chapter 1, p.78"},
+            {rank:4,source:"Practical",action:"Start a daily time log — write what you did every hour before bed for 7 straight days"},
+            {rank:5,source:"Practical",action:"Set 3 daily priorities each morning before checking email or phone"},
+            {rank:6,source:"Practical",action:"Use the Pomodoro technique — 25 min focused work, 5 min break"},
+            {rank:7,source:"Practical",action:"Block your peak energy hours for your most important work every day"},
+            {rank:8,source:"General",action:"Covey's 4 Quadrants framework — categorize all tasks by urgency vs importance"},
+            {rank:9,source:"General",action:"David Allen's 2-minute rule — if it takes less than 2 minutes, do it now"},
+            {rank:10,source:"General",action:"Weekly review habit — 30 minutes every Sunday to plan the week ahead"}
+          ],
+          "Time Allocation": [
+            {rank:1,source:"Value Engine",action:"Run the Time Reallocation Planner (Tool #9) — sort activities by Covey Quadrant",reference:"Chapter 1, p.78"},
+            {rank:2,source:"Value Engine",action:"Apply the 1,800-Hour Framework to identify how you spend your working hours",reference:"Chapter 1, p.30"},
+            {rank:3,source:"Value Engine",action:"Use the Time Audit (Tool #2) to compare planned vs actual time allocation",reference:"Chapter 1, p.24"},
+            {rank:4,source:"Practical",action:"Write your 3 most important tasks BEFORE checking email or phone tomorrow morning"},
+            {rank:5,source:"Practical",action:"Schedule your highest-value work during your peak energy window"},
+            {rank:6,source:"Practical",action:"Use time-blocking: assign every hour a purpose before the day starts"},
+            {rank:7,source:"Practical",action:"Batch similar tasks together — email, calls, admin — to reduce context switching"},
+            {rank:8,source:"General",action:"Apply the 80/20 rule — identify which 20% of tasks drive 80% of results"},
+            {rank:9,source:"General",action:"Eat the Frog — do your hardest, most important task first thing each day"},
+            {rank:10,source:"General",action:"Use a 'not-to-do' list to eliminate low-value activities"}
+          ],
+          "Time Protection": [
+            {rank:1,source:"Value Engine",action:"Apply the Time Protection principles from Chapter 1 — guard your Q2 hours",reference:"Chapter 1, p.34"},
+            {rank:2,source:"Value Engine",action:"Run the Time Audit (Tool #2) to identify who and what steals your time",reference:"Chapter 1, p.24"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 1 on creating non-negotiable time blocks aligned with your Value Per Hour",reference:"Chapter 1"},
+            {rank:4,source:"Practical",action:"Block 2 hours tomorrow as 'Do Not Disturb' time. Tell one person. Protect it."},
+            {rank:5,source:"Practical",action:"Turn off notifications during focus blocks — phone on airplane mode"},
+            {rank:6,source:"Practical",action:"Practice saying 'Let me check my schedule' instead of automatically saying yes"},
+            {rank:7,source:"Practical",action:"Set office hours for interruptions — train people when you're available"},
+            {rank:8,source:"General",action:"Cal Newport's Deep Work — schedule uninterrupted focus time daily"},
+            {rank:9,source:"General",action:"Establish a shutdown ritual — hard stop to protect personal time"},
+            {rank:10,source:"General",action:"Use physical signals (closed door, headphones) to communicate focus time"}
+          ],
+          "Time Leverage": [
+            {rank:1,source:"Value Engine",action:"Calculate your Value Per Hour (Tool #5) — know which tasks are below your rate",reference:"Chapter 1, p.42"},
+            {rank:2,source:"Value Engine",action:"Use the Time Reallocation Planner (Tool #9) to identify delegatable tasks",reference:"Chapter 1, p.78"},
+            {rank:3,source:"Value Engine",action:"Apply the Income Multiplier Model (Tool #12) — compound small time gains into big results",reference:"Chapter 4, p.156"},
+            {rank:4,source:"Practical",action:"Identify one task you do every week that someone else could do. Delegate it this week."},
+            {rank:5,source:"Practical",action:"Automate one recurring task using technology (auto-pay, email templates, scheduling tools)"},
+            {rank:6,source:"Practical",action:"Create standard operating procedures for tasks you repeat more than 3 times"},
+            {rank:7,source:"Practical",action:"Hire help for $20/hr tasks if your Value Per Hour is higher than that"},
+            {rank:8,source:"General",action:"Apply the 4 D's to every task: Do, Delegate, Defer, or Delete"},
+            {rank:9,source:"General",action:"Build systems, not just habits — create processes that run without you"},
+            {rank:10,source:"General",action:"Use templates and checklists to eliminate repeated decision-making"}
+          ],
+          "Five-Hour Leak": [
+            {rank:1,source:"Value Engine",action:"Run the Time Audit (Tool #2) specifically to find your Five-Hour Leak",reference:"Chapter 1, p.24"},
+            {rank:2,source:"Value Engine",action:"Calculate the dollar cost of your leak using Value Per Hour (Tool #5)",reference:"Chapter 1, p.42"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 1 on the Five-Hour Leak concept and how to eliminate it",reference:"Chapter 1, p.38"},
+            {rank:4,source:"Practical",action:"Set a screen time limit on your phone today. Track social media and TV hours for 3 days."},
+            {rank:5,source:"Practical",action:"Delete or move time-wasting apps off your home screen"},
+            {rank:6,source:"Practical",action:"Replace one hour of scrolling with one hour of skill-building this week"},
+            {rank:7,source:"Practical",action:"Use an app blocker during work hours to eliminate digital distractions"},
+            {rank:8,source:"General",action:"Track all screen time for one week — the data will shock you into action"},
+            {rank:9,source:"General",action:"Replace passive consumption (scrolling, watching) with active creation"},
+            {rank:10,source:"General",action:"Set a 'digital sunset' — no screens after a specific time each night"}
+          ],
+          "Value Per Hour": [
+            {rank:1,source:"Value Engine",action:"Run the Value Per Hour Calculator (Tool #5) — calculate your actual hourly worth",reference:"Chapter 1, p.42"},
+            {rank:2,source:"Value Engine",action:"Use the Income Multiplier Model (Tool #12) to map how to increase your rate",reference:"Chapter 4, p.156"},
+            {rank:3,source:"Value Engine",action:"Apply the 1,800-Hour Framework to understand your true earning capacity",reference:"Chapter 1, p.30"},
+            {rank:4,source:"Practical",action:"Calculate your actual hourly rate right now: monthly income ÷ hours worked. Write it on a sticky note."},
+            {rank:5,source:"Practical",action:"Stop doing tasks that pay below your hourly rate — delegate or eliminate them"},
+            {rank:6,source:"Practical",action:"Identify one skill that would increase your hourly rate by 20% and start learning it"},
+            {rank:7,source:"Practical",action:"Track how many 'high-value hours' vs 'low-value hours' you work each day"},
+            {rank:8,source:"General",action:"Price your time — before every commitment, calculate the real cost in dollars"},
+            {rank:9,source:"General",action:"Focus on income-producing activities during your best hours"},
+            {rank:10,source:"General",action:"Raise your rates or negotiate your salary — most people undercharge"}
+          ],
+          "Time Investment": [
+            {rank:1,source:"Value Engine",action:"Apply the Time Investment principle from Chapter 1 — every hour is a seed",reference:"Chapter 1, p.46"},
+            {rank:2,source:"Value Engine",action:"Use the Time Reallocation Planner (Tool #9) to shift time toward compounding activities",reference:"Chapter 1, p.78"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 1 on treating time as your most valuable investment",reference:"Chapter 1"},
+            {rank:4,source:"Practical",action:"Before saying yes to anything this week, ask: 'What is the expected return on this time?'"},
+            {rank:5,source:"Practical",action:"Invest 1 hour daily in a skill or relationship that compounds over time"},
+            {rank:6,source:"Practical",action:"Review your calendar weekly — is your time invested or just spent?"},
+            {rank:7,source:"Practical",action:"Create a 'time budget' like a financial budget — allocate hours to ROI categories"},
+            {rank:8,source:"General",action:"Warren Buffett's 5/25 rule — focus on your top 5 priorities, ignore the rest"},
+            {rank:9,source:"General",action:"Apply compound interest thinking to your time — small daily investments yield massive returns"},
+            {rank:10,source:"General",action:"Track your time ROI — measure what you got back from the time you invested"}
+          ],
+          "Downtime Quality": [
+            {rank:1,source:"Value Engine",action:"Audit your downtime using the Time Audit (Tool #2) — what's rest vs what's waste?",reference:"Chapter 1, p.24"},
+            {rank:2,source:"Value Engine",action:"Apply the Downtime Quality framework from Chapter 1 — strategic rest beats passive consumption",reference:"Chapter 1, p.52"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 1 on the difference between recovery and avoidance",reference:"Chapter 1"},
+            {rank:4,source:"Practical",action:"Replace one hour of scrolling or TV this week with something that builds toward a goal"},
+            {rank:5,source:"Practical",action:"Schedule active recovery: exercise, nature walks, reading, creative hobbies"},
+            {rank:6,source:"Practical",action:"Create a 'rest menu' — a list of activities that actually recharge you"},
+            {rank:7,source:"Practical",action:"Set boundaries on passive entertainment — limit Netflix/social media to specific hours"},
+            {rank:8,source:"General",action:"Distinguish between rest and avoidance — real rest prepares you for performance"},
+            {rank:9,source:"General",action:"Practice the Sabbath principle — one day per week fully disconnected from work"},
+            {rank:10,source:"General",action:"Use downtime for reflection — journal, meditate, or plan"}
+          ],
+          "Foresight": [
+            {rank:1,source:"Value Engine",action:"Apply the Foresight framework from Chapter 1 — anticipate before you react",reference:"Chapter 1, p.56"},
+            {rank:2,source:"Value Engine",action:"Use the Time Reallocation Planner (Tool #9) with a forward-looking lens",reference:"Chapter 1, p.78"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 1 on building foresight habits that prevent crises",reference:"Chapter 1"},
+            {rank:4,source:"Practical",action:"Spend 15 minutes every Sunday night planning your week. Write down what's coming."},
+            {rank:5,source:"Practical",action:"For every project, identify the top 3 risks before they happen"},
+            {rank:6,source:"Practical",action:"Keep a 90-day rolling plan — always know what's coming 3 months out"},
+            {rank:7,source:"Practical",action:"Before every meeting, prepare: what's the goal, what do I need, what could go wrong?"},
+            {rank:8,source:"General",action:"Pre-mortem technique — imagine the project failed, then work backward to prevent it"},
+            {rank:9,source:"General",action:"Scenario planning — for major decisions, map out best/worst/likely outcomes"},
+            {rank:10,source:"General",action:"Build buffer time into your schedule for the unexpected"}
+          ],
+          "Time Reallocation": [
+            {rank:1,source:"Value Engine",action:"Run the Time Reallocation Planner (Tool #9) to redesign your weekly schedule",reference:"Chapter 1, p.78"},
+            {rank:2,source:"Value Engine",action:"Use the Time Audit (Tool #2) results to identify what to cut, keep, or expand",reference:"Chapter 1, p.24"},
+            {rank:3,source:"Value Engine",action:"Apply Value Per Hour (Tool #5) as the filter for reallocation decisions",reference:"Chapter 1, p.42"},
+            {rank:4,source:"Practical",action:"Look at last week's calendar. Circle 3 activities that produced nothing. Replace them."},
+            {rank:5,source:"Practical",action:"Identify your top 3 time-wasters and eliminate or reduce one this week"},
+            {rank:6,source:"Practical",action:"Redirect freed-up time to your #1 priority — don't let it get absorbed"},
+            {rank:7,source:"Practical",action:"Review and adjust your schedule every week — treat your calendar like a budget"},
+            {rank:8,source:"General",action:"Apply the sunk cost fallacy awareness — don't continue bad time investments just because you started them"},
+            {rank:9,source:"General",action:"Create an 'ideal week' template and work toward it incrementally"},
+            {rank:10,source:"General",action:"Audit your commitments quarterly — resign from what no longer serves your goals"}
+          ]
+        },
+        People: {
+          "Trust Investment": [
+            {rank:1,source:"Value Engine",action:"Run the People Audit (Tool #3) — map your relationships by type: Givers, Receivers, Exchangers, Takers",reference:"Chapter 2, p.84"},
+            {rank:2,source:"Value Engine",action:"Apply the Relationship Matrix (Tool #6) — classify by alliance type",reference:"Chapter 2, p.98"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 2 on trust as an investment with measurable returns",reference:"Chapter 2"},
+            {rank:4,source:"Practical",action:"Pick one person you trust. Verify that trust with evidence — are they reliable? Do they follow through?"},
+            {rank:5,source:"Practical",action:"Track your trust deposits and withdrawals with key people for 2 weeks"},
+            {rank:6,source:"Practical",action:"Have one honest conversation this week where you share something real"},
+            {rank:7,source:"Practical",action:"Follow through on one promise perfectly this week — build your own trustworthiness"},
+            {rank:8,source:"General",action:"Trust but verify — combine good faith with evidence-based evaluation"},
+            {rank:9,source:"General",action:"Extend trust incrementally — small tests before big commitments"},
+            {rank:10,source:"General",action:"Repair broken trust quickly — the longer you wait, the harder it gets"}
+          ],
+          "Boundary Quality": [
+            {rank:1,source:"Value Engine",action:"Use the People Audit (Tool #3) to identify where boundaries are weak",reference:"Chapter 2, p.84"},
+            {rank:2,source:"Value Engine",action:"Apply the Value Replacement Map (Tool #10) to redirect energy from boundary violators",reference:"Chapter 2, p.112"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 2 on boundary quality as a measure of self-respect",reference:"Chapter 2"},
+            {rank:4,source:"Practical",action:"Identify one boundary you need to set. Write it down. Communicate it to one person this week."},
+            {rank:5,source:"Practical",action:"Practice saying 'no' to one request that doesn't align with your priorities"},
+            {rank:6,source:"Practical",action:"Set clear expectations at the start of every new relationship or project"},
+            {rank:7,source:"Practical",action:"When someone crosses a boundary, address it within 24 hours — don't let it fester"},
+            {rank:8,source:"General",action:"Boundaries are not walls — they're bridges with toll booths. Know the price of entry."},
+            {rank:9,source:"General",action:"Write your non-negotiables down and review them monthly"},
+            {rank:10,source:"General",action:"Remember: you teach people how to treat you by what you tolerate"}
+          ],
+          "Network Depth": [
+            {rank:1,source:"Value Engine",action:"Run the Relationship Matrix (Tool #6) — map Confidants, Constituents, Comrades, Companions",reference:"Chapter 2, p.98"},
+            {rank:2,source:"Value Engine",action:"Use the People Audit (Tool #3) to assess your network quality",reference:"Chapter 2, p.84"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 2 on building depth over breadth in relationships",reference:"Chapter 2"},
+            {rank:4,source:"Practical",action:"Reach out to one person you respect but haven't talked to in 30+ days. Have a real conversation."},
+            {rank:5,source:"Practical",action:"Schedule one meaningful conversation per week with someone who challenges you"},
+            {rank:6,source:"Practical",action:"Replace surface-level networking with deep, value-creating relationships"},
+            {rank:7,source:"Practical",action:"Ask better questions in conversations — go beyond 'how are you' to 'what are you building'"},
+            {rank:8,source:"General",action:"Your network is your net worth — invest in relationships that compound"},
+            {rank:9,source:"General",action:"Be a connector — introduce people in your network who should know each other"},
+            {rank:10,source:"General",action:"Quality over quantity — 5 deep relationships beat 500 superficial ones"}
+          ],
+          "Relational ROI": [
+            {rank:1,source:"Value Engine",action:"Use the Value Replacement Map (Tool #10) to assess ROI on every key relationship",reference:"Chapter 2, p.112"},
+            {rank:2,source:"Value Engine",action:"Run the People Audit (Tool #3) — categorize relationships by actual returns",reference:"Chapter 2, p.84"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 2 on measuring relational return on investment",reference:"Chapter 2"},
+            {rank:4,source:"Practical",action:"List your top 5 relationships. Next to each, write + (gives energy) or - (drains energy). Act on it."},
+            {rank:5,source:"Practical",action:"Redirect 2 hours per week from low-ROI to high-ROI relationships"},
+            {rank:6,source:"Practical",action:"Ask: 'Is this relationship making me better?' If not, reduce investment."},
+            {rank:7,source:"Practical",action:"Invest more in relationships where both parties grow — those are Exchangers"},
+            {rank:8,source:"General",action:"Track your emotional energy after interactions — patterns reveal ROI"},
+            {rank:9,source:"General",action:"Set relationship goals just like financial goals — be intentional"},
+            {rank:10,source:"General",action:"Remember: some relationships are meant for a season, not a lifetime"}
+          ],
+          "People Audit": [
+            {rank:1,source:"Value Engine",action:"Run the People Audit (Tool #3) — map 10 people as Givers, Receivers, Exchangers, or Takers",reference:"Chapter 2, p.84"},
+            {rank:2,source:"Value Engine",action:"Cross-reference with the Relationship Matrix (Tool #6) for deeper classification",reference:"Chapter 2, p.98"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 2 on the four relationship types and how to manage each",reference:"Chapter 2"},
+            {rank:4,source:"Practical",action:"Write down 10 names. Categorize each as Giver, Receiver, Exchanger, or Taker."},
+            {rank:5,source:"Practical",action:"Increase time with Exchangers — they're your growth engine"},
+            {rank:6,source:"Practical",action:"Set boundaries with Takers — protect your time and energy"},
+            {rank:7,source:"Practical",action:"Thank one Giver in your life this week — reinforce that relationship"},
+            {rank:8,source:"General",action:"Review your people audit quarterly — relationships change over time"},
+            {rank:9,source:"General",action:"Be the type of person you want in your network — lead by example"},
+            {rank:10,source:"General",action:"Proximity is power — spend more time with people who are where you want to be"}
+          ],
+          "Alliance Building": [
+            {rank:1,source:"Value Engine",action:"Use the Relationship Matrix (Tool #6) — identify your Confidant, Constituent, Comrade, and Companion",reference:"Chapter 2, p.98"},
+            {rank:2,source:"Value Engine",action:"Run the People Audit (Tool #3) to find alliance gaps",reference:"Chapter 2, p.84"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 2 on the four alliance types and why you need all four",reference:"Chapter 2"},
+            {rank:4,source:"Practical",action:"Identify who's missing: Confidant, Constituent, Comrade, or Companion. Find one this month."},
+            {rank:5,source:"Practical",action:"Deepen one alliance this week with intentional quality time"},
+            {rank:6,source:"Practical",action:"Be specific about what you need from each alliance type — clarity builds stronger bonds"},
+            {rank:7,source:"Practical",action:"Create mutual value in every alliance — don't just take, contribute"},
+            {rank:8,source:"General",action:"Strategic alliances outperform solo effort — find complementary strengths"},
+            {rank:9,source:"General",action:"Invest in alliances before you need them — don't network in desperation"},
+            {rank:10,source:"General",action:"Maintain alliances with consistent, small touchpoints — not just when you need something"}
+          ],
+          "Love Bank Deposits": [
+            {rank:1,source:"Value Engine",action:"Apply the Love Bank framework from Chapter 2 — every interaction is a deposit or withdrawal",reference:"Chapter 2, p.104"},
+            {rank:2,source:"Value Engine",action:"Use the People Audit (Tool #3) to identify your most important Love Bank accounts",reference:"Chapter 2, p.84"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 2 on making intentional deposits in your key relationships",reference:"Chapter 2"},
+            {rank:4,source:"Practical",action:"Make one intentional deposit in your most important relationship today. Choose to, don't wait to feel like it."},
+            {rank:5,source:"Practical",action:"Learn your partner's or key person's love language — speak it daily"},
+            {rank:6,source:"Practical",action:"Do something unexpected and kind for someone important to you this week"},
+            {rank:7,source:"Practical",action:"Show up when it's inconvenient — that's when deposits count the most"},
+            {rank:8,source:"General",action:"Deposits should outnumber withdrawals 5:1 for healthy relationships"},
+            {rank:9,source:"General",action:"Listen more than you speak — attention is the most valuable deposit"},
+            {rank:10,source:"General",action:"Consistency beats grand gestures — small daily deposits build massive trust"}
+          ],
+          "Communication Clarity": [
+            {rank:1,source:"Value Engine",action:"Apply the Communication Clarity framework from Chapter 2 — say what you mean, confirm what's heard",reference:"Chapter 2, p.108"},
+            {rank:2,source:"Value Engine",action:"Use the 4 Questions filter (Tool in Chapter 2) before difficult conversations",reference:"Chapter 2"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 2 on closing the gap between intention and reception",reference:"Chapter 2"},
+            {rank:4,source:"Practical",action:"After your next important statement, ask: 'What did you hear me say?' See if it matches."},
+            {rank:5,source:"Practical",action:"Write important messages before sending — edit for clarity, not length"},
+            {rank:6,source:"Practical",action:"Summarize key points at the end of every meeting — confirm alignment"},
+            {rank:7,source:"Practical",action:"Replace vague language with specific language: dates, numbers, names"},
+            {rank:8,source:"General",action:"The biggest communication problem is the illusion that it happened"},
+            {rank:9,source:"General",action:"Listen to understand, not to respond — most miscommunication starts with poor listening"},
+            {rank:10,source:"General",action:"Over-communicate during transitions and crises — silence creates anxiety"}
+          ],
+          "Restraint Practice": [
+            {rank:1,source:"Value Engine",action:"Apply the 4 Questions from Chapter 2: Is it true? Is it kind? Is it necessary? Is it the right time?",reference:"Chapter 2, p.110"},
+            {rank:2,source:"Value Engine",action:"Use the People Audit (Tool #3) to identify where restraint failures damage relationships",reference:"Chapter 2, p.84"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 2 on the power of strategic restraint in communication",reference:"Chapter 2"},
+            {rank:4,source:"Practical",action:"Before your next difficult conversation, pause and run the 4 questions"},
+            {rank:5,source:"Practical",action:"Wait 24 hours before responding to any message that makes you angry"},
+            {rank:6,source:"Practical",action:"In your next heated moment, take 3 deep breaths before speaking"},
+            {rank:7,source:"Practical",action:"Practice: 'I need to think about that' as your default response to pressure"},
+            {rank:8,source:"General",action:"Restraint is not weakness — it's strategic patience that protects relationships"},
+            {rank:9,source:"General",action:"The things you don't say are often more powerful than the things you do"},
+            {rank:10,source:"General",action:"Build a habit of pausing — between stimulus and response lies your power"}
+          ],
+          "Value Replacement": [
+            {rank:1,source:"Value Engine",action:"Use the Value Replacement Map (Tool #10) to redirect relational energy",reference:"Chapter 2, p.112"},
+            {rank:2,source:"Value Engine",action:"Run the People Audit (Tool #3) to identify who to replace and who to invest in",reference:"Chapter 2, p.84"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 2 on strategic value replacement in relationships",reference:"Chapter 2"},
+            {rank:4,source:"Practical",action:"Reduce time with one draining relationship this week. Invest that time in one that grows you."},
+            {rank:5,source:"Practical",action:"Don't burn bridges — just redirect your energy quietly and intentionally"},
+            {rank:6,source:"Practical",action:"Replace negative relationship time with personal development time"},
+            {rank:7,source:"Practical",action:"When you exit a draining relationship, fill the space with something better immediately"},
+            {rank:8,source:"General",action:"You become the average of the 5 people you spend the most time with"},
+            {rank:9,source:"General",action:"Letting go of the wrong relationships creates space for the right ones"},
+            {rank:10,source:"General",action:"Replacement is not rejection — it's growth. Honor what was, choose what's next."}
+          ]
+        },
+        Influence: {
+          "Leadership Level": [
+            {rank:1,source:"Value Engine",action:"Run the Influence Ladder (Tool #8) — identify which of the five leadership levels you're at",reference:"Chapter 3, p.120"},
+            {rank:2,source:"Value Engine",action:"Apply the Gravitational Center Alignment (Tool #11) to strengthen your leadership foundation",reference:"Chapter 3, p.136"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 3 on the five levels of leadership and how to advance",reference:"Chapter 3"},
+            {rank:4,source:"Practical",action:"Ask one person who follows your lead: 'Why?' Their answer reveals your level."},
+            {rank:5,source:"Practical",action:"Lead by example this week — do what you ask others to do, first"},
+            {rank:6,source:"Practical",action:"Invest in one person's development this week — leadership is measured by who you grow"},
+            {rank:7,source:"Practical",action:"Ask for honest feedback from someone who reports to you or follows your lead"},
+            {rank:8,source:"General",action:"Leadership is influence, nothing more, nothing less — John Maxwell"},
+            {rank:9,source:"General",action:"Move from position-based to permission-based leadership through genuine care"},
+            {rank:10,source:"General",action:"The highest level of leadership is when people follow you because of who you are"}
+          ],
+          "Integrity Alignment": [
+            {rank:1,source:"Value Engine",action:"Run the Gravitational Center Alignment (Tool #11) — audit your calendar and bank statement against values",reference:"Chapter 3, p.136"},
+            {rank:2,source:"Value Engine",action:"Apply the Integrity Alignment framework from Chapter 3",reference:"Chapter 3, p.124"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 3 on closing the gap between stated and lived values",reference:"Chapter 3"},
+            {rank:4,source:"Practical",action:"Audit your calendar and bank statement this week. Do they reflect what you say you value?"},
+            {rank:5,source:"Practical",action:"Write your top 5 values. Check: did your actions today serve any of them?"},
+            {rank:6,source:"Practical",action:"Make one decision this week purely based on your values, even if it's harder"},
+            {rank:7,source:"Practical",action:"When you catch a gap between words and actions, close it immediately"},
+            {rank:8,source:"General",action:"Integrity is doing the right thing when nobody is watching"},
+            {rank:9,source:"General",action:"Your reputation is built on the consistency between your words and your actions"},
+            {rank:10,source:"General",action:"Start small — keep every small promise you make this week, no matter what"}
+          ],
+          "Professional Credibility": [
+            {rank:1,source:"Value Engine",action:"Apply the Professional Credibility framework from Chapter 3 — credibility is compound interest",reference:"Chapter 3, p.128"},
+            {rank:2,source:"Value Engine",action:"Use the Influence Ladder (Tool #8) to identify your credibility level",reference:"Chapter 3, p.120"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 3 on building credibility that outlasts any single role",reference:"Chapter 3"},
+            {rank:4,source:"Practical",action:"Ask a colleague or client: 'What's one thing I could do better?' Listen without defending."},
+            {rank:5,source:"Practical",action:"Deliver on one promise ahead of schedule this week"},
+            {rank:6,source:"Practical",action:"Share your expertise publicly — write, speak, or teach what you know"},
+            {rank:7,source:"Practical",action:"Under-promise and over-deliver in your next 3 commitments"},
+            {rank:8,source:"General",action:"Credibility is built in drops and lost in buckets — protect it fiercely"},
+            {rank:9,source:"General",action:"Seek testimonials and endorsements — let others validate your credibility"},
+            {rank:10,source:"General",action:"Be the most prepared person in every room you enter"}
+          ],
+          "Empathetic Listening": [
+            {rank:1,source:"Value Engine",action:"Apply the Empathetic Listening framework from Chapter 3 — listen to understand, not to respond",reference:"Chapter 3, p.130"},
+            {rank:2,source:"Value Engine",action:"Use the Communication Clarity tools alongside empathetic listening",reference:"Chapter 2, p.108"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 3 on how empathetic listening multiplies influence",reference:"Chapter 3"},
+            {rank:4,source:"Practical",action:"In your next conversation, don't respond until you can repeat back what they said."},
+            {rank:5,source:"Practical",action:"Ask 'Tell me more about that' three times in your next deep conversation"},
+            {rank:6,source:"Practical",action:"Put your phone away during every important conversation this week"},
+            {rank:7,source:"Practical",action:"Practice the 80/20 listening rule: listen 80%, speak 20%"},
+            {rank:8,source:"General",action:"Most people listen to reply, not to understand — be different"},
+            {rank:9,source:"General",action:"Validate emotions before offering solutions — people need to feel heard first"},
+            {rank:10,source:"General",action:"Ask open-ended questions that start with 'What' or 'How' instead of 'Why'"}
+          ],
+          "Gravitational Center": [
+            {rank:1,source:"Value Engine",action:"Run the Gravitational Center Alignment (Tool #11) — define and audit your core values",reference:"Chapter 3, p.136"},
+            {rank:2,source:"Value Engine",action:"Apply the Influence Ladder (Tool #8) to align your center with your leadership",reference:"Chapter 3, p.120"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 3 on becoming a person of gravitational influence",reference:"Chapter 3"},
+            {rank:4,source:"Practical",action:"Write down your top 5 values. Check: did your actions today serve any of them?"},
+            {rank:5,source:"Practical",action:"Make one values-driven decision this week that others can observe"},
+            {rank:6,source:"Practical",action:"When faced with a tough choice, ask: 'Which option aligns with who I want to be?'"},
+            {rank:7,source:"Practical",action:"Live your values publicly — let people see what drives you"},
+            {rank:8,source:"General",action:"People with a clear center attract followers naturally — be that person"},
+            {rank:9,source:"General",action:"Your values should be non-negotiable, not aspirational"},
+            {rank:10,source:"General",action:"Review your gravitational center quarterly — make sure it hasn't drifted"}
+          ],
+          "Micro-Honesties": [
+            {rank:1,source:"Value Engine",action:"Apply the Micro-Honesties framework from Chapter 3 — small truths build massive credibility",reference:"Chapter 3, p.132"},
+            {rank:2,source:"Value Engine",action:"Use the Gravitational Center Alignment (Tool #11) to align honesty with values",reference:"Chapter 3, p.136"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 3 on how micro-honesties compound into trust",reference:"Chapter 3"},
+            {rank:4,source:"Practical",action:"Catch yourself in one exaggeration or omission this week. Correct it immediately."},
+            {rank:5,source:"Practical",action:"When you don't know something, say 'I don't know' instead of guessing"},
+            {rank:6,source:"Practical",action:"Give honest feedback to one person this week — kind but true"},
+            {rank:7,source:"Practical",action:"Admit one mistake openly this week — vulnerability builds trust faster than perfection"},
+            {rank:8,source:"General",action:"Radical honesty in small things creates trust in big things"},
+            {rank:9,source:"General",action:"The cost of a small lie is always greater than the discomfort of the truth"},
+            {rank:10,source:"General",action:"Make honesty your default — it simplifies everything"}
+          ],
+          "Word Management": [
+            {rank:1,source:"Value Engine",action:"Apply the Word Management framework from Chapter 3 — your words are contracts",reference:"Chapter 3, p.134"},
+            {rank:2,source:"Value Engine",action:"Use the Integrity Alignment tools to ensure your words match your actions",reference:"Chapter 3, p.124"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 3 on managing your words as your most powerful influence tool",reference:"Chapter 3"},
+            {rank:4,source:"Practical",action:"This week, replace 'I'll try' with 'I will' or 'I won't.' No ambiguous language."},
+            {rank:5,source:"Practical",action:"Before making a commitment, pause and ask: 'Can I actually deliver on this?'"},
+            {rank:6,source:"Practical",action:"Keep a commitment log — track every promise you make and whether you kept it"},
+            {rank:7,source:"Practical",action:"If you can't keep a commitment, communicate early — don't wait until it's due"},
+            {rank:8,source:"General",action:"Your word is your bond — people with impeccable word management get disproportionate opportunities"},
+            {rank:9,source:"General",action:"Speak less, mean more — quality of words beats quantity"},
+            {rank:10,source:"General",action:"Under-commit publicly, over-deliver privately"}
+          ],
+          "Personal Responsibility": [
+            {rank:1,source:"Value Engine",action:"Apply the Personal Responsibility principle from Chapter 3 — own your outcomes",reference:"Chapter 3, p.138"},
+            {rank:2,source:"Value Engine",action:"Use the Gravitational Center Alignment (Tool #11) to anchor responsibility in values",reference:"Chapter 3, p.136"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 3 on how personal responsibility is the foundation of all influence",reference:"Chapter 3"},
+            {rank:4,source:"Practical",action:"Next time something goes wrong, before blaming anyone, ask: 'What could I have done differently?'"},
+            {rank:5,source:"Practical",action:"Take ownership of one problem this week that isn't technically 'your fault'"},
+            {rank:6,source:"Practical",action:"Replace 'they made me' with 'I chose to' in your vocabulary"},
+            {rank:7,source:"Practical",action:"At the end of each day, write down one thing you're responsible for improving tomorrow"},
+            {rank:8,source:"General",action:"Extreme ownership — leaders take responsibility for everything in their world"},
+            {rank:9,source:"General",action:"The moment you blame someone else, you give them power over your life"},
+            {rank:10,source:"General",action:"Focus on your locus of control — act on what you can change, accept what you can't"}
+          ],
+          "Adaptive Influence": [
+            {rank:1,source:"Value Engine",action:"Apply the Adaptive Influence framework from Chapter 3 — lead with what others value",reference:"Chapter 3, p.140"},
+            {rank:2,source:"Value Engine",action:"Use the Relationship Matrix (Tool #6) to understand different communication styles",reference:"Chapter 2, p.98"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 3 on adapting your influence style to your audience",reference:"Chapter 3"},
+            {rank:4,source:"Practical",action:"Before your next important conversation, think: 'What does this person value?' Lead with that."},
+            {rank:5,source:"Practical",action:"Observe one person's communication style this week and mirror it"},
+            {rank:6,source:"Practical",action:"Ask: 'How would you like me to communicate this?' — let people tell you their preference"},
+            {rank:7,source:"Practical",action:"Practice translating your message into different styles for different audiences"},
+            {rank:8,source:"General",action:"The golden rule of influence: treat people the way THEY want to be treated"},
+            {rank:9,source:"General",action:"Study DISC or similar personality frameworks to understand different types"},
+            {rank:10,source:"General",action:"Flexibility is strength — rigid communicators have limited influence"}
+          ],
+          "Influence Multiplier": [
+            {rank:1,source:"Value Engine",action:"Apply the Influence Multiplier principle from Chapter 3 — better influence improves every pillar",reference:"Chapter 3, p.142"},
+            {rank:2,source:"Value Engine",action:"Use the Influence Ladder (Tool #8) to identify your highest-leverage influence opportunity",reference:"Chapter 3, p.120"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 3 on how influence compounds across all five pillars",reference:"Chapter 3"},
+            {rank:4,source:"Practical",action:"Identify one area where better influence would improve your time, people, numbers, or knowledge. Focus there."},
+            {rank:5,source:"Practical",action:"Mentor one person this week — teaching multiplies your influence"},
+            {rank:6,source:"Practical",action:"Create content that showcases your expertise — extend influence beyond your physical reach"},
+            {rank:7,source:"Practical",action:"Build a personal brand that works when you're not in the room"},
+            {rank:8,source:"General",action:"Influence multiplies when you develop other leaders, not just followers"},
+            {rank:9,source:"General",action:"Your influence ceiling determines every other ceiling in your life"},
+            {rank:10,source:"General",action:"Focus on being influential, not famous — depth beats breadth"}
+          ]
+        },
+        Numbers: {
+          "Financial Awareness": [
+            {rank:1,source:"Value Engine",action:"Run the Financial Snapshot (Tool #4) — document actual income, expenses, surplus/deficit",reference:"Chapter 4, p.148"},
+            {rank:2,source:"Value Engine",action:"Calculate your Value Per Hour (Tool #5) to understand your real hourly worth",reference:"Chapter 1, p.42"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 4 on the Numbers pillar and financial awareness as the foundation",reference:"Chapter 4"},
+            {rank:4,source:"Practical",action:"Write down your exact monthly income and your top 10 expenses. Right now. No guessing."},
+            {rank:5,source:"Practical",action:"Track every dollar you spend for 7 days — awareness is the first step"},
+            {rank:6,source:"Practical",action:"Set up a simple dashboard: income, expenses, savings rate. Review weekly."},
+            {rank:7,source:"Practical",action:"Know your monthly break-even number — what does it cost just to exist?"},
+            {rank:8,source:"General",action:"You can't manage what you don't measure — financial awareness is step one"},
+            {rank:9,source:"General",action:"Automate tracking with a budgeting app — remove the friction"},
+            {rank:10,source:"General",action:"Review your bank statements monthly — know where every dollar goes"}
+          ],
+          "Goal Specificity": [
+            {rank:1,source:"Value Engine",action:"Apply Number One Clarity from Chapter 4 — make your #1 priority crystal clear",reference:"Chapter 4, p.162"},
+            {rank:2,source:"Value Engine",action:"Use the Income Multiplier Model (Tool #12) to set specific, measurable financial goals",reference:"Chapter 4, p.156"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 4 on goal specificity as the foundation of all achievement",reference:"Chapter 4"},
+            {rank:4,source:"Practical",action:"Turn one vague goal into a specific, measurable, time-bound goal. 'I will [what] by [when].'"},
+            {rank:5,source:"Practical",action:"Write your #1 goal on a card and carry it with you everywhere"},
+            {rank:6,source:"Practical",action:"Break your biggest goal into weekly milestones — make progress visible"},
+            {rank:7,source:"Practical",action:"Share your goal with one accountability partner this week"},
+            {rank:8,source:"General",action:"SMART goals work: Specific, Measurable, Achievable, Relevant, Time-bound"},
+            {rank:9,source:"General",action:"Write goals down — people who write goals are 42% more likely to achieve them"},
+            {rank:10,source:"General",action:"Review and revise goals quarterly — specificity requires ongoing refinement"}
+          ],
+          "Investment Logic": [
+            {rank:1,source:"Value Engine",action:"Apply the Cost vs Value framework from Chapter 4 — think in returns, not expenses",reference:"Chapter 4, p.158"},
+            {rank:2,source:"Value Engine",action:"Use the Income Multiplier Model (Tool #12) to evaluate investment returns",reference:"Chapter 4, p.156"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 4 on investment logic and thinking like an investor in every area",reference:"Chapter 4"},
+            {rank:4,source:"Practical",action:"Before your next purchase over $50, write down the expected return. If there is none, reconsider."},
+            {rank:5,source:"Practical",action:"Categorize every expense as 'cost' or 'investment' for one month"},
+            {rank:6,source:"Practical",action:"Invest in yourself first — education, skills, and tools have the highest ROI"},
+            {rank:7,source:"Practical",action:"Calculate the opportunity cost of your next big decision — what else could that money do?"},
+            {rank:8,source:"General",action:"Think in terms of expected value — probability of return × magnitude of return"},
+            {rank:9,source:"General",action:"Diversify your investments — time, money, relationships, and skills"},
+            {rank:10,source:"General",action:"The best investment is always in your ability to earn more"}
+          ],
+          "Measurement Habit": [
+            {rank:1,source:"Value Engine",action:"Apply the Measurement Habit framework from Chapter 4 — what gets measured gets managed",reference:"Chapter 4, p.154"},
+            {rank:2,source:"Value Engine",action:"Use the Financial Snapshot (Tool #4) as your measurement baseline",reference:"Chapter 4, p.148"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 4 on building daily measurement habits that drive results",reference:"Chapter 4"},
+            {rank:4,source:"Practical",action:"Pick one metric that matters and track it daily for 7 days. Weight, income, hours — anything."},
+            {rank:5,source:"Practical",action:"Create a personal dashboard with your top 3-5 life metrics"},
+            {rank:6,source:"Practical",action:"Review your metrics weekly — look for trends, not just numbers"},
+            {rank:7,source:"Practical",action:"Make tracking automatic wherever possible — use apps, spreadsheets, or simple tally marks"},
+            {rank:8,source:"General",action:"What gets measured gets managed — Peter Drucker"},
+            {rank:9,source:"General",action:"Lead indicators beat lag indicators — track inputs, not just outputs"},
+            {rank:10,source:"General",action:"Celebrate measurement improvements, not just outcomes"}
+          ],
+          "Cost vs Value": [
+            {rank:1,source:"Value Engine",action:"Apply the Cost vs Value framework from Chapter 4 — every dollar is either spent or invested",reference:"Chapter 4, p.158"},
+            {rank:2,source:"Value Engine",action:"Run the Financial Snapshot (Tool #4) to categorize all expenses",reference:"Chapter 4, p.148"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 4 on the critical distinction between cost and value",reference:"Chapter 4"},
+            {rank:4,source:"Practical",action:"Look at your last 5 purchases. For each, write 'cost' or 'investment.' Be honest."},
+            {rank:5,source:"Practical",action:"Before every purchase this week, ask: 'Is this a cost or an investment?'"},
+            {rank:6,source:"Practical",action:"Reduce one recurring cost this week that provides no value"},
+            {rank:7,source:"Practical",action:"Redirect the saved money toward something that creates a return"},
+            {rank:8,source:"General",action:"Price is what you pay, value is what you get — Warren Buffett"},
+            {rank:9,source:"General",action:"The cheapest option is often the most expensive in the long run"},
+            {rank:10,source:"General",action:"Invest in quality where it matters — tools, education, health, relationships"}
+          ],
+          "Number One Clarity": [
+            {rank:1,source:"Value Engine",action:"Apply Number One Clarity from Chapter 4 — know your single most important priority",reference:"Chapter 4, p.162"},
+            {rank:2,source:"Value Engine",action:"Use the Time Reallocation Planner (Tool #9) to align time with your #1 priority",reference:"Chapter 1, p.78"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 4 on why clarity of priority is the ultimate competitive advantage",reference:"Chapter 4"},
+            {rank:4,source:"Practical",action:"Write down your #1 priority on a card. Carry it. Check it before every commitment."},
+            {rank:5,source:"Practical",action:"Say no to one thing this week that doesn't serve your #1 priority"},
+            {rank:6,source:"Practical",action:"Start every day by asking: 'What one thing, if I accomplished it today, makes everything else easier?'"},
+            {rank:7,source:"Practical",action:"Review your #1 priority weekly — make sure it's still right"},
+            {rank:8,source:"General",action:"The ONE Thing — what's the one thing you can do that makes everything else easier or unnecessary?"},
+            {rank:9,source:"General",action:"Clarity of purpose is rare — it gives you an unfair advantage over everyone who's confused"},
+            {rank:10,source:"General",action:"If everything is important, nothing is. Choose one."}
+          ],
+          "Small Improvements": [
+            {rank:1,source:"Value Engine",action:"Apply the Small Improvements principle from Chapter 4 — 1% daily compounds into 37x annually",reference:"Chapter 4, p.164"},
+            {rank:2,source:"Value Engine",action:"Use the Income Multiplier Model (Tool #12) to map compound improvements",reference:"Chapter 4, p.156"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 4 on marginal gains and the mathematics of daily improvement",reference:"Chapter 4"},
+            {rank:4,source:"Practical",action:"Pick one thing and improve it by 1% today. Just one thing. Do it again tomorrow."},
+            {rank:5,source:"Practical",action:"Track your daily improvement — write down what you improved each day before bed"},
+            {rank:6,source:"Practical",action:"Focus on process improvements, not just outcome improvements"},
+            {rank:7,source:"Practical",action:"Apply the kaizen mindset: continuous, incremental improvement in everything you do"},
+            {rank:8,source:"General",action:"James Clear's Atomic Habits: get 1% better every day, and you'll be 37x better in a year"},
+            {rank:9,source:"General",action:"Small improvements are sustainable — big changes often aren't"},
+            {rank:10,source:"General",action:"Focus on systems, not goals — systems produce consistent improvement"}
+          ],
+          "Negative Math": [
+            {rank:1,source:"Value Engine",action:"Apply Negative Math from Chapter 4 — sometimes the fastest way to grow is to cut",reference:"Chapter 4, p.166"},
+            {rank:2,source:"Value Engine",action:"Use the Financial Snapshot (Tool #4) to identify what's costing more than it returns",reference:"Chapter 4, p.148"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 4 on the power of subtraction and eliminating waste",reference:"Chapter 4"},
+            {rank:4,source:"Practical",action:"Identify one expense, habit, or commitment costing more than it returns. Cut it this week."},
+            {rank:5,source:"Practical",action:"Audit all subscriptions — cancel anything you haven't used in 30 days"},
+            {rank:6,source:"Practical",action:"Stop one activity that drains time without producing results"},
+            {rank:7,source:"Practical",action:"Apply negative math to relationships too — reduce time with people who cost you energy"},
+            {rank:8,source:"General",action:"Addition by subtraction — sometimes removing the wrong things matters more than adding right things"},
+            {rank:9,source:"General",action:"Warren Buffett's 'avoid list' — things NOT to do are more important than your to-do list"},
+            {rank:10,source:"General",action:"Regularly prune — your life, like a garden, grows better with strategic cutting"}
+          ],
+          "Income Multiplier": [
+            {rank:1,source:"Value Engine",action:"Run the Income Multiplier Model (Tool #12) — map compound improvements over 90 days",reference:"Chapter 4, p.156"},
+            {rank:2,source:"Value Engine",action:"Calculate your Value Per Hour (Tool #5) as the baseline for multiplication",reference:"Chapter 1, p.42"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 4 on the Income Multiplier principle and how small gains compound",reference:"Chapter 4"},
+            {rank:4,source:"Practical",action:"Map 3 specific ways your income could grow 10% in 90 days. Not theories — specific actions."},
+            {rank:5,source:"Practical",action:"Add one income stream or revenue source this quarter"},
+            {rank:6,source:"Practical",action:"Raise your prices or negotiate your compensation — most people undercharge"},
+            {rank:7,source:"Practical",action:"Invest one hour daily in the skill that most directly increases your earning power"},
+            {rank:8,source:"General",action:"Multiple income streams reduce risk and increase total earnings"},
+            {rank:9,source:"General",action:"Focus on scalable income — decouple your earnings from your hours"},
+            {rank:10,source:"General",action:"Your income is a direct reflection of the value you provide — increase the value"}
+          ],
+          "Negotiation Skill": [
+            {rank:1,source:"Value Engine",action:"Apply negotiation principles from Chapter 4 — every interaction is a negotiation",reference:"Chapter 4, p.168"},
+            {rank:2,source:"Value Engine",action:"Use the Value Per Hour Calculator (Tool #5) to know your walk-away number",reference:"Chapter 1, p.42"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 4 on negotiation as a core Numbers skill",reference:"Chapter 4"},
+            {rank:4,source:"Practical",action:"Next time someone gives you a price, ask: 'Is that the best you can do?' Just ask."},
+            {rank:5,source:"Practical",action:"Practice negotiating one small thing this week — a bill, a deadline, a price"},
+            {rank:6,source:"Practical",action:"Always know your BATNA (Best Alternative To Negotiated Agreement) before entering a negotiation"},
+            {rank:7,source:"Practical",action:"Let silence work for you — after making an offer, stop talking"},
+            {rank:8,source:"General",action:"You don't get what you deserve, you get what you negotiate"},
+            {rank:9,source:"General",action:"Negotiation is a skill, not a talent — practice it like any other skill"},
+            {rank:10,source:"General",action:"Win-win negotiations build long-term relationships — don't negotiate to defeat"}
+          ]
+        },
+        Knowledge: {
+          "Learning Hours": [
+            {rank:1,source:"Value Engine",action:"Apply the Knowledge ROI Calculator (Tool #7) to measure returns on your learning time",reference:"Chapter 5, p.172"},
+            {rank:2,source:"Value Engine",action:"Use the 1,800-Hour Framework to carve out dedicated learning time",reference:"Chapter 1, p.30"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 5 on the Knowledge pillar and learning as an investment",reference:"Chapter 5"},
+            {rank:4,source:"Practical",action:"Schedule 30 minutes of intentional learning today. Not scrolling — reading, studying, or practicing."},
+            {rank:5,source:"Practical",action:"Block a recurring 'learning hour' in your calendar 5 days a week"},
+            {rank:6,source:"Practical",action:"Replace one entertainment hour with one learning hour this week"},
+            {rank:7,source:"Practical",action:"Use commute or downtime for audiobooks or podcasts in your field"},
+            {rank:8,source:"General",action:"The average CEO reads 52 books a year — schedule reading time like a meeting"},
+            {rank:9,source:"General",action:"Focused learning beats passive consumption — study with intention"},
+            {rank:10,source:"General",action:"1 hour of learning per day = 365 hours per year = the equivalent of 9 work weeks"}
+          ],
+          "Application Rate": [
+            {rank:1,source:"Value Engine",action:"Apply the Knowledge ROI Calculator (Tool #7) — knowledge without application is trivia",reference:"Chapter 5, p.172"},
+            {rank:2,source:"Value Engine",action:"Use the Double Jeopardy principle to ensure lessons are applied immediately",reference:"Chapter 5, p.182"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 5 on closing the gap between knowing and doing",reference:"Chapter 5"},
+            {rank:4,source:"Practical",action:"Think of the last thing you learned. Apply it to something real today."},
+            {rank:5,source:"Practical",action:"After every book, course, or article, write down 3 specific actions to take"},
+            {rank:6,source:"Practical",action:"Teach someone what you just learned — teaching forces application"},
+            {rank:7,source:"Practical",action:"Create a 'learning → action' log: what you learned, what you did with it"},
+            {rank:8,source:"General",action:"Knowledge is potential power — application is actual power"},
+            {rank:9,source:"General",action:"Apply within 48 hours or it's wasted — knowledge has a shelf life"},
+            {rank:10,source:"General",action:"Focus on 'just-in-time' learning — learn what you need for your current challenge"}
+          ],
+          "Bias Awareness": [
+            {rank:1,source:"Value Engine",action:"Apply the Weighted Analysis framework from Chapter 5 to overcome cognitive biases",reference:"Chapter 5, p.186"},
+            {rank:2,source:"Value Engine",action:"Use the Perception vs Perspective tool to challenge your own blind spots",reference:"Chapter 5, p.188"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 5 on bias awareness as a knowledge multiplier",reference:"Chapter 5"},
+            {rank:4,source:"Practical",action:"Before your next big decision, ask: 'What am I not seeing? What would a disagreer say?'"},
+            {rank:5,source:"Practical",action:"Seek out one perspective this week that directly contradicts your own"},
+            {rank:6,source:"Practical",action:"Ask a trusted advisor to challenge your reasoning on an important decision"},
+            {rank:7,source:"Practical",action:"Keep a decision journal — review past decisions to spot recurring biases"},
+            {rank:8,source:"General",action:"Confirmation bias is the most dangerous — we only see what confirms what we already believe"},
+            {rank:9,source:"General",action:"Red team your own ideas — argue against yourself before others do"},
+            {rank:10,source:"General",action:"Surround yourself with diverse thinkers — homogeneous groups amplify biases"}
+          ],
+          "Highest & Best Use": [
+            {rank:1,source:"Value Engine",action:"Apply the Highest & Best Use framework from Chapter 5 — focus on what only you can do",reference:"Chapter 5, p.176"},
+            {rank:2,source:"Value Engine",action:"Calculate your Value Per Hour (Tool #5) to identify your highest-value activities",reference:"Chapter 1, p.42"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 5 on identifying and maximizing your unique abilities",reference:"Chapter 5"},
+            {rank:4,source:"Practical",action:"Identify your #1 skill. This week, spend more time using it and less on things others could do."},
+            {rank:5,source:"Practical",action:"Delegate or automate everything that's not in your top 20% of value creation"},
+            {rank:6,source:"Practical",action:"Ask: 'What can only I do?' Focus there, delegate the rest."},
+            {rank:7,source:"Practical",action:"Track how much time you spend on highest-value vs low-value work each day"},
+            {rank:8,source:"General",action:"Your time is most valuable when applied to your unique strengths"},
+            {rank:9,source:"General",action:"Pareto's principle in action — 20% of your skills produce 80% of your results"},
+            {rank:10,source:"General",action:"The opportunity cost of doing low-value work is the high-value work you're NOT doing"}
+          ],
+          "Supply & Demand": [
+            {rank:1,source:"Value Engine",action:"Apply the Supply & Demand framework from Chapter 5 — increase your scarcity value",reference:"Chapter 5, p.178"},
+            {rank:2,source:"Value Engine",action:"Use the Knowledge ROI Calculator (Tool #7) to invest in high-demand skills",reference:"Chapter 5, p.172"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 5 on positioning yourself where demand exceeds supply",reference:"Chapter 5"},
+            {rank:4,source:"Practical",action:"Google your job title + 'average salary.' Then ask: what makes me worth more than average?"},
+            {rank:5,source:"Practical",action:"Identify the top 3 skills in highest demand in your industry — learn one"},
+            {rank:6,source:"Practical",action:"Create a unique skill combination that's hard to replicate — stack complementary skills"},
+            {rank:7,source:"Practical",action:"Position yourself as a specialist, not a generalist — specialists earn more"},
+            {rank:8,source:"General",action:"Your value goes up when your supply goes down — be irreplaceable"},
+            {rank:9,source:"General",action:"Study market trends — invest learning time in skills with rising demand"},
+            {rank:10,source:"General",action:"The best negotiating position is being able to walk away — have multiple options"}
+          ],
+          "Substitution Risk": [
+            {rank:1,source:"Value Engine",action:"Apply the Substitution Risk framework from Chapter 5 — build what AI can't replace",reference:"Chapter 5, p.180"},
+            {rank:2,source:"Value Engine",action:"Use the Knowledge ROI Calculator (Tool #7) to invest in future-proof skills",reference:"Chapter 5, p.172"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 5 on reducing your substitution risk in the age of AI",reference:"Chapter 5"},
+            {rank:4,source:"Practical",action:"Write down 3 things you do that AI or a cheaper worker could replace. Start building what they can't."},
+            {rank:5,source:"Practical",action:"Invest in uniquely human skills: leadership, creativity, emotional intelligence, judgment"},
+            {rank:6,source:"Practical",action:"Learn to USE AI as a multiplier, not compete against it"},
+            {rank:7,source:"Practical",action:"Develop proprietary knowledge — systems, relationships, and insights that can't be copied"},
+            {rank:8,source:"General",action:"The safest career move is making yourself irreplaceable through unique value"},
+            {rank:9,source:"General",action:"Focus on the intersection of multiple skills — unique combinations are harder to substitute"},
+            {rank:10,source:"General",action:"Stay adaptable — the ability to learn new skills quickly is itself irreplaceable"}
+          ],
+          "Double Jeopardy": [
+            {rank:1,source:"Value Engine",action:"Apply the Rule of Double Jeopardy from Chapter 5 — never pay for the same mistake twice",reference:"Chapter 5, p.182"},
+            {rank:2,source:"Value Engine",action:"Use a structured learning system to capture and apply lessons from failures",reference:"Chapter 5"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 5 on turning mistakes into compounding knowledge",reference:"Chapter 5"},
+            {rank:4,source:"Practical",action:"Think of your last big mistake. Write the lesson in one sentence. Put it where you'll see it."},
+            {rank:5,source:"Practical",action:"Keep a 'lessons learned' journal — review it before making similar decisions"},
+            {rank:6,source:"Practical",action:"After every failure, do a quick post-mortem: what happened, why, what's the lesson?"},
+            {rank:7,source:"Practical",action:"Share your lessons with others — accountability makes learning stick"},
+            {rank:8,source:"General",action:"Failure is tuition — but only if you learn the lesson. Otherwise, it's just a loss."},
+            {rank:9,source:"General",action:"Smart people learn from their mistakes. Wise people learn from others' mistakes."},
+            {rank:10,source:"General",action:"Create checklists from past mistakes — systems prevent repeat errors"}
+          ],
+          "Knowledge Compounding": [
+            {rank:1,source:"Value Engine",action:"Apply the Knowledge Compounding framework from Chapter 5 — connect ideas across domains",reference:"Chapter 5, p.184"},
+            {rank:2,source:"Value Engine",action:"Use the Knowledge ROI Calculator (Tool #7) to identify your highest-compounding knowledge areas",reference:"Chapter 5, p.172"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 5 on how cross-domain thinking is the ultimate multiplier",reference:"Chapter 5"},
+            {rank:4,source:"Practical",action:"Connect something you learned in one area to a problem in a different area. Cross-domain thinking multiplies."},
+            {rank:5,source:"Practical",action:"Read outside your field — the best ideas come from unexpected connections"},
+            {rank:6,source:"Practical",action:"Keep an 'idea connection' journal — when you see a link between two concepts, write it down"},
+            {rank:7,source:"Practical",action:"Teach concepts from one field using analogies from another — it deepens understanding"},
+            {rank:8,source:"General",action:"Charlie Munger's mental models — the more frameworks you know, the better your decisions"},
+            {rank:9,source:"General",action:"T-shaped knowledge: go deep in one area, go wide across many — the intersection is gold"},
+            {rank:10,source:"General",action:"Review and reorganize what you know regularly — spaced repetition compounds knowledge"}
+          ],
+          "Weighted Analysis": [
+            {rank:1,source:"Value Engine",action:"Apply the Weighted Analysis framework from Chapter 5 — not all factors are equal",reference:"Chapter 5, p.186"},
+            {rank:2,source:"Value Engine",action:"Use weighted scoring for all major decisions as taught in Chapter 5",reference:"Chapter 5"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 5 on making better decisions through weighted analysis",reference:"Chapter 5"},
+            {rank:4,source:"Practical",action:"For your next decision, list 3 factors. Weight them 1-10 by importance. Rate each. Highest total wins."},
+            {rank:5,source:"Practical",action:"Create a decision matrix template and use it for every major choice"},
+            {rank:6,source:"Practical",action:"Separate emotions from analysis — use numbers to cut through feelings"},
+            {rank:7,source:"Practical",action:"Include opportunity cost as a weighted factor in every analysis"},
+            {rank:8,source:"General",action:"Decision quality > decision speed in most cases — take time to analyze"},
+            {rank:9,source:"General",action:"Expected value thinking — probability × magnitude = the true value of each option"},
+            {rank:10,source:"General",action:"Revisit major decisions after 90 days — learn from your decision-making process"}
+          ],
+          "Perception vs Perspective": [
+            {rank:1,source:"Value Engine",action:"Apply the Perception vs Perspective framework from Chapter 5 — challenge your default lens",reference:"Chapter 5, p.188"},
+            {rank:2,source:"Value Engine",action:"Use the Bias Awareness tools alongside perspective-taking",reference:"Chapter 5"},
+            {rank:3,source:"Value Engine",action:"Read Chapter 5 on the difference between perception and perspective",reference:"Chapter 5"},
+            {rank:4,source:"Practical",action:"Ask someone you respect how they see a situation you're dealing with. Compare their view to yours."},
+            {rank:5,source:"Practical",action:"Before reacting to any situation, ask: 'What else could this mean?'"},
+            {rank:6,source:"Practical",action:"Seek feedback from 3 different people on one decision — look for patterns"},
+            {rank:7,source:"Practical",action:"Practice seeing situations from the other person's point of view before responding"},
+            {rank:8,source:"General",action:"Your perception is your reality — but it's not THE reality"},
+            {rank:9,source:"General",action:"Travel, read widely, and talk to diverse people — it broadens perspective permanently"},
+            {rank:10,source:"General",action:"The map is not the territory — be willing to redraw your mental maps"}
+          ]
+        }
+      };
+
+      // Get recommendations for the requested pillar/sub-category
+      const pillarRecs = recommendationsDB[pillar] || {};
+      let recs = pillarRecs[subCategory] || [];
+
+      // If no exact sub-category match, return recommendations for the first sub-category in the pillar
+      if (recs.length === 0 && Object.keys(pillarRecs).length > 0) {
+        recs = Object.values(pillarRecs)[0];
+      }
+
+      return res.json({
+        pillar,
+        subCategory,
+        percentOfUsersWeak: percentWeak,
+        recommendations: recs
+      });
+    }
+
+    // GET /api/premium/check-membership?email={email} (Feature 6)
+    if (req.method === 'GET' && url.startsWith('/premium/check-membership')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = params.get('email');
+      if (!email) return res.status(400).json({ error: 'email required' });
+
+      // Check Stripe for active subscription
+      let isMember = false;
+      let tier = null;
+      try {
+        if (process.env.STRIPE_SECRET_KEY) {
+          const stripeResp = await fetch('https://api.stripe.com/v1/customers/search?query=email:"' + encodeURIComponent(email) + '"', {
+            headers: { 'Authorization': 'Bearer ' + process.env.STRIPE_SECRET_KEY }
+          });
+          const stripeData = await stripeResp.json();
+          if (stripeData.data && stripeData.data.length > 0) {
+            for (const customer of stripeData.data) {
+              const subsResp = await fetch('https://api.stripe.com/v1/subscriptions?customer=' + customer.id + '&status=active', {
+                headers: { 'Authorization': 'Bearer ' + process.env.STRIPE_SECRET_KEY }
+              });
+              const subsData = await subsResp.json();
+              if (subsData.data && subsData.data.length > 0) {
+                isMember = true;
+                // Determine tier from subscription amount
+                const amount = subsData.data[0].items?.data?.[0]?.price?.unit_amount;
+                if (amount >= 39700) tier = 'Victory VIP';
+                else if (amount >= 7900) tier = 'Value Builder';
+                else tier = 'VictoryPath';
+                break;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Stripe check error:', e.message);
+      }
+
+      return res.json({ email, isMember, tier });
+    }
+
+    // GET /api/team-report/{teamId} (Feature 3 - data endpoint)
+    if (req.method === 'GET' && url.match(/^\/team-report\/\d+$/)) {
+      const teamId = parseInt(url.split('/team-report/')[1]);
+
+      // Get team info
+      const teamRows = await sql`SELECT * FROM teams WHERE id = ${teamId} LIMIT 1`;
+      if (teamRows.length === 0) return res.status(404).json({ error: 'Team not found' });
+      const team = teamRows[0];
+
+      // Get all assessments for this team
+      const members = await sql`SELECT a.* FROM assessments a WHERE a.team_id = ${teamId} ORDER BY a.completed_at DESC`;
+      if (members.length === 0) return res.json({ error: 'No assessments found for this team', team });
+
+      const n = members.length;
+
+      // Calculate averages
+      const avg = (arr) => Math.round((arr.reduce((s, v) => s + Number(v), 0) / arr.length) * 10) / 10;
+      const avgMaster = avg(members.map(m => m.master_score));
+      const pillarAvgs = {
+        Time: avg(members.map(m => m.time_total)),
+        People: avg(members.map(m => m.people_total)),
+        Influence: avg(members.map(m => m.influence_total)),
+        Numbers: avg(members.map(m => m.numbers_total)),
+        Knowledge: avg(members.map(m => m.knowledge_total)),
+      };
+
+      // Score distribution
+      const distrib = { Crisis: 0, Survival: 0, Growth: 0, Momentum: 0, Mastery: 0 };
+      members.forEach(m => { distrib[m.score_range] = (distrib[m.score_range] || 0) + 1; });
+
+      // Sub-category averages
+      const subFields = {
+        Time: [['Time Awareness','time_awareness'],['Time Allocation','time_allocation'],['Time Protection','time_protection'],['Time Leverage','time_leverage'],['Five-Hour Leak','five_hour_leak'],['Value Per Hour','value_per_hour'],['Time Investment','time_investment'],['Downtime Quality','downtime_quality'],['Foresight','foresight'],['Time Reallocation','time_reallocation']],
+        People: [['Trust Investment','trust_investment'],['Boundary Quality','boundary_quality'],['Network Depth','network_depth'],['Relational ROI','relational_roi'],['People Audit','people_audit'],['Alliance Building','alliance_building'],['Love Bank Deposits','love_bank_deposits'],['Communication Clarity','communication_clarity'],['Restraint Practice','restraint_practice'],['Value Replacement','value_replacement']],
+        Influence: [['Leadership Level','leadership_level'],['Integrity Alignment','integrity_alignment'],['Professional Credibility','professional_credibility'],['Empathetic Listening','empathetic_listening'],['Gravitational Center','gravitational_center'],['Micro-Honesties','micro_honesties'],['Word Management','word_management'],['Personal Responsibility','personal_responsibility'],['Adaptive Influence','adaptive_influence'],['Influence Multiplier','influence_multiplier']],
+        Numbers: [['Financial Awareness','financial_awareness'],['Goal Specificity','goal_specificity'],['Investment Logic','investment_logic'],['Measurement Habit','measurement_habit'],['Cost vs Value','cost_vs_value'],['Number One Clarity','number_one_clarity'],['Small Improvements','small_improvements'],['Negative Math','negative_math'],['Income Multiplier','income_multiplier'],['Negotiation Skill','negotiation_skill']],
+        Knowledge: [['Learning Hours','learning_hours'],['Application Rate','application_rate'],['Bias Awareness','bias_awareness'],['Highest & Best Use','highest_best_use'],['Supply & Demand','supply_and_demand'],['Substitution Risk','substitution_risk'],['Double Jeopardy','double_jeopardy'],['Knowledge Compounding','knowledge_compounding'],['Weighted Analysis','weighted_analysis'],['Perception vs Perspective','perception_vs_perspective']]
+      };
+
+      const subCategoryData = {};
+      const allSubAvgs = [];
+      for (const [pillar, subs] of Object.entries(subFields)) {
+        subCategoryData[pillar] = [];
+        for (const [name, field] of subs) {
+          const values = members.map(m => Number(m[field]) || 0);
+          const subAvg = avg(values);
+          const lowCount = values.filter(v => v <= 2).length;
+          const lowPct = Math.round((lowCount / n) * 100);
+          subCategoryData[pillar].push({ name, avg: subAvg, lowPercent: lowPct });
+          allSubAvgs.push({ pillar, name, avg: subAvg, lowPercent: lowPct });
+        }
+      }
+
+      // Top 5 blind spots (lowest avg sub-categories)
+      const blindSpots = [...allSubAvgs].sort((a, b) => a.avg - b.avg).slice(0, 5);
+
+      // Blind spot interpretations
+      const interpretations = {
+        "Time Protection": "Your team feels their schedule is controlled by others",
+        "Boundary Quality": "Your team struggles to enforce boundaries — possible culture issue",
+        "Financial Awareness": "Your team doesn't understand the financial picture",
+        "Communication Clarity": "Your team has communication breakdowns",
+        "Time Awareness": "Your team can't account for where their time goes — productivity leak",
+        "Time Allocation": "Your team spends too much time on low-priority work",
+        "Trust Investment": "Trust levels in your team are low — impacting collaboration",
+        "Network Depth": "Your team lacks deep professional relationships",
+        "Leadership Level": "Your team's leadership capacity needs development",
+        "Integrity Alignment": "There's a gap between your team's stated and lived values",
+        "Goal Specificity": "Your team lacks clear, measurable goals",
+        "Learning Hours": "Your team isn't investing enough time in professional development",
+        "People Audit": "Your team hasn't assessed their professional relationships",
+        "Restraint Practice": "Your team may have communication discipline issues",
+        "Value Per Hour": "Your team doesn't understand their true hourly value"
+      };
+
+      const sortedPillars = Object.entries(pillarAvgs).sort((a, b) => b[1] - a[1]);
+      const strongestPillar = sortedPillars[0][0];
+      const weakestPillar = sortedPillars[sortedPillars.length - 1][0];
+
+      // Date range
+      const dates = members.map(m => new Date(m.completed_at));
+      const minDate = new Date(Math.min(...dates));
+      const maxDate = new Date(Math.max(...dates));
+
+      return res.json({
+        team: { id: team.id, name: team.name, mode: team.mode },
+        participantCount: n,
+        dateRange: { from: minDate.toISOString(), to: maxDate.toISOString() },
+        averageMasterScore: avgMaster,
+        scoreDistribution: distrib,
+        pillarAverages: pillarAvgs,
+        strongestPillar,
+        weakestPillar,
+        subCategoryData,
+        blindSpots: blindSpots.map(bs => ({
+          ...bs,
+          interpretation: interpretations[bs.name] || `Your team scored low in ${bs.name}`
+        })),
+      });
     }
 
     return res.status(404).json({ error: 'Not found' });

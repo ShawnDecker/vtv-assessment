@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Value Engine — Team Analysis Report</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+    .loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .loading-text { color: #a1a1aa; font-size: 1.125rem; }
+    .error-view { display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+    .error-view h2 { color: #ef4444; margin-bottom: 1rem; }
+    .error-view a { color: #3b82f6; }
+    .report { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: #a1a1aa; text-decoration: none; font-size: 0.85rem; }
+    .back-link:hover { color: #D4A847; }
+
+    .report-header { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid #27272a; margin-bottom: 2rem; }
+    .report-header .brand { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    .report-header .title { font-family: 'Instrument Serif', serif; font-size: 1.5rem; font-style: italic; color: #d4d4d8; margin-bottom: 0.5rem; }
+    .header-meta { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-top: 1rem; }
+    .header-meta .meta-item { text-align: center; }
+    .header-meta .meta-label { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: #71717a; font-weight: 600; }
+    .header-meta .meta-value { font-size: 1rem; font-weight: 700; color: #d4d4d8; }
+
+    .section { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; margin-bottom: 1.25rem; font-weight: 700; }
+    .section-number { display: inline-block; width: 24px; height: 24px; background: #D4A847; color: #0a0a0a; border-radius: 50%; text-align: center; line-height: 24px; font-size: 0.75rem; font-weight: 700; margin-right: 0.5rem; }
+
+    /* Overview stats */
+    .overview-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { text-align: center; padding: 1.25rem; background: #0a0a0a; border-radius: 0.5rem; }
+    .stat-value { font-size: 2rem; font-weight: 900; color: #D4A847; line-height: 1; }
+    .stat-label { font-size: 0.75rem; color: #71717a; margin-top: 0.25rem; }
+
+    /* Distribution badges */
+    .distrib-row { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
+    .distrib-badge { padding: 0.375rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 700; }
+    .badge-crisis { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+    .badge-survival { background: rgba(249,115,22,0.15); color: #f97316; border: 1px solid rgba(249,115,22,0.3); }
+    .badge-growth { background: rgba(234,179,8,0.15); color: #eab308; border: 1px solid rgba(234,179,8,0.3); }
+    .badge-momentum { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+    .badge-mastery { background: rgba(212,168,71,0.15); color: #D4A847; border: 1px solid rgba(212,168,71,0.3); }
+
+    /* Pillar bars */
+    .pillar-bars { display: flex; flex-direction: column; gap: 0.75rem; }
+    .pillar-bar { display: flex; align-items: center; gap: 0.75rem; }
+    .pillar-label { width: 80px; font-size: 0.8rem; font-weight: 600; flex-shrink: 0; }
+    .pillar-track { flex: 1; height: 28px; background: #27272a; border-radius: 0.375rem; overflow: hidden; }
+    .pillar-fill { height: 100%; border-radius: 0.375rem; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.5rem; }
+    .pillar-fill span { font-size: 0.7rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    .pillar-time { background: linear-gradient(90deg, #D4A847, #b8942e); }
+    .pillar-people { background: linear-gradient(90deg, #f472b6, #db2777); }
+    .pillar-influence { background: linear-gradient(90deg, #2dd4bf, #0d9488); }
+    .pillar-numbers { background: linear-gradient(90deg, #60a5fa, #2563eb); }
+    .pillar-knowledge { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
+    .pillar-highlight { font-size: 0.85rem; color: #d4d4d8; margin-top: 1rem; text-align: center; }
+    .pillar-highlight strong { color: #D4A847; }
+
+    /* Heatmap */
+    .heatmap-pillar { margin-bottom: 1.5rem; }
+    .heatmap-pillar:last-child { margin-bottom: 0; }
+    .heatmap-header { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; padding-bottom: 0.375rem; border-bottom: 1px solid #27272a; }
+    .heatmap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .hm-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; }
+    .hm-red { background: rgba(239,68,68,0.1); border-left: 3px solid #ef4444; }
+    .hm-yellow { background: rgba(234,179,8,0.1); border-left: 3px solid #eab308; }
+    .hm-green { background: rgba(34,197,94,0.1); border-left: 3px solid #22c55e; }
+    .hm-name { color: #d4d4d8; }
+    .hm-score { font-weight: 700; }
+    .hm-red .hm-score { color: #ef4444; }
+    .hm-yellow .hm-score { color: #eab308; }
+    .hm-green .hm-score { color: #22c55e; }
+    .hm-pct { font-size: 0.7rem; color: #71717a; margin-top: 0.125rem; }
+
+    /* Blind spots */
+    .blind-spot { padding: 1rem; background: #0a0a0a; border-left: 3px solid #f97316; border-radius: 0 0.375rem 0.375rem 0; margin-bottom: 0.75rem; }
+    .blind-spot h4 { font-size: 0.9rem; color: #f97316; margin-bottom: 0.25rem; }
+    .blind-spot .bs-pillar { font-size: 0.7rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.375rem; }
+    .blind-spot .bs-interp { font-size: 0.85rem; color: #d4d4d8; font-style: italic; }
+    .blind-spot .bs-stat { font-size: 0.8rem; color: #a1a1aa; margin-top: 0.375rem; }
+
+    /* Recommendations */
+    .rec-group { margin-bottom: 1.25rem; }
+    .rec-group:last-child { margin-bottom: 0; }
+    .rec-group-header { font-weight: 700; font-size: 0.9rem; color: #f97316; margin-bottom: 0.5rem; }
+    .rec-item { padding: 0.625rem 0.75rem; background: #0a0a0a; border-radius: 0.375rem; margin-bottom: 0.375rem; font-size: 0.825rem; }
+    .rec-source { font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; margin-bottom: 0.125rem; }
+    .rec-ve { color: #D4A847; }
+    .rec-general { color: #71717a; }
+    .rec-text { color: #d4d4d8; }
+
+    .anon-notice { text-align: center; padding: 1rem; background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.2); border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.8rem; color: #22c55e; }
+
+    .report-footer { text-align: center; padding: 3rem 0 2rem; border-top: 1px solid #27272a; margin-top: 2rem; }
+    .report-footer .tagline { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1.125rem; color: #D4A847; margin-bottom: 1rem; }
+    .report-footer .copy { color: #71717a; font-size: 0.8rem; }
+    .report-footer a { color: #3b82f6; text-decoration: none; }
+    .report-footer .disclaimer { font-size: 0.7rem; color: #52525b; margin-top: 0.75rem; }
+
+    @media print {
+      body { background: #fff; color: #000; }
+      .back-link { display: none; }
+      .section { border-color: #ddd; }
+    }
+    @media (max-width: 520px) {
+      .report { padding: 1.5rem 1rem 3rem; }
+      .heatmap-grid { grid-template-columns: 1fr; }
+      .overview-stats { grid-template-columns: 1fr; }
+      .header-meta { gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading"><span class="loading-text">Loading team report...</span></div>
+  <div id="error" class="error-view" style="display:none;">
+    <div><h2>Team Report Not Found</h2><p style="color:#a1a1aa;margin-bottom:1rem;">This team report could not be loaded.</p><a href="https://assessment.valuetovictory.com">Take the Assessment</a></div>
+  </div>
+  <div id="report" class="report" style="display:none;"></div>
+
+  <script>
+    var pillarColors = { Time: '#D4A847', People: '#f472b6', Influence: '#2dd4bf', Numbers: '#60a5fa', Knowledge: '#a78bfa' };
+    var pillarClasses = { Time: 'pillar-time', People: 'pillar-people', Influence: 'pillar-influence', Numbers: 'pillar-numbers', Knowledge: 'pillar-knowledge' };
+
+    // Recommendations by blind spot (Value Engine first)
+    var blindSpotRecs = {
+      "Time Protection": [
+        { source: "Value Engine", text: "Run a team Time Audit workshop (Value Engine Tool #2) — identify where team time is being stolen" },
+        { source: "Value Engine", text: "Implement Time Protection boundaries using Chapter 1 framework" },
+        { source: "General", text: "Establish 'focus time' blocks across the team — no meetings during these hours" }
+      ],
+      "Boundary Quality": [
+        { source: "Value Engine", text: "Run a team People Audit workshop (Value Engine Tool #3) — assess team relationship dynamics" },
+        { source: "Value Engine", text: "Apply the Boundary Quality framework from Chapter 2" },
+        { source: "General", text: "Implement structured boundary-setting workshops for the team" }
+      ],
+      "Communication Clarity": [
+        { source: "Value Engine", text: "Implement the Communication Clarity framework from Chapter 2 across all team meetings" },
+        { source: "Value Engine", text: "Apply the 4 Questions filter to team decision-making" },
+        { source: "General", text: "Consider structured team communication training" }
+      ],
+      "Financial Awareness": [
+        { source: "Value Engine", text: "Run the Financial Snapshot (Tool #4) as a team workshop" },
+        { source: "Value Engine", text: "Use the Value Per Hour Calculator (Tool #5) to help team understand their worth" },
+        { source: "General", text: "Increase financial transparency and literacy within the team" }
+      ],
+      "Time Awareness": [
+        { source: "Value Engine", text: "Run a team Time Audit (Tool #2) — have everyone track their hours for 3 days" },
+        { source: "Value Engine", text: "Apply the 1,800-Hour Framework to team scheduling" },
+        { source: "General", text: "Implement time-tracking tools and regular time reviews" }
+      ],
+      "Goal Specificity": [
+        { source: "Value Engine", text: "Apply Number One Clarity from Chapter 4 as a team exercise" },
+        { source: "Value Engine", text: "Use the Income Multiplier Model (Tool #12) for team goal setting" },
+        { source: "General", text: "Implement OKR or SMART goal frameworks across the team" }
+      ],
+      "Trust Investment": [
+        { source: "Value Engine", text: "Run a team People Audit (Tool #3) focused on trust dynamics" },
+        { source: "Value Engine", text: "Apply the Relationship Matrix (Tool #6) to map team alliances" },
+        { source: "General", text: "Facilitate trust-building exercises and transparent communication" }
+      ],
+      "Leadership Level": [
+        { source: "Value Engine", text: "Use the Influence Ladder (Tool #8) to assess leadership levels across the team" },
+        { source: "Value Engine", text: "Implement the Gravitational Center Alignment (Tool #11) for leadership values alignment" },
+        { source: "General", text: "Invest in leadership development programs for key team members" }
+      ],
+      "Learning Hours": [
+        { source: "Value Engine", text: "Use the Knowledge ROI Calculator (Tool #7) to identify high-value learning areas" },
+        { source: "Value Engine", text: "Apply the 1,800-Hour Framework to carve out team learning time" },
+        { source: "General", text: "Establish a team learning budget and dedicated professional development time" }
+      ]
+    };
+
+    // Default recommendations for any blind spot without specific entries
+    var defaultRecs = [
+      { source: "Value Engine", text: "Use the relevant Value Engine tool from 'The Lost Art of Value' to address this area" },
+      { source: "Value Engine", text: "Run a team workshop using the Value Engine framework for this pillar" },
+      { source: "General", text: "Consider targeted team training and development in this area" }
+    ];
+
+    (async function() {
+      var path = window.location.pathname;
+      var match = path.match(/\/team-report\/(\d+)/);
+      if (!match) { document.getElementById('loading').style.display='none'; document.getElementById('error').style.display='flex'; return; }
+      var teamId = match[1];
+
+      try {
+        var resp = await fetch('/api/team-report/' + teamId);
+        if (!resp.ok) throw new Error('not found');
+        var data = await resp.json();
+        if (data.error) throw new Error(data.error);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('report').style.display = 'block';
+        renderTeamReport(data, teamId);
+      } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        var errDiv = document.getElementById('error');
+        errDiv.style.display = 'flex';
+        if (e.message && e.message !== 'not found') {
+          errDiv.querySelector('p').textContent = e.message;
+        }
+      }
+    })();
+
+    function renderTeamReport(data, teamId) {
+      var html = '';
+      html += '<a class="back-link" href="/">&larr; Back to Assessment</a>';
+
+      var fromDate = new Date(data.dateRange.from);
+      var toDate = new Date(data.dateRange.to);
+
+      // Header
+      html += '<div class="report-header">';
+      html += '<div class="brand">VALUE ENGINE</div>';
+      html += '<div class="title">Team Assessment Report</div>';
+      html += '<div class="header-meta">';
+      html += '<div class="meta-item"><div class="meta-label">Team</div><div class="meta-value">' + (data.team.name || 'Team ' + data.team.id) + '</div></div>';
+      html += '<div class="meta-item"><div class="meta-label">Participants</div><div class="meta-value">' + data.participantCount + '</div></div>';
+      html += '<div class="meta-item"><div class="meta-label">Date Range</div><div class="meta-value">' + fromDate.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' — ' + toDate.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) + '</div></div>';
+      html += '</div></div>';
+
+      html += '<div class="anon-notice">&#128274; No individual scores are disclosed in this report. All data is anonymous and aggregated.</div>';
+
+      // Section 1: Team Overview
+      html += '<div class="section">';
+      html += '<div class="section-title"><span class="section-number">1</span> Team Overview</div>';
+      html += '<div class="overview-stats">';
+      html += '<div class="stat-card"><div class="stat-value">' + data.averageMasterScore + '</div><div class="stat-label">Average Master Score</div></div>';
+      html += '<div class="stat-card"><div class="stat-value">' + data.participantCount + '</div><div class="stat-label">Team Members</div></div>';
+      html += '</div>';
+
+      // Score distribution
+      html += '<p style="font-size:0.8rem;color:#71717a;margin-bottom:0.75rem;text-align:center;">Score Distribution</p>';
+      html += '<div class="distrib-row">';
+      var distLabels = { Crisis: 'badge-crisis', Survival: 'badge-survival', Growth: 'badge-growth', Momentum: 'badge-momentum', Mastery: 'badge-mastery' };
+      ['Crisis','Survival','Growth','Momentum','Mastery'].forEach(function(range) {
+        var count = data.scoreDistribution[range] || 0;
+        if (count > 0) {
+          html += '<span class="distrib-badge ' + distLabels[range] + '">' + range + ': ' + count + '</span>';
+        }
+      });
+      html += '</div></div>';
+
+      // Section 2: Pillar Averages
+      html += '<div class="section">';
+      html += '<div class="section-title"><span class="section-number">2</span> Pillar Averages</div>';
+      html += '<div class="pillar-bars">';
+      ['Time','People','Influence','Numbers','Knowledge'].forEach(function(p) {
+        var avg = data.pillarAverages[p] || 0;
+        var pctWidth = Math.min(100, (avg / 50) * 100);
+        html += '<div class="pillar-bar"><div class="pillar-label" style="color:' + pillarColors[p] + '">' + p + '</div>';
+        html += '<div class="pillar-track"><div class="pillar-fill ' + pillarClasses[p] + '" style="width:' + pctWidth + '%"><span>' + avg + '/50</span></div></div></div>';
+      });
+      html += '</div>';
+      html += '<div class="pillar-highlight">Your team\'s strongest pillar is <strong>' + data.strongestPillar + '</strong>. Your weakest is <strong>' + data.weakestPillar + '</strong>.</div>';
+      html += '</div>';
+
+      // Section 3: Sub-Category Heatmap
+      html += '<div class="section">';
+      html += '<div class="section-title"><span class="section-number">3</span> Sub-Category Heatmap</div>';
+      ['Time','People','Influence','Numbers','Knowledge'].forEach(function(p) {
+        var subs = data.subCategoryData[p] || [];
+        html += '<div class="heatmap-pillar">';
+        html += '<div class="heatmap-header" style="color:' + pillarColors[p] + '">' + p + '</div>';
+        html += '<div class="heatmap-grid">';
+        subs.forEach(function(sub) {
+          var cls = sub.avg < 2.5 ? 'hm-red' : (sub.avg <= 3.5 ? 'hm-yellow' : 'hm-green');
+          html += '<div class="hm-item ' + cls + '"><div><div class="hm-name">' + sub.name + '</div>';
+          if (sub.lowPercent > 0) html += '<div class="hm-pct">' + sub.lowPercent + '% scored 1-2</div>';
+          html += '</div><div class="hm-score">' + sub.avg + '</div></div>';
+        });
+        html += '</div></div>';
+      });
+      html += '</div>';
+
+      // Section 4: Blind Spots
+      html += '<div class="section">';
+      html += '<div class="section-title"><span class="section-number">4</span> Team Blind Spots</div>';
+      data.blindSpots.forEach(function(bs, i) {
+        html += '<div class="blind-spot">';
+        html += '<div class="bs-pillar">' + bs.pillar + ' Pillar</div>';
+        html += '<h4>#' + (i+1) + ' ' + bs.name + ' (Team Avg: ' + bs.avg + '/5)</h4>';
+        html += '<div class="bs-interp">"' + bs.interpretation + '"</div>';
+        if (bs.lowPercent > 0) html += '<div class="bs-stat">' + bs.lowPercent + '% of your team scored 1-2 in this area</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+
+      // Section 5: Recommendations
+      html += '<div class="section">';
+      html += '<div class="section-title"><span class="section-number">5</span> Recommendations</div>';
+      data.blindSpots.forEach(function(bs) {
+        var recs = blindSpotRecs[bs.name] || defaultRecs;
+        html += '<div class="rec-group">';
+        html += '<div class="rec-group-header">' + bs.name + '</div>';
+        recs.forEach(function(rec) {
+          var srcClass = rec.source === 'Value Engine' ? 'rec-ve' : 'rec-general';
+          html += '<div class="rec-item"><div class="rec-source ' + srcClass + '">' + rec.source + '</div><div class="rec-text">' + rec.text + '</div></div>';
+        });
+        html += '</div>';
+      });
+      html += '</div>';
+
+      // Footer
+      html += '<div class="report-footer">';
+      html += '<div class="tagline">"Don\'t guess. Run the system."</div>';
+      html += '<div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>';
+      html += '<div class="disclaimer">No individual scores are disclosed in this report. This is a self-assessment tool.<br>For the full framework: "The Lost Art of Value: Time for P.I.N.K." by Shawn E. Decker</div>';
+      html += '</div>';
+
+      document.getElementById('report').innerHTML = html;
+    }
+  </script>
+</body>
+</html>

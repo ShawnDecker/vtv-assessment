@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Value Engine — Personal Action Plan</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+    .loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .loading-text { color: #a1a1aa; font-size: 1.125rem; }
+    .error-view { display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+    .error-view h2 { color: #ef4444; margin-bottom: 1rem; }
+    .error-view a { color: #3b82f6; }
+    .report { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    .report-header { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid #27272a; margin-bottom: 2rem; }
+    .report-header .brand { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    .report-header .title { font-family: 'Instrument Serif', serif; font-size: 1.5rem; font-style: italic; color: #d4d4d8; margin-bottom: 0.5rem; }
+    .report-header .subtitle { font-size: 0.85rem; color: #a1a1aa; }
+    .report-header .name { font-size: 1.25rem; font-weight: 600; margin-top: 1rem; }
+    .report-header .date { font-size: 0.875rem; color: #a1a1aa; margin-top: 0.25rem; }
+
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: #a1a1aa; text-decoration: none; font-size: 0.85rem; }
+    .back-link:hover { color: #D4A847; }
+
+    .section { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; margin-bottom: 1.25rem; font-weight: 700; }
+
+    .pillar-section { margin-bottom: 2rem; }
+    .pillar-header { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem; }
+    .pillar-header h3 { font-size: 1.1rem; font-weight: 700; }
+    .pillar-header .pillar-score { font-weight: 700; font-size: 0.9rem; }
+    .pillar-time { background: rgba(212,168,71,0.1); border: 1px solid rgba(212,168,71,0.3); }
+    .pillar-time h3 { color: #D4A847; }
+    .pillar-time .pillar-score { color: #D4A847; }
+    .pillar-people { background: rgba(244,114,182,0.1); border: 1px solid rgba(244,114,182,0.3); }
+    .pillar-people h3 { color: #f472b6; }
+    .pillar-people .pillar-score { color: #f472b6; }
+    .pillar-influence { background: rgba(45,212,191,0.1); border: 1px solid rgba(45,212,191,0.3); }
+    .pillar-influence h3 { color: #2dd4bf; }
+    .pillar-influence .pillar-score { color: #2dd4bf; }
+    .pillar-numbers { background: rgba(96,165,250,0.1); border: 1px solid rgba(96,165,250,0.3); }
+    .pillar-numbers h3 { color: #60a5fa; }
+    .pillar-numbers .pillar-score { color: #60a5fa; }
+    .pillar-knowledge { background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.3); }
+    .pillar-knowledge h3 { color: #a78bfa; }
+    .pillar-knowledge .pillar-score { color: #a78bfa; }
+
+    .action-item { padding: 1rem; background: #0a0a0a; border-left: 3px solid #ef4444; border-radius: 0 0.375rem 0.375rem 0; margin-bottom: 0.75rem; }
+    .action-item .sub-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.25rem; display: flex; justify-content: space-between; }
+    .action-item .sub-score-badge { font-size: 0.7rem; padding: 0.125rem 0.5rem; border-radius: 1rem; background: rgba(239,68,68,0.15); color: #ef4444; }
+    .action-item .action-text { font-size: 0.85rem; color: #d4d4d8; }
+
+    .strength-item { padding: 0.75rem; background: #0a0a0a; border-left: 3px solid #22c55e; border-radius: 0 0.375rem 0.375rem 0; margin-bottom: 0.5rem; }
+    .strength-item .sub-name { font-weight: 600; font-size: 0.85rem; color: #d4d4d8; display: flex; justify-content: space-between; }
+    .strength-item .sub-score-badge { font-size: 0.7rem; padding: 0.125rem 0.5rem; border-radius: 1rem; background: rgba(34,197,94,0.15); color: #22c55e; }
+
+    .no-actions { color: #22c55e; font-size: 0.875rem; padding: 0.75rem; background: rgba(34,197,94,0.05); border-radius: 0.375rem; }
+
+    .tool-ref { background: rgba(212,168,71,0.1); border: 1px solid rgba(212,168,71,0.2); border-radius: 0.375rem; padding: 0.75rem; margin-top: 0.75rem; font-size: 0.8rem; color: #D4A847; }
+    .tool-ref strong { color: #D4A847; }
+
+    .recs-section { margin-top: 1.5rem; }
+    .rec-item { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.75rem; background: #0a0a0a; border-radius: 0.375rem; margin-bottom: 0.5rem; }
+    .rec-rank { min-width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.7rem; flex-shrink: 0; }
+    .rec-rank.ve { background: #D4A847; color: #0a0a0a; }
+    .rec-rank.practical { background: #3b82f6; color: #fff; }
+    .rec-rank.general { background: #71717a; color: #fff; }
+    .rec-text { font-size: 0.8rem; color: #d4d4d8; }
+    .rec-ref { font-size: 0.7rem; color: #D4A847; margin-top: 0.15rem; }
+
+    .cta-box { text-align: center; padding: 2rem; background: linear-gradient(135deg, #1e293b 0%, #18181b 100%); border: 1px solid #334155; border-radius: 0.75rem; margin-top: 1.5rem; }
+    .cta-box h3 { color: #D4A847; margin-bottom: 0.5rem; }
+    .cta-box p { color: #a1a1aa; font-size: 0.875rem; margin-bottom: 1rem; }
+    .cta-box a { display: inline-block; padding: 0.75rem 2rem; background: #3b82f6; color: #fff; border-radius: 0.5rem; font-weight: 700; text-decoration: none; }
+    .cta-box a:hover { background: #2563eb; }
+
+    .report-footer { text-align: center; padding: 3rem 0 2rem; border-top: 1px solid #27272a; margin-top: 2rem; }
+    .report-footer .tagline { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1.125rem; color: #D4A847; margin-bottom: 1rem; }
+    .report-footer .copy { color: #71717a; font-size: 0.8rem; }
+    .report-footer a { color: #3b82f6; text-decoration: none; }
+
+    @media print {
+      body { background: #fff; color: #000; }
+      .back-link, .cta-box { display: none; }
+      .section { border-color: #ddd; }
+      .action-item, .strength-item { background: #f9f9f9; }
+    }
+
+    @media (max-width: 520px) {
+      .report { padding: 1.5rem 1rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">
+    <span class="loading-text">Loading your action plan...</span>
+  </div>
+  <div id="error" class="error-view" style="display:none;">
+    <div>
+      <h2>Report Not Found</h2>
+      <p style="color:#a1a1aa;margin-bottom:1rem;">This assessment could not be loaded.</p>
+      <a href="https://assessment.valuetovictory.com">Take the Assessment</a>
+    </div>
+  </div>
+  <div id="report" class="report" style="display:none;"></div>
+
+  <script>
+    var actionItems = {
+      Time: {
+        "Time Awareness": "Track every hour for 3 days using a simple notebook or phone timer. Write down what you did each hour before bed.",
+        "Time Allocation": "Tomorrow morning, write down your 3 most important tasks BEFORE checking email or phone. Do them first.",
+        "Time Protection": "Block 2 hours tomorrow as 'Do Not Disturb' time. Tell one person about it. Protect it no matter what.",
+        "Time Leverage": "Identify one task you do every week that someone else could do. Write it down. This week, delegate it or automate it.",
+        "Five-Hour Leak": "Set a screen time limit on your phone. Track your social media and TV hours for 3 days. Find the 5-hour leak.",
+        "Value Per Hour": "Calculate your actual hourly rate: take your monthly income, divide by hours worked. Write this number on a sticky note at your desk.",
+        "Time Investment": "Before saying yes to anything this week, ask: 'What is the expected return on this time?' If you can't answer, say no.",
+        "Downtime Quality": "Replace one hour of scrolling or TV this week with something that builds toward a goal. Book, workout, planning.",
+        "Foresight": "Spend 15 minutes Sunday night planning your week. Write down what's coming and what you can prepare for.",
+        "Time Reallocation": "Look at last week's calendar. Circle 3 activities that produced nothing. Replace them with one high-value activity this week."
+      },
+      People: {
+        "Trust Investment": "Pick one person you trust. This week, verify that trust with evidence — are they reliable? Do they follow through?",
+        "Boundary Quality": "Identify one boundary you need to set. Write it down. Communicate it to one person this week.",
+        "Network Depth": "Reach out to one person you respect but haven't talked to in 30+ days. Have a real conversation, not just a text.",
+        "Relational ROI": "List your top 5 relationships. Next to each, write + (they give energy) or - (they drain energy). Act on what you see.",
+        "People Audit": "Run the People Audit (Tool #3): Map 10 people in your life as Givers, Receivers, Exchangers, or Takers.",
+        "Alliance Building": "Identify one Confidant, one Constituent, one Comrade, and one Companion in your life. Who's missing?",
+        "Love Bank Deposits": "Make one intentional deposit in your most important relationship today. Not because you have to — because you choose to.",
+        "Communication Clarity": "In your next important conversation, after you speak, ask: 'What did you hear me say?' See if it matches.",
+        "Restraint Practice": "Before your next difficult conversation, run the 4 questions: Is it true? Is it kind? Is it necessary? Is it the right time?",
+        "Value Replacement": "Reduce time with one draining relationship this week. Invest that time in one relationship that grows you."
+      },
+      Influence: {
+        "Leadership Level": "Ask one person who follows your lead: 'Why?' Their answer tells you what level you're at.",
+        "Integrity Alignment": "Audit your calendar and bank statement this week. Do they reflect what you say you value?",
+        "Professional Credibility": "Ask a colleague or client: 'What's one thing I could do better?' Listen without defending.",
+        "Empathetic Listening": "In your next conversation, don't respond until you can repeat back what the other person said. Prove you heard them.",
+        "Gravitational Center": "Write down your top 5 values. Then check: did your actions today serve any of them?",
+        "Micro-Honesties": "Catch yourself in one exaggeration or omission this week. Correct it immediately.",
+        "Word Management": "This week, replace 'I'll try' with 'I will' or 'I won't.' No ambiguous language.",
+        "Personal Responsibility": "Next time something goes wrong, before looking at anyone else, ask: 'What could I have done differently?'",
+        "Adaptive Influence": "Before your next important conversation, think: 'What does this person value?' Lead with that.",
+        "Influence Multiplier": "Identify one area where better influence would improve your time, people, numbers, or knowledge. Focus there."
+      },
+      Numbers: {
+        "Financial Awareness": "Write down your exact monthly income and your top 10 expenses. Right now. No guessing.",
+        "Goal Specificity": "Turn one vague goal into a specific, measurable, time-bound goal. Write: 'I will [what] by [when].'",
+        "Investment Logic": "Before your next purchase over $50, write down the expected return. If there is none, reconsider.",
+        "Measurement Habit": "Pick one metric that matters to your life and track it daily for 7 days. Weight, income, hours worked — anything.",
+        "Cost vs Value": "Look at your last 5 purchases. For each, write 'cost' or 'investment.' Be honest.",
+        "Number One Clarity": "Write down your #1 priority on a card. Carry it with you. Every time you're asked to do something, check it.",
+        "Small Improvements": "Pick one thing and improve it by 1% today. Just one thing. Do it again tomorrow.",
+        "Negative Math": "Identify one expense, habit, or commitment that's costing you more than it returns. Cut it this week.",
+        "Income Multiplier": "Map 3 ways your income could grow 10% in 90 days. Not theories — specific actions.",
+        "Negotiation Skill": "Next time someone gives you a price, ask: 'Is that the best you can do?' Just ask."
+      },
+      Knowledge: {
+        "Learning Hours": "Schedule 30 minutes of intentional learning today. Not scrolling — reading, studying, or practicing a skill.",
+        "Application Rate": "Think of the last thing you learned. Apply it to something real today. Knowledge without application is trivia.",
+        "Bias Awareness": "Before your next big decision, ask: 'What am I not seeing? What would someone who disagrees say?'",
+        "Highest & Best Use": "Identify your #1 skill. This week, spend more time using it and less time on things anyone else could do.",
+        "Supply & Demand": "Google your job title + 'average salary.' Then ask: what makes me worth more than average?",
+        "Substitution Risk": "Write down 3 things you do that AI, a process, or a cheaper worker could replace. Start building what they can't.",
+        "Double Jeopardy": "Think of your last big mistake. Write down the lesson in one sentence. Put it where you'll see it.",
+        "Knowledge Compounding": "Connect something you learned in one area to a problem in a different area. Cross-domain thinking is the multiplier.",
+        "Weighted Analysis": "For your next decision, list 3 factors. Weight them 1-10 by importance. Multiply by your rating. Total wins.",
+        "Perception vs Perspective": "Ask someone you respect how they see a situation you're dealing with. Compare their view to yours."
+      }
+    };
+
+    var pillarTools = {
+      Time: { tool: "Time Audit (Tool #2), Value Per Hour Calculator (Tool #5), Time Reallocation Planner (Tool #9)", chapter: "Read Chapter 1 of The Value Engine for the full Time framework" },
+      People: { tool: "People Audit (Tool #3), Relationship Matrix (Tool #6), Value Replacement Map (Tool #10)", chapter: "Read Chapter 2 of The Value Engine for the full People framework" },
+      Influence: { tool: "Influence Ladder (Tool #8), Gravitational Center Alignment (Tool #11)", chapter: "Read Chapter 3 of The Value Engine for the full Influence framework" },
+      Numbers: { tool: "Financial Snapshot (Tool #4), Value Per Hour Calculator (Tool #5), Income Multiplier Model (Tool #12)", chapter: "Read Chapter 4 of The Value Engine for the full Numbers framework" },
+      Knowledge: { tool: "Knowledge ROI Calculator (Tool #7)", chapter: "Read Chapter 5 of The Value Engine for the full Knowledge framework" }
+    };
+
+    var pillarColors = { Time: '#D4A847', People: '#f472b6', Influence: '#2dd4bf', Numbers: '#60a5fa', Knowledge: '#a78bfa' };
+    var pillarClassMap = { Time: 'pillar-time', People: 'pillar-people', Influence: 'pillar-influence', Numbers: 'pillar-numbers', Knowledge: 'pillar-knowledge' };
+
+    var subCategoryMap = {
+      Time: [['Time Awareness','timeAwareness'],['Time Allocation','timeAllocation'],['Time Protection','timeProtection'],['Time Leverage','timeLeverage'],['Five-Hour Leak','fiveHourLeak'],['Value Per Hour','valuePerHour'],['Time Investment','timeInvestment'],['Downtime Quality','downtimeQuality'],['Foresight','foresight'],['Time Reallocation','timeReallocation']],
+      People: [['Trust Investment','trustInvestment'],['Boundary Quality','boundaryQuality'],['Network Depth','networkDepth'],['Relational ROI','relationalRoi'],['People Audit','peopleAudit'],['Alliance Building','allianceBuilding'],['Love Bank Deposits','loveBankDeposits'],['Communication Clarity','communicationClarity'],['Restraint Practice','restraintPractice'],['Value Replacement','valueReplacement']],
+      Influence: [['Leadership Level','leadershipLevel'],['Integrity Alignment','integrityAlignment'],['Professional Credibility','professionalCredibility'],['Empathetic Listening','empatheticListening'],['Gravitational Center','gravitationalCenter'],['Micro-Honesties','microHonesties'],['Word Management','wordManagement'],['Personal Responsibility','personalResponsibility'],['Adaptive Influence','adaptiveInfluence'],['Influence Multiplier','influenceMultiplier']],
+      Numbers: [['Financial Awareness','financialAwareness'],['Goal Specificity','goalSpecificity'],['Investment Logic','investmentLogic'],['Measurement Habit','measurementHabit'],['Cost vs Value','costVsValue'],['Number One Clarity','numberOneClarity'],['Small Improvements','smallImprovements'],['Negative Math','negativeMath'],['Income Multiplier','incomeMultiplier'],['Negotiation Skill','negotiationSkill']],
+      Knowledge: [['Learning Hours','learningHours'],['Application Rate','applicationRate'],['Bias Awareness','biasAwareness'],['Highest & Best Use','highestBestUse'],['Supply & Demand','supplyAndDemand'],['Substitution Risk','substitutionRisk'],['Double Jeopardy','doubleJeopardy'],['Knowledge Compounding','knowledgeCompounding'],['Weighted Analysis','weightedAnalysis'],['Perception vs Perspective','perceptionVsPerspective']]
+    };
+
+    (async function() {
+      var path = window.location.pathname;
+      var match = path.match(/\/action-plan\/(\d+)/);
+      if (!match) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'flex';
+        return;
+      }
+      var assessmentId = match[1];
+
+      try {
+        var resp = await fetch('/api/report/' + assessmentId);
+        if (!resp.ok) throw new Error('not found');
+        var data = await resp.json();
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('report').style.display = 'block';
+        renderActionPlan(data, assessmentId);
+      } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'flex';
+      }
+    })();
+
+    function renderActionPlan(data, assessmentId) {
+      var a = data.assessment;
+      var rx = data.prescription || {};
+      var name = (data.contact.firstName || '') + ' ' + (data.contact.lastName || '');
+      var d = new Date(a.completedAt);
+
+      var html = '';
+      html += '<a class="back-link" href="/premium/' + assessmentId + '">&larr; Back to Premium Reports</a>';
+      html += '<div class="report-header">';
+      html += '<div class="brand">THE VALUE ENGINE</div>';
+      html += '<div class="title">Personal Action Plan</div>';
+      html += '<div class="subtitle">Specific actions based on your assessment results</div>';
+      html += '<div class="name">' + name + '</div>';
+      html += '<div class="date">' + d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) + '</div>';
+      html += '</div>';
+
+      // Overview section
+      html += '<div class="section">';
+      html += '<div class="section-title">Your Action Plan Overview</div>';
+      html += '<p style="font-size:0.9rem;color:#d4d4d8;margin-bottom:0.75rem;">Your Master Score is <strong>' + a.masterScore + '</strong> (' + a.scoreRange + '). Your weakest pillar is <strong>' + rx.weakestPillar + '</strong> (' + rx.weakestScore + '/50). Below are specific, actionable steps for every area where you scored 1 or 2 out of 5.</p>';
+      html += '<p style="font-size:0.85rem;color:#a1a1aa;">Each action can be started today. Focus on your weakest pillar first, then work through the rest.</p>';
+      html += '</div>';
+
+      // Generate pillar sections
+      var pillars = [
+        { name: 'Time', score: a.timeTotal },
+        { name: 'People', score: a.peopleTotal },
+        { name: 'Influence', score: a.influenceTotal },
+        { name: 'Numbers', score: a.numbersTotal },
+        { name: 'Knowledge', score: a.knowledgeTotal }
+      ];
+      // Sort by score ascending so weakest pillar first
+      pillars.sort(function(x, y) { return x.score - y.score; });
+
+      pillars.forEach(function(p) {
+        var subs = subCategoryMap[p.name] || [];
+        var weakSubs = [];
+        var strongSubs = [];
+        subs.forEach(function(sub) {
+          var val = a[sub[1]] || 0;
+          if (val <= 2) weakSubs.push({ name: sub[0], score: val });
+          else if (val >= 4) strongSubs.push({ name: sub[0], score: val });
+        });
+
+        html += '<div class="section pillar-section">';
+        html += '<div class="pillar-header ' + pillarClassMap[p.name] + '">';
+        html += '<h3>' + p.name + '</h3>';
+        html += '<span class="pillar-score">' + p.score + '/50</span>';
+        html += '</div>';
+
+        if (weakSubs.length > 0) {
+          html += '<div class="section-title" style="color:#ef4444;">Actions Required (' + weakSubs.length + ' areas)</div>';
+          weakSubs.forEach(function(ws) {
+            var action = (actionItems[p.name] || {})[ws.name] || 'Focus on improving this area.';
+            html += '<div class="action-item">';
+            html += '<div class="sub-name"><span>' + ws.name + '</span><span class="sub-score-badge">' + ws.score + '/5</span></div>';
+            html += '<div class="action-text">' + action + '</div>';
+            html += '</div>';
+          });
+        } else {
+          html += '<div class="no-actions">&#10003; No critical weaknesses in this pillar. Keep it up!</div>';
+        }
+
+        if (strongSubs.length > 0) {
+          html += '<div class="section-title" style="margin-top:1.25rem;color:#22c55e;">Strengths (' + strongSubs.length + ' areas)</div>';
+          strongSubs.forEach(function(ss) {
+            html += '<div class="strength-item"><div class="sub-name"><span>' + ss.name + '</span><span class="sub-score-badge">' + ss.score + '/5</span></div></div>';
+          });
+        }
+
+        // Tool reference
+        var tools = pillarTools[p.name];
+        if (tools) {
+          html += '<div class="tool-ref"><strong>Value Engine Tools:</strong> ' + tools.tool + '<br>' + tools.chapter + '</div>';
+        }
+
+        html += '</div>'; // end pillar section
+      });
+
+      // Recommendations section
+      html += '<div class="section recs-section">';
+      html += '<div class="section-title">Top 10 Recommendations for ' + rx.weakestSubCategory + '</div>';
+      html += '<div id="recsContainer"><p style="color:#71717a;font-size:0.85rem;">Loading recommendations...</p></div>';
+      html += '</div>';
+
+      // CTA
+      html += '<div class="cta-box">';
+      html += '<h3>Want Weekly Accountability?</h3>';
+      html += '<p>Join VictoryPath ($47/mo) for structured tools, community support, and monthly progress tracking.</p>';
+      html += '<a href="https://valuetovictory.com">Join VictoryPath &rarr;</a>';
+      html += '</div>';
+
+      // Footer
+      html += '<div class="report-footer">';
+      html += '<div class="tagline">"Don\'t guess. Run the system."</div>';
+      html += '<div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>';
+      html += '</div>';
+
+      document.getElementById('report').innerHTML = html;
+
+      // Load recommendations
+      if (rx.weakestPillar && rx.weakestSubCategory) {
+        fetch('/api/recommendations?pillar=' + encodeURIComponent(rx.weakestPillar) + '&subCategory=' + encodeURIComponent(rx.weakestSubCategory))
+          .then(function(resp) { return resp.json(); })
+          .then(function(recData) {
+            if (recData.recommendations && recData.recommendations.length > 0) {
+              var recsHtml = '';
+              if (recData.percentOfUsersWeak > 0) {
+                recsHtml += '<p style="font-size:0.8rem;color:#a1a1aa;margin-bottom:1rem;">' + recData.percentOfUsersWeak + '% of Value Engine users share this weakness.</p>';
+              }
+              recData.recommendations.forEach(function(rec) {
+                var rankClass = rec.source === 'Value Engine' ? 've' : (rec.source === 'Practical' ? 'practical' : 'general');
+                recsHtml += '<div class="rec-item"><span class="rec-rank ' + rankClass + '">' + rec.rank + '</span><div class="rec-text">' + rec.action;
+                if (rec.reference) recsHtml += '<div class="rec-ref">' + rec.reference + '</div>';
+                recsHtml += '</div></div>';
+              });
+              document.getElementById('recsContainer').innerHTML = recsHtml;
+            }
+          })
+          .catch(function() {
+            document.getElementById('recsContainer').innerHTML = '<p style="color:#71717a;font-size:0.85rem;">Could not load recommendations.</p>';
+          });
+      }
+    }
+  </script>
+</body>
+</html>
