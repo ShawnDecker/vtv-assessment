@@ -64,7 +64,7 @@ module.exports = async (req, res) => {
         const pdfPath = path.join(__dirname, '..', 'running-from-miracles.pdf');
         if (fs.existsSync(pdfPath)) {
           attachments.push({
-            filename: 'Running-From-Miracles.pdf',
+            filename: 'Running-From-Miracles-by-Shawn-Decker.pdf',
             path: pdfPath,
             contentType: 'application/pdf',
           });
@@ -79,7 +79,7 @@ module.exports = async (req, res) => {
             }).on('error', reject);
           });
           attachments.push({
-            filename: 'Running-From-Miracles.pdf',
+            filename: 'Running-From-Miracles-by-Shawn-Decker.pdf',
             content: pdfBuffer,
             contentType: 'application/pdf',
           });
