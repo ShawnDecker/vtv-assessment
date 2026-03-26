@@ -1897,13 +1897,13 @@ No individual scores are disclosed in this report. All data is anonymous and agg
     // POST /api/coaching/submit — Coaching call intake form submission
     if (req.method === 'POST' && url === '/coaching/submit') {
       const b = req.body || {};
-      const { name, email, track, goals, questions, biggest_challenge, assessment_id, re_years, re_specialty, re_volume } = b;
+      const { name, email, track, goals, questions, biggest_challenge, assessment_id, re_years, re_specialty, re_volume, company_name, company_role, company_size, company_department } = b;
 
       if (!name || !email || !track || !goals || !questions || !biggest_challenge) {
         return res.status(400).json({ error: 'All required fields must be filled out.' });
       }
-      if (!['real_estate', 'personal'].includes(track)) {
-        return res.status(400).json({ error: 'Track must be real_estate or personal.' });
+      if (!['real_estate', 'personal', 'company'].includes(track)) {
+        return res.status(400).json({ error: 'Track must be real_estate, personal, or company.' });
       }
 
       // Generate verification token
@@ -1921,8 +1921,8 @@ No individual scores are disclosed in this report. All data is anonymous and agg
 
       // Insert coaching request
       try {
-        await sql`INSERT INTO coaching_requests (assessment_id, contact_id, name, email, track, goals, questions, biggest_challenge, re_years, re_specialty, re_volume, verification_token)
-          VALUES (${assessment_id || null}, ${contactId}, ${name}, ${email}, ${track}, ${goals}, ${questions}, ${biggest_challenge}, ${re_years || null}, ${re_specialty || null}, ${re_volume || null}, ${verificationToken})`;
+        await sql`INSERT INTO coaching_requests (assessment_id, contact_id, name, email, track, goals, questions, biggest_challenge, re_years, re_specialty, re_volume, company_name, company_role, company_size, company_department, verification_token)
+          VALUES (${assessment_id || null}, ${contactId}, ${name}, ${email}, ${track}, ${goals}, ${questions}, ${biggest_challenge}, ${re_years || null}, ${re_specialty || null}, ${re_volume || null}, ${company_name || null}, ${company_role || null}, ${company_size || null}, ${company_department || null}, ${verificationToken})`;
       } catch (dbErr) {
         console.error('Coaching request DB error:', dbErr.message);
         return res.status(500).json({ error: 'Could not save your request. Please try again.' });
@@ -1937,7 +1937,7 @@ No individual scores are disclosed in this report. All data is anonymous and agg
             auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
           });
           const verifyUrl = `https://assessment.valuetovictory.com/api/coaching/verify?token=${verificationToken}`;
-          const trackLabel = track === 'real_estate' ? 'Real Estate' : 'Personal';
+          const trackLabel = track === 'real_estate' ? 'Real Estate' : track === 'company' ? 'Company' : 'Personal';
           await transporter.sendMail({
             from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
             to: email,
@@ -2009,7 +2009,7 @@ This link expires in 24 hours.
           }
         }
 
-        const trackLabel = cr.track === 'real_estate' ? 'Real Estate' : 'Personal';
+        const trackLabel = cr.track === 'real_estate' ? 'Real Estate' : cr.track === 'company' ? 'Company' : 'Personal';
 
         // Build the coaching report email
         let report = `${cr.name},\n\nYour ${trackLabel} Coaching Preparation Report is ready.\n\n`;
@@ -2076,6 +2076,30 @@ This link expires in 24 hours.
           }
         }
 
+        // Company-specific insights
+        if (cr.track === 'company') {
+          report += `COMPANY INSIGHTS\n${'-'.repeat(30)}\n`;
+          if (cr.company_name) report += `Company: ${cr.company_name}\n`;
+          if (cr.company_role) report += `Role: ${cr.company_role}\n`;
+          if (cr.company_size) report += `Employees: ${cr.company_size}\n`;
+          if (cr.company_department) report += `Department/Team: ${cr.company_department}\n`;
+          report += `\n`;
+
+          if (assessment && prescription) {
+            if (prescription.weakestPillar === 'People') {
+              report += `Your People pillar is your weakest area. For organizations, this signals gaps in team dynamics, culture alignment, and interpersonal trust across the company. Your coaching call should focus on building stronger team cohesion, communication frameworks, and a culture that retains top talent.\n\n`;
+            } else if (prescription.weakestPillar === 'Numbers') {
+              report += `Your Numbers pillar needs attention. At the company level, this often means financial literacy gaps across the organization — inconsistent budgeting, unclear KPIs, or teams that don't understand how their work ties to revenue. Your coaching call should focus on building financial awareness and accountability at every level.\n\n`;
+            } else if (prescription.weakestPillar === 'Influence') {
+              report += `Your Influence pillar needs work. For companies, weak influence scores point to leadership development gaps — managers who struggle to inspire, misaligned messaging, or lack of executive presence across the org. Your coaching call should focus on leadership development programs and influence-building frameworks for your team.\n\n`;
+            } else if (prescription.weakestPillar === 'Knowledge') {
+              report += `Your Knowledge pillar is your gap. At the organizational level, this means training and upskilling are falling behind — teams may lack current industry knowledge, learning budgets are underutilized, or knowledge isn't being shared effectively. Your coaching call should focus on building a learning culture and systematic upskilling programs.\n\n`;
+            } else if (prescription.weakestPillar === 'Time') {
+              report += `Your Time pillar is holding you back. For companies, this reflects operational efficiency problems — meetings that drain productivity, unclear priorities, bottlenecked workflows, or teams stuck in reactive mode. Your coaching call should focus on operational efficiency systems, priority frameworks, and time-protection strategies across your organization.\n\n`;
+            }
+          }
+        }
+
         // Pre-call action items
         report += `PRE-CALL ACTION ITEMS\n${'-'.repeat(30)}\n`;
         report += `1. Review your assessment results and note any scores that surprised you\n`;
@@ -2095,6 +2119,9 @@ This link expires in 24 hours.
         if (cr.track === 'real_estate') {
           report += `4. Real Estate Consulting — $300 (30 min) or $500 (60 min) with Shawn Decker\n`;
         }
+        if (cr.track === 'company') {
+          report += `4. Company Consulting — custom engagement with Shawn Decker for team and organizational development\n`;
+        }
         report += `\n`;
 
         // Next step
@@ -2111,10 +2138,13 @@ This link expires in 24 hours.
             service: 'gmail',
             auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
           });
+          const reportSubject = cr.track === 'company'
+            ? 'Your Company Coaching Report — Value to Victory'
+            : `Your ${trackLabel} Coaching Report — Value to Victory`;
           await transporter.sendMail({
             from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
             to: cr.email,
-            subject: `Your ${trackLabel} Coaching Report — Value to Victory`,
+            subject: reportSubject,
             text: report,
           });
           reportSent = true;

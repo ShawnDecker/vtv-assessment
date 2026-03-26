@@ -253,6 +253,7 @@
         <div class="coaching-buttons">
           <a class="coaching-btn re-btn" id="coachingRE" href="#">&#127968; Real Estate Coaching</a>
           <a class="coaching-btn personal-btn" id="coachingPersonal" href="#">&#128100; Personal Coaching</a>
+          <a class="coaching-btn personal-btn" id="coachingCompany" href="#">&#127970; Company Coaching</a>
         </div>
         <div class="coaching-note">Your report will be emailed within 5 minutes. Just verify your email and tell us what you want from the call.</div>
       </div>
@@ -478,6 +479,7 @@
       // Coaching links
       document.getElementById('coachingRE').href = '/coaching?track=real_estate&aid=' + a.id;
       document.getElementById('coachingPersonal').href = '/coaching?track=personal&aid=' + a.id;
+      document.getElementById('coachingCompany').href = '/coaching?track=company&aid=' + a.id;
 
       // Load top recommendations based on weakest pillar and sub-category
       if (rx.weakestPillar && rx.weakestSubCategory) {

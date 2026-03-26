@@ -20,7 +20,7 @@
     .form-container { max-width: 640px; margin: 0 auto; padding: 0 1.5rem 4rem; }
 
     /* Track selector */
-    .track-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+    .track-selector { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
     .track-option {
       background: #18181b;
       border: 2px solid #27272a;
@@ -74,13 +74,16 @@
     /* RE-specific fields */
     .re-fields { display: none; }
     .re-fields.visible { display: block; }
-    .re-fields-divider {
+    /* Company-specific fields */
+    .company-fields { display: none; }
+    .company-fields.visible { display: block; }
+    .conditional-fields-divider {
       border: none;
       height: 1px;
       background: #27272a;
       margin: 1.5rem 0;
     }
-    .re-fields-label {
+    .conditional-fields-label {
       font-size: 0.7rem;
       letter-spacing: 0.15em;
       text-transform: uppercase;
@@ -148,7 +151,7 @@
       .page-header h1 { font-size: 1.75rem; }
       .form-container { padding: 0 1rem 3rem; }
       .intake-form { padding: 1.5rem 1.25rem; }
-      .track-selector { grid-template-columns: 1fr; }
+      .track-selector { grid-template-columns: 1fr !important; }
     }
   </style>
 </head>
@@ -191,6 +194,11 @@
           <div class="track-name">Personal Coaching</div>
           <div class="track-desc">Personal development guidance tailored to your results</div>
         </div>
+        <div class="track-option" id="trackCompany" onclick="selectTrack('company')">
+          <div class="track-icon">&#127970;</div>
+          <div class="track-name">Company Coaching</div>
+          <div class="track-desc">Organizational development guided by Value Engine insights</div>
+        </div>
       </div>
 
       <form class="intake-form" id="coachingForm" onsubmit="submitForm(event)">
@@ -225,8 +233,8 @@
 
         <!-- Real Estate specific fields -->
         <div class="re-fields" id="reFields">
-          <hr class="re-fields-divider" />
-          <div class="re-fields-label">Real Estate Details</div>
+          <hr class="conditional-fields-divider" />
+          <div class="conditional-fields-label">Real Estate Details</div>
 
           <div class="form-group">
             <label>Years in Real Estate</label>
@@ -246,6 +254,32 @@
           <div class="form-group">
             <label>Current Annual Volume</label>
             <input type="text" id="reVolumeInput" name="re_volume" placeholder="e.g., $5M or 20 transactions" />
+          </div>
+        </div>
+
+        <!-- Company specific fields -->
+        <div class="company-fields" id="companyFields">
+          <hr class="conditional-fields-divider" />
+          <div class="conditional-fields-label">Company Details</div>
+
+          <div class="form-group">
+            <label>Company Name</label>
+            <input type="text" id="companyNameInput" name="company_name" placeholder="Your company name" />
+          </div>
+
+          <div class="form-group">
+            <label>Your Role / Title</label>
+            <input type="text" id="companyRoleInput" name="company_role" placeholder="e.g., VP of Operations" />
+          </div>
+
+          <div class="form-group">
+            <label>Number of Employees</label>
+            <input type="text" id="companySizeInput" name="company_size" placeholder="e.g., 50 or 200+" />
+          </div>
+
+          <div class="form-group">
+            <label>What department or team is this for?</label>
+            <input type="text" id="companyDeptInput" name="company_department" placeholder="e.g., Sales, Engineering, entire company" />
           </div>
         </div>
 
@@ -293,20 +327,19 @@
 
       document.getElementById('trackRE').classList.toggle('selected', track === 'real_estate');
       document.getElementById('trackPersonal').classList.toggle('selected', track === 'personal');
+      document.getElementById('trackCompany').classList.toggle('selected', track === 'company');
 
       var reFields = document.getElementById('reFields');
-      if (track === 'real_estate') {
-        reFields.classList.add('visible');
-      } else {
-        reFields.classList.remove('visible');
-      }
+      var companyFields = document.getElementById('companyFields');
+      reFields.classList.toggle('visible', track === 'real_estate');
+      companyFields.classList.toggle('visible', track === 'company');
     }
 
     function submitForm(e) {
       e.preventDefault();
 
       if (!selectedTrack) {
-        alert('Please select a coaching track (Real Estate or Personal).');
+        alert('Please select a coaching track (Real Estate, Personal, or Company).');
         return;
       }
 
@@ -328,6 +361,13 @@
         body.re_years = document.getElementById('reYearsInput').value.trim();
         body.re_specialty = document.getElementById('reSpecialtyInput').value;
         body.re_volume = document.getElementById('reVolumeInput').value.trim();
+      }
+
+      if (selectedTrack === 'company') {
+        body.company_name = document.getElementById('companyNameInput').value.trim();
+        body.company_role = document.getElementById('companyRoleInput').value.trim();
+        body.company_size = document.getElementById('companySizeInput').value.trim();
+        body.company_department = document.getElementById('companyDeptInput').value.trim();
       }
 
       fetch('/api/coaching/submit', {
