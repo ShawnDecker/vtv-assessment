@@ -11,6 +11,7 @@
     { "src": "/api/verify-email", "dest": "/api/verify-email.js" },
     { "src": "/api/setup-free-book-db", "dest": "/api/setup-free-book-db.js" },
     { "src": "/api/migrate-coaching", "dest": "/api/migrate-coaching.js" },
+    { "src": "/api/health", "dest": "/api/health.js" },
     { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "handle": "filesystem" },
     { "src": "/free-book", "dest": "/free-book.html" },
