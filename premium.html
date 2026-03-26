@@ -63,6 +63,9 @@
     .btn-teal:hover { background: #0d9488; color: #fff; }
     .btn-free { display:inline-block;padding:0.75rem 2rem;background:#22c55e;color:#fff;border-radius:0.5rem;font-weight:700;text-decoration:none;font-size:0.95rem;text-align:center;transition:background 0.2s; } .btn-free:hover { background:#16a34a; } .btn-pay { background: transparent; border: 1px solid #D4A847; color: #D4A847; }
     .btn-pay:hover { background: #D4A847; color: #0a0a0a; }
+    .email-deliver { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .deliver-email { padding: 0.5rem 0.75rem; background: #0a0a0a; border: 1px solid #3f3f46; border-radius: 0.375rem; color: #fff; font-size: 0.85rem; font-family: inherit; flex: 1; min-width: 180px; }
+    .deliver-email:focus { outline: none; border-color: #D4A847; }
     .card-price { display: inline-block; font-size: 0.8rem; color: #a1a1aa; margin-left: 0.75rem; vertical-align: middle; }
 
     /* Membership upsell */
@@ -161,7 +164,7 @@
     <!-- Membership Upsell -->
     <div class="upsell" id="upsellSection">
       <h3>Get Unlimited Access to All Premium Reports</h3>
-      <p>VictoryPath membership ($47/mo) includes all 3 premium reports, plus tools, community, and monthly progress tracking.</p>
+      <p>VictoryPath membership ($29/mo) includes all 3 premium reports, plus tools, community, and monthly progress tracking.</p>
       <a href="https://valuetovictory.com">Learn More at ValueToVictory.com &rarr;</a>
     </div>
 
@@ -212,33 +215,72 @@
       }
     })();
 
+    var memberEmail = '';
+
     function renderButtons(memberAccess) {
       var actionHtml, counselorHtml, teamHtml;
+      var isPromo = new Date() < new Date('2026-04-26T00:00:00');
       if (memberAccess) {
-        actionHtml = '<a class="card-btn btn-gold" href="/action-plan/' + assessmentId + '">View Action Plan</a>';
-        counselorHtml = '<a class="card-btn btn-blue" href="/counselor-report/' + assessmentId + '">View Counselor Report</a>';
+        actionHtml = '<a class="card-btn btn-gold" href="/action-plan/' + assessmentId + '" onclick="emailReport(\'action-plan\')">View Action Plan</a>';
+        counselorHtml = '<a class="card-btn btn-blue" href="/counselor-report/' + assessmentId + '" onclick="emailReport(\'counselor\')">View Counselor Report</a>';
         teamHtml = teamId
-          ? '<a class="card-btn btn-teal" href="/team-report/' + teamId + '">View Team Report</a>'
+          ? '<a class="card-btn btn-teal" href="/team-report/' + teamId + '" onclick="emailReport(\'team\')">View Team Report</a>'
           : '<span style="color:#71717a;font-size:0.8rem;">Requires a team assessment</span>';
         document.getElementById('upsellSection').style.display = 'none';
-      } else {
-        if (new Date() < new Date('2026-04-26T00:00:00')) {
-          actionHtml = '<a class=\"card-btn btn-free\" href=\"/action-plan/' + assessmentId + '\">Get This Report — FREE</a>';
-        } else {
-          actionHtml = '<a class=\"card-btn btn-pay\" href=\"https://buy.stripe.com/aFa4gy9oEbmkaBr43W6oo04\">Get This Report — $1.99</a>';
-        }
-        if (new Date() < new Date('2026-04-26T00:00:00')) {
-          counselorHtml = '<a class=\"card-btn btn-free\" href=\"/counselor-report/' + assessmentId + '\">Get This Report — FREE</a>';
-        } else {
-          counselorHtml = '<a class=\"card-btn btn-pay\" href=\"https://buy.stripe.com/fZu9ASdEU9ec10R1VO6oo05\">Get This Report — $1.99</a>';
-        }
+      } else if (isPromo) {
+        actionHtml = '<a class="card-btn btn-free" href="/action-plan/' + assessmentId + '">Get This Report — FREE</a>';
+        counselorHtml = '<a class="card-btn btn-free" href="/counselor-report/' + assessmentId + '">Get This Report — FREE</a>';
         teamHtml = teamId
-          ? (new Date() < new Date('2026-04-26T00:00:00') ? '<a class="card-btn btn-free" href="/team-report/0">Get This Report — FREE</a>' : '<a class="card-btn btn-pay" href="https://buy.stripe.com/28E14m0S82POeRH5806oo06">Get This Report — $1.99</a>')
+          ? '<a class="card-btn btn-free" href="/team-report/0">Get This Report — FREE</a>'
+          : '<span style="color:#71717a;font-size:0.8rem;">Requires a team assessment</span>';
+      } else {
+        actionHtml = '<div class="email-deliver" id="actionDeliver"><input type="email" class="deliver-email" placeholder="Your email" /><button class="card-btn btn-pay" onclick="confirmAndSend(\'action-plan\',this)">Email Me This Report — $1.99</button></div>';
+        counselorHtml = '<div class="email-deliver" id="counselorDeliver"><input type="email" class="deliver-email" placeholder="Your email" /><button class="card-btn btn-pay" onclick="confirmAndSend(\'counselor\',this)">Email Me This Report — $1.99</button></div>';
+        teamHtml = teamId
+          ? '<div class="email-deliver" id="teamDeliver"><input type="email" class="deliver-email" placeholder="Your email" /><button class="card-btn btn-pay" onclick="confirmAndSend(\'team\',this)">Email Me This Report — $1.99</button></div>'
           : '<span style="color:#71717a;font-size:0.8rem;">Requires a team assessment</span>';
       }
       document.getElementById('actionBtn').innerHTML = actionHtml;
       document.getElementById('counselorBtn').innerHTML = counselorHtml;
       document.getElementById('teamBtn').innerHTML = teamHtml;
+    }
+
+    function emailReport(reportType) {
+      if (!memberEmail) return;
+      fetch('/api/premium/send-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentId: assessmentId, reportType: reportType, email: memberEmail })
+      }).catch(function() {});
+    }
+
+    async function confirmAndSend(reportType, btnEl) {
+      var container = btnEl.parentElement;
+      var emailInput = container.querySelector('.deliver-email');
+      var email = emailInput.value.trim();
+      if (!email || !email.includes('@')) {
+        emailInput.style.borderColor = '#ef4444';
+        return;
+      }
+      btnEl.textContent = 'Sending...';
+      btnEl.disabled = true;
+      try {
+        var resp = await fetch('/api/premium/send-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assessmentId: assessmentId, reportType: reportType, email: email })
+        });
+        var data = await resp.json();
+        if (data.sent) {
+          container.innerHTML = '<span style="color:#22c55e;font-size:0.9rem;">&#10003; Report sent to ' + email + '</span>';
+        } else {
+          btnEl.textContent = 'Failed — Try Again';
+          btnEl.disabled = false;
+        }
+      } catch (e) {
+        btnEl.textContent = 'Failed — Try Again';
+        btnEl.disabled = false;
+      }
     }
 
     async function checkMembership() {
@@ -256,6 +298,7 @@
 
         if (data.isMember) {
           isMember = true;
+          memberEmail = email;
           statusEl.className = 'membership-status membership-active';
           statusEl.textContent = '✓ Active ' + (data.tier || 'Member') + ' — All premium reports unlocked!';
           renderButtons(true);

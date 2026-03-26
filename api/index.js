@@ -373,8 +373,8 @@ module.exports = async (req, res) => {
 
           const recTexts = {
             Crisis: "YOUR NEXT STEP: You need the full system. Start with The Value Engine book — the diagnostic that shows you exactly where your life is undervalued. $29 at valuetovictory.com",
-            Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Value Engine book ($29) plus VictoryPath membership ($47/mo) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
-            Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($47/mo) — structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
+            Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Value Engine book ($29) plus VictoryPath membership ($29/mo) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
+            Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($29/mo) — structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
             Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($79/mo) or 1:1 coaching ($300/hr, 20% off your first session) will break through the ceiling. valuetovictory.com",
             Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($397/mo) gives you 50% off coaching, a complimentary monthly session, and direct author access. valuetovictory.com",
           };
@@ -709,8 +709,8 @@ Don't guess. Run the system.
       const scoreRange = a.score_range;
       const productRecommendations = {
         Crisis: { title: 'Start Here', product: 'The Value Engine Book', price: '$29', description: 'The diagnostic that shows you exactly where your life is undervalued.' },
-        Survival: { title: 'Build Your Foundation', product: 'Book + VictoryPath Membership', price: '$29 + $47/mo', description: 'The tools and community to move from Survival to Growth.' },
-        Growth: { title: 'Accelerate Your Growth', product: 'VictoryPath Membership', price: '$47/mo', description: 'Structured tools, community accountability, and monthly progress tracking.' },
+        Survival: { title: 'Build Your Foundation', product: 'Book + VictoryPath Membership', price: '$29 + $29/mo', description: 'The tools and community to move from Survival to Growth.' },
+        Growth: { title: 'Accelerate Your Growth', product: 'VictoryPath Membership', price: '$29/mo', description: 'Structured tools, community accountability, and monthly progress tracking.' },
         Momentum: { title: 'Break Through', product: 'Value Builder or 1:1 Coaching', price: '$79/mo or $300/hr (20% off first session)', description: 'Direct coaching to break through the ceiling.' },
         Mastery: { title: 'Go Elite', product: 'Victory VIP', price: '$397/mo', description: '50% off coaching, complimentary monthly session, and direct author access.' },
       };
@@ -776,8 +776,8 @@ Don't guess. Run the system.
       // Product recommendation text by range
       const recTexts = {
         Crisis: "YOUR NEXT STEP: You need the full system. Start with The Value Engine book — the diagnostic that shows you exactly where your life is undervalued. $29 at valuetovictory.com",
-        Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Value Engine book ($29) plus VictoryPath membership ($47/mo) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
-        Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($47/mo) — structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
+        Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Value Engine book ($29) plus VictoryPath membership ($29/mo) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
+        Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($29/mo) — structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
         Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($79/mo) or 1:1 coaching ($300/hr, 20% off your first session) will break through the ceiling. valuetovictory.com",
         Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($397/mo) gives you 50% off coaching, a complimentary monthly session, and direct author access. valuetovictory.com",
       };
@@ -1664,6 +1664,133 @@ Don't guess. Run the system.
       }
 
       return res.json({ email, isMember, tier });
+    }
+
+    // POST /api/premium/send-report — Email a premium report to the user
+    if (req.method === 'POST' && url === '/premium/send-report') {
+      const b = req.body || {};
+      const { assessmentId, reportType, email: recipientEmail } = b;
+      if (!assessmentId || !reportType) return res.status(400).json({ error: 'assessmentId and reportType required' });
+      if (!recipientEmail) return res.status(400).json({ error: 'email required' });
+
+      // Fetch assessment data
+      const aRows = await sql`SELECT a.*, c.first_name, c.last_name, c.email FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE a.id = ${assessmentId} LIMIT 1`;
+      if (aRows.length === 0) return res.status(404).json({ error: 'Assessment not found' });
+      const a = aRows[0];
+
+      const firstName = a.first_name || 'there';
+      const name = (a.first_name || '') + ' ' + (a.last_name || '');
+      const masterScore = a.master_score;
+      const scoreRange = a.score_range;
+      const weakestPillar = a.weakest_pillar;
+      const prescription = typeof a.prescription === 'string' ? JSON.parse(a.prescription) : (a.prescription || {});
+
+      let subject = '';
+      let emailBody = '';
+
+      if (reportType === 'action-plan') {
+        subject = `Your Personal Action Plan — Master Score: ${masterScore} (${scoreRange})`;
+        const pillars = ['Time', 'People', 'Influence', 'Numbers', 'Knowledge'];
+        const pillarFields = { Time: 'time_total', People: 'people_total', Influence: 'influence_total', Numbers: 'numbers_total', Knowledge: 'knowledge_total' };
+        let pillarSummary = pillars.map(p => `  ${p}: ${a[pillarFields[p]]}/50`).join('\n');
+
+        emailBody = `${firstName},
+
+Your Personal Action Plan is ready.
+
+MASTER VALUE SCORE: ${masterScore} (${scoreRange})
+
+Pillar Breakdown:
+${pillarSummary}
+
+Your weakest pillar is ${weakestPillar}. ${prescription.diagnosis || ''}
+
+KEY RECOMMENDATIONS:
+- Focus on your weakest pillar (${weakestPillar}) first
+- Address all sub-categories where you scored 1-2 out of 5
+- Use the specific action items in your full report
+
+View your full interactive Action Plan:
+https://assessment.valuetovictory.com/action-plan/${assessmentId}
+
+This report includes personalized actions for every weakness, Value Engine tool references, a chapter-by-chapter reading plan, and a weekly accountability structure.
+
+Don't guess. Run the system.
+
+— The Value Engine
+   ValueToVictory.com`;
+      } else if (reportType === 'counselor') {
+        subject = `Counselor/Coach Handoff Report — ${name} — Score: ${masterScore} (${scoreRange})`;
+        emailBody = `Client Assessment Summary for ${name}
+
+MASTER VALUE SCORE: ${masterScore}/250 (${scoreRange})
+
+Pillar Breakdown:
+  Time:      ${a.time_total}/50
+  People:    ${a.people_total}/50
+  Influence: ${a.influence_total}/50
+  Numbers:   ${a.numbers_total}/50
+  Knowledge: ${a.knowledge_total}/50
+
+Weakest Pillar: ${weakestPillar}
+${prescription.diagnosis || ''}
+
+This report is designed for use by counselors, therapists, coaches, and mentors. It includes:
+- Areas requiring clinical attention (scores 1-2)
+- Client strengths inventory
+- Recommended focus areas with clinical interpretations
+- Suggested interventions (Value Engine + general)
+
+View the full interactive Counselor Report:
+https://assessment.valuetovictory.com/counselor-report/${assessmentId}
+
+DISCLAIMER: This is a self-assessment tool and should not be used as a clinical diagnosis.
+
+— The Value Engine
+   ValueToVictory.com`;
+      } else if (reportType === 'team') {
+        subject = `Team Analysis Report — Value Engine Assessment`;
+        emailBody = `Your Team Analysis Report is ready.
+
+This report includes anonymous, aggregated team data showing:
+- Team averages across all 5 pillars
+- Score distribution breakdown
+- Sub-category heatmap
+- Top 5 team blind spots with interpretations
+- Team-specific improvement recommendations
+
+View the full interactive Team Report:
+https://assessment.valuetovictory.com/team-report/${assessmentId}
+
+No individual scores are disclosed in this report. All data is anonymous and aggregated.
+
+— The Value Engine
+   ValueToVictory.com`;
+      } else {
+        return res.status(400).json({ error: 'Invalid reportType. Must be: action-plan, counselor, or team' });
+      }
+
+      if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+        return res.json({ sent: false, reason: 'Email credentials not configured', reportUrl: `https://assessment.valuetovictory.com/${reportType === 'action-plan' ? 'action-plan' : reportType === 'counselor' ? 'counselor-report' : 'team-report'}/${assessmentId}` });
+      }
+
+      try {
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+        });
+        await transporter.sendMail({
+          from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
+          to: recipientEmail,
+          subject,
+          text: emailBody,
+        });
+        return res.json({ sent: true, to: recipientEmail });
+      } catch (emailErr) {
+        console.error('Premium report email error:', emailErr.message);
+        return res.json({ sent: false, reason: emailErr.message });
+      }
     }
 
     // GET /api/team-report/{teamId} (Feature 3 - data endpoint)
