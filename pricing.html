@@ -112,6 +112,55 @@
       margin-bottom: 1.5rem;
     }
 
+    /* Promo pricing */
+    .regular-price {
+      font-size: 1.1rem;
+      color: #71717a;
+      text-decoration: line-through;
+      margin-bottom: 0.25rem;
+    }
+    .promo-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #0a0a0a;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.75rem;
+      border-radius: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    .savings-note {
+      font-size: 0.78rem;
+      color: #D4A847;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    /* Promo banner */
+    .promo-banner {
+      max-width: 1180px;
+      margin: 0 auto 1.5rem;
+      padding: 1rem 1.5rem;
+      background: linear-gradient(135deg, rgba(212,168,71,0.12) 0%, rgba(212,168,71,0.05) 100%);
+      border: 1px solid rgba(212,168,71,0.3);
+      border-radius: 0.75rem;
+      text-align: center;
+    }
+    .promo-banner p {
+      font-size: 0.95rem;
+      color: #D4A847;
+      font-weight: 600;
+      margin: 0;
+    }
+    .promo-banner .promo-sub {
+      font-size: 0.8rem;
+      color: #a1a1aa;
+      font-weight: 400;
+      margin-top: 0.25rem;
+    }
+
     /* Divider */
     .card-divider {
       border: none;
@@ -348,16 +397,22 @@
 
   <!-- Pricing Cards -->
   <section class="pricing-container">
+    <div class="promo-banner">
+      <p>Lock in your rate &mdash; promo pricing ends December 31, 2026</p>
+      <p class="promo-sub">Prices increase in 2027. Subscribe now to keep your current rate for the next 12 months.</p>
+    </div>
     <div class="pricing-grid">
 
       <!-- Tier 1: VictoryPath -->
       <div class="pricing-card">
         <div class="card-tier">Tier 1</div>
         <div class="card-name">VictoryPath Membership</div>
+        <div class="regular-price">Regular: $49/mo</div>
         <div class="card-price">
           <span class="amount">$29</span>
           <span class="period">/mo</span>
         </div>
+        <span class="promo-badge">2026 Promo Rate &mdash; Save 40%</span>
         <p class="price-note">Founders rate locked until 2027</p>
         <hr class="card-divider" />
         <div class="benefits-label">What's included</div>
@@ -380,10 +435,12 @@
         <div class="badge">MOST POPULAR</div>
         <div class="card-tier">Tier 2</div>
         <div class="card-name">Value Builder</div>
+        <div class="regular-price">Regular: $79/mo</div>
         <div class="card-price">
           <span class="amount">$47</span>
           <span class="period">/mo</span>
         </div>
+        <span class="promo-badge">2026 Promo Rate &mdash; Save 40%</span>
         <p class="price-note">Full course access &amp; advanced tools</p>
         <hr class="card-divider" />
         <div class="benefits-label">Everything in VictoryPath, plus</div>
@@ -404,10 +461,12 @@
       <div class="pricing-card premium-tier">
         <div class="card-tier">Tier 3</div>
         <div class="card-name">Victory VIP</div>
+        <div class="regular-price">Regular: $697/mo</div>
         <div class="card-price">
           <span class="amount">$497</span>
           <span class="period">/mo</span>
         </div>
+        <span class="promo-badge">2026 Promo Rate &mdash; Save 29%</span>
         <p class="price-note">The complete transformation experience</p>
         <hr class="card-divider" />
         <p class="includes-note">Everything in VictoryPath &amp; Value Builder, plus:</p>

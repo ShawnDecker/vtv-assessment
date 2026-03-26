@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Coaching Call — The Value Engine</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+
+    /* Header */
+    .page-header { text-align: center; padding: 3rem 1.5rem 2rem; }
+    .page-header .brand { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.75rem; }
+    .page-header h1 { font-family: 'Instrument Serif', serif; font-size: 2.5rem; font-style: italic; color: #fff; margin-bottom: 0.75rem; }
+    .page-header .subtitle { font-size: 1.05rem; color: #a1a1aa; max-width: 600px; margin: 0 auto; }
+
+    /* Container */
+    .form-container { max-width: 640px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+    /* Track selector */
+    .track-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+    .track-option {
+      background: #18181b;
+      border: 2px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 1.5rem 1.25rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .track-option:hover { border-color: #3f3f46; }
+    .track-option.selected { border-color: #D4A847; box-shadow: 0 0 20px rgba(212,168,71,0.12); }
+    .track-option .track-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .track-option .track-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; }
+    .track-option .track-desc { font-size: 0.8rem; color: #a1a1aa; }
+
+    /* Form */
+    .intake-form { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 2rem 1.75rem; }
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #d4d4d8;
+      margin-bottom: 0.5rem;
+    }
+    .form-group label .required { color: #ef4444; }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.5rem;
+      color: #fff;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #D4A847;
+    }
+    .form-group textarea { min-height: 100px; resize: vertical; }
+    .form-group select { cursor: pointer; }
+    .form-group select option { background: #0a0a0a; color: #fff; }
+    .form-group .helper { font-size: 0.75rem; color: #71717a; margin-top: 0.25rem; }
+
+    /* RE-specific fields */
+    .re-fields { display: none; }
+    .re-fields.visible { display: block; }
+    .re-fields-divider {
+      border: none;
+      height: 1px;
+      background: #27272a;
+      margin: 1.5rem 0;
+    }
+    .re-fields-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #D4A847;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    /* Submit button */
+    .submit-btn {
+      display: block;
+      width: 100%;
+      padding: 1rem 1.5rem;
+      border: none;
+      border-radius: 0.625rem;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #0a0a0a;
+      transition: all 0.2s ease;
+      margin-top: 0.5rem;
+    }
+    .submit-btn:hover { background: linear-gradient(135deg, #e0b84f, #c9a33a); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* States */
+    .form-message {
+      text-align: center;
+      padding: 2rem;
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      display: none;
+    }
+    .form-message.success { border-color: rgba(34,197,94,0.3); }
+    .form-message.error { border-color: rgba(239,68,68,0.3); }
+    .form-message h3 { font-size: 1.25rem; margin-bottom: 0.75rem; }
+    .form-message p { color: #a1a1aa; font-size: 0.9rem; }
+    .form-message .success-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+    /* Footer */
+    .page-footer {
+      text-align: center;
+      padding: 3rem 1.5rem 2.5rem;
+      border-top: 1px solid #27272a;
+      margin-top: 3rem;
+    }
+    .page-footer .tagline {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 1.125rem;
+      color: #D4A847;
+      margin-bottom: 1rem;
+    }
+    .page-footer .copy { color: #71717a; font-size: 0.8rem; }
+    .page-footer a { color: #3b82f6; text-decoration: none; }
+    .page-footer a:hover { text-decoration: underline; }
+
+    /* Mobile */
+    @media (max-width: 520px) {
+      .page-header { padding: 2rem 1rem 1.5rem; }
+      .page-header h1 { font-size: 1.75rem; }
+      .form-container { padding: 0 1rem 3rem; }
+      .intake-form { padding: 1.5rem 1.25rem; }
+      .track-selector { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="brand">THE VALUE ENGINE</div>
+    <h1>Request a Coaching Call</h1>
+    <p class="subtitle">Get a free personalized coaching report tailored to your assessment results. Verify your email and we'll send it within 5 minutes.</p>
+  </header>
+
+  <div class="form-container">
+
+    <!-- Success / Error messages -->
+    <div id="successMessage" class="form-message success">
+      <div class="success-icon">&#9993;</div>
+      <h3>Check Your Email</h3>
+      <p>We've sent a verification link to <strong id="sentToEmail"></strong>.<br>Click the link to confirm your email and we'll generate your personalized coaching report within 5 minutes.</p>
+      <p style="color:#71717a;font-size:0.8rem;margin-top:1rem;">Don't see it? Check your spam folder. The link expires in 24 hours.</p>
+    </div>
+
+    <div id="errorMessage" class="form-message error">
+      <h3 style="color:#ef4444;">Something went wrong</h3>
+      <p id="errorText">Please try again.</p>
+    </div>
+
+    <!-- Intake Form -->
+    <div id="formWrapper">
+
+      <!-- Track Selector -->
+      <div class="track-selector">
+        <div class="track-option" id="trackRE" onclick="selectTrack('real_estate')">
+          <div class="track-icon">&#127968;</div>
+          <div class="track-name">Real Estate Coaching</div>
+          <div class="track-desc">Apply Value Engine principles to your real estate business</div>
+        </div>
+        <div class="track-option" id="trackPersonal" onclick="selectTrack('personal')">
+          <div class="track-icon">&#128100;</div>
+          <div class="track-name">Personal Coaching</div>
+          <div class="track-desc">Personal development guidance tailored to your results</div>
+        </div>
+      </div>
+
+      <form class="intake-form" id="coachingForm" onsubmit="submitForm(event)">
+        <input type="hidden" id="trackInput" name="track" value="" />
+        <input type="hidden" id="aidInput" name="assessmentId" value="" />
+
+        <div class="form-group">
+          <label>Name <span class="required">*</span></label>
+          <input type="text" id="nameInput" name="name" required placeholder="Your full name" />
+        </div>
+
+        <div class="form-group">
+          <label>Email <span class="required">*</span></label>
+          <input type="email" id="emailInput" name="email" required placeholder="you@example.com" />
+          <div class="helper">We'll send a verification link to this address before generating your report.</div>
+        </div>
+
+        <div class="form-group">
+          <label>What do you want to get out of this coaching call? <span class="required">*</span></label>
+          <textarea id="goalsInput" name="goals" required placeholder="What specific outcomes are you hoping to achieve?"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>What specific questions do you want answered? <span class="required">*</span></label>
+          <textarea id="questionsInput" name="questions" required placeholder="List the questions you'd like to discuss during your coaching call"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>What's your biggest challenge right now? <span class="required">*</span></label>
+          <textarea id="challengeInput" name="biggest_challenge" required placeholder="Describe the main obstacle or challenge you're currently facing"></textarea>
+        </div>
+
+        <!-- Real Estate specific fields -->
+        <div class="re-fields" id="reFields">
+          <hr class="re-fields-divider" />
+          <div class="re-fields-label">Real Estate Details</div>
+
+          <div class="form-group">
+            <label>Years in Real Estate</label>
+            <input type="text" id="reYearsInput" name="re_years" placeholder="e.g., 5 years" />
+          </div>
+
+          <div class="form-group">
+            <label>Specialty</label>
+            <select id="reSpecialtyInput" name="re_specialty">
+              <option value="">Select your specialty...</option>
+              <option value="residential">Residential</option>
+              <option value="commercial">Commercial</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Current Annual Volume</label>
+            <input type="text" id="reVolumeInput" name="re_volume" placeholder="e.g., $5M or 20 transactions" />
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Submit &amp; Verify Email</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="page-footer">
+    <div class="tagline">Value to Victory</div>
+    <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>
+  </footer>
+
+  <script>
+    var selectedTrack = '';
+
+    // Pre-fill from URL params
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var track = params.get('track');
+      var aid = params.get('aid');
+
+      if (track) selectTrack(track);
+      if (aid) document.getElementById('aidInput').value = aid;
+
+      // Try to pre-fill name from assessment data if we have an aid
+      if (aid) {
+        fetch('/api/report/' + aid)
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data.contact) {
+              var name = ((data.contact.firstName || '') + ' ' + (data.contact.lastName || '')).trim();
+              if (name) document.getElementById('nameInput').value = name;
+              if (data.contact.email) document.getElementById('emailInput').value = data.contact.email;
+            }
+          })
+          .catch(function() {});
+      }
+    })();
+
+    function selectTrack(track) {
+      selectedTrack = track;
+      document.getElementById('trackInput').value = track;
+
+      document.getElementById('trackRE').classList.toggle('selected', track === 'real_estate');
+      document.getElementById('trackPersonal').classList.toggle('selected', track === 'personal');
+
+      var reFields = document.getElementById('reFields');
+      if (track === 'real_estate') {
+        reFields.classList.add('visible');
+      } else {
+        reFields.classList.remove('visible');
+      }
+    }
+
+    function submitForm(e) {
+      e.preventDefault();
+
+      if (!selectedTrack) {
+        alert('Please select a coaching track (Real Estate or Personal).');
+        return;
+      }
+
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      var body = {
+        name: document.getElementById('nameInput').value.trim(),
+        email: document.getElementById('emailInput').value.trim(),
+        track: selectedTrack,
+        goals: document.getElementById('goalsInput').value.trim(),
+        questions: document.getElementById('questionsInput').value.trim(),
+        biggest_challenge: document.getElementById('challengeInput').value.trim(),
+        assessment_id: document.getElementById('aidInput').value || null,
+      };
+
+      if (selectedTrack === 'real_estate') {
+        body.re_years = document.getElementById('reYearsInput').value.trim();
+        body.re_specialty = document.getElementById('reSpecialtyInput').value;
+        body.re_volume = document.getElementById('reVolumeInput').value.trim();
+      }
+
+      fetch('/api/coaching/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.error) {
+            document.getElementById('errorText').textContent = data.error;
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('formWrapper').style.display = 'none';
+          } else {
+            document.getElementById('sentToEmail').textContent = body.email;
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('formWrapper').style.display = 'none';
+          }
+        })
+        .catch(function(err) {
+          document.getElementById('errorText').textContent = 'Network error. Please try again.';
+          document.getElementById('errorMessage').style.display = 'block';
+          document.getElementById('formWrapper').style.display = 'none';
+        });
+    }
+  </script>
+
+</body>
+</html>

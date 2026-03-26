@@ -1894,6 +1894,243 @@ No individual scores are disclosed in this report. All data is anonymous and agg
       });
     }
 
+    // POST /api/coaching/submit — Coaching call intake form submission
+    if (req.method === 'POST' && url === '/coaching/submit') {
+      const b = req.body || {};
+      const { name, email, track, goals, questions, biggest_challenge, assessment_id, re_years, re_specialty, re_volume } = b;
+
+      if (!name || !email || !track || !goals || !questions || !biggest_challenge) {
+        return res.status(400).json({ error: 'All required fields must be filled out.' });
+      }
+      if (!['real_estate', 'personal'].includes(track)) {
+        return res.status(400).json({ error: 'Track must be real_estate or personal.' });
+      }
+
+      // Generate verification token
+      const crypto = require('crypto');
+      const verificationToken = crypto.randomUUID();
+
+      // Look up contact_id if we have an assessment_id
+      let contactId = null;
+      if (assessment_id) {
+        try {
+          const aRows = await sql`SELECT contact_id FROM assessments WHERE id = ${assessment_id} LIMIT 1`;
+          if (aRows.length > 0) contactId = aRows[0].contact_id;
+        } catch (e) { /* non-fatal */ }
+      }
+
+      // Insert coaching request
+      try {
+        await sql`INSERT INTO coaching_requests (assessment_id, contact_id, name, email, track, goals, questions, biggest_challenge, re_years, re_specialty, re_volume, verification_token)
+          VALUES (${assessment_id || null}, ${contactId}, ${name}, ${email}, ${track}, ${goals}, ${questions}, ${biggest_challenge}, ${re_years || null}, ${re_specialty || null}, ${re_volume || null}, ${verificationToken})`;
+      } catch (dbErr) {
+        console.error('Coaching request DB error:', dbErr.message);
+        return res.status(500).json({ error: 'Could not save your request. Please try again.' });
+      }
+
+      // Send verification email
+      if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        try {
+          const nodemailer = require('nodemailer');
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+          });
+          const verifyUrl = `https://assessment.valuetovictory.com/api/coaching/verify?token=${verificationToken}`;
+          const trackLabel = track === 'real_estate' ? 'Real Estate' : 'Personal';
+          await transporter.sendMail({
+            from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
+            to: email,
+            subject: `Verify Your Email — ${trackLabel} Coaching Report`,
+            text: `${name},
+
+Thank you for requesting a ${trackLabel} coaching report from Value to Victory.
+
+Please verify your email by clicking the link below:
+${verifyUrl}
+
+Once verified, we'll generate your personalized coaching report and email it to you within 5 minutes.
+
+This link expires in 24 hours.
+
+— The Value Engine
+   ValueToVictory.com`,
+          });
+        } catch (emailErr) {
+          console.error('Verification email error:', emailErr.message);
+          return res.json({ submitted: true, emailSent: false, warning: 'Request saved but verification email could not be sent. Please contact us.' });
+        }
+      }
+
+      return res.json({ submitted: true, emailSent: true });
+    }
+
+    // GET /api/coaching/verify?token=XXX — Verify email and trigger coaching report
+    if (req.method === 'GET' && url.startsWith('/coaching/verify')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const token = params.get('token');
+      if (!token) return res.status(400).json({ error: 'Verification token required.' });
+
+      // Look up the coaching request
+      const rows = await sql`SELECT * FROM coaching_requests WHERE verification_token = ${token} LIMIT 1`;
+      if (rows.length === 0) {
+        return res.status(404).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invalid Link</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#ef4444;">Invalid or Expired Link</h2><p style="color:#a1a1aa;">This verification link is invalid or has already been used.</p><p><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;">Go to Value Engine</a></p></div></body></html>');
+      }
+      const cr = rows[0];
+
+      // Check if already verified
+      if (cr.verified) {
+        return res.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Already Verified</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#D4A847;">Already Verified</h2><p style="color:#a1a1aa;">Your email has already been verified. Your coaching report has been sent.</p><p><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;">Go to Value Engine</a></p></div></body></html>');
+      }
+
+      // Check expiration (24 hours)
+      const createdAt = new Date(cr.created_at);
+      const now = new Date();
+      if (now - createdAt > 24 * 60 * 60 * 1000) {
+        return res.status(410).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Link Expired</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#ef4444;">Link Expired</h2><p style="color:#a1a1aa;">This verification link has expired (24-hour limit). Please submit a new coaching request.</p><p><a href="https://assessment.valuetovictory.com/coaching" style="color:#3b82f6;">Request Again</a></p></div></body></html>');
+      }
+
+      // Mark as verified
+      await sql`UPDATE coaching_requests SET verified = true, verified_at = NOW() WHERE id = ${cr.id}`;
+
+      // Generate and send coaching report
+      let reportSent = false;
+      try {
+        // Get assessment data if available
+        let assessment = null;
+        let prescription = null;
+        let contact = null;
+        if (cr.assessment_id) {
+          const aRows = await sql`SELECT a.*, c.first_name, c.last_name, c.email FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE a.id = ${cr.assessment_id} LIMIT 1`;
+          if (aRows.length > 0) {
+            assessment = aRows[0];
+            prescription = typeof assessment.prescription === 'string' ? JSON.parse(assessment.prescription) : assessment.prescription;
+            contact = { firstName: assessment.first_name, lastName: assessment.last_name };
+          }
+        }
+
+        const trackLabel = cr.track === 'real_estate' ? 'Real Estate' : 'Personal';
+
+        // Build the coaching report email
+        let report = `${cr.name},\n\nYour ${trackLabel} Coaching Preparation Report is ready.\n\n`;
+        report += `${'='.repeat(50)}\n`;
+        report += `YOUR ${trackLabel.toUpperCase()} COACHING PREPARATION REPORT\n`;
+        report += `${'='.repeat(50)}\n\n`;
+
+        // Assessment summary (if available)
+        if (assessment) {
+          report += `ASSESSMENT SUMMARY\n${'-'.repeat(30)}\n`;
+          report += `Master Value Score: ${assessment.master_score} (${assessment.score_range})\n`;
+          report += `Pillar Breakdown:\n`;
+          report += `  Time:      ${assessment.time_total}/50\n`;
+          report += `  People:    ${assessment.people_total}/50\n`;
+          report += `  Influence: ${assessment.influence_total}/50\n`;
+          report += `  Numbers:   ${assessment.numbers_total}/50\n`;
+          report += `  Knowledge: ${assessment.knowledge_total}/50\n\n`;
+
+          // Weakest pillar deep-dive
+          if (prescription) {
+            report += `WEAKEST PILLAR DEEP-DIVE: ${prescription.weakestPillar}\n${'-'.repeat(30)}\n`;
+            report += `Score: ${prescription.weakestScore}/50\n`;
+            report += `Weakest Sub-Category: ${prescription.weakestSubCategory} (${prescription.weakestSubScore}/5)\n`;
+            report += `${prescription.diagnosis || ''}\n\n`;
+            report += `Recommended Action: ${prescription.immediate || ''}\n`;
+            report += `Tool to Use: ${prescription.tool || ''}\n\n`;
+          }
+        } else {
+          report += `(No assessment data linked — your coaching call will include an initial assessment review.)\n\n`;
+        }
+
+        // Their stated goals
+        report += `YOUR GOALS\n${'-'.repeat(30)}\n`;
+        report += `${cr.goals}\n\n`;
+
+        // Their questions as agenda items
+        report += `YOUR QUESTIONS (Coaching Call Agenda Items)\n${'-'.repeat(30)}\n`;
+        report += `${cr.questions}\n\n`;
+
+        // Their biggest challenge
+        report += `YOUR BIGGEST CHALLENGE\n${'-'.repeat(30)}\n`;
+        report += `${cr.biggest_challenge}\n\n`;
+
+        // RE-specific insights
+        if (cr.track === 'real_estate') {
+          report += `REAL ESTATE INSIGHTS\n${'-'.repeat(30)}\n`;
+          if (cr.re_years) report += `Experience: ${cr.re_years}\n`;
+          if (cr.re_specialty) report += `Specialty: ${cr.re_specialty}\n`;
+          if (cr.re_volume) report += `Current Volume: ${cr.re_volume}\n`;
+          report += `\n`;
+
+          if (assessment && prescription) {
+            if (prescription.weakestPillar === 'Numbers') {
+              report += `Your Numbers pillar is your weakest area. For real estate professionals, this often means inconsistent deal analysis, unclear cost-per-lead tracking, or missing your true cost per transaction. Your coaching call should focus on building a systematic financial dashboard for your business.\n\n`;
+            } else if (prescription.weakestPillar === 'People') {
+              report += `Your People pillar needs attention. In real estate, this directly impacts client relationships, referral generation, and sphere of influence management. Your coaching call should focus on building a systematic approach to relationship ROI and client retention.\n\n`;
+            } else if (prescription.weakestPillar === 'Time') {
+              report += `Your Time pillar is holding you back. Real estate professionals often lose hours to unqualified leads, poor scheduling, and reactive work patterns. Your coaching call should focus on time-blocking, lead qualification systems, and protecting your high-value hours.\n\n`;
+            } else if (prescription.weakestPillar === 'Influence') {
+              report += `Your Influence pillar needs work. In real estate, influence directly drives listings, referrals, and market positioning. Your coaching call should focus on building your personal brand, market authority, and professional credibility systems.\n\n`;
+            } else if (prescription.weakestPillar === 'Knowledge') {
+              report += `Your Knowledge pillar is your gap. For real estate professionals, this means you may be under-investing in market knowledge, negotiation skills, or industry trends. Your coaching call should focus on building a deliberate learning system that compounds your expertise.\n\n`;
+            }
+          }
+        }
+
+        // Pre-call action items
+        report += `PRE-CALL ACTION ITEMS\n${'-'.repeat(30)}\n`;
+        report += `1. Review your assessment results and note any scores that surprised you\n`;
+        if (assessment && prescription) {
+          report += `2. Spend 10 minutes thinking about your ${prescription.weakestPillar} pillar — what specific situations trigger your lowest scores?\n`;
+          report += `3. Write down 1-2 specific wins from the past 90 days that relate to your strongest area (${prescription.strongestPillar})\n\n`;
+        } else {
+          report += `2. Spend 10 minutes reflecting on where you feel most stuck right now\n`;
+          report += `3. Write down 1-2 recent wins — we'll build on what's already working\n\n`;
+        }
+
+        // Value Engine tools recommendation (ALWAYS first)
+        report += `RECOMMENDED TOOLS (Value Engine)\n${'-'.repeat(30)}\n`;
+        report += `1. The Value Engine Assessment — your diagnostic baseline (valuetovictory.com)\n`;
+        report += `2. VictoryPath Membership ($29/mo) — structured tools, community, and accountability\n`;
+        report += `3. Value Builder ($47/mo) — full course access, advanced tools, and monthly Q&A\n`;
+        if (cr.track === 'real_estate') {
+          report += `4. Real Estate Consulting — $300 (30 min) or $500 (60 min) with Shawn Decker\n`;
+        }
+        report += `\n`;
+
+        // Next step
+        report += `NEXT STEP\n${'-'.repeat(30)}\n`;
+        report += `Your coaching call details will be sent separately. Reply to this email with any additional questions.\n\n`;
+        report += `Don't guess. Run the system.\n\n`;
+        report += `— The Value Engine\n`;
+        report += `   Value to Victory | valuetovictory.com\n`;
+
+        // Send the report email
+        if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+          const nodemailer = require('nodemailer');
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+          });
+          await transporter.sendMail({
+            from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
+            to: cr.email,
+            subject: `Your ${trackLabel} Coaching Report — Value to Victory`,
+            text: report,
+          });
+          reportSent = true;
+          await sql`UPDATE coaching_requests SET report_sent = true, report_sent_at = NOW() WHERE id = ${cr.id}`;
+        }
+      } catch (reportErr) {
+        console.error('Coaching report generation error:', reportErr.message);
+      }
+
+      // Return success HTML page
+      const statusMsg = reportSent
+        ? 'Your personalized coaching report has been sent to your email.'
+        : 'Your email has been verified. Your coaching report will be sent shortly.';
+      return res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Email Verified</title><style>body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style><link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet"></head><body><div style="max-width:480px;padding:2rem;"><div style="font-size:3rem;margin-bottom:1rem;">&#10003;</div><h2 style="color:#D4A847;margin-bottom:0.75rem;">Email Verified!</h2><p style="color:#a1a1aa;margin-bottom:1.5rem;">${statusMsg}</p><p style="color:#71717a;font-size:0.85rem;">Check your inbox (and spam folder) for your coaching report.</p><p style="margin-top:1.5rem;"><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;text-decoration:none;">Return to Value Engine &rarr;</a></p></div></body></html>`);
+    }
+
     return res.status(404).json({ error: 'Not found' });
   } catch (err) {
     console.error('API Error:', err);
