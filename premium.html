@@ -61,7 +61,7 @@
     .btn-blue:hover { background: #2563eb; }
     .btn-teal { background: #2dd4bf; color: #0a0a0a; }
     .btn-teal:hover { background: #0d9488; color: #fff; }
-    .btn-pay { background: transparent; border: 1px solid #D4A847; color: #D4A847; }
+    .btn-free { display:inline-block;padding:0.75rem 2rem;background:#22c55e;color:#fff;border-radius:0.5rem;font-weight:700;text-decoration:none;font-size:0.95rem;text-align:center;transition:background 0.2s; } .btn-free:hover { background:#16a34a; } .btn-pay { background: transparent; border: 1px solid #D4A847; color: #D4A847; }
     .btn-pay:hover { background: #D4A847; color: #0a0a0a; }
     .card-price { display: inline-block; font-size: 0.8rem; color: #a1a1aa; margin-left: 0.75rem; vertical-align: middle; }
 
@@ -87,6 +87,12 @@
   </style>
 </head>
 <body>
+  <div id="promoBanner" style="background:#D4A847;color:#0a0a0a;text-align:center;padding:1rem 1.5rem;font-weight:700;font-size:1rem;letter-spacing:0.05em;animation:promoGlow 2s ease-in-out infinite;">
+    🎉 LAUNCH PROMOTION — All Premium Reports FREE Through April 25, 2026
+  </div>
+  <style>@keyframes promoGlow { 0%,100% { opacity:1; } 50% { opacity:0.85; } }</style>
+  <script>if(new Date()>new Date('2026-04-26T00:00:00'))document.getElementById('promoBanner').style.display='none';</script>
+
   <div id="loading" class="loading">
     <span class="loading-text">Loading premium reports...</span>
   </div>
@@ -216,10 +222,18 @@
           : '<span style="color:#71717a;font-size:0.8rem;">Requires a team assessment</span>';
         document.getElementById('upsellSection').style.display = 'none';
       } else {
-        actionHtml = '<a class="card-btn btn-pay" href="https://buy.stripe.com/aFa4gy9oEbmkaBr43W6oo04">Get This Report — $1.99</a>';
-        counselorHtml = '<a class="card-btn btn-pay" href="https://buy.stripe.com/fZu9ASdEU9ec10R1VO6oo05">Get This Report — $1.99</a>';
+        if (new Date() < new Date('2026-04-26T00:00:00')) {
+          actionHtml = '<a class=\"card-btn btn-free\" href=\"/action-plan/' + assessmentId + '\">Get This Report — FREE</a>';
+        } else {
+          actionHtml = '<a class=\"card-btn btn-pay\" href=\"https://buy.stripe.com/aFa4gy9oEbmkaBr43W6oo04\">Get This Report — $1.99</a>';
+        }
+        if (new Date() < new Date('2026-04-26T00:00:00')) {
+          counselorHtml = '<a class=\"card-btn btn-free\" href=\"/counselor-report/' + assessmentId + '\">Get This Report — FREE</a>';
+        } else {
+          counselorHtml = '<a class=\"card-btn btn-pay\" href=\"https://buy.stripe.com/fZu9ASdEU9ec10R1VO6oo05\">Get This Report — $1.99</a>';
+        }
         teamHtml = teamId
-          ? '<a class="card-btn btn-pay" href="https://buy.stripe.com/28E14m0S82POeRH5806oo06">Get This Report — $1.99</a>'
+          ? (new Date() < new Date('2026-04-26T00:00:00') ? '<a class="card-btn btn-free" href="/team-report/0">Get This Report — FREE</a>' : '<a class="card-btn btn-pay" href="https://buy.stripe.com/28E14m0S82POeRH5806oo06">Get This Report — $1.99</a>')
           : '<span style="color:#71717a;font-size:0.8rem;">Requires a team assessment</span>';
       }
       document.getElementById('actionBtn').innerHTML = actionHtml;

@@ -469,5 +469,17 @@
       }
     }
   </script>
+
+  <script>
+    if (new Date() < new Date('2026-04-26T00:00:00')) {
+      document.addEventListener('DOMContentLoaded', function() {
+        var prodCard = document.getElementById('productCard');
+        if (prodCard) {
+          var existing = prodCard.innerHTML;
+          prodCard.innerHTML = '<div style="background:#D4A847;color:#0a0a0a;padding:0.5rem;border-radius:0.375rem 0.375rem 0 0;font-weight:700;font-size:0.8rem;letter-spacing:0.05em;text-align:center;">FREE DURING LAUNCH — ENDS APRIL 25</div>' + existing;
+        }
+      });
+    }
+  </script>
 </body>
 </html>
