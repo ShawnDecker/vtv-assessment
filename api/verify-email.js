@@ -1,5 +1,8 @@
 const { neon } = require('@neondatabase/serverless');
 const nodemailer = require('nodemailer');
+const path = require('path');
+const fs = require('fs');
+const https = require('https');
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
@@ -54,10 +57,43 @@ module.exports = async (req, res) => {
       const downloadUrl = 'https://assessment.valuetovictory.com/running-from-miracles.pdf';
       const assessmentUrl = 'https://assessment.valuetovictory.com';
 
+      // Attach the PDF directly so it works on all devices/email clients
+      const attachments = [];
+      try {
+        // First try local file (works in some Vercel configs)
+        const pdfPath = path.join(__dirname, '..', 'running-from-miracles.pdf');
+        if (fs.existsSync(pdfPath)) {
+          attachments.push({
+            filename: 'Running-From-Miracles.pdf',
+            path: pdfPath,
+            contentType: 'application/pdf',
+          });
+        } else {
+          // Fallback: fetch PDF from the live URL
+          const pdfBuffer = await new Promise((resolve, reject) => {
+            https.get(downloadUrl, (response) => {
+              const chunks = [];
+              response.on('data', (chunk) => chunks.push(chunk));
+              response.on('end', () => resolve(Buffer.concat(chunks)));
+              response.on('error', reject);
+            }).on('error', reject);
+          });
+          attachments.push({
+            filename: 'Running-From-Miracles.pdf',
+            content: pdfBuffer,
+            contentType: 'application/pdf',
+          });
+        }
+      } catch (attachErr) {
+        console.error('PDF attachment failed, sending without attachment:', attachErr);
+        // Email still sends with download link even if attachment fails
+      }
+
       await transporter.sendMail({
         from: `"Value to Victory" <${process.env.GMAIL_USER}>`,
         to: signup.email,
         subject: 'Your Free Copy of Running From Miracles \u{1F4D6}',
+        attachments,
         html: `
 <!DOCTYPE html>
 <html>
@@ -84,6 +120,7 @@ module.exports = async (req, res) => {
               <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 16px;">
                 Your email is confirmed. Here's your free digital copy of
                 <strong style="color:#D4A847;">Running From Miracles</strong> by Shawn Decker.
+                The PDF is attached to this email &mdash; just open the attachment to start reading.
               </p>
               <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 8px;">
                 This isn't just a book. It's a raw, honest look at what happens when you stop running from the
@@ -100,6 +137,7 @@ module.exports = async (req, res) => {
                     <a href="${downloadUrl}" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 40px;border-radius:8px;">
                       Download My Free Copy
                     </a>
+                    <p style="color:#71717a;font-size:13px;margin-top:12px;">Can't see the attachment? Use the button above or copy this link:<br/><a href="${downloadUrl}" style="color:#D4A847;word-break:break-all;">${downloadUrl}</a></p>
                   </td>
                 </tr>
               </table>
