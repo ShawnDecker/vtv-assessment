@@ -375,8 +375,8 @@ module.exports = async (req, res) => {
             Crisis: "YOUR NEXT STEP: You need the full system. Start with The Value Engine book — the diagnostic that shows you exactly where your life is undervalued. $29 at valuetovictory.com",
             Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Value Engine book ($29) plus VictoryPath membership ($29/mo) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
             Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($29/mo) — structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
-            Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($79/mo) or 1:1 coaching ($300/hr, 20% off your first session) will break through the ceiling. valuetovictory.com",
-            Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($397/mo) gives you 50% off coaching, a complimentary monthly session, and direct author access. valuetovictory.com",
+            Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($47/mo) or 1:1 coaching ($300/hr, 20% off your first session) will break through the ceiling. valuetovictory.com",
+            Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($497/mo) gives you 50% off coaching, a complimentary monthly session, and direct author access. valuetovictory.com",
           };
           const productRec = recTexts[eScoreRange] || recTexts.Growth;
 
@@ -711,8 +711,8 @@ Don't guess. Run the system.
         Crisis: { title: 'Start Here', product: 'The Value Engine Book', price: '$29', description: 'The diagnostic that shows you exactly where your life is undervalued.' },
         Survival: { title: 'Build Your Foundation', product: 'Book + VictoryPath Membership', price: '$29 + $29/mo', description: 'The tools and community to move from Survival to Growth.' },
         Growth: { title: 'Accelerate Your Growth', product: 'VictoryPath Membership', price: '$29/mo', description: 'Structured tools, community accountability, and monthly progress tracking.' },
-        Momentum: { title: 'Break Through', product: 'Value Builder or 1:1 Coaching', price: '$79/mo or $300/hr (20% off first session)', description: 'Direct coaching to break through the ceiling.' },
-        Mastery: { title: 'Go Elite', product: 'Victory VIP', price: '$397/mo', description: '50% off coaching, complimentary monthly session, and direct author access.' },
+        Momentum: { title: 'Break Through', product: 'Value Builder or 1:1 Coaching', price: '$47/mo or $300/hr (20% off first session)', description: 'Direct coaching to break through the ceiling.' },
+        Mastery: { title: 'Go Elite', product: 'Victory VIP', price: '$497/mo', description: '50% off coaching, complimentary monthly session, and direct author access.' },
       };
       const recommendation = productRecommendations[scoreRange] || productRecommendations.Growth;
 
@@ -778,8 +778,8 @@ Don't guess. Run the system.
         Crisis: "YOUR NEXT STEP: You need the full system. Start with The Value Engine book — the diagnostic that shows you exactly where your life is undervalued. $29 at valuetovictory.com",
         Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Value Engine book ($29) plus VictoryPath membership ($29/mo) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
         Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($29/mo) — structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
-        Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($79/mo) or 1:1 coaching ($300/hr, 20% off your first session) will break through the ceiling. valuetovictory.com",
-        Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($397/mo) gives you 50% off coaching, a complimentary monthly session, and direct author access. valuetovictory.com",
+        Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($47/mo) or 1:1 coaching ($300/hr, 20% off your first session) will break through the ceiling. valuetovictory.com",
+        Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($497/mo) gives you 50% off coaching, a complimentary monthly session, and direct author access. valuetovictory.com",
       };
       const productRec = recTexts[scoreRange] || recTexts.Growth;
 
@@ -1651,8 +1651,8 @@ Don't guess. Run the system.
                 isMember = true;
                 // Determine tier from subscription amount
                 const amount = subsData.data[0].items?.data?.[0]?.price?.unit_amount;
-                if (amount >= 39700) tier = 'Victory VIP';
-                else if (amount >= 7900) tier = 'Value Builder';
+                if (amount >= 49700) tier = 'Victory VIP';
+                else if (amount >= 4700) tier = 'Value Builder';
                 else tier = 'VictoryPath';
                 break;
               }

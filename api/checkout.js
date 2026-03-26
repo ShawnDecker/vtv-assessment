@@ -4,10 +4,10 @@ const { neon } = require('@neondatabase/serverless');
 const TIER_CONFIG = {
   victorypath: { amount: 2900, name: 'VictoryPath Membership', tier: 'victorypath', envKey: 'STRIPE_PRICE_INDIVIDUAL' },
   individual: { amount: 2900, name: 'VictoryPath Membership', tier: 'victorypath', envKey: 'STRIPE_PRICE_INDIVIDUAL' },
-  builder: { amount: 7900, name: 'Value Builder', tier: 'builder', envKey: 'STRIPE_PRICE_COUPLE' },
-  couple: { amount: 7900, name: 'Value Builder', tier: 'builder', envKey: 'STRIPE_PRICE_COUPLE' },
-  vip: { amount: 39700, name: 'Victory VIP', tier: 'vip', envKey: 'STRIPE_PRICE_PREMIUM' },
-  premium: { amount: 39700, name: 'Victory VIP', tier: 'vip', envKey: 'STRIPE_PRICE_PREMIUM' }
+  builder: { amount: 4700, name: 'Value Builder', tier: 'builder', envKey: 'STRIPE_PRICE_COUPLE' },
+  couple: { amount: 4700, name: 'Value Builder', tier: 'builder', envKey: 'STRIPE_PRICE_COUPLE' },
+  vip: { amount: 49700, name: 'Victory VIP', tier: 'vip', envKey: 'STRIPE_PRICE_PREMIUM' },
+  premium: { amount: 49700, name: 'Victory VIP', tier: 'vip', envKey: 'STRIPE_PRICE_PREMIUM' }
 };
 
 const BASE_URL = 'https://assessment.valuetovictory.com';
@@ -111,8 +111,8 @@ module.exports = async (req, res) => {
               const price = await stripe.prices.retrieve(priceId);
               const amount = price.unit_amount;
               if (amount === 2900) newTier = 'individual';
-              else if (amount === 7900) newTier = 'couple';
-              else if (amount === 39700) newTier = 'premium';
+              else if (amount === 4700) newTier = 'couple';
+              else if (amount === 49700) newTier = 'premium';
             } catch (e) { /* ignore lookup error */ }
           }
 
