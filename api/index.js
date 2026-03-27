@@ -41,9 +41,25 @@ function generatePrescription(a) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const allowedOrigins = [
+    'https://valuetovictory.com',
+    'https://www.valuetovictory.com',
+    'https://assessment.valuetovictory.com',
+    'https://shawnedecker.com',
+    'https://www.shawnedecker.com'
+  ];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const sql = neon(process.env.DATABASE_URL);
@@ -521,8 +537,27 @@ Don't guess. Run the system.
       return res.json(rows[0]);
     }
 
+    // Admin authentication check
+    function requireAdminAuth(req, res) {
+      const authHeader = req.headers.authorization;
+      const adminKey = process.env.ADMIN_API_KEY;
+
+      if (!adminKey) {
+        res.status(500).json({ error: 'Admin API key not configured' });
+        return false;
+      }
+
+      if (!authHeader || authHeader !== `Bearer ${adminKey}`) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return false;
+      }
+
+      return true;
+    }
+
     // GET /api/admin/contacts
     if (req.method === 'GET' && url === '/admin/contacts') {
+      if (!requireAdminAuth(req, res)) return;
       const allContacts = await sql`SELECT * FROM contacts ORDER BY created_at DESC`;
       const enriched = [];
       for (const c of allContacts) {
@@ -534,6 +569,7 @@ Don't guess. Run the system.
 
     // GET /api/admin/contacts/:id
     if (req.method === 'GET' && url.match(/^\/admin\/contacts\/\d+$/)) {
+      if (!requireAdminAuth(req, res)) return;
       const id = parseInt(url.split('/').pop());
       const rows = await sql`SELECT * FROM contacts WHERE id = ${id} LIMIT 1`;
       if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
@@ -544,6 +580,7 @@ Don't guess. Run the system.
 
     // GET /api/admin/analytics
     if (req.method === 'GET' && url === '/admin/analytics') {
+      if (!requireAdminAuth(req, res)) return;
       const dist = await sql`SELECT score_range as range, COUNT(*) as count FROM assessments GROUP BY score_range`;
       const avgs = await sql`SELECT AVG(time_total) as t, AVG(people_total) as p, AVG(influence_total) as i, AVG(numbers_total) as n, AVG(knowledge_total) as k FROM assessments`;
       const recent = await sql`SELECT a.*, c.first_name, c.last_name, c.email FROM assessments a JOIN contacts c ON a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 10`;
@@ -567,6 +604,7 @@ Don't guess. Run the system.
 
     // GET /api/admin/export (CSV)
     if (req.method === 'GET' && url === '/admin/export') {
+      if (!requireAdminAuth(req, res)) return;
       const all = await sql`SELECT a.*, c.first_name, c.last_name, c.email, c.phone FROM assessments a JOIN contacts c ON a.contact_id = c.id ORDER BY a.completed_at DESC`;
       let csv = "First Name,Last Name,Email,Phone,Date,Time,People,Influence,Numbers,Knowledge,Raw,Multiplier,Master Score,Range,Weakest,Depth,Focus Pillar\n";
       for (const r of all) {
@@ -579,11 +617,13 @@ Don't guess. Run the system.
 
     // POST /api/admin/hubspot-sync (placeholder)
     if (req.method === 'POST' && url === '/admin/hubspot-sync') {
+      if (!requireAdminAuth(req, res)) return;
       return res.json({ synced: 0, failed: 0, total: 0, message: "HubSpot sync coming soon" });
     }
 
     // GET /api/admin/question-bank
     if (req.method === 'GET' && url === '/admin/question-bank') {
+      if (!requireAdminAuth(req, res)) return;
       try {
         const questions = await sql`
           SELECT qb.*,
@@ -619,6 +659,7 @@ Don't guess. Run the system.
 
     // POST /api/admin/questions — add new questions to the bank
     if (req.method === 'POST' && url === '/admin/questions') {
+      if (!requireAdminAuth(req, res)) return;
       const b = req.body || {};
       const questions = b.questions || [];
       if (!Array.isArray(questions) || questions.length === 0) {
@@ -1235,6 +1276,7 @@ ${roadmapHtml}
 
     // GET /api/admin/feedback-summary — aggregated feedback data (Feature 4)
     if (req.method === 'GET' && url === '/admin/feedback-summary') {
+      if (!requireAdminAuth(req, res)) return;
       try {
         const totalFeedback = await sql`SELECT COUNT(*) as cnt FROM feedback`;
         const total = Number(totalFeedback[0].cnt);
