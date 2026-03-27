@@ -767,6 +767,9 @@ Don't guess. Run the system.
 
       if (!a.email) return res.status(400).json({ error: 'No email on file for this contact' });
 
+      // Allow overriding recipient email (for admin preview)
+      const recipientEmail = b.overrideEmail || a.email;
+
       const firstName = a.first_name || 'there';
       const masterScore = a.master_score;
       const scoreRange = a.score_range;
@@ -839,7 +842,7 @@ Don't guess. Run the system.
         });
         await transporter.sendMail({
           from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
-          to: a.email,
+          to: recipientEmail,
           subject,
           text: emailBody,
         });
