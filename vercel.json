@@ -1,6 +1,15 @@
 {
   "version": 2,
+  "headers": [
+    {
+      "source": "/.git/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    }
+  ],
   "routes": [
+    { "src": "/.git(.*)", "status": 404 },
     { "src": "/api/setup-db", "dest": "/api/setup-db.js" },
     { "src": "/api/migrate-question-system", "dest": "/api/migrate-question-system.js" },
     { "src": "/api/migrate-relationships", "dest": "/api/migrate-relationships.js" },
