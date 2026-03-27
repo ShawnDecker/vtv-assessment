@@ -48,8 +48,15 @@
 
       if (email) {
         try { localStorage.setItem('ve_email', email); } catch(e) {}
+      }
+      // Fetch questions when we have context: either an email (returning user) or
+      // depth is explicitly in the URL (redirected from depth selector) and we're heading to assessment
+      var depthInUrl = params.has('depth');
+      var onAssessmentPage = window.location.hash.indexOf('assessment') !== -1;
+      var shouldFetch = email || (depthInUrl && (onAssessmentPage || window.location.hash === '' || window.location.hash === '#/'));
+      if (shouldFetch) {
         var xhr = new XMLHttpRequest();
-        var apiUrl = '/api/questions?email=' + encodeURIComponent(email) + '&mode=' + encodeURIComponent(mode) + '&depth=' + encodeURIComponent(depth);
+        var apiUrl = '/api/questions?' + (email ? 'email=' + encodeURIComponent(email) + '&' : '') + 'mode=' + encodeURIComponent(mode) + '&depth=' + encodeURIComponent(depth);
         if (depth === 'pillar' && pillar) {
           apiUrl += '&pillar=' + encodeURIComponent(pillar);
         }
@@ -322,38 +329,31 @@
 
       // --- Patch question counter for quick depth mode ---
       // For first-time users where __veQuestions wasn't pre-fetched, the React app
-      // shows 50 hardcoded questions. This patches the DOM to show only 25 for quick mode.
-      var depth = window.__veDepth || 'quick';
-      if (depth === 'quick' && (!window.__veQuestions || window.__veQuestions.length > 25)) {
-        var qPatchObserver = new MutationObserver(function() {
-          // Patch "Question X of 50" → "Question X of 25"
-          var root = document.getElementById('root');
-          if (!root) return;
-          var texts = root.querySelectorAll('p');
-          texts.forEach(function(el) {
-            var t = el.textContent;
-            if (t && t.match && t.match(/^Question \d+ of 50$/)) {
-              var num = parseInt(t.match(/Question (\d+)/)[1]);
-              if (num <= 25) {
-                el.textContent = 'Question ' + num + ' of 25';
-              }
-            }
-          });
-
-          // Hide the Next button / auto-complete when question > 25
-          // Actually, intercept progress: if current question index >= 25, 
-          // trigger submission by clicking the appropriate button
-          var progressText = root.querySelector('[class*="font-semibold"]');
-          if (progressText && progressText.textContent) {
-            var match = progressText.textContent.match(/Question (\d+) of/);
-            if (match && parseInt(match[1]) > 25) {
-              // We're past question 25 in quick mode — this shouldn't happen
-              // because the depth param is sent to the API and only 25 questions are scored
+      // shows 50 hardcoded questions. This patches the DOM to show the correct count.
+      function patchQuestionCounter() {
+        var d = window.__veDepth || new URLSearchParams(window.location.search).get('depth') || 'quick';
+        if (d !== 'quick') return;
+        var root = document.getElementById('root');
+        if (!root) return;
+        // Walk ALL text nodes and elements looking for "of 50"
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+        var node;
+        while (node = walker.nextNode()) {
+          if (node.nodeValue && node.nodeValue.trim() === '50') {
+            // Check if sibling/parent context is a question counter
+            var parent = node.parentElement;
+            if (parent && parent.textContent && parent.textContent.match(/Question \d+ of 50/)) {
+              node.nodeValue = '25';
             }
           }
-        });
-        qPatchObserver.observe(document.body || document.documentElement, { childList: true, subtree: true, characterData: true });
+        }
       }
+      // Run the patcher on DOM changes
+      var qPatchObserver = new MutationObserver(function() {
+        var d = window.__veDepth || new URLSearchParams(window.location.search).get('depth');
+        if (d === 'quick') patchQuestionCounter();
+      });
+      qPatchObserver.observe(document.body || document.documentElement, { childList: true, subtree: true, characterData: true });
     })();
     </script>
     <script type="module" crossorigin src="./assets/index-DXoDn4Oe.js"></script>
