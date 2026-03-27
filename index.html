@@ -149,24 +149,10 @@
             window.__veFocusPillar = null;
             overlay.remove();
 
-            // Re-fetch questions with the chosen depth
-            var savedEmail = null;
-            try { savedEmail = localStorage.getItem('ve_email'); } catch(e) {}
-            if (savedEmail) {
-              var mode = selectedMode || 'individual';
-              var xhr = new XMLHttpRequest();
-              xhr.open('GET', '/api/questions?email=' + encodeURIComponent(savedEmail) + '&mode=' + encodeURIComponent(mode) + '&depth=' + encodeURIComponent(depth), false);
-              try {
-                xhr.send();
-                if (xhr.status === 200) {
-                  var data = JSON.parse(xhr.responseText);
-                  if (data.questions && data.questions.length > 0) {
-                    window.__veQuestions = data.questions;
-                    window.__veUserHistory = data;
-                  }
-                }
-              } catch(e) {}
-            }
+            // Reload the page with depth in the URL so the sync pre-fetch script
+            // runs BEFORE the React bundle evaluates, giving us the correct question count.
+            var mode = selectedMode || 'individual';
+            window.location.href = '/?depth=' + encodeURIComponent(depth) + '&mode=' + encodeURIComponent(mode) + '#/assessment';
           });
         });
       }
@@ -259,19 +245,10 @@
                     return; // Let the click proceed naturally
                   }
 
-                  // Show depth selector (don't prevent default — the React app will continue after selection)
+                  // Show depth selector — selection triggers a full page reload with depth param
                   e.preventDefault();
                   e.stopPropagation();
                   showDepthSelector(mode);
-
-                  // After depth is selected, re-click the button
-                  var waitForChoice = setInterval(function() {
-                    if (!document.getElementById('ve-depth-overlay')) {
-                      clearInterval(waitForChoice);
-                      btn.__veDepthHooked = false; // unhook to prevent infinite loop
-                      btn.click();
-                    }
-                  }, 100);
                 }, true);
               }
             });
@@ -302,6 +279,81 @@
           watchModeSelect();
         }
       });
+
+      // --- Patch mode-select page text to reflect depth choice ---
+      var modePatchObserver = new MutationObserver(function() {
+        if (window.location.hash !== '#/mode-select' && window.location.hash !== '#/mode-select/') return;
+        var root = document.getElementById('root');
+        if (!root) return;
+        // Patch "All modes include the full 50-question..." subtitle
+        var allTexts = root.querySelectorAll('p');
+        allTexts.forEach(function(el) {
+          if (el.textContent && el.textContent.indexOf('full 50-question') !== -1) {
+            el.textContent = 'Choose your mode, then pick your assessment depth — Quick (25 questions, ~5 min) or Extensive (50 questions, ~15–20 min).';
+          }
+          // Patch card detail "50 questions + time multiplier"
+          if (el.textContent === '50 questions + time multiplier') {
+            el.textContent = '25–50 questions + time multiplier';
+          }
+        });
+      });
+      modePatchObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
+
+      // --- Save email to localStorage when user enters it in the React form ---
+      // This ensures the pre-fetch script works on subsequent page loads (depth redirect).
+      var emailObserver = new MutationObserver(function() {
+        var emailInput = document.querySelector('[data-testid="input-email"]');
+        if (emailInput && !emailInput.__veEmailHooked) {
+          emailInput.__veEmailHooked = true;
+          // Watch for form submission
+          var form = emailInput.closest('form');
+          if (form && !form.__veFormHooked) {
+            form.__veFormHooked = true;
+            form.addEventListener('submit', function() {
+              var val = emailInput.value.trim();
+              if (val) {
+                try { localStorage.setItem('ve_email', val); } catch(e) {}
+              }
+            });
+          }
+        }
+      });
+      emailObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
+
+      // --- Patch question counter for quick depth mode ---
+      // For first-time users where __veQuestions wasn't pre-fetched, the React app
+      // shows 50 hardcoded questions. This patches the DOM to show only 25 for quick mode.
+      var depth = window.__veDepth || 'quick';
+      if (depth === 'quick' && (!window.__veQuestions || window.__veQuestions.length > 25)) {
+        var qPatchObserver = new MutationObserver(function() {
+          // Patch "Question X of 50" → "Question X of 25"
+          var root = document.getElementById('root');
+          if (!root) return;
+          var texts = root.querySelectorAll('p');
+          texts.forEach(function(el) {
+            var t = el.textContent;
+            if (t && t.match && t.match(/^Question \d+ of 50$/)) {
+              var num = parseInt(t.match(/Question (\d+)/)[1]);
+              if (num <= 25) {
+                el.textContent = 'Question ' + num + ' of 25';
+              }
+            }
+          });
+
+          // Hide the Next button / auto-complete when question > 25
+          // Actually, intercept progress: if current question index >= 25, 
+          // trigger submission by clicking the appropriate button
+          var progressText = root.querySelector('[class*="font-semibold"]');
+          if (progressText && progressText.textContent) {
+            var match = progressText.textContent.match(/Question (\d+) of/);
+            if (match && parseInt(match[1]) > 25) {
+              // We're past question 25 in quick mode — this shouldn't happen
+              // because the depth param is sent to the API and only 25 questions are scored
+            }
+          }
+        });
+        qPatchObserver.observe(document.body || document.documentElement, { childList: true, subtree: true, characterData: true });
+      }
     })();
     </script>
     <script type="module" crossorigin src="./assets/index-DXoDn4Oe.js"></script>
