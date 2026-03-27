@@ -1,10 +1,19 @@
 const { neon } = require('@neondatabase/serverless');
 
-function getScoreRange(score) {
-  if (score <= 50) return "Crisis";
-  if (score <= 100) return "Survival";
-  if (score <= 150) return "Growth";
-  if (score <= 200) return "Momentum";
+function getScoreRange(score, maxScore) {
+  // Scale thresholds proportionally to the max possible score.
+  // Default (extensive): maxScore = 250 → thresholds at 50/100/150/200
+  // Quick (25 questions): maxScore = 125 → thresholds at 25/50/75/100
+  // Pillar deep-dive (10 questions): maxScore = 50 → thresholds at 10/20/30/40
+  const max = maxScore || 250;
+  const t1 = max * 0.2;  // Crisis ceiling  (20%)
+  const t2 = max * 0.4;  // Survival ceiling (40%)
+  const t3 = max * 0.6;  // Growth ceiling   (60%)
+  const t4 = max * 0.8;  // Momentum ceiling (80%)
+  if (score <= t1) return "Crisis";
+  if (score <= t2) return "Survival";
+  if (score <= t3) return "Growth";
+  if (score <= t4) return "Momentum";
   return "Mastery";
 }
 
@@ -41,12 +50,18 @@ module.exports = async (req, res) => {
   const url = req.url.replace(/^\/api/, '');
 
   try {
-    // GET /api/questions?email=xxx&mode=individual|relationship|leadership
+    // GET /api/questions?email=xxx&mode=individual|relationship|leadership&depth=quick|extensive|pillar&pillar=time|people|influence|numbers|knowledge
     if (req.method === 'GET' && url.startsWith('/questions')) {
       const params = new URL('http://x' + req.url).searchParams;
       const email = params.get('email');
       const mode = params.get('mode') || 'individual';
-      const corePillars = ['time', 'people', 'influence', 'numbers', 'knowledge'];
+      const depth = params.get('depth') || 'quick';
+      const focusPillar = params.get('pillar') || null;
+      const allCorePillars = ['time', 'people', 'influence', 'numbers', 'knowledge'];
+      // For pillar deep-dive, only assess the single requested pillar
+      const corePillars = (depth === 'pillar' && focusPillar && allCorePillars.includes(focusPillar))
+        ? [focusPillar]
+        : allCorePillars;
 
       // Check if question_bank table exists (migration may not have run yet)
       let hasQuestionBank = false;
@@ -80,12 +95,13 @@ module.exports = async (req, res) => {
       const coreQuestions = allQuestions.filter(q => !q.is_overlay);
       const overlayQuestions = allQuestions.filter(q => q.is_overlay);
 
-      // Select 10 questions per pillar
+      // Select questions per pillar based on depth:
+      //   quick: 5 per pillar (25 total), extensive/pillar: 10 per pillar
       // Strategy: prioritize unanswered questions, then randomly reincorporate
       // some previously answered ones (oldest-answered first, with shuffle).
       // This ensures returning users mostly see new content but also get a
       // few familiar questions cycled back in for re-assessment.
-      const QUESTIONS_PER_PILLAR = 10;
+      const QUESTIONS_PER_PILLAR = (depth === 'quick') ? 5 : 10;
       const RECYCLE_RATIO = 0.3; // up to 30% of slots can be recycled old questions
       const selectedQuestions = [];
       const totalAvailableByPillar = {};
@@ -141,8 +157,8 @@ module.exports = async (req, res) => {
         selectedQuestions.push(...shuffle(picked));
       }
 
-      // Handle overlay questions for relationship/leadership modes
-      if (mode === 'relationship' || mode === 'leadership') {
+      // Handle overlay questions for relationship/leadership modes (extensive only)
+      if (depth === 'extensive' && (mode === 'relationship' || mode === 'leadership')) {
         const modeOverlays = overlayQuestions.filter(q => q.overlay_type === mode);
         const unansweredOverlays = shuffle(modeOverlays.filter(q => !answeredIds.includes(q.id)));
         const answeredOverlays = shuffle(modeOverlays.filter(q => answeredIds.includes(q.id)));
@@ -185,6 +201,9 @@ module.exports = async (req, res) => {
         isReturningUser,
         totalAvailableByPillar,
         recycleRatio: RECYCLE_RATIO,
+        depth,
+        focusPillar: (depth === 'pillar') ? focusPillar : null,
+        questionsPerPillar: QUESTIONS_PER_PILLAR,
       });
     }
 
@@ -211,7 +230,7 @@ module.exports = async (req, res) => {
         totalAvailable = Number(countResult[0]?.cnt || 0);
       } catch (e) { /* table may not exist */ }
 
-      const assessments = await sql`SELECT id, completed_at, mode, master_score, score_range, weakest_pillar FROM assessments WHERE contact_id = ${contact.id} ORDER BY completed_at DESC`;
+      const assessments = await sql`SELECT id, completed_at, mode, master_score, score_range, weakest_pillar, depth, focus_pillar FROM assessments WHERE contact_id = ${contact.id} ORDER BY completed_at DESC`;
 
       return res.json({
         answered: history.map(h => ({
@@ -230,6 +249,8 @@ module.exports = async (req, res) => {
           masterScore: a.master_score,
           scoreRange: a.score_range,
           weakestPillar: a.weakest_pillar,
+          depth: a.depth || 'extensive',
+          focusPillar: a.focus_pillar || null,
         })),
         isNewUser: false,
       });
@@ -288,8 +309,25 @@ module.exports = async (req, res) => {
       const rawScore = tt + pt + it + nt + kt;
       const tm = Math.max(0.1, Math.min(2.0, b.timeMultiplier || 1.0));
       const masterScore = Math.round(rawScore * tm * 10) / 10;
-      const scoreRange = getScoreRange(masterScore);
       const mode = b.mode || 'individual';
+      const assessmentDepth = b.depth || 'quick';
+      const assessmentFocusPillar = b.focusPillar || null;
+
+      // Calculate max possible score based on depth for proportional score ranges
+      // quick: 5 questions × 5 max per question × 5 pillars = 125 max raw
+      // extensive: 10 × 5 × 5 = 250 max raw
+      // pillar: 10 × 5 × 1 = 50 max raw
+      let maxRawScore;
+      if (assessmentDepth === 'pillar') {
+        maxRawScore = 50;
+      } else if (assessmentDepth === 'quick') {
+        maxRawScore = 125;
+      } else {
+        maxRawScore = 250;
+      }
+      // Apply same multiplier range to max for consistent tier mapping
+      const maxMasterScore = maxRawScore * tm;
+      const scoreRange = getScoreRange(masterScore, maxMasterScore);
 
       const aData = {
         contact_id: contact.id, completed_at: new Date().toISOString(), mode,
@@ -308,8 +346,11 @@ module.exports = async (req, res) => {
       aData.weakest_pillar = prescription.weakestPillar;
       aData.prescription = JSON.stringify(prescription);
 
+      aData.depth = assessmentDepth;
+      aData.focus_pillar = assessmentFocusPillar;
+
       const d = aData;
-      const rows = await sql`INSERT INTO assessments (contact_id, completed_at, mode, team_id, is_team_creator, time_awareness, time_allocation, time_protection, time_leverage, five_hour_leak, value_per_hour, time_investment, downtime_quality, foresight, time_reallocation, time_total, trust_investment, boundary_quality, network_depth, relational_roi, people_audit, alliance_building, love_bank_deposits, communication_clarity, restraint_practice, value_replacement, people_total, leadership_level, integrity_alignment, professional_credibility, empathetic_listening, gravitational_center, micro_honesties, word_management, personal_responsibility, adaptive_influence, influence_multiplier, influence_total, financial_awareness, goal_specificity, investment_logic, measurement_habit, cost_vs_value, number_one_clarity, small_improvements, negative_math, income_multiplier, negotiation_skill, numbers_total, learning_hours, application_rate, bias_awareness, highest_best_use, supply_and_demand, substitution_risk, double_jeopardy, knowledge_compounding, weighted_analysis, perception_vs_perspective, knowledge_total, time_multiplier, raw_score, master_score, score_range, weakest_pillar, prescription, overlay_answers, overlay_total) VALUES (${d.contact_id}, ${d.completed_at}, ${d.mode}, ${d.team_id}, ${d.is_team_creator}, ${d.time_awareness}, ${d.time_allocation}, ${d.time_protection}, ${d.time_leverage}, ${d.five_hour_leak}, ${d.value_per_hour}, ${d.time_investment}, ${d.downtime_quality}, ${d.foresight}, ${d.time_reallocation}, ${d.time_total}, ${d.trust_investment}, ${d.boundary_quality}, ${d.network_depth}, ${d.relational_roi}, ${d.people_audit}, ${d.alliance_building}, ${d.love_bank_deposits}, ${d.communication_clarity}, ${d.restraint_practice}, ${d.value_replacement}, ${d.people_total}, ${d.leadership_level}, ${d.integrity_alignment}, ${d.professional_credibility}, ${d.empathetic_listening}, ${d.gravitational_center}, ${d.micro_honesties}, ${d.word_management}, ${d.personal_responsibility}, ${d.adaptive_influence}, ${d.influence_multiplier}, ${d.influence_total}, ${d.financial_awareness}, ${d.goal_specificity}, ${d.investment_logic}, ${d.measurement_habit}, ${d.cost_vs_value}, ${d.number_one_clarity}, ${d.small_improvements}, ${d.negative_math}, ${d.income_multiplier}, ${d.negotiation_skill}, ${d.numbers_total}, ${d.learning_hours}, ${d.application_rate}, ${d.bias_awareness}, ${d.highest_best_use}, ${d.supply_and_demand}, ${d.substitution_risk}, ${d.double_jeopardy}, ${d.knowledge_compounding}, ${d.weighted_analysis}, ${d.perception_vs_perspective}, ${d.knowledge_total}, ${d.time_multiplier}, ${d.raw_score}, ${d.master_score}, ${d.score_range}, ${d.weakest_pillar}, ${d.prescription}, ${d.overlay_answers}, ${d.overlay_total}) RETURNING *`;
+      const rows = await sql`INSERT INTO assessments (contact_id, completed_at, mode, team_id, is_team_creator, depth, focus_pillar, time_awareness, time_allocation, time_protection, time_leverage, five_hour_leak, value_per_hour, time_investment, downtime_quality, foresight, time_reallocation, time_total, trust_investment, boundary_quality, network_depth, relational_roi, people_audit, alliance_building, love_bank_deposits, communication_clarity, restraint_practice, value_replacement, people_total, leadership_level, integrity_alignment, professional_credibility, empathetic_listening, gravitational_center, micro_honesties, word_management, personal_responsibility, adaptive_influence, influence_multiplier, influence_total, financial_awareness, goal_specificity, investment_logic, measurement_habit, cost_vs_value, number_one_clarity, small_improvements, negative_math, income_multiplier, negotiation_skill, numbers_total, learning_hours, application_rate, bias_awareness, highest_best_use, supply_and_demand, substitution_risk, double_jeopardy, knowledge_compounding, weighted_analysis, perception_vs_perspective, knowledge_total, time_multiplier, raw_score, master_score, score_range, weakest_pillar, prescription, overlay_answers, overlay_total) VALUES (${d.contact_id}, ${d.completed_at}, ${d.mode}, ${d.team_id}, ${d.is_team_creator}, ${d.depth}, ${d.focus_pillar}, ${d.time_awareness}, ${d.time_allocation}, ${d.time_protection}, ${d.time_leverage}, ${d.five_hour_leak}, ${d.value_per_hour}, ${d.time_investment}, ${d.downtime_quality}, ${d.foresight}, ${d.time_reallocation}, ${d.time_total}, ${d.trust_investment}, ${d.boundary_quality}, ${d.network_depth}, ${d.relational_roi}, ${d.people_audit}, ${d.alliance_building}, ${d.love_bank_deposits}, ${d.communication_clarity}, ${d.restraint_practice}, ${d.value_replacement}, ${d.people_total}, ${d.leadership_level}, ${d.integrity_alignment}, ${d.professional_credibility}, ${d.empathetic_listening}, ${d.gravitational_center}, ${d.micro_honesties}, ${d.word_management}, ${d.personal_responsibility}, ${d.adaptive_influence}, ${d.influence_multiplier}, ${d.influence_total}, ${d.financial_awareness}, ${d.goal_specificity}, ${d.investment_logic}, ${d.measurement_habit}, ${d.cost_vs_value}, ${d.number_one_clarity}, ${d.small_improvements}, ${d.negative_math}, ${d.income_multiplier}, ${d.negotiation_skill}, ${d.numbers_total}, ${d.learning_hours}, ${d.application_rate}, ${d.bias_awareness}, ${d.highest_best_use}, ${d.supply_and_demand}, ${d.substitution_risk}, ${d.double_jeopardy}, ${d.knowledge_compounding}, ${d.weighted_analysis}, ${d.perception_vs_perspective}, ${d.knowledge_total}, ${d.time_multiplier}, ${d.raw_score}, ${d.master_score}, ${d.score_range}, ${d.weakest_pillar}, ${d.prescription}, ${d.overlay_answers}, ${d.overlay_total}) RETURNING *`;
 
       const assessment = rows[0];
 
@@ -390,6 +431,7 @@ module.exports = async (req, res) => {
             }
           } catch (e) { /* table may not exist */ }
 
+          const pillarMax = assessmentDepth === 'quick' ? 25 : 50;
           const emailBody = `${efName},
 
 Your Value Engine Assessment is complete.
@@ -397,11 +439,11 @@ Your Value Engine Assessment is complete.
 MASTER VALUE SCORE: ${eMasterScore} (${eScoreRange})
 
 Pillar Breakdown:
-  Time:      ${tt}/50
-  People:    ${pt}/50
-  Influence: ${it}/50
-  Numbers:   ${nt}/50
-  Knowledge: ${kt}/50
+  Time:      ${tt}/${pillarMax}
+  People:    ${pt}/${pillarMax}
+  Influence: ${it}/${pillarMax}
+  Numbers:   ${nt}/${pillarMax}
+  Knowledge: ${kt}/${pillarMax}
 
 Your weakest pillar is ${eWeakestPillar}. ${prescription.diagnosis || ''}
 
@@ -411,7 +453,7 @@ https://assessment.valuetovictory.com/report/${assessment.id}
 ${productRec}
 ${fitcarnaSection}
 Your report includes:
-- Detailed sub-category breakdown across all 50 dimensions
+- Detailed sub-category breakdown across all dimensions
 - Where you rank against other Value Engine users
 - Personalized prescription with specific tools to run
 - Your recommended next step
@@ -441,7 +483,7 @@ Don't guess. Run the system.
       }
       // === END AUTO-EMAIL ===
 
-      return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name }, emailSent });
+      return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name }, emailSent, depth: assessmentDepth, focusPillar: assessmentFocusPillar });
     }
 
     // POST /api/teams
@@ -526,9 +568,9 @@ Don't guess. Run the system.
     // GET /api/admin/export (CSV)
     if (req.method === 'GET' && url === '/admin/export') {
       const all = await sql`SELECT a.*, c.first_name, c.last_name, c.email, c.phone FROM assessments a JOIN contacts c ON a.contact_id = c.id ORDER BY a.completed_at DESC`;
-      let csv = "First Name,Last Name,Email,Phone,Date,Time,People,Influence,Numbers,Knowledge,Raw,Multiplier,Master Score,Range,Weakest\n";
+      let csv = "First Name,Last Name,Email,Phone,Date,Time,People,Influence,Numbers,Knowledge,Raw,Multiplier,Master Score,Range,Weakest,Depth,Focus Pillar\n";
       for (const r of all) {
-        csv += `"${r.first_name}","${r.last_name}","${r.email}","${r.phone||''}","${r.completed_at}",${r.time_total},${r.people_total},${r.influence_total},${r.numbers_total},${r.knowledge_total},${r.raw_score},${r.time_multiplier},${r.master_score},"${r.score_range}","${r.weakest_pillar}"\n`;
+        csv += `"${r.first_name}","${r.last_name}","${r.email}","${r.phone||''}","${r.completed_at}",${r.time_total},${r.people_total},${r.influence_total},${r.numbers_total},${r.knowledge_total},${r.raw_score},${r.time_multiplier},${r.master_score},"${r.score_range}","${r.weakest_pillar}","${r.depth||'extensive'}","${r.focus_pillar||''}"\n`;
       }
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', 'attachment; filename=value-engine-export.csv');
@@ -752,6 +794,8 @@ Don't guess. Run the system.
         challenge,
         questionsAnswered: totalAnswered,
         questionsAvailable: totalAvailable,
+        depth: a.depth || 'extensive',
+        focusPillar: a.focus_pillar || null,
       });
     }
 
@@ -767,6 +811,7 @@ Don't guess. Run the system.
 
       if (!a.email) return res.status(400).json({ error: 'No email on file for this contact' });
 
+      const recipientEmail = b.overrideEmail || a.email;
       const firstName = a.first_name || 'there';
       const masterScore = a.master_score;
       const scoreRange = a.score_range;
@@ -793,6 +838,67 @@ Don't guess. Run the system.
         }
       } catch (e) { /* table may not exist */ }
 
+      // --- Pillar data ---
+      const reportDepth = a.depth || 'extensive';
+      const reportPillarMax = reportDepth === 'quick' ? 25 : 50;
+      const pillars = [
+        { key: 'Time', icon: '&#9201;', score: Number(a.time_total) || 0 },
+        { key: 'People', icon: '&#128101;', score: Number(a.people_total) || 0 },
+        { key: 'Influence', icon: '&#9889;', score: Number(a.influence_total) || 0 },
+        { key: 'Numbers', icon: '&#128200;', score: Number(a.numbers_total) || 0 },
+        { key: 'Knowledge', icon: '&#128218;', score: Number(a.knowledge_total) || 0 },
+      ];
+      // Scale the "below 35" threshold proportionally to depth
+      const belowThreshold = reportDepth === 'quick' ? 18 : 35; // 35/50 ~ 70% → 18/25 ~ 72%
+      const pillarsBelow35 = pillars.filter(p => p.score < belowThreshold);
+
+      // Per-pillar action items (from spec)
+      const pillarActionItems = {
+        Time: [
+          "Run the Time Audit (Tool #2) \u2014 Track every hour for 3 days. Find your Five-Hour Leak. Most people discover 5-10 hours of wasted time they never knew about.",
+          "Identify your peak productive hours and protect them. Block them on your calendar. Tell people they\u2019re non-negotiable.",
+          "Use the Time Reallocation Planner (Tool #9) \u2014 Sort your week by Covey Quadrant. Move 3 hours from Q3/Q4 to Q2 activities.",
+          "Calculate your Value Per Hour (Tool #5) \u2014 Know what one hour of your time is actually worth. Then refuse to spend it on anything below that number.",
+        ],
+        People: [
+          "Run the People Audit (Tool #3) \u2014 Map your top 15 relationships as Givers, Receivers, Exchangers, or Takers. The truth will surprise you.",
+          "Identify your 4 Alliances (Tool #6) \u2014 Who are your Confidants, Constituents, Comrades, and Companions? Each serves a different purpose.",
+          "Make 3 intentional Love Bank deposits this week \u2014 a genuine compliment, an act of service, quality time with someone who matters.",
+          "Use the Communicate-Clarify-Question framework in one difficult conversation this week. State it clearly, verify understanding, then ask the real question.",
+        ],
+        Influence: [
+          "Identify your Gravitational Center (Tool #11) \u2014 Audit your calendar and bank statement against your stated values. Where does your time and money actually go?",
+          "Eliminate one micro-dishonesty this week. The small exaggerations and omissions cost more trust than you think.",
+          "Practice the Four Questions Before You Speak \u2014 Is it true? Is it kind? Is it necessary? Is it the right time?",
+          "Under-promise and over-deliver in one key relationship this week. Precision in language builds influence faster than anything.",
+        ],
+        Numbers: [
+          "Run the Financial Snapshot (Tool #4) \u2014 Document actual income, expenses, surplus/deficit, and real cost per hour. No rounding. No guessing. 30 minutes that change everything.",
+          "Calculate your Value Per Hour (Tool #5) \u2014 What is one hour of your time actually worth in the marketplace? Not your salary divided by 40 \u2014 your real output value.",
+          "Identify your Number One (Tool #7) \u2014 The single metric that matters most to your progress right now. Track it daily.",
+          "Use the Income Multiplier Model (Tool #12) \u2014 Map how small improvements compound over 90 days. A 1% daily improvement = 37x in a year.",
+        ],
+        Knowledge: [
+          "Audit your learning hours \u2014 How much time do you spend consuming information versus implementing what you\u2019ve learned? The goal is a 1:1 ratio.",
+          "Identify your Highest and Best Use (Tool #13) \u2014 What are you uniquely qualified to do? Stop learning things outside your zone.",
+          "Apply one thing you learned this week before learning anything new. Knowledge without application is just trivia.",
+          "Assess your Substitution Risk \u2014 How easily could someone replace what you know? If the answer is \u2018easily,\u2019 you need deeper expertise.",
+        ],
+      };
+
+      // Build plain text roadmap section
+      let roadmapText = '';
+      if (pillarsBelow35.length > 0) {
+        roadmapText = '\n--- YOUR IMPROVEMENT ROADMAP ---\n';
+        for (const p of pillarsBelow35) {
+          roadmapText += `\n${p.key.toUpperCase()} (${p.score}/${reportPillarMax}) \u2014 Action Items:\n`;
+          const items = pillarActionItems[p.key] || [];
+          items.forEach((item, i) => { roadmapText += `  ${i + 1}. ${item}\n`; });
+        }
+      } else {
+        roadmapText = '\n--- MAINTAIN YOUR EDGE ---\nAll your pillars are at 35 or above. You are operating at a high level. Here are tips to stay sharp:\n  1. Schedule a quarterly reassessment to track your trajectory and catch any drift before it becomes a slide.\n  2. Identify one pillar to push from good to exceptional this quarter. Mastery is not about fixing weaknesses \u2014 it is about compounding strengths.\n  3. Mentor or teach what you know. The fastest way to deepen expertise is to help someone else build theirs.\n';
+      }
+
       const emailBody = `${firstName},
 
 Your Value Engine Assessment is complete.
@@ -800,11 +906,11 @@ Your Value Engine Assessment is complete.
 MASTER VALUE SCORE: ${masterScore} (${scoreRange})
 
 Pillar Breakdown:
-  Time:      ${a.time_total}/50
-  People:    ${a.people_total}/50
-  Influence: ${a.influence_total}/50
-  Numbers:   ${a.numbers_total}/50
-  Knowledge: ${a.knowledge_total}/50
+  Time:      ${a.time_total}/${reportPillarMax}
+  People:    ${a.people_total}/${reportPillarMax}
+  Influence: ${a.influence_total}/${reportPillarMax}
+  Numbers:   ${a.numbers_total}/${reportPillarMax}
+  Knowledge: ${a.knowledge_total}/${reportPillarMax}
 
 Your weakest pillar is ${weakestPillar}. ${prescription.diagnosis || ''}
 
@@ -814,7 +920,7 @@ https://assessment.valuetovictory.com/report/${assessmentId}
 ${productRec}
 ${fitcarnaSection}
 Your report includes:
-- Detailed sub-category breakdown across all 50 dimensions
+- Detailed sub-category breakdown across all dimensions
 - Where you rank against other Value Engine users
 - Personalized prescription with specific tools to run
 - Your recommended next step
@@ -824,7 +930,184 @@ Don't guess. Run the system.
 — The Value Engine
    ValueToVictory.com`;
 
-      const subject = `Your Value Engine Score: ${masterScore} (${scoreRange}) — Personal Report Ready`;
+      // --- Rich HTML email generation ---
+      const maxPillar = pillars.reduce((best, p) => p.score > best.score ? p : best, pillars[0]);
+      const minPillar = pillars.reduce((best, p) => p.score < best.score ? p : best, pillars[0]);
+
+      // Encouraging pillar diagnosis (opportunity framing)
+      const pillarDiagnosis = {
+        Time: 'You have the most room to grow here \u2014 and that is exciting. The hours you reclaim will compound into everything else you are building.',
+        People: 'This is where your next breakthrough lives. The right relationships do not just add value \u2014 they multiply it.',
+        Influence: 'You have more impact potential than your score reflects. Small shifts in how you lead and communicate will unlock outsized results.',
+        Numbers: 'The gap between your goals and your numbers is not a failure \u2014 it is a map. Once you see it clearly, you can close it fast.',
+        Knowledge: 'You are closer than you think. The difference between knowing and earning is application \u2014 and that is a skill you can build.',
+      };
+
+      // Encouraging tier descriptions
+      const tierDescriptions = {
+        Crisis: 'Every victory starts with knowing where you stand \u2014 and you just took that step. That takes courage. Most people never even look in the mirror. You did \u2014 and now you know exactly where to focus.',
+        Survival: 'You showed up. That takes courage. Most people never even look in the mirror. You did \u2014 and now you know exactly where to focus.',
+        Growth: 'You have a real foundation. That is not nothing \u2014 that is everything. The people who reach Momentum are the ones who build on what they already have.',
+        Momentum: 'You are moving. Most people never get here. You have built something real \u2014 now it is time to refine it.',
+        Excellence: 'You are operating at a high level. The system is working. Fine-tuning and leverage are your edge now.',
+        Mastery: 'You are operating at the highest level. The system is working. The question now is: who are you bringing with you?',
+      };
+
+      // Tier configuration \u2014 HARD RULE PRICING: VictoryPath $29/mo, Value Builder $47/mo, Victory VIP $497/mo
+      const tierConfig = {
+        Crisis:     { color: '#e74c3c', bg: '#2a1a1a', border: '#c0392b', arrow: '&#9660;', cta: 'Ready to Build Your Foundation?', product: 'VictoryPath', promo: '$29', full: '$49', promoNum: '29' },
+        Survival:   { color: '#e74c3c', bg: '#2a1a1a', border: '#c0392b', arrow: '&#9660;', cta: 'Ready to Build Your Foundation?', product: 'VictoryPath', promo: '$29', full: '$49', promoNum: '29' },
+        Growth:     { color: '#2ecc71', bg: '#1a2a1a', border: '#27ae60', arrow: '&#9650;', cta: 'Ready to Move Into Momentum?', product: 'VictoryPath', promo: '$29', full: '$49', promoNum: '29' },
+        Momentum:   { color: '#d4a853', bg: '#2a2518', border: '#c89030', arrow: '&#9650;', cta: 'Ready to Break Through?', product: 'Value Builder', promo: '$47', full: '$79', promoNum: '47' },
+        Excellence: { color: '#9b59b6', bg: '#1f1a2a', border: '#8e44ad', arrow: '&#9733;', cta: 'Ready to Go Elite?', product: 'Victory VIP', promo: '$497', full: '$697', promoNum: '497' },
+        Mastery:    { color: '#9b59b6', bg: '#1f1a2a', border: '#8e44ad', arrow: '&#9733;', cta: 'Ready to Go Elite?', product: 'Victory VIP', promo: '$497', full: '$697', promoNum: '497' },
+      };
+      const tier = tierConfig[scoreRange] || tierConfig.Growth;
+
+      function buildPillarRowHtml(p) {
+        const isStrongest = p.key === maxPillar.key;
+        const isWeakest = p.key === minPillar.key;
+        const pct = Math.round((p.score / reportPillarMax) * 100);
+        let barColor, barGradStart, scoreColor, badge;
+        if (isWeakest) {
+          barColor = '#e74c3c'; barGradStart = '#c0392b'; scoreColor = '#e74c3c';
+          badge = '<span style="display:inline-block;background:#2a1a1a;border:1px solid #c0392b;border-radius:3px;padding:1px 7px;font-size:10px;color:#e74c3c;margin-left:8px;vertical-align:middle;text-transform:uppercase;letter-spacing:0.5px;">Biggest Opportunity</span>';
+        } else if (isStrongest) {
+          barColor = '#2ecc71'; barGradStart = '#1e8449'; scoreColor = '#2ecc71';
+          badge = '<span style="display:inline-block;background:#1a3320;border:1px solid #27ae60;border-radius:3px;padding:1px 7px;font-size:10px;color:#2ecc71;margin-left:8px;vertical-align:middle;text-transform:uppercase;letter-spacing:0.5px;">Strongest</span>';
+        } else {
+          barColor = '#d4a853'; barGradStart = '#c89030'; scoreColor = '#d4a853';
+          badge = '';
+        }
+        const isLast = p.key === 'Knowledge';
+        const bottomPad = isLast ? '24px' : '14px';
+        return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px ${bottomPad} 40px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#ffffff;padding-bottom:6px;">${p.icon} ${p.key} ${badge}</td><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:${scoreColor};text-align:right;padding-bottom:6px;">${p.score} / ${reportPillarMax}</td></tr><tr><td colspan="2"><div style="background:#2a2a44;border-radius:6px;height:10px;width:100%;overflow:hidden;"><div style="background:linear-gradient(90deg,${barGradStart},${barColor});height:10px;width:${pct}%;border-radius:6px;"></div></div></td></tr></table></td></tr></table>`;
+      }
+
+      function buildActionCardHtml(stepText, num, isLast) {
+        const bottomPad = isLast ? '24px' : '12px';
+        return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px ${bottomPad} 40px;"><div style="background:#22223a;border-radius:8px;padding:20px 24px;border:1px solid #2a2a4a;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="width:44px;vertical-align:top;"><div style="width:36px;height:36px;background:linear-gradient(135deg,#d4a853,#e8c775);border-radius:50%;text-align:center;line-height:36px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:800;color:#1a1a2e;">${num}</div></td><td style="vertical-align:top;padding-left:12px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8888a8;line-height:1.5;">${stepText}</p></td></tr></table></div></td></tr></table>`;
+      }
+
+      // Build per-pillar roadmap sections for pillars below 35
+      function buildPillarRoadmapSection(pillarKey, pillarScore, pillarIcon) {
+        const items = pillarActionItems[pillarKey] || [];
+        let html = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:8px 40px 4px 40px;"><h3 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#ffffff;">${pillarIcon} ${pillarKey} <span style="color:#d4a853;">(${pillarScore}/${reportPillarMax})</span></h3><p style="margin:4px 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6a6a84;">Where you have the most room to grow</p></td></tr></table>`;
+        items.forEach((item, i) => {
+          html += buildActionCardHtml(item, i + 1, i === items.length - 1);
+        });
+        return html;
+      }
+
+      let roadmapHtml = '';
+      if (pillarsBelow35.length > 0) {
+        roadmapHtml = `
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Improvement Roadmap Header -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px 16px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#d4a853;text-transform:uppercase;letter-spacing:1px;">&#127942; Your Improvement Roadmap</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#a0a0b8;line-height:1.5;">Every pillar below 35 gets a focused action plan. These are your highest-leverage moves.</p></td></tr></table>
+
+${pillarsBelow35.map(p => buildPillarRoadmapSection(p.key, p.score, p.icon)).join('\n')}`;
+      } else {
+        roadmapHtml = `
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Maintain Your Edge -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px 16px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#d4a853;text-transform:uppercase;letter-spacing:1px;">&#128170; Maintain Your Edge</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#a0a0b8;line-height:1.5;">All your pillars are at 35 or above. You are operating at a high level. Here is how to stay sharp.</p></td></tr></table>
+${buildActionCardHtml('Schedule a quarterly reassessment to track your trajectory and catch any drift before it becomes a slide.', 1, false)}
+${buildActionCardHtml('Identify one pillar to push from good to exceptional this quarter. Mastery is not about fixing weaknesses \u2014 it is about compounding strengths.', 2, false)}
+${buildActionCardHtml('Mentor or teach what you know. The fastest way to deepen expertise is to help someone else build theirs.', 3, true)}`;
+      }
+
+      const weakDiag = pillarDiagnosis[minPillar.key] || pillarDiagnosis.Time;
+
+      // Action plan cards from prescription data (weakest pillar focus)
+      const actionSteps = [];
+      if (prescription.immediate) actionSteps.push(prescription.immediate);
+      if (prescription.tool) actionSteps.push(prescription.tool);
+      if (prescription.thirtyDay) actionSteps.push(prescription.thirtyDay);
+      while (actionSteps.length < 3) actionSteps.push('Review your full report for personalized next steps.');
+
+      const htmlBody = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Your Value Engine Report</title></head><body style="margin:0;padding:0;background:#111122;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;">
+
+<!-- Promo Banner -->
+<tr><td style="background:linear-gradient(90deg,#d4a853,#e8c775);padding:10px 24px;text-align:center;border-radius:4px 4px 0 0;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#1a1a2e;letter-spacing:0.5px;text-transform:uppercase;">&#9733; This report is normally $1.99 \u2014 FREE through April 25, 2026 &#9733;</p></td></tr>
+
+<!-- Main Body -->
+<tr><td style="background:#1a1a2e;">
+
+<!-- Header -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:36px 40px 20px 40px;text-align:center;"><h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">VALUE <span style="color:#d4a853;">TO</span> VICTORY</h1><p style="margin:4px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">The Value Engine Report</p></td></tr></table>
+
+<!-- Gold Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#d4a853,transparent);"></div></td></tr></table>
+
+<!-- Greeting -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 8px 40px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#a0a0b8;line-height:1.6;">Hello <strong style="color:#ffffff;">${firstName}</strong>,</p><p style="margin:10px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#a0a0b8;line-height:1.6;">Your Value Engine assessment is complete. Below is a detailed breakdown of where you stand across the <strong style="color:#d4a853;">five pillars of value</strong>.</p></td></tr></table>
+
+<!-- Master Score -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 12px 40px;text-align:center;"><p style="margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">Master Value Score</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="width:180px;height:180px;border-radius:50%;border:10px solid #2a2a44;text-align:center;vertical-align:middle;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:44px;font-weight:800;color:#d4a853;line-height:1;">${masterScore}</span><br><span style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">of ${reportDepth === 'quick' ? 125 : (reportDepth === 'pillar' ? 50 : 250)}</span></td></tr></table>
+<!-- Tier Badge -->
+<div style="margin-top:20px;"><span style="display:inline-block;background:${tier.bg};border:1px solid ${tier.border};border-radius:20px;padding:6px 20px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:${tier.color};letter-spacing:1.5px;text-transform:uppercase;">${tier.arrow} ${scoreRange} Tier</span></div>
+<p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#a0a0b8;line-height:1.6;max-width:480px;display:inline-block;">${tierDescriptions[scoreRange] || tierDescriptions.Growth}</p></td></tr></table>
+
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:20px 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Pillar Breakdown Header -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:4px 40px 20px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:1px;">Your Five Pillars</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">Each pillar is scored out of ${reportPillarMax}. Here is where you stand.</p></td></tr></table>
+
+<!-- Pillar Bars -->
+${pillars.map(p => buildPillarRowHtml(p)).join('\n')}
+
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Weakest Pillar Callout \u2014 Encouraging Tone -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px;"><div style="background:linear-gradient(135deg,#1a2035,#1f1525);border:1px solid #d4a853;border-left:4px solid #d4a853;border-radius:8px;padding:24px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td><p style="margin:0 0 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#d4a853;letter-spacing:2px;text-transform:uppercase;font-weight:700;">&#127775; Your Biggest Opportunity for Growth</p><h3 style="margin:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#ffffff;">${minPillar.key} \u2014 ${minPillar.score} out of ${reportPillarMax}</h3><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#a0a0b8;line-height:1.6;">${weakDiag}</p></td></tr></table></div></td></tr></table>
+
+<!-- Action Plan Header -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:8px 40px 16px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:1px;">Your 3-Step Action Plan</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">Based on your results, here is where to focus first.</p></td></tr></table>
+
+<!-- Action Cards -->
+${buildActionCardHtml(actionSteps[0], 1, false)}
+${buildActionCardHtml(actionSteps[1], 2, false)}
+${buildActionCardHtml(actionSteps[2], 3, true)}
+
+<!-- YOUR IMPROVEMENT ROADMAP or MAINTAIN YOUR EDGE -->
+${roadmapHtml}
+
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:12px 40px 0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Coaching CTA -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h2 style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#ffffff;">${tier.cta}</h2><p style="margin:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#8888a8;line-height:1.6;">Get a free coaching preparation report \u2014 personalized to your exact scores.<br>Choose your track: Personal, Real Estate, or Company.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;background:linear-gradient(135deg,#d4a853,#c89030);" align="center"><a href="https://assessment.valuetovictory.com/coaching?track=personal&amp;aid=${assessmentId}" target="_blank" style="display:inline-block;padding:16px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:800;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Get Your Free Coaching Report &rarr;</a></td></tr></table></td></tr></table>
+
+<!-- Membership / Pricing CTA -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:16px 40px 32px 40px;text-align:center;">
+<div style="margin-bottom:16px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#6a6a84;text-decoration:line-through;">${tier.full}/mo</span> <span style="font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:800;color:#d4a853;margin-left:8px;">${tier.promo}</span><span style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#d4a853;">/mo</span></div>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;border:2px solid #d4a853;" align="center"><a href="https://assessment.valuetovictory.com/pricing" target="_blank" style="display:inline-block;padding:12px 36px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#d4a853;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Lock In ${tier.product} Promo Rate</a></td></tr></table>
+<p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#4a4a64;">2026 promo pricing. Goes to ${tier.full}/mo in January 2027.</p></td></tr></table>
+
+<!-- View Full Report -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px 24px 40px;text-align:center;"><a href="https://assessment.valuetovictory.com/report/${assessmentId}" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#d4a853;text-decoration:underline;">View Your Full Interactive Report Online</a></td></tr></table>
+
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Footer -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 36px 40px;text-align:center;"><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#4a4a64;letter-spacing:1.5px;text-transform:uppercase;">Value to Victory</p><p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#3a3a54;line-height:1.6;">Don't guess. Run the system.</p><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3a3a54;">You're receiving this because you completed the Value Engine Assessment.</p><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6a6a84;">To unsubscribe, reply with UNSUBSCRIBE in the subject line.</p><p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#2a2a44;">&copy; 2026 Value to Victory | Goodview, VA | valuetovictory.com</p></td></tr></table>
+
+</td></tr>
+</table>
+</body></html>`;
+
+      const subject = `Your Value Engine Score: ${masterScore} (${scoreRange}) \u2014 Personal Report Ready`;
 
       // Check if email credentials are configured
       if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
@@ -839,11 +1122,12 @@ Don't guess. Run the system.
         });
         await transporter.sendMail({
           from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
-          to: a.email,
+          to: recipientEmail,
           subject,
           text: emailBody,
+          html: htmlBody,
         });
-        return res.json({ sent: true, to: a.email, reportUrl: `https://assessment.valuetovictory.com/report/${assessmentId}` });
+        return res.json({ sent: true, to: recipientEmail, reportUrl: `https://assessment.valuetovictory.com/report/${assessmentId}` });
       } catch (emailErr) {
         console.error('Email send error:', emailErr.message);
         return res.json({ sent: false, reason: emailErr.message, reportUrl: `https://assessment.valuetovictory.com/report/${assessmentId}` });
@@ -2019,19 +2303,21 @@ This link expires in 24 hours.
 
         // Assessment summary (if available)
         if (assessment) {
+          const cPillarMax = (assessment.depth === 'quick') ? 25 : 50;
           report += `ASSESSMENT SUMMARY\n${'-'.repeat(30)}\n`;
           report += `Master Value Score: ${assessment.master_score} (${assessment.score_range})\n`;
+          report += `Assessment Depth: ${assessment.depth || 'extensive'}\n`;
           report += `Pillar Breakdown:\n`;
-          report += `  Time:      ${assessment.time_total}/50\n`;
-          report += `  People:    ${assessment.people_total}/50\n`;
-          report += `  Influence: ${assessment.influence_total}/50\n`;
-          report += `  Numbers:   ${assessment.numbers_total}/50\n`;
-          report += `  Knowledge: ${assessment.knowledge_total}/50\n\n`;
+          report += `  Time:      ${assessment.time_total}/${cPillarMax}\n`;
+          report += `  People:    ${assessment.people_total}/${cPillarMax}\n`;
+          report += `  Influence: ${assessment.influence_total}/${cPillarMax}\n`;
+          report += `  Numbers:   ${assessment.numbers_total}/${cPillarMax}\n`;
+          report += `  Knowledge: ${assessment.knowledge_total}/${cPillarMax}\n\n`;
 
           // Weakest pillar deep-dive
           if (prescription) {
             report += `WEAKEST PILLAR DEEP-DIVE: ${prescription.weakestPillar}\n${'-'.repeat(30)}\n`;
-            report += `Score: ${prescription.weakestScore}/50\n`;
+            report += `Score: ${prescription.weakestScore}/${cPillarMax}\n`;
             report += `Weakest Sub-Category: ${prescription.weakestSubCategory} (${prescription.weakestSubScore}/5)\n`;
             report += `${prescription.diagnosis || ''}\n\n`;
             report += `Recommended Action: ${prescription.immediate || ''}\n`;
@@ -2180,6 +2466,7 @@ function mapAssessment(a) {
     learningHours: a.learning_hours, applicationRate: a.application_rate, biasAwareness: a.bias_awareness, highestBestUse: a.highest_best_use, supplyAndDemand: a.supply_and_demand, substitutionRisk: a.substitution_risk, doubleJeopardy: a.double_jeopardy, knowledgeCompounding: a.knowledge_compounding, weightedAnalysis: a.weighted_analysis, perceptionVsPerspective: a.perception_vs_perspective, knowledgeTotal: a.knowledge_total,
     timeMultiplier: a.time_multiplier, rawScore: a.raw_score, masterScore: a.master_score, scoreRange: a.score_range, weakestPillar: a.weakest_pillar, prescription: a.prescription,
     overlayAnswers: a.overlay_answers, overlayTotal: a.overlay_total,
+    depth: a.depth || 'extensive', focusPillar: a.focus_pillar || null,
     // Pass through any join fields
     ...(a.first_name ? { firstName: a.first_name, lastName: a.last_name, email: a.email } : {}),
   };

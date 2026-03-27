@@ -273,7 +273,23 @@
       </div>
     </div>
 
-    <!-- Section 10: Re-Assessment CTA -->
+    <!-- Section 10: Go Deeper (quick assessment) / Pillar Deep-Dive (all) -->
+    <div id="goDeeper" class="section" style="display:none;text-align:center;">
+      <div class="section-title" style="color:#D4A847;">Ready to Go Deeper?</div>
+      <p style="color:#a1a1aa;font-size:0.9rem;line-height:1.6;margin-bottom:1.5rem;">Your quick score gives you a snapshot &mdash; but real change requires real reflection. The extensive assessment unlocks your full P.I.N.K. breakdown, personalized prescription, and the tools to actually move the needle.</p>
+      <a href="https://assessment.valuetovictory.com/?depth=extensive" style="display:inline-block;padding:0.875rem 2rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;border-radius:0.625rem;text-decoration:none;font-size:0.95rem;">Take the Extensive Assessment</a>
+      <p id="pillarDiveLabel" style="font-size:0.78rem;color:#71717a;margin-top:1.5rem;margin-bottom:0.5rem;">Or dive into one pillar at a time:</p>
+      <div id="pillarDiveBtns" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;"></div>
+    </div>
+
+    <!-- Section 10b: Pillar Deep-Dive (extensive) -->
+    <div id="pillarDiveOnly" class="section" style="display:none;text-align:center;">
+      <div class="section-title" style="color:#D4A847;">Explore Individual Pillars</div>
+      <p style="color:#a1a1aa;font-size:0.9rem;line-height:1.6;margin-bottom:1rem;">Dive into a single pillar for even more detail and targeted insights.</p>
+      <div id="pillarDiveBtnsExt" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;"></div>
+    </div>
+
+    <!-- Section 11: Re-Assessment CTA -->
     <div class="section" style="padding:0;border:none;background:none;">
       <div class="reassess">
         <div class="section-title">Keep Moving</div>
@@ -361,11 +377,16 @@
       var rx = data.prescription || {};
       var pct = data.percentiles || {};
       var rec = data.recommendation || {};
+      var depth = data.depth || a.depth || 'extensive';
+      var pillarMax = depth === 'quick' ? 25 : 50;
 
       // Header
       document.getElementById('reportName').textContent = (data.contact.firstName || '') + ' ' + (data.contact.lastName || '');
       var d = new Date(a.completedAt);
-      document.getElementById('reportDate').textContent = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      var dateStr = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      if (depth === 'quick') dateStr += ' (Quick Assessment)';
+      else if (depth === 'pillar') dateStr += ' (Pillar Deep-Dive: ' + (data.focusPillar || a.focusPillar || '') + ')';
+      document.getElementById('reportDate').textContent = dateStr;
 
       // Score Hero
       var scoreEl = document.getElementById('masterScore');
@@ -390,10 +411,10 @@
       ];
       var barsHtml = '';
       pillars.forEach(function(p) {
-        var pctWidth = Math.min(100, (p.score / 50) * 100);
+        var pctWidth = Math.min(100, (p.score / pillarMax) * 100);
         barsHtml += '<div class="pillar-bar">' +
           '<div class="pillar-label" style="color:' + pillarColors[p.name] + '">' + p.name + '</div>' +
-          '<div class="pillar-track"><div class="pillar-fill ' + pillarClasses[p.name] + '" style="width:' + pctWidth + '%"><span>' + p.score + '/50</span></div></div>' +
+          '<div class="pillar-track"><div class="pillar-fill ' + pillarClasses[p.name] + '" style="width:' + pctWidth + '%"><span>' + p.score + '/' + pillarMax + '</span></div></div>' +
           '</div>';
       });
       document.getElementById('pillarBars').innerHTML = barsHtml;
@@ -403,7 +424,7 @@
       pillars.forEach(function(p) {
         var subs = subCategoryMap[p.name] || [];
         ddHtml += '<div class="pillar-deep-dive">' +
-          '<div class="pillar-dd-header"><span class="pillar-dd-name" style="color:' + pillarColors[p.name] + '">' + p.name + '</span><span class="pillar-dd-score">' + p.score + '/50</span></div>' +
+          '<div class="pillar-dd-header"><span class="pillar-dd-name" style="color:' + pillarColors[p.name] + '">' + p.name + '</span><span class="pillar-dd-score">' + p.score + '/' + pillarMax + '</span></div>' +
           '<div class="sub-grid">';
         subs.forEach(function(sub) {
           var val = a[sub[1]] || 0;
@@ -419,7 +440,7 @@
       if (rx.diagnosis) {
         rxHtml += '<div class="rx-diagnosis">' + rx.diagnosis + '</div>';
       }
-      rxHtml += '<div class="rx-label">Weakest Pillar</div><div class="rx-value"><strong>' + (rx.weakestPillar || '') + '</strong> (' + (rx.weakestScore || '') + '/50) — weakest sub-category: ' + (rx.weakestSubCategory || '') + ' (' + (rx.weakestSubScore || '') + '/5)</div>';
+      rxHtml += '<div class="rx-label">Weakest Pillar</div><div class="rx-value"><strong>' + (rx.weakestPillar || '') + '</strong> (' + (rx.weakestScore || '') + '/' + pillarMax + ') — weakest sub-category: ' + (rx.weakestSubCategory || '') + ' (' + (rx.weakestSubScore || '') + '/5)</div>';
       rxHtml += '<div class="rx-label">Immediate Action</div><div class="rx-value">' + (rx.immediate || '') + '</div>';
       rxHtml += '<div class="rx-label">Your Tool</div><div class="rx-value">' + (rx.tool || '') + '</div>';
       rxHtml += '<div class="rx-label">30-Day Plan</div><div class="rx-value">' + (rx.thirtyDay || '') + '</div>';
@@ -480,6 +501,22 @@
       document.getElementById('coachingRE').href = '/coaching?track=real_estate&aid=' + a.id;
       document.getElementById('coachingPersonal').href = '/coaching?track=personal&aid=' + a.id;
       document.getElementById('coachingCompany').href = '/coaching?track=company&aid=' + a.id;
+
+      // Go Deeper / Pillar Deep-Dive CTAs
+      var pillarBtnStyle = 'display:inline-block;padding:0.5rem 1rem;background:#0a0a0a;border:1px solid #27272a;border-radius:0.5rem;color:#d4d4d8;font-size:0.8rem;font-weight:600;text-decoration:none;transition:all 0.2s;';
+      var pillarNames = ['Time', 'People', 'Influence', 'Numbers', 'Knowledge'];
+      function buildPillarBtns() {
+        return pillarNames.map(function(pn) {
+          return '<a href="https://assessment.valuetovictory.com/?depth=pillar&pillar=' + pn.toLowerCase() + '" style="' + pillarBtnStyle + '">' + pn + '</a>';
+        }).join('');
+      }
+      if (depth === 'quick') {
+        document.getElementById('goDeeper').style.display = 'block';
+        document.getElementById('pillarDiveBtns').innerHTML = buildPillarBtns();
+      } else {
+        document.getElementById('pillarDiveOnly').style.display = 'block';
+        document.getElementById('pillarDiveBtnsExt').innerHTML = buildPillarBtns();
+      }
 
       // Load top recommendations based on weakest pillar and sub-category
       if (rx.weakestPillar && rx.weakestSubCategory) {
