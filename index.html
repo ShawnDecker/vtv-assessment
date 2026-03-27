@@ -39,11 +39,21 @@
       try { savedEmail = localStorage.getItem('ve_email'); } catch(e) {}
       var email = params.get('email') || savedEmail;
       var mode = params.get('mode') || 'individual';
+      var depth = params.get('depth') || (window.__veDepth) || 'quick';
+      var pillar = params.get('pillar') || '';
+
+      // Persist depth choice for the session
+      window.__veDepth = depth;
+      window.__veFocusPillar = pillar || null;
 
       if (email) {
         try { localStorage.setItem('ve_email', email); } catch(e) {}
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/api/questions?email=' + encodeURIComponent(email) + '&mode=' + encodeURIComponent(mode), false); // synchronous
+        var apiUrl = '/api/questions?email=' + encodeURIComponent(email) + '&mode=' + encodeURIComponent(mode) + '&depth=' + encodeURIComponent(depth);
+        if (depth === 'pillar' && pillar) {
+          apiUrl += '&pillar=' + encodeURIComponent(pillar);
+        }
+        xhr.open('GET', apiUrl, false); // synchronous
         try {
           xhr.send();
           if (xhr.status === 200) {
@@ -57,6 +67,241 @@
           console.warn('Dynamic question load failed, using defaults:', e);
         }
       }
+    })();
+    </script>
+    <script>
+    // === DEPTH SELECTOR + RESULTS DEEP-DIVE INJECTION ===
+    // Intercepts the React app to add assessment depth selection and results CTAs
+    (function() {
+      // --- Monkey-patch fetch to inject depth/focusPillar into assessment submission ---
+      var originalFetch = window.fetch;
+      window.fetch = function(url, opts) {
+        if (typeof url === 'string' && url.indexOf('/api/assessment') !== -1 && opts && opts.method === 'POST' && opts.body) {
+          try {
+            var body = JSON.parse(opts.body);
+            body.depth = window.__veDepth || 'quick';
+            body.focusPillar = window.__veFocusPillar || null;
+            opts = Object.assign({}, opts, { body: JSON.stringify(body) });
+          } catch(e) {}
+        }
+        return originalFetch.call(this, url, opts);
+      };
+
+      // --- CSS for injected components ---
+      var style = document.createElement('style');
+      style.textContent = [
+        '.ve-depth-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center; padding:1rem; animation:veFadeIn 0.3s ease; }',
+        '@keyframes veFadeIn { from{opacity:0} to{opacity:1} }',
+        '.ve-depth-card { background:#18181b; border:1px solid #27272a; border-radius:1rem; max-width:520px; width:100%; padding:2.5rem 2rem; text-align:center; font-family:"Satoshi",sans-serif; }',
+        '.ve-depth-card h2 { font-family:"Instrument Serif",serif; font-style:italic; font-size:1.75rem; color:#fff; margin-bottom:0.5rem; }',
+        '.ve-depth-card .ve-sub { font-size:0.85rem; color:#a1a1aa; margin-bottom:2rem; line-height:1.5; }',
+        '.ve-depth-option { border:1px solid #27272a; border-radius:0.75rem; padding:1.5rem; margin-bottom:1rem; cursor:pointer; transition:all 0.2s; text-align:left; background:#0a0a0a; }',
+        '.ve-depth-option:hover { border-color:#D4A847; background:#1a1a1a; }',
+        '.ve-depth-option.ve-premium { border-color:#D4A84740; background:linear-gradient(135deg,#18181b,#1a1510); }',
+        '.ve-depth-option.ve-premium:hover { border-color:#D4A847; }',
+        '.ve-depth-option h3 { font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:0.375rem; display:flex; align-items:center; gap:0.5rem; }',
+        '.ve-depth-option .ve-badge { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; background:#D4A84720; color:#D4A847; padding:0.15rem 0.5rem; border-radius:1rem; font-weight:700; }',
+        '.ve-depth-option p { font-size:0.85rem; color:#a1a1aa; line-height:1.5; margin:0; }',
+        '.ve-depth-option .ve-detail { font-size:0.75rem; color:#71717a; margin-top:0.5rem; }',
+        '.ve-depth-option .ve-recommend { font-size:0.78rem; color:#D4A847; margin-top:0.625rem; font-style:italic; }',
+        // Results deep-dive section
+        '.ve-deeper-section { background:#18181b; border:1px solid #27272a; border-radius:0.75rem; padding:2rem; margin:1.5rem auto; max-width:600px; text-align:center; }',
+        '.ve-deeper-section h3 { font-family:"Instrument Serif",serif; font-style:italic; font-size:1.5rem; color:#D4A847; margin-bottom:0.75rem; }',
+        '.ve-deeper-section p { font-size:0.9rem; color:#a1a1aa; line-height:1.6; margin-bottom:1.5rem; }',
+        '.ve-deeper-btn { display:inline-block; padding:0.875rem 2rem; background:linear-gradient(135deg,#D4A847,#b8942e); color:#0a0a0a; font-family:"Satoshi",sans-serif; font-size:0.95rem; font-weight:700; border:none; border-radius:0.625rem; cursor:pointer; transition:opacity 0.2s; text-decoration:none; }',
+        '.ve-deeper-btn:hover { opacity:0.9; }',
+        '.ve-pillar-btns { display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:center; margin-top:1.25rem; }',
+        '.ve-pillar-btn { padding:0.5rem 1rem; background:#0a0a0a; border:1px solid #27272a; border-radius:0.5rem; color:#d4d4d8; font-family:"Satoshi",sans-serif; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s; text-decoration:none; }',
+        '.ve-pillar-btn:hover { border-color:#D4A847; color:#D4A847; }',
+        '.ve-pillar-label { font-size:0.78rem; color:#71717a; margin-top:1.5rem; margin-bottom:0.5rem; }',
+      ].join('\n');
+      document.head.appendChild(style);
+
+      // --- Depth selector overlay ---
+      function showDepthSelector(selectedMode) {
+        var existing = document.getElementById('ve-depth-overlay');
+        if (existing) existing.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = 've-depth-overlay';
+        overlay.className = 've-depth-overlay';
+        overlay.innerHTML = '<div class="ve-depth-card">' +
+          '<h2>Choose Your Assessment Depth</h2>' +
+          '<p class="ve-sub">How deep do you want to go? Both assessments measure the same 5 pillars of value.</p>' +
+          '<div class="ve-depth-option" data-depth="quick">' +
+            '<h3>Quick Check <span style="color:#71717a;font-weight:400;font-size:0.85rem;">~5 minutes</span></h3>' +
+            '<p>Get your P.I.N.K. Value Score in 5 minutes. 25 questions across all 5 pillars.</p>' +
+            '<p class="ve-detail">Perfect for a first look at where you stand.</p>' +
+          '</div>' +
+          '<div class="ve-depth-option ve-premium" data-depth="extensive">' +
+            '<h3>Extensive Assessment <span class="ve-badge">Recommended</span> <span style="color:#71717a;font-weight:400;font-size:0.85rem;">~15\u201320 min</span></h3>' +
+            '<p>For those ready to truly reflect and create real change. 50 questions. Deeper insights. Personalized prescription.</p>' +
+            '<p class="ve-recommend">We recommend this for anyone serious about understanding where they stand and ready to do the work.</p>' +
+          '</div>' +
+        '</div>';
+
+        document.body.appendChild(overlay);
+
+        overlay.querySelectorAll('.ve-depth-option').forEach(function(opt) {
+          opt.addEventListener('click', function() {
+            var depth = this.getAttribute('data-depth');
+            window.__veDepth = depth;
+            window.__veFocusPillar = null;
+            overlay.remove();
+
+            // Re-fetch questions with the chosen depth
+            var savedEmail = null;
+            try { savedEmail = localStorage.getItem('ve_email'); } catch(e) {}
+            if (savedEmail) {
+              var mode = selectedMode || 'individual';
+              var xhr = new XMLHttpRequest();
+              xhr.open('GET', '/api/questions?email=' + encodeURIComponent(savedEmail) + '&mode=' + encodeURIComponent(mode) + '&depth=' + encodeURIComponent(depth), false);
+              try {
+                xhr.send();
+                if (xhr.status === 200) {
+                  var data = JSON.parse(xhr.responseText);
+                  if (data.questions && data.questions.length > 0) {
+                    window.__veQuestions = data.questions;
+                    window.__veUserHistory = data;
+                  }
+                }
+              } catch(e) {}
+            }
+          });
+        });
+      }
+
+      // --- Inject "Go Deeper" section on results page ---
+      function injectResultsDeepDive() {
+        // Don't inject if already there
+        if (document.getElementById('ve-deeper-inject')) return;
+
+        var root = document.getElementById('root');
+        if (!root) return;
+
+        // Find the results container (look for the score range badge pattern)
+        var resultsContainer = root.querySelector('[class*="min-h-screen"]');
+        if (!resultsContainer) return;
+
+        var depth = window.__veDepth || 'quick';
+        var section = document.createElement('div');
+        section.id = 've-deeper-inject';
+        section.style.padding = '0 1rem 3rem';
+
+        if (depth === 'quick') {
+          section.innerHTML = '<div class="ve-deeper-section">' +
+            '<h3>Ready to Go Deeper?</h3>' +
+            '<p>Your quick score gives you a snapshot \u2014 but real change requires real reflection. The extensive assessment unlocks your full P.I.N.K. breakdown, personalized prescription, and the tools to actually move the needle.</p>' +
+            '<a class="ve-deeper-btn" href="/?depth=extensive#/mode-select">Take the Extensive Assessment</a>' +
+            '<p class="ve-pillar-label">Or dive into one pillar at a time:</p>' +
+            '<div class="ve-pillar-btns">' +
+              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=time#/mode-select">Time</a>' +
+              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=people#/mode-select">People</a>' +
+              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=influence#/mode-select">Influence</a>' +
+              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=numbers#/mode-select">Numbers</a>' +
+              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=knowledge#/mode-select">Knowledge</a>' +
+            '</div>' +
+          '</div>';
+        } else {
+          // Extensive or pillar — still show pillar deep-dives
+          section.innerHTML = '<div class="ve-deeper-section">' +
+            '<h3>Explore Individual Pillars</h3>' +
+            '<p>Dive into a single pillar for even more detail and targeted insights.</p>' +
+            '<div class="ve-pillar-btns">' +
+              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=time#/mode-select">Time</a>' +
+              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=people#/mode-select">People</a>' +
+              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=influence#/mode-select">Influence</a>' +
+              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=numbers#/mode-select">Numbers</a>' +
+              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=knowledge#/mode-select">Knowledge</a>' +
+            '</div>' +
+          '</div>';
+        }
+
+        // Append before the free-book section or at the end of root
+        var freeBook = document.getElementById('free-book-section');
+        if (freeBook) {
+          freeBook.parentNode.insertBefore(section, freeBook);
+        } else {
+          root.appendChild(section);
+        }
+      }
+
+      // --- Watch for mode selection clicks to show depth selector ---
+      var lastHash = '';
+      var modeSelectObserver = null;
+
+      function watchModeSelect() {
+        var root = document.getElementById('root');
+        if (!root) return;
+
+        if (modeSelectObserver) modeSelectObserver.disconnect();
+
+        modeSelectObserver = new MutationObserver(function() {
+          // Check if we're on mode-select page
+          if (window.location.hash === '#/mode-select' || window.location.hash === '#/mode-select/') {
+            // Look for mode selection buttons (they contain "Start Individual", "Start Relationship", etc.)
+            var buttons = root.querySelectorAll('button');
+            buttons.forEach(function(btn) {
+              var text = btn.textContent || '';
+              if ((text.indexOf('Start Individual') !== -1 || text.indexOf('Start Relationship') !== -1 || text.indexOf('Start Leadership') !== -1) && !btn.__veDepthHooked) {
+                btn.__veDepthHooked = true;
+                btn.addEventListener('click', function(e) {
+                  var mode = 'individual';
+                  if (text.indexOf('Relationship') !== -1) mode = 'relationship';
+                  else if (text.indexOf('Leadership') !== -1) mode = 'leadership';
+
+                  // If depth was pre-selected via URL, skip the selector
+                  var urlParams = new URLSearchParams(window.location.search);
+                  var preDepth = urlParams.get('depth');
+                  if (preDepth) {
+                    window.__veDepth = preDepth;
+                    window.__veFocusPillar = urlParams.get('pillar') || null;
+                    return; // Let the click proceed naturally
+                  }
+
+                  // Show depth selector (don't prevent default — the React app will continue after selection)
+                  e.preventDefault();
+                  e.stopPropagation();
+                  showDepthSelector(mode);
+
+                  // After depth is selected, re-click the button
+                  var waitForChoice = setInterval(function() {
+                    if (!document.getElementById('ve-depth-overlay')) {
+                      clearInterval(waitForChoice);
+                      btn.__veDepthHooked = false; // unhook to prevent infinite loop
+                      btn.click();
+                    }
+                  }, 100);
+                }, true);
+              }
+            });
+          }
+
+          // Check if we're on results page — inject deep-dive CTAs
+          if (window.location.hash === '#/results' || window.location.hash === '#/results/') {
+            setTimeout(injectResultsDeepDive, 500);
+          }
+        });
+
+        modeSelectObserver.observe(root, { childList: true, subtree: true });
+      }
+
+      // Start watching once DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', watchModeSelect);
+      } else {
+        watchModeSelect();
+      }
+
+      // Also watch hash changes
+      window.addEventListener('hashchange', function() {
+        if (window.location.hash === '#/results' || window.location.hash === '#/results/') {
+          setTimeout(injectResultsDeepDive, 800);
+        }
+        if (window.location.hash === '#/mode-select' || window.location.hash === '#/mode-select/') {
+          watchModeSelect();
+        }
+      });
     })();
     </script>
     <script type="module" crossorigin src="./assets/index-DXoDn4Oe.js"></script>
