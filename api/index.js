@@ -776,11 +776,11 @@ Don't guess. Run the system.
       const weakestPillar = a.weakest_pillar;
       const prescription = typeof a.prescription === 'string' ? JSON.parse(a.prescription) : (a.prescription || {});
 
-      // Product recommendation text by range
+      // Product recommendation text by range — HARD RULE PRICING
       const recTexts = {
-        Crisis: "YOUR NEXT STEP: You need the full system. Start with The Value Engine book — the diagnostic that shows you exactly where your life is undervalued. $29 at valuetovictory.com",
+        Crisis: "YOUR NEXT STEP: You need the full system. Start with The Value Engine book \u2014 the diagnostic that shows you exactly where your life is undervalued. $29 at valuetovictory.com",
         Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Value Engine book ($29) plus VictoryPath membership ($29/mo) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
-        Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($29/mo) — structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
+        Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($29/mo) \u2014 structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
         Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($47/mo) or 1:1 coaching ($300/hr, 20% off your first session) will break through the ceiling. valuetovictory.com",
         Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($497/mo) gives you 50% off coaching, a complimentary monthly session, and direct author access. valuetovictory.com",
       };
@@ -792,9 +792,66 @@ Don't guess. Run the system.
       try {
         const fitnessAnswers = await sql`SELECT question_id, answer_value FROM answer_history WHERE contact_id = ${a.contact_id} AND question_id = ANY(${fitnessQuestionIds})`;
         if (fitnessAnswers.some(fa => fa.answer_value <= 2)) {
-          fitcarnaSection = "\nYOUR BODY IS CAPPING YOUR SCORE: Your fitness answers reveal a gap that's limiting every other pillar. We partner with one coach who builds programs for people in your exact position — no gimmicks, just structured accountability and results. See what Cameron builds: valuetovictory.com/fitcarna/\n";
+          fitcarnaSection = "\nYOUR BODY IS CAPPING YOUR SCORE: Your fitness answers reveal a gap that's limiting every other pillar. We partner with one coach who builds programs for people in your exact position \u2014 no gimmicks, just structured accountability and results. See what Cameron builds: valuetovictory.com/fitcarna/\n";
         }
       } catch (e) { /* table may not exist */ }
+
+      // --- Pillar data ---
+      const pillars = [
+        { key: 'Time', icon: '&#9201;', score: Number(a.time_total) || 0 },
+        { key: 'People', icon: '&#128101;', score: Number(a.people_total) || 0 },
+        { key: 'Influence', icon: '&#9889;', score: Number(a.influence_total) || 0 },
+        { key: 'Numbers', icon: '&#128200;', score: Number(a.numbers_total) || 0 },
+        { key: 'Knowledge', icon: '&#128218;', score: Number(a.knowledge_total) || 0 },
+      ];
+      const pillarsBelow35 = pillars.filter(p => p.score < 35);
+
+      // Per-pillar action items (from spec)
+      const pillarActionItems = {
+        Time: [
+          "Run the Time Audit (Tool #2) \u2014 Track every hour for 3 days. Find your Five-Hour Leak. Most people discover 5-10 hours of wasted time they never knew about.",
+          "Identify your peak productive hours and protect them. Block them on your calendar. Tell people they\u2019re non-negotiable.",
+          "Use the Time Reallocation Planner (Tool #9) \u2014 Sort your week by Covey Quadrant. Move 3 hours from Q3/Q4 to Q2 activities.",
+          "Calculate your Value Per Hour (Tool #5) \u2014 Know what one hour of your time is actually worth. Then refuse to spend it on anything below that number.",
+        ],
+        People: [
+          "Run the People Audit (Tool #3) \u2014 Map your top 15 relationships as Givers, Receivers, Exchangers, or Takers. The truth will surprise you.",
+          "Identify your 4 Alliances (Tool #6) \u2014 Who are your Confidants, Constituents, Comrades, and Companions? Each serves a different purpose.",
+          "Make 3 intentional Love Bank deposits this week \u2014 a genuine compliment, an act of service, quality time with someone who matters.",
+          "Use the Communicate-Clarify-Question framework in one difficult conversation this week. State it clearly, verify understanding, then ask the real question.",
+        ],
+        Influence: [
+          "Identify your Gravitational Center (Tool #11) \u2014 Audit your calendar and bank statement against your stated values. Where does your time and money actually go?",
+          "Eliminate one micro-dishonesty this week. The small exaggerations and omissions cost more trust than you think.",
+          "Practice the Four Questions Before You Speak \u2014 Is it true? Is it kind? Is it necessary? Is it the right time?",
+          "Under-promise and over-deliver in one key relationship this week. Precision in language builds influence faster than anything.",
+        ],
+        Numbers: [
+          "Run the Financial Snapshot (Tool #4) \u2014 Document actual income, expenses, surplus/deficit, and real cost per hour. No rounding. No guessing. 30 minutes that change everything.",
+          "Calculate your Value Per Hour (Tool #5) \u2014 What is one hour of your time actually worth in the marketplace? Not your salary divided by 40 \u2014 your real output value.",
+          "Identify your Number One (Tool #7) \u2014 The single metric that matters most to your progress right now. Track it daily.",
+          "Use the Income Multiplier Model (Tool #12) \u2014 Map how small improvements compound over 90 days. A 1% daily improvement = 37x in a year.",
+        ],
+        Knowledge: [
+          "Audit your learning hours \u2014 How much time do you spend consuming information versus implementing what you\u2019ve learned? The goal is a 1:1 ratio.",
+          "Identify your Highest and Best Use (Tool #13) \u2014 What are you uniquely qualified to do? Stop learning things outside your zone.",
+          "Apply one thing you learned this week before learning anything new. Knowledge without application is just trivia.",
+          "Assess your Substitution Risk \u2014 How easily could someone replace what you know? If the answer is \u2018easily,\u2019 you need deeper expertise.",
+        ],
+      };
+
+      // Build plain text roadmap section
+      let roadmapText = '';
+      if (pillarsBelow35.length > 0) {
+        roadmapText = '\n--- YOUR IMPROVEMENT ROADMAP ---\n';
+        for (const p of pillarsBelow35) {
+          roadmapText += `\n${p.key.toUpperCase()} (${p.score}/50) \u2014 Action Items:\n`;
+          const items = pillarActionItems[p.key] || [];
+          items.forEach((item, i) => { roadmapText += `  ${i + 1}. ${item}\n`; });
+        }
+      } else {
+        roadmapText = '\n--- MAINTAIN YOUR EDGE ---\nAll your pillars are at 35 or above. You are operating at a high level. Here are tips to stay sharp:\n  1. Schedule a quarterly reassessment to track your trajectory and catch any drift before it becomes a slide.\n  2. Identify one pillar to push from good to exceptional this quarter. Mastery is not about fixing weaknesses \u2014 it is about compounding strengths.\n  3. Mentor or teach what you know. The fastest way to deepen expertise is to help someone else build theirs.\n';
+      }
 
       const emailBody = `${firstName},
 
@@ -809,8 +866,8 @@ Pillar Breakdown:
   Numbers:   ${a.numbers_total}/50
   Knowledge: ${a.knowledge_total}/50
 
-Your weakest pillar is ${weakestPillar}. ${prescription.diagnosis || ''}
-
+Your biggest opportunity for growth is ${weakestPillar}. ${prescription.diagnosis || ''}
+${roadmapText}
 View your full diagnostic report:
 https://assessment.valuetovictory.com/report/${assessmentId}
 
@@ -824,29 +881,33 @@ Your report includes:
 
 Don't guess. Run the system.
 
-— The Value Engine
+\u2014 The Value Engine
    ValueToVictory.com`;
 
       // --- Rich HTML email generation ---
-      const pillars = [
-        { key: 'Time', icon: '&#9201;', score: Number(a.time_total) || 0 },
-        { key: 'People', icon: '&#128101;', score: Number(a.people_total) || 0 },
-        { key: 'Influence', icon: '&#9889;', score: Number(a.influence_total) || 0 },
-        { key: 'Numbers', icon: '&#128200;', score: Number(a.numbers_total) || 0 },
-        { key: 'Knowledge', icon: '&#128218;', score: Number(a.knowledge_total) || 0 },
-      ];
       const maxPillar = pillars.reduce((best, p) => p.score > best.score ? p : best, pillars[0]);
       const minPillar = pillars.reduce((best, p) => p.score < best.score ? p : best, pillars[0]);
 
+      // Encouraging pillar diagnosis (opportunity framing)
       const pillarDiagnosis = {
-        Time: 'You are likely losing hours every week to activities that do not move you forward. The hidden cost is not just wasted time \u2014 it is the compound effect of what you could have built with those hours.',
-        People: 'The relationships around you are not producing the value they should. Some are compounding, but others are quietly draining you.',
-        Influence: 'There is a gap between the impact you could have and the impact you are currently making. Leadership, credibility, and trust are not where they need to be.',
-        Numbers: 'There is a disconnect between your goals and your financial reality. You are likely not tracking what matters \u2014 or the numbers you are tracking do not tell the full story.',
-        Knowledge: 'You are not converting what you learn into what you earn fast enough. Information without application is just trivia.',
+        Time: 'You have the most room to grow here \u2014 and that is exciting. The hours you reclaim will compound into everything else you are building.',
+        People: 'This is where your next breakthrough lives. The right relationships do not just add value \u2014 they multiply it.',
+        Influence: 'You have more impact potential than your score reflects. Small shifts in how you lead and communicate will unlock outsized results.',
+        Numbers: 'The gap between your goals and your numbers is not a failure \u2014 it is a map. Once you see it clearly, you can close it fast.',
+        Knowledge: 'You are closer than you think. The difference between knowing and earning is application \u2014 and that is a skill you can build.',
       };
 
-      // Tier configuration
+      // Encouraging tier descriptions
+      const tierDescriptions = {
+        Crisis: 'Every victory starts with knowing where you stand \u2014 and you just took that step. That takes courage. Most people never even look in the mirror. You did \u2014 and now you know exactly where to focus.',
+        Survival: 'You showed up. That takes courage. Most people never even look in the mirror. You did \u2014 and now you know exactly where to focus.',
+        Growth: 'You have a real foundation. That is not nothing \u2014 that is everything. The people who reach Momentum are the ones who build on what they already have.',
+        Momentum: 'You are moving. Most people never get here. You have built something real \u2014 now it is time to refine it.',
+        Excellence: 'You are operating at a high level. The system is working. Fine-tuning and leverage are your edge now.',
+        Mastery: 'You are operating at the highest level. The system is working. The question now is: who are you bringing with you?',
+      };
+
+      // Tier configuration \u2014 HARD RULE PRICING: VictoryPath $29/mo, Value Builder $47/mo, Victory VIP $497/mo
       const tierConfig = {
         Crisis:     { color: '#e74c3c', bg: '#2a1a1a', border: '#c0392b', arrow: '&#9660;', cta: 'Ready to Build Your Foundation?', product: 'VictoryPath', promo: '$29', full: '$49', promoNum: '29' },
         Survival:   { color: '#e74c3c', bg: '#2a1a1a', border: '#c0392b', arrow: '&#9660;', cta: 'Ready to Build Your Foundation?', product: 'VictoryPath', promo: '$29', full: '$49', promoNum: '29' },
@@ -857,15 +918,6 @@ Don't guess. Run the system.
       };
       const tier = tierConfig[scoreRange] || tierConfig.Growth;
 
-      const tierDescriptions = {
-        Crisis: 'You are in the danger zone. Every pillar needs attention immediately.',
-        Survival: 'You are surviving, but not building. The foundation is unstable.',
-        Growth: 'The foundation is there. The question now is whether you accelerate or plateau.',
-        Momentum: 'You are building real velocity. The next move separates good from great.',
-        Excellence: 'You are operating at a high level. Fine-tuning and leverage are your edge.',
-        Mastery: 'You are in the top tier. Protect what you have built and multiply it.',
-      };
-
       function buildPillarRowHtml(p) {
         const isStrongest = p.key === maxPillar.key;
         const isWeakest = p.key === minPillar.key;
@@ -873,7 +925,7 @@ Don't guess. Run the system.
         let barColor, barGradStart, scoreColor, badge;
         if (isWeakest) {
           barColor = '#e74c3c'; barGradStart = '#c0392b'; scoreColor = '#e74c3c';
-          badge = '<span style="display:inline-block;background:#2a1a1a;border:1px solid #c0392b;border-radius:3px;padding:1px 7px;font-size:10px;color:#e74c3c;margin-left:8px;vertical-align:middle;text-transform:uppercase;letter-spacing:0.5px;">Weakest</span>';
+          badge = '<span style="display:inline-block;background:#2a1a1a;border:1px solid #c0392b;border-radius:3px;padding:1px 7px;font-size:10px;color:#e74c3c;margin-left:8px;vertical-align:middle;text-transform:uppercase;letter-spacing:0.5px;">Biggest Opportunity</span>';
         } else if (isStrongest) {
           barColor = '#2ecc71'; barGradStart = '#1e8449'; scoreColor = '#2ecc71';
           badge = '<span style="display:inline-block;background:#1a3320;border:1px solid #27ae60;border-radius:3px;padding:1px 7px;font-size:10px;color:#2ecc71;margin-left:8px;vertical-align:middle;text-transform:uppercase;letter-spacing:0.5px;">Strongest</span>';
@@ -886,26 +938,57 @@ Don't guess. Run the system.
         return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px ${bottomPad} 40px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#ffffff;padding-bottom:6px;">${p.icon} ${p.key} ${badge}</td><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:${scoreColor};text-align:right;padding-bottom:6px;">${p.score} / 50</td></tr><tr><td colspan="2"><div style="background:#2a2a44;border-radius:6px;height:10px;width:100%;overflow:hidden;"><div style="background:linear-gradient(90deg,${barGradStart},${barColor});height:10px;width:${pct}%;border-radius:6px;"></div></div></td></tr></table></td></tr></table>`;
       }
 
-      // Action plan cards from prescription data
-      const actionSteps = [];
-      if (prescription.immediate) actionSteps.push(prescription.immediate);
-      if (prescription.tool) actionSteps.push(prescription.tool);
-      if (prescription.thirtyDay) actionSteps.push(prescription.thirtyDay);
-      // Fallback if prescription is missing steps
-      while (actionSteps.length < 3) actionSteps.push('Review your full report for personalized next steps.');
-
       function buildActionCardHtml(stepText, num, isLast) {
         const bottomPad = isLast ? '24px' : '12px';
         return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px ${bottomPad} 40px;"><div style="background:#22223a;border-radius:8px;padding:20px 24px;border:1px solid #2a2a4a;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="width:44px;vertical-align:top;"><div style="width:36px;height:36px;background:linear-gradient(135deg,#d4a853,#e8c775);border-radius:50%;text-align:center;line-height:36px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:800;color:#1a1a2e;">${num}</div></td><td style="vertical-align:top;padding-left:12px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8888a8;line-height:1.5;">${stepText}</p></td></tr></table></div></td></tr></table>`;
       }
 
+      // Build per-pillar roadmap sections for pillars below 35
+      function buildPillarRoadmapSection(pillarKey, pillarScore, pillarIcon) {
+        const items = pillarActionItems[pillarKey] || [];
+        let html = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:8px 40px 4px 40px;"><h3 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#ffffff;">${pillarIcon} ${pillarKey} <span style="color:#d4a853;">(${pillarScore}/50)</span></h3><p style="margin:4px 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6a6a84;">Where you have the most room to grow</p></td></tr></table>`;
+        items.forEach((item, i) => {
+          html += buildActionCardHtml(item, i + 1, i === items.length - 1);
+        });
+        return html;
+      }
+
+      let roadmapHtml = '';
+      if (pillarsBelow35.length > 0) {
+        roadmapHtml = `
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Improvement Roadmap Header -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px 16px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#d4a853;text-transform:uppercase;letter-spacing:1px;">&#127942; Your Improvement Roadmap</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#a0a0b8;line-height:1.5;">Every pillar below 35 gets a focused action plan. These are your highest-leverage moves.</p></td></tr></table>
+
+${pillarsBelow35.map(p => buildPillarRoadmapSection(p.key, p.score, p.icon)).join('\n')}`;
+      } else {
+        roadmapHtml = `
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Maintain Your Edge -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px 16px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#d4a853;text-transform:uppercase;letter-spacing:1px;">&#128170; Maintain Your Edge</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#a0a0b8;line-height:1.5;">All your pillars are at 35 or above. You are operating at a high level. Here is how to stay sharp.</p></td></tr></table>
+${buildActionCardHtml('Schedule a quarterly reassessment to track your trajectory and catch any drift before it becomes a slide.', 1, false)}
+${buildActionCardHtml('Identify one pillar to push from good to exceptional this quarter. Mastery is not about fixing weaknesses \u2014 it is about compounding strengths.', 2, false)}
+${buildActionCardHtml('Mentor or teach what you know. The fastest way to deepen expertise is to help someone else build theirs.', 3, true)}`;
+      }
+
       const weakDiag = pillarDiagnosis[minPillar.key] || pillarDiagnosis.Time;
+
+      // Action plan cards from prescription data (weakest pillar focus)
+      const actionSteps = [];
+      if (prescription.immediate) actionSteps.push(prescription.immediate);
+      if (prescription.tool) actionSteps.push(prescription.tool);
+      if (prescription.thirtyDay) actionSteps.push(prescription.thirtyDay);
+      while (actionSteps.length < 3) actionSteps.push('Review your full report for personalized next steps.');
 
       const htmlBody = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Your Value Engine Report</title></head><body style="margin:0;padding:0;background:#111122;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;">
 
 <!-- Promo Banner -->
-<tr><td style="background:linear-gradient(90deg,#d4a853,#e8c775);padding:10px 24px;text-align:center;border-radius:4px 4px 0 0;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#1a1a2e;letter-spacing:0.5px;text-transform:uppercase;">&#9733; This report is normally $1.99 — FREE through April 25, 2026 &#9733;</p></td></tr>
+<tr><td style="background:linear-gradient(90deg,#d4a853,#e8c775);padding:10px 24px;text-align:center;border-radius:4px 4px 0 0;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#1a1a2e;letter-spacing:0.5px;text-transform:uppercase;">&#9733; This report is normally $1.99 \u2014 FREE through April 25, 2026 &#9733;</p></td></tr>
 
 <!-- Main Body -->
 <tr><td style="background:#1a1a2e;">
@@ -924,13 +1007,13 @@ Don't guess. Run the system.
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="width:180px;height:180px;border-radius:50%;border:10px solid #2a2a44;text-align:center;vertical-align:middle;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:44px;font-weight:800;color:#d4a853;line-height:1;">${masterScore}</span><br><span style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">of 250</span></td></tr></table>
 <!-- Tier Badge -->
 <div style="margin-top:20px;"><span style="display:inline-block;background:${tier.bg};border:1px solid ${tier.border};border-radius:20px;padding:6px 20px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:${tier.color};letter-spacing:1.5px;text-transform:uppercase;">${tier.arrow} ${scoreRange} Tier</span></div>
-<p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;line-height:1.5;">${tierDescriptions[scoreRange] || tierDescriptions.Growth}</p></td></tr></table>
+<p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#a0a0b8;line-height:1.6;max-width:480px;display:inline-block;">${tierDescriptions[scoreRange] || tierDescriptions.Growth}</p></td></tr></table>
 
 <!-- Divider -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:20px 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
 
 <!-- Pillar Breakdown Header -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:4px 40px 20px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:1px;">Your Five Pillars</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">Each pillar is scored out of 50. Here's where you stand.</p></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:4px 40px 20px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:1px;">Your Five Pillars</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">Each pillar is scored out of 50. Here is where you stand.</p></td></tr></table>
 
 <!-- Pillar Bars -->
 ${pillars.map(p => buildPillarRowHtml(p)).join('\n')}
@@ -938,22 +1021,25 @@ ${pillars.map(p => buildPillarRowHtml(p)).join('\n')}
 <!-- Divider -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
 
-<!-- Weakest Pillar Callout -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px;"><div style="background:linear-gradient(135deg,#2a1a1a,#1f1525);border:1px solid #c0392b;border-left:4px solid #e74c3c;border-radius:8px;padding:24px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td><p style="margin:0 0 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#e74c3c;letter-spacing:2px;text-transform:uppercase;font-weight:700;">&#9888; Area Requiring Immediate Attention</p><h3 style="margin:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#ffffff;">${minPillar.key} — ${minPillar.score} out of 50</h3><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#a0a0b8;line-height:1.6;">${weakDiag}</p></td></tr></table></div></td></tr></table>
+<!-- Weakest Pillar Callout \u2014 Encouraging Tone -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px;"><div style="background:linear-gradient(135deg,#1a2035,#1f1525);border:1px solid #d4a853;border-left:4px solid #d4a853;border-radius:8px;padding:24px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td><p style="margin:0 0 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#d4a853;letter-spacing:2px;text-transform:uppercase;font-weight:700;">&#127775; Your Biggest Opportunity for Growth</p><h3 style="margin:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#ffffff;">${minPillar.key} \u2014 ${minPillar.score} out of 50</h3><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#a0a0b8;line-height:1.6;">${weakDiag}</p></td></tr></table></div></td></tr></table>
 
 <!-- Action Plan Header -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:8px 40px 16px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:1px;">Your 3-Step Action Plan</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">Based on your results, here's where to focus first.</p></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:8px 40px 16px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:1px;">Your 3-Step Action Plan</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">Based on your results, here is where to focus first.</p></td></tr></table>
 
 <!-- Action Cards -->
 ${buildActionCardHtml(actionSteps[0], 1, false)}
 ${buildActionCardHtml(actionSteps[1], 2, false)}
 ${buildActionCardHtml(actionSteps[2], 3, true)}
 
+<!-- YOUR IMPROVEMENT ROADMAP or MAINTAIN YOUR EDGE -->
+${roadmapHtml}
+
 <!-- Divider -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:12px 40px 0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
 
 <!-- Coaching CTA -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h2 style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#ffffff;">${tier.cta}</h2><p style="margin:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#8888a8;line-height:1.6;">Get a free coaching preparation report — personalized to your exact scores.<br>Choose your track: Personal, Real Estate, or Company.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h2 style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#ffffff;">${tier.cta}</h2><p style="margin:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#8888a8;line-height:1.6;">Get a free coaching preparation report \u2014 personalized to your exact scores.<br>Choose your track: Personal, Real Estate, or Company.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;background:linear-gradient(135deg,#d4a853,#c89030);" align="center"><a href="https://assessment.valuetovictory.com/coaching?track=personal&amp;aid=${assessmentId}" target="_blank" style="display:inline-block;padding:16px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:800;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Get Your Free Coaching Report &rarr;</a></td></tr></table></td></tr></table>
 
 <!-- Membership / Pricing CTA -->
@@ -975,7 +1061,7 @@ ${buildActionCardHtml(actionSteps[2], 3, true)}
 </table>
 </body></html>`;
 
-      const subject = `Your Value Engine Score: ${masterScore} (${scoreRange}) — Personal Report Ready`;
+      const subject = `Your Value Engine Score: ${masterScore} (${scoreRange}) \u2014 Personal Report Ready`;
 
       // Check if email credentials are configured
       if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
