@@ -827,6 +827,154 @@ Don't guess. Run the system.
 — The Value Engine
    ValueToVictory.com`;
 
+      // --- Rich HTML email generation ---
+      const pillars = [
+        { key: 'Time', icon: '&#9201;', score: Number(a.time_total) || 0 },
+        { key: 'People', icon: '&#128101;', score: Number(a.people_total) || 0 },
+        { key: 'Influence', icon: '&#9889;', score: Number(a.influence_total) || 0 },
+        { key: 'Numbers', icon: '&#128200;', score: Number(a.numbers_total) || 0 },
+        { key: 'Knowledge', icon: '&#128218;', score: Number(a.knowledge_total) || 0 },
+      ];
+      const maxPillar = pillars.reduce((best, p) => p.score > best.score ? p : best, pillars[0]);
+      const minPillar = pillars.reduce((best, p) => p.score < best.score ? p : best, pillars[0]);
+
+      const pillarDiagnosis = {
+        Time: 'You are likely losing hours every week to activities that do not move you forward. The hidden cost is not just wasted time \u2014 it is the compound effect of what you could have built with those hours.',
+        People: 'The relationships around you are not producing the value they should. Some are compounding, but others are quietly draining you.',
+        Influence: 'There is a gap between the impact you could have and the impact you are currently making. Leadership, credibility, and trust are not where they need to be.',
+        Numbers: 'There is a disconnect between your goals and your financial reality. You are likely not tracking what matters \u2014 or the numbers you are tracking do not tell the full story.',
+        Knowledge: 'You are not converting what you learn into what you earn fast enough. Information without application is just trivia.',
+      };
+
+      // Tier configuration
+      const tierConfig = {
+        Crisis:     { color: '#e74c3c', bg: '#2a1a1a', border: '#c0392b', arrow: '&#9660;', cta: 'Ready to Build Your Foundation?', product: 'VictoryPath', promo: '$29', full: '$49', promoNum: '29' },
+        Survival:   { color: '#e74c3c', bg: '#2a1a1a', border: '#c0392b', arrow: '&#9660;', cta: 'Ready to Build Your Foundation?', product: 'VictoryPath', promo: '$29', full: '$49', promoNum: '29' },
+        Growth:     { color: '#2ecc71', bg: '#1a2a1a', border: '#27ae60', arrow: '&#9650;', cta: 'Ready to Move Into Momentum?', product: 'VictoryPath', promo: '$29', full: '$49', promoNum: '29' },
+        Momentum:   { color: '#d4a853', bg: '#2a2518', border: '#c89030', arrow: '&#9650;', cta: 'Ready to Break Through?', product: 'Value Builder', promo: '$47', full: '$79', promoNum: '47' },
+        Excellence: { color: '#9b59b6', bg: '#1f1a2a', border: '#8e44ad', arrow: '&#9733;', cta: 'Ready to Go Elite?', product: 'Victory VIP', promo: '$497', full: '$697', promoNum: '497' },
+        Mastery:    { color: '#9b59b6', bg: '#1f1a2a', border: '#8e44ad', arrow: '&#9733;', cta: 'Ready to Go Elite?', product: 'Victory VIP', promo: '$497', full: '$697', promoNum: '497' },
+      };
+      const tier = tierConfig[scoreRange] || tierConfig.Growth;
+
+      const tierDescriptions = {
+        Crisis: 'You are in the danger zone. Every pillar needs attention immediately.',
+        Survival: 'You are surviving, but not building. The foundation is unstable.',
+        Growth: 'The foundation is there. The question now is whether you accelerate or plateau.',
+        Momentum: 'You are building real velocity. The next move separates good from great.',
+        Excellence: 'You are operating at a high level. Fine-tuning and leverage are your edge.',
+        Mastery: 'You are in the top tier. Protect what you have built and multiply it.',
+      };
+
+      function buildPillarRowHtml(p) {
+        const isStrongest = p.key === maxPillar.key;
+        const isWeakest = p.key === minPillar.key;
+        const pct = Math.round((p.score / 50) * 100);
+        let barColor, barGradStart, scoreColor, badge;
+        if (isWeakest) {
+          barColor = '#e74c3c'; barGradStart = '#c0392b'; scoreColor = '#e74c3c';
+          badge = '<span style="display:inline-block;background:#2a1a1a;border:1px solid #c0392b;border-radius:3px;padding:1px 7px;font-size:10px;color:#e74c3c;margin-left:8px;vertical-align:middle;text-transform:uppercase;letter-spacing:0.5px;">Weakest</span>';
+        } else if (isStrongest) {
+          barColor = '#2ecc71'; barGradStart = '#1e8449'; scoreColor = '#2ecc71';
+          badge = '<span style="display:inline-block;background:#1a3320;border:1px solid #27ae60;border-radius:3px;padding:1px 7px;font-size:10px;color:#2ecc71;margin-left:8px;vertical-align:middle;text-transform:uppercase;letter-spacing:0.5px;">Strongest</span>';
+        } else {
+          barColor = '#d4a853'; barGradStart = '#c89030'; scoreColor = '#d4a853';
+          badge = '';
+        }
+        const isLast = p.key === 'Knowledge';
+        const bottomPad = isLast ? '24px' : '14px';
+        return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px ${bottomPad} 40px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#ffffff;padding-bottom:6px;">${p.icon} ${p.key} ${badge}</td><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:${scoreColor};text-align:right;padding-bottom:6px;">${p.score} / 50</td></tr><tr><td colspan="2"><div style="background:#2a2a44;border-radius:6px;height:10px;width:100%;overflow:hidden;"><div style="background:linear-gradient(90deg,${barGradStart},${barColor});height:10px;width:${pct}%;border-radius:6px;"></div></div></td></tr></table></td></tr></table>`;
+      }
+
+      // Action plan cards from prescription data
+      const actionSteps = [];
+      if (prescription.immediate) actionSteps.push(prescription.immediate);
+      if (prescription.tool) actionSteps.push(prescription.tool);
+      if (prescription.thirtyDay) actionSteps.push(prescription.thirtyDay);
+      // Fallback if prescription is missing steps
+      while (actionSteps.length < 3) actionSteps.push('Review your full report for personalized next steps.');
+
+      function buildActionCardHtml(stepText, num, isLast) {
+        const bottomPad = isLast ? '24px' : '12px';
+        return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px ${bottomPad} 40px;"><div style="background:#22223a;border-radius:8px;padding:20px 24px;border:1px solid #2a2a4a;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="width:44px;vertical-align:top;"><div style="width:36px;height:36px;background:linear-gradient(135deg,#d4a853,#e8c775);border-radius:50%;text-align:center;line-height:36px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:800;color:#1a1a2e;">${num}</div></td><td style="vertical-align:top;padding-left:12px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8888a8;line-height:1.5;">${stepText}</p></td></tr></table></div></td></tr></table>`;
+      }
+
+      const weakDiag = pillarDiagnosis[minPillar.key] || pillarDiagnosis.Time;
+
+      const htmlBody = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Your Value Engine Report</title></head><body style="margin:0;padding:0;background:#111122;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;">
+
+<!-- Promo Banner -->
+<tr><td style="background:linear-gradient(90deg,#d4a853,#e8c775);padding:10px 24px;text-align:center;border-radius:4px 4px 0 0;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#1a1a2e;letter-spacing:0.5px;text-transform:uppercase;">&#9733; This report is normally $1.99 — FREE through April 25, 2026 &#9733;</p></td></tr>
+
+<!-- Main Body -->
+<tr><td style="background:#1a1a2e;">
+
+<!-- Header -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:36px 40px 20px 40px;text-align:center;"><h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">VALUE <span style="color:#d4a853;">TO</span> VICTORY</h1><p style="margin:4px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">The Value Engine Report</p></td></tr></table>
+
+<!-- Gold Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#d4a853,transparent);"></div></td></tr></table>
+
+<!-- Greeting -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 8px 40px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#a0a0b8;line-height:1.6;">Hello <strong style="color:#ffffff;">${firstName}</strong>,</p><p style="margin:10px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#a0a0b8;line-height:1.6;">Your Value Engine assessment is complete. Below is a detailed breakdown of where you stand across the <strong style="color:#d4a853;">five pillars of value</strong>.</p></td></tr></table>
+
+<!-- Master Score -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 12px 40px;text-align:center;"><p style="margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">Master Value Score</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="width:180px;height:180px;border-radius:50%;border:10px solid #2a2a44;text-align:center;vertical-align:middle;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:44px;font-weight:800;color:#d4a853;line-height:1;">${masterScore}</span><br><span style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">of 250</span></td></tr></table>
+<!-- Tier Badge -->
+<div style="margin-top:20px;"><span style="display:inline-block;background:${tier.bg};border:1px solid ${tier.border};border-radius:20px;padding:6px 20px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:${tier.color};letter-spacing:1.5px;text-transform:uppercase;">${tier.arrow} ${scoreRange} Tier</span></div>
+<p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;line-height:1.5;">${tierDescriptions[scoreRange] || tierDescriptions.Growth}</p></td></tr></table>
+
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:20px 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Pillar Breakdown Header -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:4px 40px 20px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:1px;">Your Five Pillars</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">Each pillar is scored out of 50. Here's where you stand.</p></td></tr></table>
+
+<!-- Pillar Bars -->
+${pillars.map(p => buildPillarRowHtml(p)).join('\n')}
+
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Weakest Pillar Callout -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px;"><div style="background:linear-gradient(135deg,#2a1a1a,#1f1525);border:1px solid #c0392b;border-left:4px solid #e74c3c;border-radius:8px;padding:24px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td><p style="margin:0 0 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#e74c3c;letter-spacing:2px;text-transform:uppercase;font-weight:700;">&#9888; Area Requiring Immediate Attention</p><h3 style="margin:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#ffffff;">${minPillar.key} — ${minPillar.score} out of 50</h3><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#a0a0b8;line-height:1.6;">${weakDiag}</p></td></tr></table></div></td></tr></table>
+
+<!-- Action Plan Header -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:8px 40px 16px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:1px;">Your 3-Step Action Plan</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">Based on your results, here's where to focus first.</p></td></tr></table>
+
+<!-- Action Cards -->
+${buildActionCardHtml(actionSteps[0], 1, false)}
+${buildActionCardHtml(actionSteps[1], 2, false)}
+${buildActionCardHtml(actionSteps[2], 3, true)}
+
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Coaching CTA -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h2 style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#ffffff;">${tier.cta}</h2><p style="margin:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#8888a8;line-height:1.6;">Get a free coaching preparation report — personalized to your exact scores.<br>Choose your track: Personal, Real Estate, or Company.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;background:linear-gradient(135deg,#d4a853,#c89030);" align="center"><a href="https://assessment.valuetovictory.com/coaching?track=personal&amp;aid=${assessmentId}" target="_blank" style="display:inline-block;padding:16px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:800;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Get Your Free Coaching Report &rarr;</a></td></tr></table></td></tr></table>
+
+<!-- Membership / Pricing CTA -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:16px 40px 32px 40px;text-align:center;">
+<div style="margin-bottom:16px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#6a6a84;text-decoration:line-through;">${tier.full}/mo</span> <span style="font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:800;color:#d4a853;margin-left:8px;">${tier.promo}</span><span style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#d4a853;">/mo</span></div>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;border:2px solid #d4a853;" align="center"><a href="https://assessment.valuetovictory.com/pricing" target="_blank" style="display:inline-block;padding:12px 36px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#d4a853;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Lock In ${tier.product} Promo Rate</a></td></tr></table>
+<p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#4a4a64;">2026 promo pricing. Goes to ${tier.full}/mo in January 2027.</p></td></tr></table>
+
+<!-- View Full Report -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px 24px 40px;text-align:center;"><a href="https://assessment.valuetovictory.com/report/${assessmentId}" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#d4a853;text-decoration:underline;">View Your Full Interactive Report Online</a></td></tr></table>
+
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Footer -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 36px 40px;text-align:center;"><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#4a4a64;letter-spacing:1.5px;text-transform:uppercase;">Value to Victory</p><p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#3a3a54;line-height:1.6;">Don't guess. Run the system.</p><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3a3a54;">You're receiving this because you completed the Value Engine Assessment.</p><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6a6a84;">To unsubscribe, reply with UNSUBSCRIBE in the subject line.</p><p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#2a2a44;">&copy; 2026 Value to Victory | Goodview, VA | valuetovictory.com</p></td></tr></table>
+
+</td></tr>
+</table>
+</body></html>`;
+
       const subject = `Your Value Engine Score: ${masterScore} (${scoreRange}) — Personal Report Ready`;
 
       // Check if email credentials are configured
@@ -845,6 +993,7 @@ Don't guess. Run the system.
           to: recipientEmail,
           subject,
           text: emailBody,
+          html: htmlBody,
         });
         return res.json({ sent: true, to: a.email, reportUrl: `https://assessment.valuetovictory.com/report/${assessmentId}` });
       } catch (emailErr) {
