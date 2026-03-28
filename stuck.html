@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>The Value Engine — Feeling Stuck?</title>
+  <meta name="description" content="Find out which pillar of your life is holding you back — in under 5 minutes. Free diagnostic.">
+  <meta property="og:title" content="Feeling Stuck? — The Value Engine">
+  <meta property="og:description" content="You are not broken. You are just measuring the wrong things. Find your weakest pillar in 5 minutes.">
+  <meta property="og:image" content="https://assessment.valuetovictory.com/og-stuck.png">
+  <meta property="og:url" content="https://assessment.valuetovictory.com/stuck">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Feeling Stuck? — The Value Engine">
+  <meta name="twitter:image" content="https://assessment.valuetovictory.com/og-stuck.png">
+  <meta name="description" content="Find out which pillar of your life is holding you back — in under 5 minutes. Free diagnostic by Shawn E. Decker.">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}.page{max-width:640px;margin:0 auto;padding:2rem 1.5rem 4rem}.brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;margin-bottom:.5rem}h1{font-size:2rem;font-weight:900;margin-bottom:.5rem}
+    .quote{font-family:'Instrument Serif',serif;font-size:1.5rem;font-style:italic;color:#D4A847;margin:1.5rem 0;line-height:1.4}.subtitle{color:#a1a1aa;margin-bottom:2rem;font-size:.95rem;line-height:1.5}
+    .question-card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.5rem;margin-bottom:1rem}.q-pillar{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}.q-text{font-size:1rem;font-weight:600;margin-bottom:1rem;line-height:1.4}
+    .scale{display:flex;gap:.5rem}.scale-btn{flex:1;padding:.75rem .5rem;background:#27272a;border:1px solid #3f3f46;border-radius:.5rem;color:#a1a1aa;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;font-family:inherit}.scale-btn:hover{border-color:#D4A847;color:#fff}.scale-btn.selected{background:#D4A847;color:#0a0a0a;border-color:#D4A847}
+    .scale-labels{display:flex;justify-content:space-between;font-size:.7rem;color:#71717a;margin-top:.25rem;padding:0 .25rem}
+    .submit-btn{width:100%;padding:1rem;background:#D4A847;color:#0a0a0a;border:none;border-radius:.5rem;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;margin-top:1rem;transition:background .2s}.submit-btn:hover{background:#b8942e}.submit-btn:disabled{opacity:.4;cursor:default}
+    .result{display:none;margin-top:2rem}.result-card{background:#18181b;border:1px solid #D4A847;border-radius:.75rem;padding:2rem;text-align:center}.result-pillar{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;margin-bottom:.5rem}.result-title{font-size:1.5rem;font-weight:900;margin-bottom:.75rem}
+    .result-desc{color:#a1a1aa;font-size:.95rem;line-height:1.6;margin-bottom:1.5rem}.result-cta{display:inline-block;padding:.75rem 2rem;background:#D4A847;color:#0a0a0a;border-radius:.5rem;text-decoration:none;font-weight:700;font-size:.95rem;transition:background .2s}.result-cta:hover{background:#b8942e}
+    .bars{margin:1.5rem 0}.bar-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}.bar-label{width:80px;font-size:.8rem;font-weight:600;color:#a1a1aa}.bar-track{flex:1;height:8px;background:#27272a;border-radius:4px;overflow:hidden}.bar-fill{height:100%;border-radius:4px;transition:width .5s}.bar-val{width:30px;font-size:.8rem;font-weight:700;text-align:right}
+    .footer{text-align:center;margin-top:3rem;padding-top:1.5rem;border-top:1px solid #27272a;font-size:.75rem;color:#71717a}a.back{color:#D4A847;text-decoration:none;font-size:.85rem;display:inline-block;margin-bottom:1.5rem}a.back:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+<div class="page">
+  <a href="/" class="back">← Back to Assessment</a>
+  <div class="brand">THE VALUE ENGINE</div>
+  <h1>Feeling Stuck?</h1>
+  <div class="quote">"You're not broken. You're just measuring the wrong things."</div>
+  <div class="subtitle">Let's find out which pillar is holding you back — in under 5 minutes. Answer honestly. No email required.</div>
+
+  <div id="quiz">
+    <div class="question-card" data-pillar="time">
+      <div class="q-pillar">Time</div>
+      <div class="q-text">How often do you feel like there aren't enough hours in the day?</div>
+      <div class="scale" data-q="0">
+        <button class="scale-btn" data-v="1">1</button><button class="scale-btn" data-v="2">2</button><button class="scale-btn" data-v="3">3</button><button class="scale-btn" data-v="4">4</button><button class="scale-btn" data-v="5">5</button>
+      </div>
+      <div class="scale-labels"><span>Always overwhelmed</span><span>Never an issue</span></div>
+    </div>
+    <div class="question-card" data-pillar="people">
+      <div class="q-pillar">People</div>
+      <div class="q-text">Do you have at least 3 people you could call at 2 AM who would answer?</div>
+      <div class="scale" data-q="1">
+        <button class="scale-btn" data-v="1">1</button><button class="scale-btn" data-v="2">2</button><button class="scale-btn" data-v="3">3</button><button class="scale-btn" data-v="4">4</button><button class="scale-btn" data-v="5">5</button>
+      </div>
+      <div class="scale-labels"><span>No one</span><span>Absolutely</span></div>
+    </div>
+    <div class="question-card" data-pillar="influence">
+      <div class="q-pillar">Influence</div>
+      <div class="q-text">When you speak, do the people around you change their behavior?</div>
+      <div class="scale" data-q="2">
+        <button class="scale-btn" data-v="1">1</button><button class="scale-btn" data-v="2">2</button><button class="scale-btn" data-v="3">3</button><button class="scale-btn" data-v="4">4</button><button class="scale-btn" data-v="5">5</button>
+      </div>
+      <div class="scale-labels"><span>Rarely</span><span>Consistently</span></div>
+    </div>
+    <div class="question-card" data-pillar="numbers">
+      <div class="q-pillar">Numbers</div>
+      <div class="q-text">Can you tell me your exact monthly income and expenses right now?</div>
+      <div class="scale" data-q="3">
+        <button class="scale-btn" data-v="1">1</button><button class="scale-btn" data-v="2">2</button><button class="scale-btn" data-v="3">3</button><button class="scale-btn" data-v="4">4</button><button class="scale-btn" data-v="5">5</button>
+      </div>
+      <div class="scale-labels"><span>No idea</span><span>To the penny</span></div>
+    </div>
+    <div class="question-card" data-pillar="knowledge">
+      <div class="q-pillar">Knowledge</div>
+      <div class="q-text">How many hours per week do you invest in learning something new?</div>
+      <div class="scale" data-q="4">
+        <button class="scale-btn" data-v="1">1</button><button class="scale-btn" data-v="2">2</button><button class="scale-btn" data-v="3">3</button><button class="scale-btn" data-v="4">4</button><button class="scale-btn" data-v="5">5</button>
+      </div>
+      <div class="scale-labels"><span>Zero</span><span>5+ hours</span></div>
+    </div>
+    <button class="submit-btn" id="showResult" disabled>Show Me Where I'm Stuck</button>
+  </div>
+
+  <div class="result" id="result">
+    <div class="bars" id="bars"></div>
+    <div class="result-card">
+      <div class="result-pillar" id="rPillar"></div>
+      <div class="result-title" id="rTitle"></div>
+      <div class="result-desc" id="rDesc"></div>
+      <a href="/" class="result-cta">Take the Full 50-Question Assessment →</a>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem">
+      <p style="color:#a1a1aa;font-size:.85rem;margin-bottom:.5rem">The full assessment gives you a detailed breakdown with a personalized prescription.</p>
+      <p style="color:#a1a1aa;font-size:.85rem">Our assessments are constantly improving — retake often for better results.</p>
+    </div>
+  </div>
+
+  <div class="footer">© 2026 Value to Victory — Shawn E. Decker<br><a href="https://valuetovictory.com" style="color:#D4A847">valuetovictory.com</a></div>
+</div>
+<script>
+const answers=[null,null,null,null,null];const pillars=['Time','People','Influence','Numbers','Knowledge'];
+const msgs={Time:{t:"Time Is Your Bottleneck",d:"You're losing hours to low-value activities without realizing it. The average person leaks 5+ hours a week. The full assessment will show you exactly where — and give you a plan to reclaim it."},People:{t:"Your Relationships Need Attention",d:"The people around you are either multiplying your value or draining it. You may be over-investing in Takers and under-investing in the people who matter. The full assessment maps your relational ROI."},Influence:{t:"Your Influence Isn't Matching Your Potential",d:"You have more to offer than the world is seeing. There's a gap between who you are and how you're showing up. The full assessment identifies exactly where your leadership is leaking."},Numbers:{t:"You're Flying Blind Financially",d:"If you can't measure it, you can't improve it. Your numbers pillar is your weakest link — and it's quietly undermining every other area. The full assessment gives you clarity and a plan."},Knowledge:{t:"You've Stopped Growing",d:"The most expensive thing you'll ever pay for is what you don't know. Your knowledge investment has stalled, and it's capping your potential in every other pillar. The full assessment shows you where to invest."}};
+const colors={Time:'#3b82f6',People:'#22c55e',Influence:'#a855f7',Numbers:'#f59e0b',Knowledge:'#ef4444'};
+document.querySelectorAll('.scale-btn').forEach(b=>{b.onclick=function(){const q=+this.parentElement.dataset.q;const v=+this.dataset.v;answers[q]=v;this.parentElement.querySelectorAll('.scale-btn').forEach(x=>x.classList.remove('selected'));this.classList.add('selected');document.getElementById('showResult').disabled=answers.includes(null);}});
+document.getElementById('showResult').onclick=function(){
+  let min=6,minI=0;answers.forEach((v,i)=>{if(v<min){min=v;minI=i;}});
+  const p=pillars[minI];const m=msgs[p];
+  document.getElementById('rPillar'),'YOUR WEAKEST PILLAR';document.getElementById('rPillar').textContent='YOUR WEAKEST PILLAR: '+p.toUpperCase();
+  document.getElementById('rTitle').textContent=m.t;document.getElementById('rDesc').textContent=m.d;
+  let bh='';pillars.forEach((name,i)=>{const pct=answers[i]*20;const c=colors[name];bh+=`<div class="bar-row"><div class="bar-label">${name}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${c}"></div></div><div class="bar-val" style="color:${c}">${answers[i]}/5</div></div>`;});
+  document.getElementById('bars').innerHTML=bh;document.getElementById('result').style.display='block';document.getElementById('quiz').style.display='none';window.scrollTo({top:0,behavior:'smooth'});
+};
+</script>
+</body>
+</html>

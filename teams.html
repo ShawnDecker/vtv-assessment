@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/><link rel="icon" type="image/png" href="/favicon.png"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+<title>The Value Engine — Team Assessment</title>
+<meta name="description" content="Assess your team's collective strengths across all 5 P.I.N.K. pillars. Build stronger teams with data, not guesswork.">
+<meta property="og:title" content="Team Assessment — The Value Engine">
+<meta property="og:description" content="Measure your team's strengths across Time, People, Influence, Numbers & Knowledge. Build stronger teams with data.">
+<meta property="og:image" content="https://assessment.valuetovictory.com/og-teams.png">
+<meta property="og:url" content="https://assessment.valuetovictory.com/teams">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Team Assessment — The Value Engine">
+<meta name="twitter:description" content="Measure your team's strengths across 5 pillars. Build stronger teams with data.">
+<meta name="twitter:image" content="https://assessment.valuetovictory.com/og-teams.png">
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}.page{max-width:640px;margin:0 auto;padding:2rem 1.5rem 4rem}.brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;margin-bottom:.5rem}h1{font-size:1.75rem;font-weight:900;margin-bottom:.25rem}.subtitle{color:#a1a1aa;margin-bottom:2rem;font-size:.95rem;line-height:1.5}
+.card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.5rem;margin-bottom:1.5rem}.card h2{font-size:1rem;font-weight:700;margin-bottom:.75rem;color:#D4A847}
+input{width:100%;padding:.75rem;background:#27272a;border:1px solid #3f3f46;border-radius:.5rem;color:#fff;font-size:.9rem;font-family:inherit;margin-bottom:.75rem}input::placeholder{color:#71717a}
+.btn{width:100%;padding:.875rem;background:#D4A847;color:#0a0a0a;border:none;border-radius:.5rem;font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s}.btn:hover{background:#b8942e}
+.btn-outline{background:transparent;border:1px solid #D4A847;color:#D4A847}.btn-outline:hover{background:rgba(212,168,71,.1)}
+.steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:2rem 0}.step{text-align:center;padding:1rem}.step-num{width:32px;height:32px;border-radius:50%;background:#D4A847;color:#0a0a0a;font-weight:900;font-size:.9rem;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem}.step-text{font-size:.8rem;color:#a1a1aa;line-height:1.4}
+.features{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0}.feature{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.25rem}.feat-icon{font-size:1.5rem;margin-bottom:.5rem}.feat-title{font-size:.9rem;font-weight:700;margin-bottom:.25rem}.feat-desc{font-size:.8rem;color:#a1a1aa;line-height:1.4}
+.footer{text-align:center;margin-top:3rem;padding-top:1.5rem;border-top:1px solid #27272a;font-size:.75rem;color:#71717a}a.back{color:#D4A847;text-decoration:none;font-size:.85rem;display:inline-block;margin-bottom:1.5rem}
+.msg{padding:.75rem;border-radius:.5rem;font-size:.85rem;margin-top:.75rem;display:none}.msg-ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e}.msg-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444}
+.team-dash{display:none}
+@media(max-width:500px){.steps{grid-template-columns:1fr}.features{grid-template-columns:1fr}}
+</style></head><body><div class="page">
+<a href="/" class="back">← Back to Assessment</a>
+<div class="brand">THE VALUE ENGINE</div>
+<h1>Team Assessment</h1>
+<div class="subtitle">Measure your team's collective strengths across all 5 P.I.N.K. pillars. Identify where your team leads — and where it leaks value.</div>
+
+<div class="steps"><div class="step"><div class="step-num">1</div><div class="step-text">Create your team or join an existing one</div></div><div class="step"><div class="step-num">2</div><div class="step-text">Each member takes the assessment</div></div><div class="step"><div class="step-num">3</div><div class="step-text">See your team's aggregate strengths</div></div></div>
+
+<div class="card"><h2>Create a New Team</h2>
+<input id="teamName" placeholder="Team or company name"><input id="creatorEmail" type="email" placeholder="Your email (team admin)">
+<button class="btn" onclick="createTeam()">Create Team</button><div class="msg" id="createMsg"></div></div>
+
+<div class="card"><h2>Join an Existing Team</h2>
+<input id="teamCode" placeholder="Team code (from your admin)"><input id="joinEmail" type="email" placeholder="Your email">
+<button class="btn btn-outline" onclick="joinTeam()">Join Team</button><div class="msg" id="joinMsg"></div></div>
+
+<div class="features">
+<div class="feature"><div class="feat-icon">📊</div><div class="feat-title">Aggregate Scores</div><div class="feat-desc">See average pillar scores across your entire team</div></div>
+<div class="feature"><div class="feat-icon">🎯</div><div class="feat-title">Blind Spots</div><div class="feat-desc">Identify which pillar is weakest across the group</div></div>
+<div class="feature"><div class="feat-icon">👥</div><div class="feat-title">Anonymous</div><div class="feat-desc">Individual scores stay private — only aggregates are shared</div></div>
+<div class="feature"><div class="feat-icon">📈</div><div class="feat-title">Track Growth</div><div class="feat-desc">Retake quarterly to measure team improvement over time</div></div>
+</div>
+
+<div style="text-align:center;padding:1.25rem;background:#18181b;border:1px solid #27272a;border-radius:.75rem;margin-top:1.5rem"><p style="font-size:.85rem;color:#a1a1aa">Our assessment engine is constantly improving. Encourage your team to retake regularly for more accurate insights.</p></div>
+
+<div class="footer">© 2026 Value to Victory — Shawn E. Decker<br><a href="https://valuetovictory.com" style="color:#D4A847">valuetovictory.com</a></div>
+</div>
+<script>
+async function createTeam(){const n=document.getElementById('teamName').value.trim(),e=document.getElementById('creatorEmail').value.trim(),m=document.getElementById('createMsg');if(!n||!e){show(m,'err','Please fill in both fields.');return;}try{const r=await fetch('/api/teams',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({teamName:n,creatorEmail:e})});const d=await r.json();if(d.id){show(m,'ok','Team created! Your team code is: <strong>'+d.id+'</strong> — share this with your team members.');}else{show(m,'err',d.error||'Failed to create team.');}}catch(err){show(m,'err','Something went wrong. Try again.');}}
+async function joinTeam(){const c=document.getElementById('teamCode').value.trim(),e=document.getElementById('joinEmail').value.trim(),m=document.getElementById('joinMsg');if(!c||!e){show(m,'err','Please fill in both fields.');return;}show(m,'ok','Redirecting to your assessment...');setTimeout(()=>{window.location.href='/?team='+c+'&email='+encodeURIComponent(e);},1000);}
+function show(el,type,msg){el.className='msg msg-'+type;el.innerHTML=msg;el.style.display='block';}
+</script></body></html>
