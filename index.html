@@ -101,7 +101,18 @@
             opts = Object.assign({}, opts, { body: JSON.stringify(body) });
           } catch(e) {}
         }
-        return originalFetch.call(this, url, opts);
+        var result = originalFetch.call(this, url, opts);
+        if (typeof url === 'string' && url.indexOf('/api/assessment') !== -1 && opts && opts.method === 'POST') {
+          result.then(function(resp) {
+            var clone = resp.clone();
+            clone.json().then(function(data) {
+              if (data && data.prescription && data.prescription.crossPillarImpact) {
+                window.__veCrossPillarImpact = data.prescription.crossPillarImpact;
+              }
+            }).catch(function() {});
+          }).catch(function() {});
+        }
+        return result;
       };
 
       // --- CSS for injected components ---
@@ -131,6 +142,25 @@
         '.ve-pillar-btn { padding:0.5rem 1rem; background:#0a0a0a; border:1px solid #27272a; border-radius:0.5rem; color:#d4d4d8; font-family:"Satoshi",sans-serif; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s; text-decoration:none; }',
         '.ve-pillar-btn:hover { border-color:#D4A847; color:#D4A847; }',
         '.ve-pillar-label { font-size:0.78rem; color:#71717a; margin-top:1.5rem; margin-bottom:0.5rem; }',
+        // Cross-pillar impact section
+        '.ve-impact-section { background:#18181b; border:1px solid #27272a; border-radius:0.75rem; padding:2rem; margin:1.5rem auto; max-width:600px; }',
+        '.ve-impact-section h3 { font-family:"Instrument Serif",serif; font-style:italic; font-size:1.5rem; color:#D4A847; margin-bottom:1.25rem; text-align:center; }',
+        '.ve-impact-arrow { display:flex; align-items:center; justify-content:center; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap; }',
+        '.ve-impact-tag { font-size:0.85rem; font-weight:700; padding:0.375rem 0.875rem; border:1px solid; border-radius:2rem; background:#0a0a0a; }',
+        '.ve-impact-arrow-icon { font-size:1.25rem; color:#71717a; }',
+        '.ve-severity-badge { display:inline-block; padding:0.25rem 0.75rem; border-radius:1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; }',
+        '.ve-severity-critical { background:#7f1d1d; color:#fca5a5; }',
+        '.ve-severity-significant { background:#78350f; color:#fcd34d; }',
+        '.ve-severity-moderate { background:#1e3a5f; color:#93c5fd; }',
+        '.ve-impact-headline { font-family:"Instrument Serif",serif; font-style:italic; font-size:1.15rem; color:#e5e5e5; text-align:center; margin:1rem 0; line-height:1.5; }',
+        '.ve-impact-explanation { font-size:0.9rem; color:#a1a1aa; line-height:1.65; margin-bottom:1rem; }',
+        '.ve-sub-links { display:flex; flex-wrap:wrap; gap:0.375rem; justify-content:center; margin-top:1rem; }',
+        '.ve-sub-link { font-size:0.72rem; color:#D4A847; background:#D4A84710; border:1px solid #D4A84730; padding:0.25rem 0.625rem; border-radius:1rem; }',
+        '.ve-secondary-impacts { border-top:1px solid #27272a; margin-top:1.25rem; padding-top:1rem; }',
+        '.ve-sec-title { font-size:0.8rem; color:#71717a; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.75rem; }',
+        '.ve-sec-item { padding:0.5rem 0; border-bottom:1px solid #1a1a1a; }',
+        '.ve-sec-headline { font-size:0.85rem; color:#d4d4d8; }',
+        '.ve-sec-links { font-size:0.72rem; color:#71717a; margin-top:0.25rem; }',
       ].join('\n');
       document.head.appendChild(style);
 
@@ -172,6 +202,123 @@
             window.location.href = '/?depth=' + encodeURIComponent(depth) + '&mode=' + encodeURIComponent(mode) + '#/assessment';
           });
         });
+      }
+
+      // --- Inject Cross-Pillar Impact Analysis on results page ---
+      function injectCrossPillarImpact() {
+        var impact = window.__veCrossPillarImpact;
+        if (!impact || !impact.primaryImpact) return;
+        if (impact.severity === 'balanced') return;
+        if (document.getElementById('ve-impact-inject')) return;
+
+        var root = document.getElementById('root');
+        if (!root) return;
+
+        var pillarColors = { Time: '#60a5fa', People: '#f472b6', Influence: '#D4A847', Numbers: '#34d399', Knowledge: '#a78bfa' };
+        var pi = impact.primaryImpact;
+        var fromColor = pillarColors[pi.from] || '#D4A847';
+        var toColor = pillarColors[pi.to] || '#D4A847';
+
+        var html = '<div class="ve-impact-section">';
+        html += '<h3>Cross-Pillar Impact Analysis</h3>';
+
+        // Arrow graphic
+        html += '<div class="ve-impact-arrow">';
+        html += '<span class="ve-impact-tag" style="color:' + fromColor + ';border-color:' + fromColor + ';">' + pi.from + ' (' + pi.fromScore + ')</span>';
+        html += '<span class="ve-impact-arrow-icon">\u2192</span>';
+        html += '<span class="ve-impact-tag" style="color:' + toColor + ';border-color:' + toColor + ';">' + pi.to + ' (' + pi.toScore + ')</span>';
+        html += '</div>';
+
+        // Severity badge
+        var sevClass = 've-severity-' + pi.severity;
+        html += '<div style="text-align:center;margin-bottom:1rem;">';
+        html += '<span class="ve-severity-badge ' + sevClass + '">' + pi.severity + ' impact</span>';
+        html += '</div>';
+
+        // Headline & explanation
+        html += '<div class="ve-impact-headline">' + pi.headline + '</div>';
+        if (pi.explanation) {
+          html += '<div class="ve-impact-explanation">' + pi.explanation + '</div>';
+        }
+
+        // Sub-category links
+        if (pi.subCategoryLinks && pi.subCategoryLinks.length > 0) {
+          html += '<div class="ve-sub-links">';
+          for (var i = 0; i < pi.subCategoryLinks.length; i++) {
+            var link = pi.subCategoryLinks[i];
+            html += '<span class="ve-sub-link">' + link.from + ' \u2192 ' + link.to + '</span>';
+          }
+          html += '</div>';
+        }
+
+        // Secondary impacts
+        if (impact.secondaryImpacts && impact.secondaryImpacts.length > 0) {
+          html += '<div class="ve-secondary-impacts">';
+          html += '<div class="ve-sec-title">Additional Connections</div>';
+          for (var j = 0; j < impact.secondaryImpacts.length; j++) {
+            var si = impact.secondaryImpacts[j];
+            var siFromColor = pillarColors[si.from] || '#D4A847';
+            var siToColor = pillarColors[si.to] || '#D4A847';
+            html += '<div class="ve-sec-item">';
+            html += '<div class="ve-impact-arrow" style="margin-bottom:0.5rem;">';
+            html += '<span class="ve-impact-tag" style="font-size:0.75rem;padding:0.25rem 0.625rem;color:' + siFromColor + ';border-color:' + siFromColor + ';">' + si.from + ' (' + si.fromScore + ')</span>';
+            html += '<span class="ve-impact-arrow-icon" style="font-size:1rem;">\u2192</span>';
+            html += '<span class="ve-impact-tag" style="font-size:0.75rem;padding:0.25rem 0.625rem;color:' + siToColor + ';border-color:' + siToColor + ';">' + si.to + ' (' + si.toScore + ')</span>';
+            html += '</div>';
+            html += '<div class="ve-sec-headline">' + si.headline + '</div>';
+            if (si.subCategoryLinks && si.subCategoryLinks.length > 0) {
+              var linkTexts = [];
+              for (var k = 0; k < si.subCategoryLinks.length; k++) {
+                linkTexts.push(si.subCategoryLinks[k].from + ' \u2192 ' + si.subCategoryLinks[k].to);
+              }
+              html += '<div class="ve-sec-links">' + linkTexts.join(' &middot; ') + '</div>';
+            }
+            html += '</div>';
+          }
+          html += '</div>';
+        }
+
+        // Overall message
+        if (impact.overallMessage) {
+          html += '<div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #27272a;font-size:0.88rem;color:#a1a1aa;line-height:1.6;text-align:center;font-style:italic;">' + impact.overallMessage + '</div>';
+        }
+
+        html += '</div>';
+
+        var wrapper = document.createElement('div');
+        wrapper.id = 've-impact-inject';
+        wrapper.style.padding = '0 1rem';
+        wrapper.innerHTML = html;
+
+        // Try to insert before the prescription/diagnosis section
+        var inserted = false;
+        var allEls = root.querySelectorAll('h2, h3, div');
+        for (var m = 0; m < allEls.length; m++) {
+          var txt = allEls[m].textContent || '';
+          if (txt.indexOf('DIAGNOSIS') !== -1 || txt.indexOf('Your Prescription') !== -1) {
+            var target = allEls[m].closest('div[class]') || allEls[m].parentElement;
+            if (target && target.parentNode) {
+              target.parentNode.insertBefore(wrapper, target);
+              inserted = true;
+              break;
+            }
+          }
+        }
+
+        // Fallback: insert before #ve-deeper-inject or append to results container
+        if (!inserted) {
+          var deeper = document.getElementById('ve-deeper-inject');
+          if (deeper && deeper.parentNode) {
+            deeper.parentNode.insertBefore(wrapper, deeper);
+          } else {
+            var resultsContainer = root.querySelector('[class*="min-h-screen"]');
+            if (resultsContainer) {
+              resultsContainer.appendChild(wrapper);
+            } else {
+              root.appendChild(wrapper);
+            }
+          }
+        }
       }
 
       // --- Inject "Go Deeper" section on results page ---
@@ -271,9 +418,10 @@
             });
           }
 
-          // Check if we're on results page — inject deep-dive CTAs
+          // Check if we're on results page — inject deep-dive CTAs and cross-pillar impact
           if (window.location.hash === '#/results' || window.location.hash === '#/results/') {
             setTimeout(injectResultsDeepDive, 500);
+            setTimeout(injectCrossPillarImpact, 600);
           }
         });
 
@@ -291,6 +439,9 @@
       window.addEventListener('hashchange', function() {
         if (window.location.hash === '#/results' || window.location.hash === '#/results/') {
           setTimeout(injectResultsDeepDive, 800);
+          setTimeout(injectCrossPillarImpact, 600);
+          // Fallback in case fetch response arrives after DOM is ready
+          setTimeout(injectCrossPillarImpact, 2000);
         }
         if (window.location.hash === '#/mode-select' || window.location.hash === '#/mode-select/') {
           watchModeSelect();
