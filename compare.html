@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-TT6PYLPP31');
+  gtag('config', 'G-MJ1SXZJ399');
+</script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <title>Compare — Value Engine vs MBTI vs Enneagram vs CliftonStrengths</title>
+  <meta name="description" content="MBTI tells you WHAT you are. Enneagram tells you WHY you feel. CliftonStrengths tells you what you're good at. The Value Engine tells you WHERE your life is undervalued." />
+  <meta property="og:title" content="You've Been Typed. Now Get Scored." />
+  <meta property="og:description" content="Compare the Value Engine to MBTI, Enneagram, and CliftonStrengths. See why scoring beats typing." />
+  <meta property="og:image" content="https://assessment.valuetovictory.com/og-image.png" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #1a1a2e; color: #fff; min-height: 100vh; line-height: 1.6; }
+
+    .promo-banner {
+      background: linear-gradient(135deg, rgba(212,168,83,0.15) 0%, rgba(212,168,83,0.05) 100%);
+      border-bottom: 1px solid rgba(212,168,83,0.3);
+      text-align: center;
+      padding: 0.75rem 1rem;
+    }
+    .promo-banner p { font-size: 0.88rem; color: #d4a853; font-weight: 600; margin: 0; }
+
+    .page-header { text-align: center; padding: 2rem 1.5rem 0; }
+    .page-header .brand { font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; color: #d4a853; font-weight: 700; }
+
+    .hero { max-width: 800px; margin: 0 auto; padding: 3rem 1.5rem 2.5rem; text-align: center; }
+    .hero h1 { font-size: 2.75rem; font-weight: 700; color: #fff; margin-bottom: 1rem; line-height: 1.15; }
+    .hero .subtitle { font-size: 1.05rem; color: #a1a1b5; max-width: 680px; margin: 0 auto 2rem; line-height: 1.6; }
+    .hero .divider { width: 60px; height: 2px; background: linear-gradient(90deg, transparent, #d4a853, transparent); margin: 0 auto 2rem; }
+
+    .cta-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #d4a853, #b8942e);
+      color: #1a1a2e;
+      font-weight: 700;
+      font-size: 1.05rem;
+      text-decoration: none;
+      padding: 1rem 2.5rem;
+      border-radius: 0.625rem;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .cta-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .section-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #d4a853;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Comparison Table */
+    .table-section {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3rem;
+      overflow-x: auto;
+    }
+    .compare-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.88rem;
+    }
+    .compare-table thead th {
+      background: rgba(212,168,83,0.1);
+      padding: 1rem 0.75rem;
+      text-align: center;
+      font-weight: 700;
+      color: #d4d4e0;
+      border-bottom: 2px solid rgba(212,168,83,0.3);
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+    }
+    .compare-table thead th:first-child {
+      text-align: left;
+      border-radius: 0.5rem 0 0 0;
+    }
+    .compare-table thead th:last-child {
+      border-radius: 0 0.5rem 0 0;
+      background: rgba(212,168,83,0.2);
+      color: #d4a853;
+    }
+    .compare-table tbody td {
+      padding: 0.85rem 0.75rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      color: #a1a1b5;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .compare-table tbody td:first-child {
+      text-align: left;
+      font-weight: 600;
+      color: #d4d4e0;
+    }
+    .compare-table tbody td:last-child {
+      color: #d4a853;
+      font-weight: 600;
+      background: rgba(212,168,83,0.04);
+    }
+    .compare-table tbody tr:last-child td { border-bottom: none; }
+    .yes { color: #d4a853; font-weight: 700; }
+    .no { color: #71717a; }
+
+    /* Competitor Deep-Dives */
+    .deepdive-section {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3rem;
+    }
+    .deepdive-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 0.6rem;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .deepdive-item:hover { border-color: rgba(255,255,255,0.15); }
+    .deepdive-question {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #e4e4e7;
+    }
+    .deepdive-question .arrow {
+      font-size: 0.8rem;
+      color: #71717a;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-left: 1rem;
+    }
+    .deepdive-item.open .deepdive-question .arrow { transform: rotate(180deg); }
+    .deepdive-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      font-size: 0.9rem;
+      color: #a1a1b5;
+      line-height: 1.6;
+    }
+    .deepdive-item.open .deepdive-answer {
+      max-height: 500px;
+      padding-top: 1rem;
+    }
+    .deepdive-answer ul {
+      list-style: none;
+      margin-top: 0.5rem;
+    }
+    .deepdive-answer ul li {
+      padding: 0.3rem 0 0.3rem 1.25rem;
+      position: relative;
+    }
+    .deepdive-answer ul li::before {
+      content: "\2022";
+      position: absolute;
+      left: 0;
+      color: #d4a853;
+    }
+
+    /* Market Size */
+    .market-callout {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+      text-align: center;
+    }
+    .market-card {
+      background: rgba(212,168,83,0.06);
+      border: 1px solid rgba(212,168,83,0.2);
+      border-radius: 1rem;
+      padding: 2rem 1.75rem;
+    }
+    .market-card .big-number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #d4a853;
+      margin-bottom: 0.5rem;
+    }
+    .market-card p {
+      font-size: 0.95rem;
+      color: #a1a1b5;
+      line-height: 1.6;
+    }
+
+    .final-cta { text-align: center; padding: 3rem 1.5rem 2rem; }
+    .final-cta h2 { font-size: 1.75rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; }
+
+    .page-footer { text-align: center; padding: 3rem 1.5rem 2.5rem; border-top: 1px solid rgba(255,255,255,0.08); }
+    .page-footer .tagline { font-size: 1.05rem; color: #d4a853; font-weight: 600; margin-bottom: 1rem; }
+    .page-footer .copy { color: #71717a; font-size: 0.8rem; }
+    .page-footer a { color: #d4a853; text-decoration: none; }
+    .page-footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 700px) {
+      .compare-table { font-size: 0.78rem; }
+      .compare-table thead th, .compare-table tbody td { padding: 0.65rem 0.4rem; }
+    }
+    @media (max-width: 520px) {
+      .hero { padding: 2rem 1rem 2rem; }
+      .hero h1 { font-size: 2rem; }
+      .hero .subtitle { font-size: 1rem; }
+      .table-section { padding: 1.5rem 0.5rem 2rem; }
+      .deepdive-section { padding: 1.5rem 1rem 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Promo Banner -->
+  <div class="promo-banner">
+    <p>Reports normally $1.99 &mdash; FREE through April 25, 2026</p>
+  </div>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="brand">VALUE TO VICTORY</div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>You've Been Typed. Now Get Scored.</h1>
+    <div class="divider"></div>
+    <p class="subtitle">MBTI tells you <strong>what</strong> you are. Enneagram tells you <strong>why</strong> you feel. CliftonStrengths tells you what you're good at. The Value Engine tells you <strong>where</strong> your life is undervalued &mdash; and exactly what to do about it.</p>
+    <a href="https://assessment.valuetovictory.com" class="cta-btn">Take the Value Engine &rarr;</a>
+  </section>
+
+  <!-- Comparison Table -->
+  <section class="table-section">
+    <div class="section-label">Head-to-Head Comparison</div>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>MBTI</th>
+          <th>Enneagram</th>
+          <th>CliftonStrengths</th>
+          <th>Value Engine</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>What you get</td>
+          <td>A type label</td>
+          <td>A personality pattern</td>
+          <td>Your top strengths</td>
+          <td class="yes">A score + action plan</td>
+        </tr>
+        <tr>
+          <td>Measures weaknesses</td>
+          <td class="no">No</td>
+          <td class="no">Vaguely</td>
+          <td class="no">No</td>
+          <td class="yes">Yes &mdash; your exact weakest pillar</td>
+        </tr>
+        <tr>
+          <td>Action plan</td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+          <td class="yes">Yes &mdash; specific tools per pillar</td>
+        </tr>
+        <tr>
+          <td>Retestable</td>
+          <td class="no">Unreliable (39&ndash;76% get different results)</td>
+          <td class="no">Subjective</td>
+          <td class="no">Snapshot only</td>
+          <td class="yes">Yes &mdash; track improvement over time</td>
+        </tr>
+        <tr>
+          <td>Financial dimension</td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+          <td class="yes">Yes &mdash; Numbers pillar</td>
+        </tr>
+        <tr>
+          <td>Time management</td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+          <td class="yes">Yes &mdash; Time pillar</td>
+        </tr>
+        <tr>
+          <td>Relationship health</td>
+          <td class="no">No</td>
+          <td class="no">Partially</td>
+          <td class="no">No</td>
+          <td class="yes">Yes &mdash; People pillar</td>
+        </tr>
+        <tr>
+          <td>Follow-up system</td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+          <td class="yes">Yes &mdash; coaching reports + email sequence</td>
+        </tr>
+        <tr>
+          <td>Cost</td>
+          <td>$50&ndash;100</td>
+          <td>Free&ndash;$60</td>
+          <td>$60+</td>
+          <td class="yes">Free (report normally $1.99)</td>
+        </tr>
+        <tr>
+          <td>Dynamic questions</td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+          <td class="yes">Yes &mdash; 140+ rotating, never same test twice</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Competitor Deep-Dives -->
+  <section class="deepdive-section">
+    <div class="section-label">A Closer Look</div>
+
+    <div class="deepdive-item" onclick="this.classList.toggle('open')">
+      <div class="deepdive-question">
+        Why MBTI Falls Short
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="deepdive-answer">
+        The Myers-Briggs Type Indicator is the most popular personality test in the world &mdash; and one of the least reliable. Studies show 39&ndash;76% of test-takers get a different result when they retake it.
+        <ul>
+          <li>It gives you a type label (INFJ, ENTP) but no action plan</li>
+          <li>It doesn't measure weaknesses &mdash; just preferences</li>
+          <li>The scientific community has widely labeled it pseudoscience</li>
+          <li>It flatters instead of diagnosing &mdash; everyone's result feels good</li>
+          <li>No financial, time, or relationship dimensions</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="deepdive-item" onclick="this.classList.toggle('open')">
+      <div class="deepdive-question">
+        Why Enneagram Isn't Enough
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="deepdive-answer">
+        The Enneagram is a rich personality framework with deep psychological roots &mdash; but it's too complex for most people to act on and missing critical dimensions.
+        <ul>
+          <li>9 types, 27 subtypes, wings, growth/stress arrows &mdash; hard to apply</li>
+          <li>Highly subjective &mdash; your type depends on who's interpreting</li>
+          <li>No action plan &mdash; you learn your pattern but not what to do about it</li>
+          <li>No financial, time management, or career dimensions</li>
+          <li>Focuses on motivation, not outcomes</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="deepdive-item" onclick="this.classList.toggle('open')">
+      <div class="deepdive-question">
+        Why CliftonStrengths Misses the Point
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="deepdive-answer">
+        Gallup's CliftonStrengths (formerly StrengthsFinder) is a best-seller in corporate L&amp;D. But it has a fatal flaw: it only measures strengths.
+        <ul>
+          <li>Deliberately ignores weaknesses &mdash; tells you to "lean into" what you're good at</li>
+          <li>Costs $60+ for the basic report, $100+ for the full 34</li>
+          <li>No personal life dimensions &mdash; only professional strengths</li>
+          <li>Snapshot assessment &mdash; not designed for retesting or tracking improvement</li>
+          <li>No follow-up system, coaching reports, or action plans</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Market Size Callout -->
+  <section class="market-callout">
+    <div class="market-card">
+      <div class="big-number">$11.6B</div>
+      <p>The personality assessment market in 2025, growing 12.4% annually. There's a reason &mdash; people want to understand themselves. They just need better tools.</p>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final-cta">
+    <h2>Stop Being Typed. Start Being Scored.</h2>
+    <a href="https://assessment.valuetovictory.com" class="cta-btn">Take the Value Engine &rarr;</a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="page-footer">
+    <div class="tagline">Value to Victory</div>
+    <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>
+  </footer>
+
+</body>
+</html>

@@ -30,6 +30,10 @@
     { "src": "/love-language", "dest": "/love-language.html" },
     { "src": "/couple-challenge-hub", "dest": "/couple-challenge.html" },
     { "src": "/coaching", "dest": "/coaching.html" },
+    { "src": "/stuck", "dest": "/stuck.html" },
+    { "src": "/realestate", "dest": "/realestate.html" },
+    { "src": "/teams", "dest": "/teams.html" },
+    { "src": "/compare", "dest": "/compare.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

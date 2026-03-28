@@ -506,23 +506,157 @@
       </div>
     </div>
 
+    <!-- FAQ: Objection Destroyers -->
+    <div id="faq-objections-section" style="display:none;">
+      <style>
+        #faq-objections-section {
+          background: linear-gradient(180deg, #0a0a0a 0%, #0f0f0f 50%, #0a0a0a 100%);
+          padding: 4rem 1.5rem;
+          border-top: 1px solid #1a1a1a;
+        }
+        #faq-objections-section .faq-container {
+          max-width: 700px;
+          margin: 0 auto;
+        }
+        #faq-objections-section .faq-eyebrow {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.7rem;
+          letter-spacing: 3px;
+          text-transform: uppercase;
+          color: #D4A847;
+          margin-bottom: 1rem;
+          font-weight: 700;
+          text-align: center;
+        }
+        #faq-objections-section h2 {
+          font-family: 'Instrument Serif', serif;
+          font-style: italic;
+          font-size: 2rem;
+          color: #fff;
+          margin-bottom: 2rem;
+          text-align: center;
+        }
+        #faq-objections-section .objection-item {
+          background: #18181b;
+          border: 1px solid #27272a;
+          border-radius: 0.75rem;
+          padding: 1.25rem 1.5rem;
+          margin-bottom: 0.6rem;
+          cursor: pointer;
+          transition: border-color 0.2s;
+        }
+        #faq-objections-section .objection-item:hover { border-color: #3f3f46; }
+        #faq-objections-section .objection-q {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-family: 'Satoshi', sans-serif;
+          font-weight: 600;
+          font-size: 0.95rem;
+          color: #e4e4e7;
+        }
+        #faq-objections-section .objection-q .arrow {
+          font-size: 0.8rem;
+          color: #71717a;
+          transition: transform 0.2s;
+          flex-shrink: 0;
+          margin-left: 1rem;
+        }
+        #faq-objections-section .objection-item.open .objection-q .arrow { transform: rotate(180deg); }
+        #faq-objections-section .objection-a {
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.3s ease, padding 0.3s ease;
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.88rem;
+          color: #a1a1aa;
+          line-height: 1.55;
+        }
+        #faq-objections-section .objection-item.open .objection-a {
+          max-height: 300px;
+          padding-top: 0.75rem;
+        }
+        @media (max-width: 520px) {
+          #faq-objections-section { padding: 3rem 1rem; }
+          #faq-objections-section h2 { font-size: 1.65rem; }
+        }
+      </style>
+      <div class="faq-container">
+        <div class="faq-eyebrow">COMMON QUESTIONS</div>
+        <h2>Before You Decide</h2>
+
+        <div class="objection-item" onclick="this.classList.toggle('open')">
+          <div class="objection-q">&ldquo;I've taken personality tests before &mdash; how is this different?&rdquo;<span class="arrow">&#9660;</span></div>
+          <div class="objection-a">Personality tests tell you what you are. The Value Engine tells you where your life is undervalued &mdash; and gives you the exact prescription to fix it. It's a diagnostic, not a label.</div>
+        </div>
+
+        <div class="objection-item" onclick="this.classList.toggle('open')">
+          <div class="objection-q">&ldquo;I don't have time for another assessment.&rdquo;<span class="arrow">&#9660;</span></div>
+          <div class="objection-a">It takes 5 minutes. If you can scroll social media for 20, you can invest 5 in understanding where your life is leaking value.</div>
+        </div>
+
+        <div class="objection-item" onclick="this.classList.toggle('open')">
+          <div class="objection-q">&ldquo;How accurate can a free test really be?&rdquo;<span class="arrow">&#9660;</span></div>
+          <div class="objection-a">The Value Engine uses 140+ rotating questions across 50 dimensions. It's more comprehensive than most paid assessments &mdash; and it never gives you the same test twice.</div>
+        </div>
+
+        <div class="objection-item" onclick="this.classList.toggle('open')">
+          <div class="objection-q">&ldquo;What if I already know my problems?&rdquo;<span class="arrow">&#9660;</span></div>
+          <div class="objection-a">Knowing you have a problem and knowing exactly which pillar is weakest are different things. The Value Engine quantifies it &mdash; so you stop guessing and start fixing.</div>
+        </div>
+
+        <div class="objection-item" onclick="this.classList.toggle('open')">
+          <div class="objection-q">&ldquo;Is this just going to try to sell me something?&rdquo;<span class="arrow">&#9660;</span></div>
+          <div class="objection-a">The assessment and your score are 100% free. Reports are normally $1.99 but free through April 25. Coaching is optional, never required.</div>
+        </div>
+
+        <div class="objection-item" onclick="this.classList.toggle('open')">
+          <div class="objection-q">&ldquo;I'm not in a crisis &mdash; is this still for me?&rdquo;<span class="arrow">&#9660;</span></div>
+          <div class="objection-a">You don't need to be in crisis. Most people who take the Value Engine are functioning just fine &mdash; they just sense they're capable of more and want the data to prove it.</div>
+        </div>
+
+        <div class="objection-item" onclick="this.classList.toggle('open')">
+          <div class="objection-q">&ldquo;What happens with my data?&rdquo;<span class="arrow">&#9660;</span></div>
+          <div class="objection-a">Your results are private. We never sell your data. Your assessment is linked to your email so you can retest and track progress over time.</div>
+        </div>
+
+        <div class="objection-item" onclick="this.classList.toggle('open')">
+          <div class="objection-q">&ldquo;Can I retake it?&rdquo;<span class="arrow">&#9660;</span></div>
+          <div class="objection-a">Absolutely. The Value Engine is designed for retesting. With 140+ rotating questions, you'll never see the same test twice &mdash; and you can track your improvement over time.</div>
+        </div>
+
+        <div class="objection-item" onclick="this.classList.toggle('open')">
+          <div class="objection-q">&ldquo;I don't believe in self-help.&rdquo;<span class="arrow">&#9660;</span></div>
+          <div class="objection-a">Good &mdash; this isn't self-help. It's a value diagnostic. No affirmations. No fluff. Just a score, your weakest pillar, and the specific tools to improve it.</div>
+        </div>
+
+        <div class="objection-item" onclick="this.classList.toggle('open')">
+          <div class="objection-q">&ldquo;What's the catch?&rdquo;<span class="arrow">&#9660;</span></div>
+          <div class="objection-a">No catch. The assessment is free. The report is free (through April 25). If you want ongoing coaching and tools, VictoryPath is $29/mo. But you get your score and action plan without paying a cent.</div>
+        </div>
+      </div>
+    </div>
+
     <script>
-    // Show the free book section once React has rendered (or immediately if no React root content)
+    // Show the free book section and FAQ section once React has rendered
     (function() {
       var section = document.getElementById('free-book-section');
+      var faqSection = document.getElementById('faq-objections-section');
+      function showSections() {
+        if (section) section.style.display = 'block';
+        if (faqSection) faqSection.style.display = 'block';
+      }
       if (section) {
-        // Use MutationObserver to show after React renders
         var root = document.getElementById('root');
         if (root && root.children.length === 0) {
           var observer = new MutationObserver(function() {
-            section.style.display = 'block';
+            showSections();
             observer.disconnect();
           });
           observer.observe(root, { childList: true });
-          // Fallback: show after 3 seconds even if React doesn't render
-          setTimeout(function() { section.style.display = 'block'; }, 3000);
+          setTimeout(showSections, 3000);
         } else {
-          section.style.display = 'block';
+          showSections();
         }
       }
     })();
