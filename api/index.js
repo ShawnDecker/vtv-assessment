@@ -260,15 +260,32 @@ module.exports = async (req, res) => {
     if (req.method === 'POST' && url === '/assessment') {
       const b = req.body || {};
 
-      // Upsert contact
-      let contactRows = await sql`SELECT * FROM contacts WHERE email = ${b.email || ''} LIMIT 1`;
+      // Validate required fields
+      if (!b.email || !b.email.trim()) {
+        return res.status(400).json({ error: 'Email is required to save your assessment results. Please enter your email and try again.' });
+      }
+      const cleanEmail = b.email.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        return res.status(400).json({ error: 'Please enter a valid email address.' });
+      }
+
+      // Upsert contact with validated email
+      let contactRows = await sql`SELECT * FROM contacts WHERE email = ${cleanEmail} LIMIT 1`;
       let contact;
       if (contactRows.length > 0) {
         contact = contactRows[0];
+        // Update name/phone if provided and contact existed
+        if (b.firstName || b.lastName || b.phone) {
+          await sql`UPDATE contacts SET first_name = COALESCE(NULLIF(${b.firstName || ''}, ''), first_name), last_name = COALESCE(NULLIF(${b.lastName || ''}, ''), last_name), phone = COALESCE(${b.phone || null}, phone) WHERE id = ${contact.id}`;
+          contact.first_name = b.firstName || contact.first_name;
+          contact.last_name = b.lastName || contact.last_name;
+        }
       } else {
-        const rows = await sql`INSERT INTO contacts (first_name, last_name, email, phone, created_at) VALUES (${b.firstName || ''}, ${b.lastName || ''}, ${b.email || ''}, ${b.phone || null}, ${new Date().toISOString()}) RETURNING *`;
+        const rows = await sql`INSERT INTO contacts (first_name, last_name, email, phone, created_at) VALUES (${b.firstName || ''}, ${b.lastName || ''}, ${cleanEmail}, ${b.phone || null}, ${new Date().toISOString()}) RETURNING *`;
         contact = rows[0];
       }
+      console.log(`Contact upserted: ${contact.id} (${cleanEmail}) - ${contact.first_name} ${contact.last_name}`);
 
       // Dynamic scoring: if questionIds provided, compute pillar totals from question_bank
       let tt, pt, it, nt, kt;
@@ -478,12 +495,32 @@ Don't guess. Run the system.
           emailSent = true;
           console.log(`Auto-email sent to ${contactEmail} for assessment ${assessment.id}`);
         } catch (emailErr) {
-          console.error('Auto-email error (non-fatal):', emailErr.message);
+          console.error('Auto-email FAILED for', contactEmail, ':', emailErr.message);
+          // Retry once after 2 second delay
+          try {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            const retryTransporter = require('nodemailer').createTransport({
+              service: 'gmail',
+              auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+            });
+            await retryTransporter.sendMail({
+              from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
+              to: contactEmail,
+              subject,
+              text: emailBody,
+            });
+            emailSent = true;
+            console.log(`Auto-email RETRY succeeded for ${contactEmail}`);
+          } catch (retryErr) {
+            console.error('Auto-email RETRY also failed for', contactEmail, ':', retryErr.message);
+          }
         }
+      } else {
+        console.warn('Email not sent: missing GMAIL_USER or GMAIL_APP_PASSWORD env vars, or no contact email. Email:', contactEmail, 'GMAIL_USER set:', !!process.env.GMAIL_USER, 'GMAIL_APP_PASSWORD set:', !!process.env.GMAIL_APP_PASSWORD);
       }
       // === END AUTO-EMAIL ===
 
-      return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name }, emailSent, depth: assessmentDepth, focusPillar: assessmentFocusPillar });
+      return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name }, emailSent, emailError: !emailSent ? 'Your results are saved but the email delivery encountered an issue. You can view your report at the link below.' : null, depth: assessmentDepth, focusPillar: assessmentFocusPillar });
     }
 
     // POST /api/teams
