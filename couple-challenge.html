@@ -93,7 +93,11 @@
       h1 { font-size: 1.5rem; }
     }
   </style>
-</head>
+    <script type="module">
+      import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@2/dist/index.mjs';
+      inject();
+    </script>
+  </head>
 <body>
   <!-- Lookup View -->
   <div class="center-wrap" id="lookupWrap">
