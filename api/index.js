@@ -251,11 +251,13 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const sql = neon(process.env.DATABASE_URL);
-  const url = req.url.replace(/^\/api/, '');
+  const url = req.url.replace(/^\/api/, '').split('?')[0].replace(/\/$/, '');
 
   try {
     // POST /api/start-assessment — early lead capture: create/find contact before assessment begins
     if (req.method === 'POST' && url === '/start-assessment') {
+      // Auto-create progress table if not exists
+      try { await sql`CREATE TABLE IF NOT EXISTS assessment_progress (id SERIAL PRIMARY KEY, contact_id INTEGER REFERENCES contacts(id), answers JSONB DEFAULT '{}', current_question_index INTEGER DEFAULT 0, mode TEXT DEFAULT 'individual', depth TEXT DEFAULT 'extensive', total_questions INTEGER DEFAULT 0, updated_at TIMESTAMPTZ DEFAULT NOW())`; await sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_progress_contact ON assessment_progress(contact_id)`; } catch(e) { /* already exists */ }
       const b = req.body || {};
       if (!b.email || !b.email.trim()) {
         return res.status(400).json({ error: 'Email is required.' });
@@ -325,7 +327,7 @@ module.exports = async (req, res) => {
     }
 
     // GET /api/get-progress?contactId=X — retrieve saved progress for a contact
-    if (req.method === 'GET' && url.startsWith('/get-progress')) {
+    if (req.method === 'GET' && (url === '/get-progress' || url.startsWith('/get-progress'))) {
       const params = new URL('http://x' + req.url).searchParams;
       const contactId = params.get('contactId');
       if (!contactId) return res.status(400).json({ error: 'contactId required' });
@@ -2901,6 +2903,27 @@ This link expires in 24 hours.
         ? 'Your personalized coaching report has been sent to your email.'
         : 'Your email has been verified. Your coaching report will be sent shortly.';
       return res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Email Verified</title><style>body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style><link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet"></head><body><div style="max-width:480px;padding:2rem;"><div style="font-size:3rem;margin-bottom:1rem;">&#10003;</div><h2 style="color:#D4A847;margin-bottom:0.75rem;">Email Verified!</h2><p style="color:#a1a1aa;margin-bottom:1.5rem;">${statusMsg}</p><p style="color:#71717a;font-size:0.85rem;">Check your inbox (and spam folder) for your coaching report.</p><p style="margin-top:1.5rem;"><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;text-decoration:none;">Return to Value Engine &rarr;</a></p></div></body></html>`);
+    }
+
+    // GET /api/admin/abandoned — contacts who started but never completed
+    if (req.method === 'GET' && url === '/admin/abandoned') {
+      const abandoned = await sql`
+        SELECT c.id, c.first_name, c.last_name, c.email, c.created_at,
+               (SELECT COUNT(*) FROM assessments a WHERE a.contact_id = c.id AND a.master_score > 0) as completed_count,
+               p.current_question_index, p.total_questions, p.updated_at as progress_updated
+        FROM contacts c
+        LEFT JOIN assessment_progress p ON p.contact_id = c.id
+        WHERE c.email IS NOT NULL AND c.email != ''
+          AND c.email NOT IN ('test@valuetovictory.com','valuetovictory@gmail.com','test@example.com')
+          AND NOT EXISTS (SELECT 1 FROM assessments a WHERE a.contact_id = c.id AND a.master_score > 0)
+        ORDER BY c.created_at DESC
+      `;
+      return res.json({ abandoned: abandoned.map(r => ({
+        contactId: r.id, firstName: r.first_name, lastName: r.last_name, email: r.email,
+        createdAt: r.created_at, hasProgress: !!r.current_question_index,
+        questionsAnswered: r.current_question_index || 0, totalQuestions: r.total_questions || 0,
+        progressUpdated: r.progress_updated
+      }))});
     }
 
     return res.status(404).json({ error: 'Not found' });
