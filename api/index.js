@@ -251,7 +251,9 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const sql = neon(process.env.DATABASE_URL);
-  const url = req.url.replace(/^\/api/, '').split('?')[0].replace(/\/$/, '');
+  const rawUrl = req.url;
+  const url = rawUrl.replace(/^\/api/, '').split('?')[0].replace(/\/$/, '');
+  console.log('[VE-API] rawUrl:', rawUrl, '| parsed url:', url, '| method:', req.method);
 
   try {
     // POST /api/start-assessment — early lead capture: create/find contact before assessment begins
