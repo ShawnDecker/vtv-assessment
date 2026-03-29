@@ -54,6 +54,22 @@
       "dest": "/api/health.js"
     },
     {
+      "src": "/api/couples/invite/(.*)",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/api/couples/complete",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/api/couples/results",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/api/couples",
+      "dest": "/api/index.js"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     },
@@ -115,6 +131,14 @@
     {
       "src": "/couple-challenge-hub",
       "dest": "/couple-challenge.html"
+    },
+    {
+      "src": "/partner-invite",
+      "dest": "/partner-invite.html"
+    },
+    {
+      "src": "/couple-report",
+      "dest": "/couple-report.html"
     },
     {
       "src": "/coaching",

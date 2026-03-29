@@ -2948,6 +2948,165 @@ This link expires in 24 hours.
       }
     }
 
+
+    // POST /api/couples — Create a couple pairing and invite partner
+    if (req.method === 'POST' && url === '/couples') {
+      const b = req.body || {};
+      if (!b.initiatorContactId || !b.partnerEmail || !b.partnerName) {
+        return res.status(400).json({ error: 'initiatorContactId, partnerEmail, and partnerName are required' });
+      }
+      
+      // Create couples table if not exists
+      await sql`CREATE TABLE IF NOT EXISTS couples (
+        id SERIAL PRIMARY KEY,
+        initiator_contact_id INTEGER NOT NULL,
+        partner_email TEXT NOT NULL,
+        partner_contact_id INTEGER,
+        partner_name TEXT NOT NULL,
+        invite_code TEXT NOT NULL UNIQUE,
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        completed_at TIMESTAMPTZ
+      )`;
+      
+      const inviteCode = require('crypto').randomBytes(16).toString('hex');
+      
+      const rows = await sql`INSERT INTO couples (initiator_contact_id, partner_email, partner_name, invite_code) 
+        VALUES (${b.initiatorContactId}, ${b.partnerEmail.toLowerCase()}, ${b.partnerName}, ${inviteCode}) RETURNING *`;
+      
+      // Get initiator's name
+      const initiator = await sql`SELECT first_name, last_name FROM contacts WHERE id = ${b.initiatorContactId} LIMIT 1`;
+      const initiatorName = initiator.length > 0 ? `${initiator[0].first_name} ${initiator[0].last_name}` : 'Your partner';
+      
+      // Send invite email
+      const inviteUrl = `https://assessment.valuetovictory.com/partner-invite?code=${inviteCode}`;
+      
+      if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
+        });
+        
+        await transporter.sendMail({
+          from: `"Value to Victory" <${process.env.GMAIL_USER}>`,
+          to: b.partnerEmail,
+          subject: `${initiatorName} invited you to take the P.I.N.K. Relationship Assessment`,
+          html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;">
+            <tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+            <tr><td style="text-align:center;padding-bottom:24px;">
+              <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;margin-bottom:8px;">VALUE TO VICTORY</div>
+              <div style="font-family:Georgia,serif;font-size:24px;font-style:italic;color:#fff;">Relationship Assessment Invite</div>
+            </td></tr>
+            <tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:32px;">
+              <p style="color:#e4e4e7;font-size:16px;margin:0 0 16px;">Hey ${b.partnerName},</p>
+              <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 16px;">
+                <strong style="color:#D4A847;">${initiatorName}</strong> wants to take the P.I.N.K. Relationship Assessment together with you.
+              </p>
+              <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 24px;">
+                This assessment measures five pillars of value — People, Influence, Numbers, Knowledge, and Time — and creates a combined report showing where you align, where you differ, and specific actions to strengthen your relationship.
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+                <a href="${inviteUrl}" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 40px;border-radius:8px;">
+                  Take the Assessment Together
+                </a>
+              </td></tr></table>
+              <p style="color:#71717a;font-size:13px;margin:24px 0 0;text-align:center;">
+                This link is unique to your invitation. It takes about 10 minutes.
+              </p>
+            </td></tr>
+            <tr><td style="text-align:center;padding-top:24px;">
+              <p style="color:#52525b;font-size:12px;">&copy; 2026 Value to Victory — Shawn E. Decker</p>
+            </td></tr>
+            </table></td></tr></table></body></html>`
+        });
+      }
+      
+      return res.json({ success: true, couple: rows[0], inviteUrl: `https://assessment.valuetovictory.com/partner-invite?code=${inviteCode}` });
+    }
+
+    // GET /api/couples/invite/:code — Get couple invite details
+    if (req.method === 'GET' && url.startsWith('/couples/invite/')) {
+      const code = url.split('/couples/invite/')[1];
+      const rows = await sql`SELECT * FROM couples WHERE invite_code = ${code} LIMIT 1`;
+      if (rows.length === 0) return res.status(404).json({ error: 'Invite not found or expired' });
+      const couple = rows[0];
+      const initiator = await sql`SELECT first_name, last_name FROM contacts WHERE id = ${couple.initiator_contact_id} LIMIT 1`;
+      return res.json({
+        partnerName: couple.partner_name,
+        initiatorName: initiator.length > 0 ? `${initiator[0].first_name} ${initiator[0].last_name}` : 'Your partner',
+        status: couple.status
+      });
+    }
+
+    // POST /api/couples/complete — Mark partner assessment complete, link to couple
+    if (req.method === 'POST' && url === '/couples/complete') {
+      const b = req.body || {};
+      if (!b.inviteCode || !b.contactId) {
+        return res.status(400).json({ error: 'inviteCode and contactId required' });
+      }
+      await sql`UPDATE couples SET partner_contact_id = ${b.contactId}, status = 'completed', completed_at = NOW() WHERE invite_code = ${b.inviteCode}`;
+      return res.json({ success: true });
+    }
+
+    // GET /api/couples/results — Get combined couple results
+    if (req.method === 'GET' && url.startsWith('/couples/results')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const code = params.get('code');
+      if (!code) return res.status(400).json({ error: 'code parameter required' });
+      
+      const coupleRows = await sql`SELECT * FROM couples WHERE invite_code = ${code} LIMIT 1`;
+      if (coupleRows.length === 0) return res.status(404).json({ error: 'Couple not found' });
+      const couple = coupleRows[0];
+      
+      if (couple.status !== 'completed' || !couple.partner_contact_id) {
+        return res.json({ status: 'waiting', message: 'Partner has not completed the assessment yet' });
+      }
+      
+      // Get both assessments (most recent for each)
+      const initiatorAssessment = await sql`SELECT * FROM assessments WHERE contact_id = ${couple.initiator_contact_id} ORDER BY completed_at DESC LIMIT 1`;
+      const partnerAssessment = await sql`SELECT * FROM assessments WHERE contact_id = ${couple.partner_contact_id} ORDER BY completed_at DESC LIMIT 1`;
+      
+      const initiatorContact = await sql`SELECT first_name, last_name FROM contacts WHERE id = ${couple.initiator_contact_id} LIMIT 1`;
+      const partnerContact = await sql`SELECT first_name, last_name FROM contacts WHERE id = ${couple.partner_contact_id} LIMIT 1`;
+      
+      // Helper to parse scores
+      function getScores(a) {
+        if (!a) return { time: 0, people: 0, influence: 0, numbers: 0, knowledge: 0, total: 0 };
+        return {
+          time: Number(a.time_total) || 0,
+          people: Number(a.people_total) || 0,
+          influence: Number(a.influence_total) || 0,
+          numbers: Number(a.numbers_total) || 0,
+          knowledge: Number(a.knowledge_total) || 0,
+          total: Number(a.master_score) || 0
+        };
+      }
+      
+      const iScores = getScores(initiatorAssessment[0]);
+      const pScores = getScores(partnerAssessment[0]);
+      
+      return res.json({
+        status: 'complete',
+        initiator: {
+          name: initiatorContact.length > 0 ? `${initiatorContact[0].first_name} ${initiatorContact[0].last_name}` : 'Partner 1',
+          scores: iScores
+        },
+        partner: {
+          name: partnerContact.length > 0 ? `${partnerContact[0].first_name} ${partnerContact[0].last_name}` : 'Partner 2',
+          scores: pScores
+        },
+        gaps: {
+          time: Math.abs(iScores.time - pScores.time),
+          people: Math.abs(iScores.people - pScores.people),
+          influence: Math.abs(iScores.influence - pScores.influence),
+          numbers: Math.abs(iScores.numbers - pScores.numbers),
+          knowledge: Math.abs(iScores.knowledge - pScores.knowledge)
+        }
+      });
+    }
+
     return res.status(404).json({ error: 'Not found' });
   } catch (err) {
     console.error('API Error:', err);

@@ -399,6 +399,8 @@
                   var mode = 'individual';
                   if (text.indexOf('Relationship') !== -1) mode = 'relationship';
                   else if (text.indexOf('Leadership') !== -1) mode = 'leadership';
+                  // Store mode globally for couple invite logic
+                  window.__veMode = mode;
 
                   // If depth was pre-selected via URL, skip the selector
                   var urlParams = new URLSearchParams(window.location.search);
@@ -442,6 +444,17 @@
           setTimeout(injectCrossPillarImpact, 600);
           // Fallback in case fetch response arrives after DOM is ready
           setTimeout(injectCrossPillarImpact, 2000);
+          // Show invite partner modal if in relationship mode (and not already a couple)
+          var urlP = new URLSearchParams(window.location.search);
+          var currentMode = urlP.get('mode') || window.__veMode || '';
+          var coupleCode = urlP.get('couple');
+          if (currentMode === 'relationship' && !coupleCode) {
+            setTimeout(showCoupleInviteModal, 1200);
+          }
+          // If arriving as a partner (couple code in URL), complete the couple link
+          if (coupleCode) {
+            setTimeout(function() { completeCoupleLink(coupleCode); }, 800);
+          }
         }
         if (window.location.hash === '#/mode-select' || window.location.hash === '#/mode-select/') {
           watchModeSelect();
@@ -1507,5 +1520,241 @@
   import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@2/dist/index.mjs';
   inject();
 </script>
+
+<!-- ====== COUPLE INVITE MODAL ====== -->
+<div id="couple-invite-modal" style="display:none;" aria-modal="true" role="dialog" aria-label="Invite Your Partner">
+<style>
+  #couple-invite-modal {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.75);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1.5rem;
+    backdrop-filter: blur(4px);
+    animation: cim-fade-in 0.3s ease;
+  }
+  @keyframes cim-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  #cim-card {
+    background: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 1rem;
+    padding: 2rem 1.75rem;
+    max-width: 460px;
+    width: 100%;
+    position: relative;
+    animation: cim-slide-up 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  @keyframes cim-slide-up { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  #cim-close {
+    position: absolute; top: 1rem; right: 1rem;
+    background: none; border: none; color: #52525b;
+    font-size: 1.25rem; cursor: pointer; line-height: 1;
+    padding: 0.25rem;
+    transition: color 0.15s;
+  }
+  #cim-close:hover { color: #d4d4d8; }
+  #cim-eyebrow {
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #D4A847; font-weight: 700; margin-bottom: 0.75rem;
+  }
+  #cim-title {
+    font-size: 1.25rem; font-weight: 700; color: #fff;
+    line-height: 1.3; margin-bottom: 0.625rem;
+  }
+  #cim-sub {
+    font-size: 0.875rem; color: #a1a1aa; line-height: 1.55;
+    margin-bottom: 1.5rem;
+  }
+  .cim-field { margin-bottom: 0.875rem; }
+  .cim-label {
+    display: block; font-size: 0.75rem; font-weight: 600;
+    color: #a1a1aa; margin-bottom: 0.375rem; letter-spacing: 0.03em;
+  }
+  .cim-input {
+    width: 100%; padding: 0.75rem 1rem;
+    background: #0a0a0a; border: 1px solid #27272a;
+    border-radius: 0.5rem; color: #fff;
+    font-family: 'Satoshi', sans-serif; font-size: 0.95rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  .cim-input:focus { border-color: #D4A847; }
+  .cim-input::placeholder { color: #52525b; }
+  #cim-error {
+    display: none; font-size: 0.8rem; color: #ef4444;
+    background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 0.375rem; padding: 0.5rem 0.75rem;
+    margin-bottom: 0.875rem;
+  }
+  #cim-success {
+    display: none; font-size: 0.875rem; color: #22c55e;
+    background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2);
+    border-radius: 0.375rem; padding: 0.75rem 1rem;
+    margin-bottom: 0.875rem; line-height: 1.5;
+  }
+  #cim-send-btn {
+    width: 100%; padding: 0.875rem 1.5rem;
+    background: linear-gradient(135deg, #D4A847, #b8942e);
+    color: #0a0a0a; font-family: 'Satoshi', sans-serif;
+    font-size: 0.95rem; font-weight: 700;
+    border: none; border-radius: 0.5rem;
+    cursor: pointer; transition: opacity 0.2s;
+  }
+  #cim-send-btn:hover:not(:disabled) { opacity: 0.9; }
+  #cim-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  #cim-skip {
+    display: block; text-align: center; margin-top: 0.875rem;
+    font-size: 0.8rem; color: #52525b; cursor: pointer;
+    background: none; border: none; width: 100%;
+    font-family: 'Satoshi', sans-serif; transition: color 0.15s;
+  }
+  #cim-skip:hover { color: #a1a1aa; }
+  #cim-divider {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin-bottom: 0.875rem;
+  }
+  #cim-divider::before, #cim-divider::after {
+    content: ''; flex: 1; height: 1px; background: #27272a;
+  }
+  #cim-divider span { font-size: 0.7rem; color: #3f3f46; white-space: nowrap; }
+</style>
+<div id="cim-card">
+  <button id="cim-close" aria-label="Close" onclick="closeCoupleModal()">&#10005;</button>
+  <div id="cim-eyebrow">Relationship Mode</div>
+  <h2 id="cim-title">See how you and your partner compare</h2>
+  <p id="cim-sub">Invite your partner to take the same assessment. You'll get a combined report showing where you align, where you differ, and how to grow together.</p>
+  <div id="cim-success"></div>
+  <div id="cim-error"></div>
+  <div id="cim-form">
+    <div class="cim-field">
+      <label class="cim-label" for="cim-partner-name">Partner's First Name</label>
+      <input class="cim-input" id="cim-partner-name" type="text" placeholder="e.g. Jamie" autocomplete="off" />
+    </div>
+    <div class="cim-field">
+      <label class="cim-label" for="cim-partner-email">Partner's Email Address</label>
+      <input class="cim-input" id="cim-partner-email" type="email" placeholder="partner@email.com" autocomplete="off" />
+    </div>
+    <button id="cim-send-btn" onclick="sendCoupleInvite()">Send Invite &rarr;</button>
+    <div id="cim-divider"><span>or</span></div>
+  </div>
+  <button id="cim-skip" onclick="closeCoupleModal()">Skip &mdash; just view my individual report</button>
+</div>
+</div>
+
+<script>
+(function() {
+  // Track couple code from URL
+  var _coupleCode = (function() {
+    try { return new URLSearchParams(window.location.search).get('couple'); } catch(e) { return null; }
+  })();
+
+  // Complete couple link after partner assessment
+  window.completeCoupleLink = function(code) {
+    var contactId = null;
+    try { contactId = localStorage.getItem('ve_contact_id'); } catch(e) {}
+    if (!contactId || !code) return;
+    fetch('/api/couples/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inviteCode: code, contactId: parseInt(contactId) })
+    }).then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        // Show a small banner with link to combined report
+        injectCoupleCompleteBanner(code);
+      }
+    }).catch(function() {});
+  };
+
+  function injectCoupleCompleteBanner(code) {
+    if (document.getElementById('ve-couple-complete-banner')) return;
+    var root = document.getElementById('root');
+    if (!root) return;
+    var banner = document.createElement('div');
+    banner.id = 've-couple-complete-banner';
+    banner.style.cssText = 'padding:0 1rem 1rem;';
+    banner.innerHTML = '<div style="background:rgba(212,168,71,0.08);border:1px solid rgba(212,168,71,0.25);border-radius:0.75rem;padding:1.25rem 1.5rem;text-align:center;">' +
+      '<div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#D4A847;font-weight:700;margin-bottom:0.5rem;">Your Couple Report Is Ready</div>' +
+      '<p style="font-size:0.875rem;color:#a1a1aa;margin-bottom:1rem;line-height:1.5;">Both assessments are now linked. View your combined P.I.N.K. breakdown.</p>' +
+      '<a href="/couple-report?code=' + encodeURIComponent(code) + '" style="display:inline-block;padding:0.625rem 1.5rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;font-size:0.875rem;text-decoration:none;border-radius:0.5rem;">View Combined Report &rarr;</a>' +
+      '</div>';
+
+    // Insert at top of results view
+    var firstChild = root.querySelector('[class*="min-h-screen"] > *');
+    if (firstChild && firstChild.parentNode) {
+      firstChild.parentNode.insertBefore(banner, firstChild.nextSibling);
+    } else {
+      root.appendChild(banner);
+    }
+  }
+
+  // Show the invite modal
+  window.showCoupleInviteModal = function() {
+    if (document.getElementById('couple-invite-modal')) {
+      document.getElementById('couple-invite-modal').style.display = 'flex';
+    }
+  };
+
+  window.closeCoupleModal = function() {
+    var modal = document.getElementById('couple-invite-modal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  // Close on backdrop click
+  document.addEventListener('click', function(e) {
+    var modal = document.getElementById('couple-invite-modal');
+    if (modal && e.target === modal) {
+      closeCoupleModal();
+    }
+  });
+
+  window.sendCoupleInvite = function() {
+    var name = (document.getElementById('cim-partner-name').value || '').trim();
+    var email = (document.getElementById('cim-partner-email').value || '').trim();
+    var errEl = document.getElementById('cim-error');
+    var sucEl = document.getElementById('cim-success');
+    var btn = document.getElementById('cim-send-btn');
+
+    errEl.style.display = 'none';
+    sucEl.style.display = 'none';
+
+    if (!name) { errEl.textContent = 'Please enter your partner's first name.'; errEl.style.display = 'block'; document.getElementById('cim-partner-name').focus(); return; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Please enter a valid email address.'; errEl.style.display = 'block'; document.getElementById('cim-partner-email').focus(); return; }
+
+    var contactId = null;
+    try { contactId = parseInt(localStorage.getItem('ve_contact_id')); } catch(e) {}
+    if (!contactId) { errEl.textContent = 'Could not find your contact. Please refresh and try again.'; errEl.style.display = 'block'; return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Sending invite...';
+
+    fetch('/api/couples', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initiatorContactId: contactId, partnerEmail: email, partnerName: name })
+    })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(result) {
+      if (!result.ok) {
+        errEl.textContent = result.data.error || 'Something went wrong. Please try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Send Invite →';
+        return;
+      }
+      // Success
+      document.getElementById('cim-form').style.display = 'none';
+      sucEl.innerHTML = '<strong style="color:#22c55e;">Invite sent!</strong><br>We've emailed ' + name + ' at ' + email + ' with a link to take the assessment.<br><br><a href="/couple-report?code=' + encodeURIComponent(result.data.couple.invite_code) + '" style="color:#D4A847;text-decoration:none;font-weight:600;">View your couple report page &rarr;</a>';
+      sucEl.style.display = 'block';
+      document.getElementById('cim-skip').textContent = 'Close';
+    })
+    .catch(function() {
+      errEl.textContent = 'Network error. Please check your connection.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Send Invite →';
+    });
+  };
+})();
+</script>
+
 </body>
 </html>

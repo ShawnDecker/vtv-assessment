@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-TT6PYLPP31');
+</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Couple Report — P.I.N.K. Relationship Assessment</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Satoshi', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* Loading */
+    .loading-view {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .loading-spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid #27272a;
+      border-top-color: #D4A847;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-view p { color: #71717a; font-size: 0.95rem; }
+
+    /* Error */
+    .error-view {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: 2rem;
+    }
+    .error-view h2 { color: #ef4444; font-size: 1.25rem; }
+    .error-view p { color: #71717a; font-size: 0.9rem; }
+    .error-view a { color: #D4A847; text-decoration: none; }
+
+    /* Waiting */
+    .waiting-view {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      flex-direction: column;
+      text-align: center;
+      padding: 2rem 1.5rem;
+    }
+    .waiting-pulse {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(212,168,71,0.1);
+      border: 2px solid rgba(212,168,71,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.75rem;
+      animation: pulse-ring 2s ease-in-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.08); opacity: 0.7; }
+    }
+    .waiting-pulse svg { width: 36px; height: 36px; }
+    .waiting-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .waiting-sub {
+      font-size: 0.95rem;
+      color: #a1a1aa;
+      max-width: 420px;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .waiting-share-box {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      max-width: 440px;
+      width: 100%;
+    }
+    .waiting-share-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #52525b;
+      margin-bottom: 0.625rem;
+      font-weight: 700;
+    }
+    .share-link-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .share-link-input {
+      flex: 1;
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.375rem;
+      color: #a1a1aa;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 0.8rem;
+      padding: 0.5rem 0.75rem;
+      outline: none;
+    }
+    .copy-btn {
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      border-radius: 0.375rem;
+      color: #d4d4d8;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .copy-btn:hover { background: #3f3f46; }
+    .copy-btn.copied { color: #22c55e; }
+    .reload-hint {
+      font-size: 0.75rem;
+      color: #52525b;
+      margin-top: 1rem;
+    }
+
+    /* Report layout */
+    .report-view {
+      display: none;
+    }
+    .report {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 5rem;
+    }
+
+    /* Report header */
+    .report-header {
+      text-align: center;
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid #27272a;
+      margin-bottom: 2rem;
+    }
+    .brand-eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #D4A847;
+      margin-bottom: 0.5rem;
+    }
+    .report-title {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.5rem;
+      font-style: italic;
+      color: #d4d4d8;
+      margin-bottom: 1.5rem;
+    }
+    .partner-names {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .partner-name-tag {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .partner-name-tag.partner2 { color: #a78bfa; }
+    .partner-divider {
+      color: #D4A847;
+      font-size: 1.25rem;
+    }
+
+    /* Overall score comparison */
+    .score-overview {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 480px) {
+      .score-overview { grid-template-columns: 1fr; }
+    }
+    .score-card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .score-card.partner1 { border-color: rgba(212,168,71,0.3); }
+    .score-card.partner2 { border-color: rgba(167,139,250,0.3); }
+    .score-name {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #71717a;
+      margin-bottom: 0.75rem;
+    }
+    .score-card.partner1 .score-name { color: #D4A847; }
+    .score-card.partner2 .score-name { color: #a78bfa; }
+    .score-total {
+      font-size: 3.5rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 0.375rem;
+    }
+    .score-card.partner1 .score-total { color: #D4A847; }
+    .score-card.partner2 .score-total { color: #a78bfa; }
+    .score-label {
+      font-size: 0.8rem;
+      color: #52525b;
+    }
+
+    /* Section */
+    .section {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .section-title {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #D4A847;
+      margin-bottom: 1.25rem;
+      font-weight: 700;
+    }
+    .section h3 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Pillar comparison bars */
+    .pillar-compare {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .pillar-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+    .pillar-row-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pillar-row-name {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #d4d4d8;
+      letter-spacing: 0.05em;
+    }
+    .pillar-row-gap {
+      font-size: 0.7rem;
+      color: #71717a;
+    }
+    .bars-pair {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .bar-who {
+      width: 70px;
+      font-size: 0.7rem;
+      color: #71717a;
+      text-align: right;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .bar-track {
+      flex: 1;
+      height: 22px;
+      background: #27272a;
+      border-radius: 0.25rem;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 0.5rem;
+      transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+    .bar-fill span {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+    /* Partner 1 bar fills (gold variants per pillar) */
+    .bf-time-1 { background: linear-gradient(90deg, #D4A847, #b8942e); }
+    .bf-people-1 { background: linear-gradient(90deg, #f472b6, #db2777); }
+    .bf-influence-1 { background: linear-gradient(90deg, #2dd4bf, #0d9488); }
+    .bf-numbers-1 { background: linear-gradient(90deg, #60a5fa, #2563eb); }
+    .bf-knowledge-1 { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
+    /* Partner 2 bar fills (lighter/dimmer variants) */
+    .bf-time-2 { background: linear-gradient(90deg, rgba(212,168,71,0.5), rgba(184,148,46,0.5)); }
+    .bf-people-2 { background: linear-gradient(90deg, rgba(244,114,182,0.5), rgba(219,39,119,0.5)); }
+    .bf-influence-2 { background: linear-gradient(90deg, rgba(45,212,191,0.5), rgba(13,148,136,0.5)); }
+    .bf-numbers-2 { background: linear-gradient(90deg, rgba(96,165,250,0.5), rgba(37,99,235,0.5)); }
+    .bf-knowledge-2 { background: linear-gradient(90deg, rgba(167,139,250,0.5), rgba(124,58,237,0.5)); }
+
+    /* Gap analysis */
+    .gap-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .gap-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.875rem 1rem;
+      background: #0a0a0a;
+      border-radius: 0.5rem;
+      border: 1px solid #27272a;
+    }
+    .gap-rank {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: #3f3f46;
+      width: 24px;
+      flex-shrink: 0;
+    }
+    .gap-pillar-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .gap-info {
+      flex: 1;
+    }
+    .gap-pillar-name {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-bottom: 0.125rem;
+    }
+    .gap-scores-text {
+      font-size: 0.75rem;
+      color: #71717a;
+    }
+    .gap-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.25rem 0.625rem;
+      border-radius: 2rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .gap-large { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+    .gap-medium { background: rgba(249,115,22,0.12); color: #f97316; border: 1px solid rgba(249,115,22,0.25); }
+    .gap-small { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.25); }
+    .gap-none { background: rgba(212,168,71,0.12); color: #D4A847; border: 1px solid rgba(212,168,71,0.25); }
+
+    /* Alignment section */
+    .align-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.625rem;
+    }
+    .align-item {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      padding: 0.75rem 1rem;
+      background: rgba(34,197,94,0.05);
+      border: 1px solid rgba(34,197,94,0.15);
+      border-radius: 0.5rem;
+    }
+    .align-icon {
+      color: #22c55e;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .align-info { flex: 1; }
+    .align-pillar { font-size: 0.875rem; font-weight: 700; margin-bottom: 0.125rem; }
+    .align-detail { font-size: 0.75rem; color: #71717a; }
+    .align-combined {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #22c55e;
+      white-space: nowrap;
+    }
+
+    /* Recommendations */
+    .rec-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .rec-item {
+      padding: 1.25rem;
+      background: #0a0a0a;
+      border-radius: 0.625rem;
+      border-left: 3px solid #D4A847;
+      border-top: 1px solid #27272a;
+      border-right: 1px solid #27272a;
+      border-bottom: 1px solid #27272a;
+    }
+    .rec-item.priority-high { border-left-color: #ef4444; }
+    .rec-item.priority-medium { border-left-color: #f97316; }
+    .rec-item.priority-low { border-left-color: #22c55e; }
+    .rec-pillar-tag {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #D4A847;
+      margin-bottom: 0.5rem;
+    }
+    .rec-item.priority-high .rec-pillar-tag { color: #ef4444; }
+    .rec-item.priority-medium .rec-pillar-tag { color: #f97316; }
+    .rec-item.priority-low .rec-pillar-tag { color: #22c55e; }
+    .rec-text {
+      font-size: 0.9rem;
+      color: #d4d4d8;
+      line-height: 1.55;
+    }
+
+    /* CTAs */
+    .cta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.875rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 500px) {
+      .cta-grid { grid-template-columns: 1fr; }
+    }
+    .cta-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 1.25rem;
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      text-decoration: none;
+      transition: border-color 0.2s, background 0.15s;
+    }
+    .cta-card:hover { border-color: #D4A847; background: rgba(212,168,71,0.04); }
+    .cta-card-eyebrow {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #D4A847;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .cta-card h4 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.375rem;
+      line-height: 1.3;
+    }
+    .cta-card p {
+      font-size: 0.775rem;
+      color: #71717a;
+      line-height: 1.4;
+    }
+    .cta-full {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 0.875rem 1.5rem;
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #0a0a0a;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 0.625rem;
+      transition: opacity 0.2s;
+    }
+    .cta-full:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+
+  <!-- Loading -->
+  <div class="loading-view" id="loadingView">
+    <div class="loading-spinner"></div>
+    <p>Loading your couple report...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-view" id="errorView">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem;">&#x26A0;</div>
+    <h2>Report Not Found</h2>
+    <p>We couldn't find this couple report. The link may be invalid.</p>
+    <p style="margin-top:1rem;"><a href="/">Take the Assessment &rarr;</a></p>
+  </div>
+
+  <!-- Waiting for partner -->
+  <div class="waiting-view" id="waitingView">
+    <div class="waiting-pulse">
+      <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="18" cy="18" r="14" stroke="#D4A847" stroke-width="2" stroke-dasharray="4 3"/>
+        <path d="M13 18l3 3 7-7" stroke="#D4A847" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2 class="waiting-title">Waiting for your partner</h2>
+    <p class="waiting-sub" id="waitingSub">
+      Your report will be ready once your partner completes their assessment. Share the link below with them.
+    </p>
+    <div class="waiting-share-box">
+      <div class="waiting-share-label">Send this link to your partner</div>
+      <div class="share-link-row">
+        <input type="text" class="share-link-input" id="shareLinkInput" readonly />
+        <button class="copy-btn" id="copyBtn" onclick="copyLink()">Copy</button>
+      </div>
+    </div>
+    <p class="reload-hint">This page will show your combined results once both assessments are complete.</p>
+  </div>
+
+  <!-- Full Report -->
+  <div class="report-view" id="reportView">
+    <div class="report">
+
+      <!-- Header -->
+      <div class="report-header">
+        <div class="brand-eyebrow">Value to Victory</div>
+        <div class="report-title">P.I.N.K. Couple Report</div>
+        <div class="partner-names">
+          <span class="partner-name-tag" id="name1">Partner 1</span>
+          <span class="partner-divider">&#10084;</span>
+          <span class="partner-name-tag partner2" id="name2">Partner 2</span>
+        </div>
+      </div>
+
+      <!-- Overall scores -->
+      <div class="score-overview">
+        <div class="score-card partner1">
+          <div class="score-name" id="scoreCard1Name">Partner 1</div>
+          <div class="score-total" id="scoreCard1">—</div>
+          <div class="score-label">Overall P.I.N.K. Score</div>
+        </div>
+        <div class="score-card partner2">
+          <div class="score-name" id="scoreCard2Name">Partner 2</div>
+          <div class="score-total" id="scoreCard2">—</div>
+          <div class="score-label">Overall P.I.N.K. Score</div>
+        </div>
+      </div>
+
+      <!-- Pillar Comparison -->
+      <div class="section">
+        <div class="section-title">Pillar Comparison</div>
+        <div class="pillar-compare" id="pillarCompare">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+
+      <!-- Gap Analysis -->
+      <div class="section">
+        <div class="section-title">Gap Analysis</div>
+        <h3 style="margin-bottom:0.5rem;">Where You Differ Most</h3>
+        <p style="font-size:0.875rem;color:#71717a;margin-bottom:1.25rem;">Pillars with the largest gaps are the highest-leverage opportunities for your relationship.</p>
+        <div class="gap-list" id="gapList"><!-- Injected --></div>
+      </div>
+
+      <!-- Alignment -->
+      <div class="section">
+        <div class="section-title">Alignment</div>
+        <h3 style="margin-bottom:0.5rem;">Where You're Strongest Together</h3>
+        <p style="font-size:0.875rem;color:#71717a;margin-bottom:1.25rem;">These are the pillars where you're most aligned — build on this foundation.</p>
+        <div class="align-list" id="alignList"><!-- Injected --></div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="section">
+        <div class="section-title">Recommendations</div>
+        <h3 style="margin-bottom:0.5rem;">Actions to Close the Gaps</h3>
+        <p style="font-size:0.875rem;color:#71717a;margin-bottom:1.25rem;">Based on your specific gaps, here's where to focus first.</p>
+        <div class="rec-list" id="recList"><!-- Injected --></div>
+      </div>
+
+      <!-- CTAs -->
+      <div class="section">
+        <div class="section-title">Next Steps</div>
+        <h3 style="margin-bottom:1.25rem;">Turn Insights Into Action</h3>
+        <div class="cta-grid">
+          <a class="cta-card" href="https://calendly.com/valuetovictory" target="_blank" rel="noopener">
+            <div class="cta-card-eyebrow">Free Session</div>
+            <h4>Book a Couples Coaching Call</h4>
+            <p>Work through your gaps with Shawn E. Decker — 45 minutes, no pitch.</p>
+          </a>
+          <a class="cta-card" href="https://buy.stripe.com/9B6dR81WcdusfVL0RK6oo0c" target="_blank" rel="noopener">
+            <div class="cta-card-eyebrow">$29/mo</div>
+            <h4>Join VictoryPath Together</h4>
+            <p>Monthly coaching, accountability tools, and couple progress tracking.</p>
+          </a>
+        </div>
+        <a class="cta-full" href="/couple-challenge" style="margin-top:0.25rem;">
+          Take the 30-Day Couple Challenge &rarr;
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    var code = params.get('code');
+
+    var PILLAR_COLORS = {
+      time: '#D4A847',
+      people: '#f472b6',
+      influence: '#2dd4bf',
+      numbers: '#60a5fa',
+      knowledge: '#a78bfa'
+    };
+    var PILLAR_LABELS = {
+      time: 'Time',
+      people: 'People',
+      influence: 'Influence',
+      numbers: 'Numbers',
+      knowledge: 'Knowledge'
+    };
+    var PILLAR_ORDER = ['time', 'people', 'influence', 'numbers', 'knowledge'];
+
+    var RECOMMENDATIONS = {
+      time: {
+        high: 'Your biggest gap is in Time — one of you treats time as an investment while the other hasn\'t fully optimized it yet. Start with a weekly calendar review together: block your highest-value hours and protect them as a team.',
+        medium: 'You have a moderate gap in Time. Try syncing your schedules monthly to spot where you\'re misaligned on priorities and eliminate shared time drains.',
+        low: 'Small gap in Time — you\'re mostly aligned here. Consider doing a quick 5-hour "time leak audit" together to find any remaining inefficiencies.'
+      },
+      people: {
+        high: 'People is your largest gap — one partner invests heavily in relationships while the other doesn\'t. Schedule one intentional "relationship investment" together each week: a double date, mentorship conversation, or community event.',
+        medium: 'Moderate gap in People. Identify two or three relationships that are important to both of you and make joint deposits — shared dinners, introductions, thoughtful check-ins.',
+        low: 'Small People gap — you both value relationships similarly. Focus on building shared alliances rather than individual networks.'
+      },
+      influence: {
+        high: 'Influence shows your biggest gap. One partner has developed significantly more credibility or communication skill. Spend 30 minutes each week where the higher-scoring partner coaches the other on one influence habit.',
+        medium: 'Moderate Influence gap. Read one book on communication or leadership together this quarter and debrief chapter by chapter.',
+        low: 'You\'re well-matched on Influence. Continue developing your combined credibility — the way you show up together is already an asset.'
+      },
+      numbers: {
+        high: 'Numbers is your largest gap — financial alignment is one of the top predictors of relationship success. Set a standing "money date" once a month to review budgets, goals, and investments side by side.',
+        medium: 'Moderate Numbers gap. Get on the same page about your financial goals by writing out a one-page "couple financial plan" — income targets, saving rate, and one shared investment.',
+        low: 'Small Numbers gap — you\'re close in financial thinking. Make sure you have a shared view of your numbers so you can optimize together.'
+      },
+      knowledge: {
+        high: 'Knowledge is your biggest gap. One of you is investing heavily in learning while the other isn\'t. Start a shared "learning hour" each week — a podcast, book, or course you both engage with.',
+        medium: 'Moderate Knowledge gap. Pick one skill area that benefits both of you and learn it together this quarter — investing, marketing, or whatever fits your shared goals.',
+        low: 'Small Knowledge gap — you\'re aligned in how you value learning. Keep building together and share what you learn from your individual paths.'
+      }
+    };
+
+    function show(id) {
+      ['loadingView', 'errorView', 'waitingView', 'reportView'].forEach(function(v) {
+        document.getElementById(v).style.display = v === id ? (id === 'waitingView' || id === 'loadingView' ? 'flex' : 'block') : 'none';
+      });
+    }
+
+    function copyLink() {
+      var input = document.getElementById('shareLinkInput');
+      input.select();
+      document.execCommand('copy');
+      var btn = document.getElementById('copyBtn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(function() {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    }
+    window.copyLink = copyLink;
+
+    function getPct(score) {
+      // Scores are out of 100 per pillar (10 questions x 10 pts)
+      return Math.min(100, Math.max(0, score));
+    }
+
+    function buildPillarCompare(data) {
+      var html = '';
+      PILLAR_ORDER.forEach(function(key) {
+        var s1 = data.initiator.scores[key] || 0;
+        var s2 = data.partner.scores[key] || 0;
+        var pct1 = getPct(s1);
+        var pct2 = getPct(s2);
+        var gap = Math.abs(s1 - s2);
+        var color = PILLAR_COLORS[key];
+        var label = PILLAR_LABELS[key];
+        var name1 = data.initiator.name.split(' ')[0];
+        var name2 = data.partner.name.split(' ')[0];
+
+        html += '<div class="pillar-row">';
+        html += '<div class="pillar-row-header">';
+        html += '<span class="pillar-row-name" style="color:' + color + ';">' + label + '</span>';
+        html += '<span class="pillar-row-gap">gap: ' + gap.toFixed(0) + ' pts</span>';
+        html += '</div>';
+        html += '<div class="bars-pair">';
+        html += '<div class="bar-wrap"><span class="bar-who" title="' + data.initiator.name + '">' + name1 + '</span>';
+        html += '<div class="bar-track"><div class="bar-fill bf-' + key + '-1" style="width:' + pct1 + '%"><span>' + s1 + '</span></div></div></div>';
+        html += '<div class="bar-wrap"><span class="bar-who" title="' + data.partner.name + '">' + name2 + '</span>';
+        html += '<div class="bar-track"><div class="bar-fill bf-' + key + '-2" style="width:' + pct2 + '%"><span>' + s2 + '</span></div></div></div>';
+        html += '</div></div>';
+      });
+      document.getElementById('pillarCompare').innerHTML = html;
+    }
+
+    function buildGapAnalysis(data) {
+      var gaps = [];
+      PILLAR_ORDER.forEach(function(key) {
+        gaps.push({
+          key: key,
+          gap: data.gaps[key] || 0,
+          s1: data.initiator.scores[key] || 0,
+          s2: data.partner.scores[key] || 0
+        });
+      });
+      gaps.sort(function(a, b) { return b.gap - a.gap; });
+
+      var html = '';
+      gaps.forEach(function(g, i) {
+        var color = PILLAR_COLORS[g.key];
+        var label = PILLAR_LABELS[g.key];
+        var badgeClass, badgeText;
+        if (g.gap >= 20) { badgeClass = 'gap-large'; badgeText = 'Large Gap'; }
+        else if (g.gap >= 10) { badgeClass = 'gap-medium'; badgeText = 'Moderate'; }
+        else if (g.gap >= 5) { badgeClass = 'gap-small'; badgeText = 'Small Gap'; }
+        else { badgeClass = 'gap-none'; badgeText = 'Aligned'; }
+
+        var name1 = data.initiator.name.split(' ')[0];
+        var name2 = data.partner.name.split(' ')[0];
+
+        html += '<div class="gap-item">';
+        html += '<div class="gap-rank">' + (i + 1) + '</div>';
+        html += '<div class="gap-pillar-dot" style="background:' + color + ';"></div>';
+        html += '<div class="gap-info">';
+        html += '<div class="gap-pillar-name" style="color:' + color + ';">' + label + '</div>';
+        html += '<div class="gap-scores-text">' + name1 + ': ' + g.s1 + ' &nbsp;&nbsp; ' + name2 + ': ' + g.s2 + ' &nbsp;&mdash;&nbsp; ' + g.gap.toFixed(0) + ' pt gap</div>';
+        html += '</div>';
+        html += '<span class="gap-badge ' + badgeClass + '">' + badgeText + '</span>';
+        html += '</div>';
+      });
+      document.getElementById('gapList').innerHTML = html;
+
+      // Build recommendations based on top gaps
+      buildRecommendations(gaps, data);
+
+      return gaps;
+    }
+
+    function buildAlignment(data, sortedGaps) {
+      // Take the 2-3 pillars with smallest gaps
+      var aligned = sortedGaps.slice().sort(function(a, b) { return a.gap - b.gap; }).slice(0, 3);
+      var html = '';
+      aligned.forEach(function(g) {
+        var color = PILLAR_COLORS[g.key];
+        var label = PILLAR_LABELS[g.key];
+        var combined = g.s1 + g.s2;
+        var alignDesc = g.gap <= 5 ? 'Nearly identical scores — excellent alignment' :
+          g.gap <= 10 ? 'Close scores — strong alignment in this area' :
+          'Moderate alignment — room to grow together';
+        html += '<div class="align-item">';
+        html += '<div class="align-icon">&#10003;</div>';
+        html += '<div class="align-info">';
+        html += '<div class="align-pillar" style="color:' + color + ';">' + label + '</div>';
+        html += '<div class="align-detail">' + alignDesc + '</div>';
+        html += '</div>';
+        html += '<div class="align-combined">' + combined + ' combined</div>';
+        html += '</div>';
+      });
+      document.getElementById('alignList').innerHTML = html;
+    }
+
+    function buildRecommendations(sortedGaps, data) {
+      var html = '';
+      sortedGaps.forEach(function(g) {
+        var recSet = RECOMMENDATIONS[g.key];
+        var priority, priorityClass, recText;
+        if (g.gap >= 20) { priority = 'Highest Priority'; priorityClass = 'priority-high'; recText = recSet.high; }
+        else if (g.gap >= 10) { priority = 'Medium Priority'; priorityClass = 'priority-medium'; recText = recSet.medium; }
+        else { priority = 'Maintenance'; priorityClass = 'priority-low'; recText = recSet.low; }
+
+        html += '<div class="rec-item ' + priorityClass + '">';
+        html += '<div class="rec-pillar-tag">' + PILLAR_LABELS[g.key] + ' &nbsp;&middot;&nbsp; ' + priority + '</div>';
+        html += '<div class="rec-text">' + recText + '</div>';
+        html += '</div>';
+      });
+      document.getElementById('recList').innerHTML = html;
+    }
+
+    function renderReport(data) {
+      // Names
+      document.getElementById('name1').textContent = data.initiator.name;
+      document.getElementById('name2').textContent = data.partner.name;
+      document.getElementById('scoreCard1Name').textContent = data.initiator.name.split(' ')[0];
+      document.getElementById('scoreCard2Name').textContent = data.partner.name.split(' ')[0];
+      document.getElementById('scoreCard1').textContent = data.initiator.scores.total || '—';
+      document.getElementById('scoreCard2').textContent = data.partner.scores.total || '—';
+
+      buildPillarCompare(data);
+      var sortedGaps = buildGapAnalysis(data);
+      buildAlignment(data, sortedGaps);
+
+      show('reportView');
+    }
+
+    if (!code) {
+      show('errorView');
+      return;
+    }
+
+    show('loadingView');
+
+    fetch('/api/couples/results?code=' + encodeURIComponent(code))
+      .then(function(r) {
+        if (!r.ok) throw new Error('error');
+        return r.json();
+      })
+      .then(function(data) {
+        if (data.status === 'waiting') {
+          // Show waiting view
+          var inviteUrl = 'https://assessment.valuetovictory.com/partner-invite?code=' + encodeURIComponent(code);
+          document.getElementById('shareLinkInput').value = inviteUrl;
+          show('waitingView');
+        } else if (data.status === 'complete') {
+          renderReport(data);
+        } else {
+          show('errorView');
+        }
+      })
+      .catch(function() {
+        show('errorView');
+      });
+  })();
+  </script>
+
+</body>
+</html>
