@@ -282,9 +282,33 @@
     .limited-data p { color: #a1a1aa; font-size: 0.85rem; line-height: 1.5; margin: 0 0 0.75rem; }
     .limited-data a { display: inline-block; padding: 0.5rem 1.25rem; background: #f97316; color: #0a0a0a; font-weight: 700; border-radius: 0.5rem; text-decoration: none; font-size: 0.85rem; }
 
+  
+    .pdf-download-bar { position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, #D4A847, #b8942e); padding: 12px 20px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 12px; }
+    .pdf-download-bar button { background: #0a0a0a; color: #D4A847; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+    .pdf-download-bar button:hover { background: #1a1a1a; }
+    .pdf-download-bar .dl-text { color: #0a0a0a; font-size: 0.85rem; font-weight: 600; }
+    .pdf-download-bar .dl-free { background: #22c55e; color: #0a0a0a; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+    .pdf-generating { opacity: 0.7; pointer-events: none; }
+
   </style>
+
+    <!-- PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 </head>
 <body>
+
+  <!-- PDF Download Bar -->
+  <div class="pdf-download-bar" id="pdfBar" style="display:none;">
+    <span class="dl-text">Your P.I.N.K. Diagnostic Report is ready</span>
+    <span class="dl-free" id="dlFreeTag">FREE</span>
+    <button onclick="downloadPDF()" id="dlBtn">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download PDF Report
+    </button>
+  </div>
+
   <div id="loading" class="loading">
     <span class="loading-text">Loading your report...</span>
   </div>
@@ -608,6 +632,7 @@
       var d = new Date(a.completedAt);
       var dateStr = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
+      showDownloadBar(false);
       // Show limited data notice for quick assessments or first-time users
       var assessmentDepth = data.depth || 'quick';
       var isQuick = assessmentDepth === 'quick';
@@ -854,5 +879,97 @@ fetch('/api/book-count').then(function(r){return r.json()}).then(function(d){
   pills.forEach(function(el){if(d.verified_copies>0)el.textContent=d.verified_copies.toLocaleString()+' claimed';});
 }).catch(function(){});
 </script>
+
+  <script>
+    // Show download bar when report loads
+    function showDownloadBar(gated) {
+      var bar = document.getElementById('pdfBar');
+      var freeTag = document.getElementById('dlFreeTag');
+      if (bar) {
+        bar.style.display = 'flex';
+        if (gated) {
+          freeTag.textContent = '$1.99';
+          freeTag.style.background = '#D4A847';
+        }
+      }
+    }
+
+    function downloadPDF() {
+      var btn = document.getElementById('dlBtn');
+      var origText = btn.innerHTML;
+      btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="spin"><circle cx="12" cy="12" r="10"/></svg> Generating PDF...';
+      btn.disabled = true;
+
+      var report = document.querySelector('.report');
+      if (!report) { alert('Report not found'); btn.innerHTML = origText; btn.disabled = false; return; }
+
+      // Hide the download bar and gating overlay temporarily
+      var bar = document.getElementById('pdfBar');
+      var overlay = document.getElementById('gatingOverlay');
+      if (bar) bar.style.display = 'none';
+      if (overlay) overlay.style.display = 'none';
+
+      // Remove blur for PDF
+      var blurred = document.getElementById('gatedContent');
+      var wasBlurred = false;
+      if (blurred && blurred.classList.contains('gated-content-blurred')) {
+        blurred.classList.remove('gated-content-blurred');
+        wasBlurred = true;
+      }
+
+      html2canvas(report, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#0a0a0a',
+        logging: false
+      }).then(function(canvas) {
+        var jsPDF = window.jspdf.jsPDF;
+        var imgData = canvas.toDataURL('image/jpeg', 0.95);
+        var imgWidth = 210; // A4 width in mm
+        var pageHeight = 297; // A4 height in mm
+        var imgHeight = canvas.height * imgWidth / canvas.width;
+        var heightLeft = imgHeight;
+        var position = 0;
+
+        var pdf = new jsPDF('p', 'mm', 'a4');
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        // Add disclaimer footer on last page
+        var lastPage = pdf.getNumberOfPages();
+        pdf.setPage(lastPage);
+        pdf.setFontSize(7);
+        pdf.setTextColor(113, 113, 122);
+        pdf.text('This report contains recommendations based on self-reported data. Accuracy improves with coaching involvement. © 2026 Value to Victory — Shawn E. Decker', 105, 290, { align: 'center' });
+
+        var name = document.querySelector('.report-header .name');
+        var fileName = name ? 'PINK-Report-' + name.textContent.replace(/[^a-zA-Z]/g, '-') + '.pdf' : 'PINK-Diagnostic-Report.pdf';
+        pdf.save(fileName);
+
+        // Restore
+        if (bar) bar.style.display = 'flex';
+        if (overlay) overlay.style.display = 'block';
+        if (wasBlurred && blurred) blurred.classList.add('gated-content-blurred');
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }).catch(function(err) {
+        console.error('PDF generation failed:', err);
+        alert('PDF generation failed. Try using your browser\'s Print > Save as PDF instead.');
+        if (bar) bar.style.display = 'flex';
+        if (overlay) overlay.style.display = 'block';
+        if (wasBlurred && blurred) blurred.classList.add('gated-content-blurred');
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      });
+    }
+  </script>
+
 </body>
 </html>
