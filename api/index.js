@@ -2932,12 +2932,12 @@ This link expires in 24 hours.
     // GET /api/book-count — track free book giveaway count
     if (req.method === 'GET' && url === '/book-count') {
       try {
-        const countResult = await sql\`
+        const countResult = await sql`
           SELECT 
             COUNT(*) as total_signups,
             COUNT(*) FILTER (WHERE verified = true) as verified_copies
           FROM free_book_signups
-        \`;
+        `;
         return res.status(200).json({
           total_signups: parseInt(countResult[0].total_signups) || 0,
           verified_copies: parseInt(countResult[0].verified_copies) || 0,
