@@ -616,6 +616,559 @@
     <link rel="stylesheet" crossorigin href="./assets/index-CHzibysT.css">
   </head>
   <body>
+    <!-- Lead Capture Gate Overlay -->
+    <div id="ve-lead-gate" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#1a1a2e;z-index:99999;display:flex;align-items:center;justify-content:center;padding:1rem;font-family:'Satoshi',sans-serif;">
+      <style>
+        #ve-lead-gate .gate-card { background:#0f0f23; border:1px solid #2a2a4a; border-radius:1rem; max-width:460px; width:100%; padding:2.5rem 2rem; text-align:center; animation:veGateIn 0.4s ease; }
+        @keyframes veGateIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        #ve-lead-gate .gate-eyebrow { font-size:0.7rem; letter-spacing:3px; text-transform:uppercase; color:#d4a853; margin-bottom:0.75rem; font-weight:700; }
+        #ve-lead-gate h2 { font-family:'Instrument Serif',serif; font-style:italic; font-size:1.75rem; color:#fff; margin:0 0 0.5rem; line-height:1.3; }
+        #ve-lead-gate .gate-sub { font-size:0.88rem; color:#a1a1b8; line-height:1.6; margin-bottom:1.75rem; }
+        #ve-lead-gate .gate-welcome { font-size:1rem; color:#d4a853; font-weight:600; margin-bottom:0.5rem; display:none; }
+        #ve-lead-gate .gate-input { width:100%; padding:0.875rem 1rem; background:#1a1a2e; border:1px solid #2a2a4a; border-radius:0.5rem; color:#fff; font-family:'Satoshi',sans-serif; font-size:1rem; outline:none; transition:border-color 0.2s; margin-bottom:0.75rem; box-sizing:border-box; }
+        #ve-lead-gate .gate-input:focus { border-color:#d4a853; }
+        #ve-lead-gate .gate-input::placeholder { color:#52527a; }
+        #ve-lead-gate .gate-btn { display:block; width:100%; padding:0.95rem; background:linear-gradient(135deg,#d4a853,#b8942e); color:#0a0a1a; font-family:'Satoshi',sans-serif; font-size:1rem; font-weight:700; border:none; border-radius:0.625rem; cursor:pointer; transition:opacity 0.2s; margin-top:0.25rem; }
+        #ve-lead-gate .gate-btn:hover { opacity:0.9; }
+        #ve-lead-gate .gate-btn:disabled { opacity:0.5; cursor:not-allowed; }
+        #ve-lead-gate .gate-error { color:#ef4444; font-size:0.85rem; margin-top:0.5rem; display:none; }
+        #ve-lead-gate .gate-note { font-size:0.78rem; color:#52527a; margin-top:1rem; line-height:1.5; }
+        #ve-lead-gate .gate-note a { color:#d4a853; text-decoration:none; }
+        #ve-lead-gate .gate-note a:hover { text-decoration:underline; }
+        #ve-lead-gate .gate-resume { display:none; background:#1a1a2e; border:1px solid #2a2a4a; border-radius:0.75rem; padding:1.25rem; margin-top:1.25rem; text-align:left; }
+        #ve-lead-gate .gate-resume p { font-size:0.9rem; color:#e4e4f0; margin:0 0 1rem; line-height:1.5; }
+        #ve-lead-gate .gate-resume-btns { display:flex; gap:0.75rem; }
+        #ve-lead-gate .gate-resume-btn { flex:1; padding:0.75rem; border-radius:0.5rem; font-family:'Satoshi',sans-serif; font-size:0.88rem; font-weight:600; cursor:pointer; border:none; transition:opacity 0.2s; }
+        #ve-lead-gate .gate-resume-btn:hover { opacity:0.85; }
+        #ve-lead-gate .gate-resume-btn.primary { background:linear-gradient(135deg,#d4a853,#b8942e); color:#0a0a1a; }
+        #ve-lead-gate .gate-resume-btn.secondary { background:#2a2a4a; color:#a1a1b8; }
+        @media (max-width: 520px) {
+          #ve-lead-gate .gate-card { padding:2rem 1.25rem; }
+          #ve-lead-gate h2 { font-size:1.5rem; }
+        }
+      </style>
+      <div class="gate-card">
+        <div class="gate-eyebrow">THE VALUE ENGINE</div>
+        <div class="gate-welcome" id="ve-gate-welcome"></div>
+        <h2 id="ve-gate-title">Let's Set Up Your Profile</h2>
+        <p class="gate-sub" id="ve-gate-sub">So we can save your results, email your personalized report, and let you pick up right where you left off.</p>
+        <form id="ve-gate-form" autocomplete="on">
+          <input type="text" class="gate-input" id="ve-gate-name" name="given-name" autocomplete="given-name" placeholder="First Name *" required />
+          <input type="email" class="gate-input" id="ve-gate-email" name="email" autocomplete="email" placeholder="Email Address *" required />
+          <input type="tel" class="gate-input" id="ve-gate-phone" name="tel" autocomplete="tel" placeholder="Phone (optional)" />
+          <button type="submit" class="gate-btn" id="ve-gate-btn">Start My Assessment</button>
+          <div class="gate-error" id="ve-gate-error"></div>
+        </form>
+        <div class="gate-resume" id="ve-gate-resume">
+          <p id="ve-gate-resume-text"></p>
+          <div class="gate-resume-btns">
+            <button class="gate-resume-btn primary" id="ve-gate-resume-btn">Resume Where I Left Off</button>
+            <button class="gate-resume-btn secondary" id="ve-gate-fresh-btn">Start Fresh</button>
+          </div>
+        </div>
+        <p class="gate-note">Your data stays private. We never sell your information.<br><a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms of Service</a></p>
+      </div>
+    </div>
+
+    <script>
+    // === LEAD CAPTURE GATE LOGIC ===
+    (function() {
+      var gate = document.getElementById('ve-lead-gate');
+      var form = document.getElementById('ve-gate-form');
+      var nameInput = document.getElementById('ve-gate-name');
+      var emailInput = document.getElementById('ve-gate-email');
+      var phoneInput = document.getElementById('ve-gate-phone');
+      var btn = document.getElementById('ve-gate-btn');
+      var errorDiv = document.getElementById('ve-gate-error');
+      var welcomeDiv = document.getElementById('ve-gate-welcome');
+      var titleEl = document.getElementById('ve-gate-title');
+      var subEl = document.getElementById('ve-gate-sub');
+      var resumeBox = document.getElementById('ve-gate-resume');
+      var resumeText = document.getElementById('ve-gate-resume-text');
+      var resumeBtn = document.getElementById('ve-gate-resume-btn');
+      var freshBtn = document.getElementById('ve-gate-fresh-btn');
+
+      // Check if user already completed the gate this session
+      var storedContactId = null;
+      try { storedContactId = localStorage.getItem('ve_contact_id'); } catch(e) {}
+
+      // If they already have a contactId and are mid-assessment, skip the gate
+      if (storedContactId && window.location.hash.indexOf('assessment') !== -1) {
+        gate.style.display = 'none';
+      }
+      // If on results page or report page, skip gate
+      if (window.location.hash.indexOf('results') !== -1 || window.location.hash.indexOf('report') !== -1) {
+        gate.style.display = 'none';
+      }
+      // If on mode-select with depth already chosen and contactId exists, skip gate
+      if (storedContactId && window.location.hash.indexOf('mode-select') !== -1) {
+        gate.style.display = 'none';
+      }
+
+      // Pre-fill from URL params
+      var params = new URLSearchParams(window.location.search);
+      var urlEmail = params.get('email');
+      if (urlEmail) {
+        emailInput.value = urlEmail;
+      } else {
+        // Try from localStorage
+        try {
+          var savedEmail = localStorage.getItem('ve_email');
+          if (savedEmail) emailInput.value = savedEmail;
+        } catch(e) {}
+      }
+
+      // Saved progress state
+      var savedProgress = null;
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var firstName = nameInput.value.trim();
+        var email = emailInput.value.trim();
+        var phone = phoneInput.value.trim();
+
+        if (!firstName) { showError('Please enter your first name.'); nameInput.focus(); return; }
+        if (!email) { showError('Please enter your email address.'); emailInput.focus(); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('Please enter a valid email address.'); emailInput.focus(); return; }
+
+        btn.disabled = true;
+        btn.textContent = 'Setting up...';
+        errorDiv.style.display = 'none';
+
+        fetch('/api/start-assessment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ firstName: firstName, email: email, phone: phone }),
+        })
+        .then(function(resp) { return resp.json().then(function(d) { return { ok: resp.ok, data: d }; }); })
+        .then(function(result) {
+          if (!result.ok) {
+            showError(result.data.error || 'Something went wrong. Please try again.');
+            btn.disabled = false;
+            btn.textContent = 'Start My Assessment';
+            return;
+          }
+
+          var data = result.data;
+          // Store contact info
+          try {
+            localStorage.setItem('ve_contact_id', data.contactId);
+            localStorage.setItem('ve_email', email);
+            localStorage.setItem('ve_first_name', firstName);
+          } catch(e) {}
+
+          if (data.isReturning) {
+            // Check for saved progress
+            fetch('/api/get-progress?contactId=' + data.contactId)
+            .then(function(r) { return r.json(); })
+            .then(function(pData) {
+              if (pData.progress && pData.progress.answers && Object.keys(pData.progress.answers).length > 0) {
+                savedProgress = pData.progress;
+                var answeredCount = Object.keys(pData.progress.answers).length;
+                welcomeDiv.textContent = 'Welcome back, ' + data.firstName + '!';
+                welcomeDiv.style.display = 'block';
+                titleEl.textContent = 'Continue Your Assessment?';
+                subEl.style.display = 'none';
+                form.style.display = 'none';
+                resumeText.textContent = 'You have a saved assessment (' + answeredCount + ' questions answered, ' + (pData.progress.depth || 'quick') + ' mode). Continue where you left off?';
+                resumeBox.style.display = 'block';
+              } else {
+                // Returning user but no saved progress
+                welcomeDiv.textContent = 'Welcome back, ' + data.firstName + '!';
+                welcomeDiv.style.display = 'block';
+                if (data.previousAssessments > 0) {
+                  subEl.textContent = "You've taken " + data.previousAssessments + " assessment" + (data.previousAssessments > 1 ? 's' : '') + " before. Ready for another round?";
+                }
+                btn.textContent = 'Start New Assessment';
+                btn.disabled = false;
+                // Brief pause then dismiss
+                setTimeout(function() { dismissGate(); }, 1500);
+              }
+            })
+            .catch(function() {
+              // Can't check progress, just proceed
+              dismissGate();
+            });
+          } else {
+            // New user — just dismiss
+            dismissGate();
+          }
+        })
+        .catch(function() {
+          showError('Network error. Please check your connection and try again.');
+          btn.disabled = false;
+          btn.textContent = 'Start My Assessment';
+        });
+      });
+
+      // Resume button — load saved answers and continue
+      resumeBtn.addEventListener('click', function() {
+        if (savedProgress) {
+          try {
+            localStorage.setItem('ve_saved_answers', JSON.stringify(savedProgress.answers));
+            localStorage.setItem('ve_saved_question_index', savedProgress.currentQuestionIndex);
+            localStorage.setItem('ve_resume_mode', 'true');
+            // Set depth for the session
+            window.__veDepth = savedProgress.depth || 'quick';
+          } catch(e) {}
+        }
+        dismissGate();
+      });
+
+      // Start fresh button
+      freshBtn.addEventListener('click', function() {
+        // Clear any saved resume data
+        try {
+          localStorage.removeItem('ve_saved_answers');
+          localStorage.removeItem('ve_saved_question_index');
+          localStorage.removeItem('ve_resume_mode');
+        } catch(e) {}
+        // Delete server-side progress
+        var cId = null;
+        try { cId = localStorage.getItem('ve_contact_id'); } catch(e) {}
+        if (cId) {
+          fetch('/api/save-progress?contactId=' + cId, { method: 'DELETE' }).catch(function() {});
+        }
+        dismissGate();
+      });
+
+      function showError(msg) {
+        errorDiv.textContent = msg;
+        errorDiv.style.display = 'block';
+      }
+
+      function dismissGate() {
+        gate.style.opacity = '0';
+        gate.style.transition = 'opacity 0.3s ease';
+        setTimeout(function() {
+          gate.style.display = 'none';
+        }, 300);
+      }
+
+      // === AUTO-SAVE PROGRESS SYSTEM ===
+      var lastSavedAnswerCount = 0;
+      var saveInterval = null;
+
+      function getContactId() {
+        try { return localStorage.getItem('ve_contact_id'); } catch(e) { return null; }
+      }
+
+      function collectCurrentAnswers() {
+        var root = document.getElementById('root');
+        if (!root) return null;
+
+        // Only save during assessment
+        if (window.location.hash.indexOf('assessment') === -1) return null;
+
+        var answers = {};
+        // Find all checked radio inputs within the React form
+        var checkedRadios = root.querySelectorAll('[data-state="checked"]');
+        checkedRadios.forEach(function(el) {
+          // Walk up to find the radiogroup and the question container
+          var radioGroup = el.closest('[role="radiogroup"]');
+          if (!radioGroup) return;
+          // Get the value — it's typically in a data-value attribute or the button value
+          var value = el.getAttribute('value') || el.dataset.value;
+          if (!value) return;
+
+          // Find the field name for this question — check parent structure
+          var questionContainer = radioGroup.closest('[data-field]');
+          if (questionContainer) {
+            answers[questionContainer.dataset.field] = value;
+          }
+        });
+
+        // Also try to pick up answers from React's internal state via form inputs
+        var allInputs = root.querySelectorAll('input[type="radio"]:checked, input[type="hidden"]');
+        allInputs.forEach(function(input) {
+          if (input.name && input.value) {
+            answers[input.name] = input.value;
+          }
+        });
+
+        return answers;
+      }
+
+      function getCurrentQuestionIndex() {
+        var root = document.getElementById('root');
+        if (!root) return 0;
+        // Try to find "Question X of Y" text
+        var allText = root.querySelectorAll('*');
+        for (var i = 0; i < allText.length; i++) {
+          var txt = allText[i].textContent || '';
+          var match = txt.match(/Question\s+(\d+)\s+of\s+(\d+)/);
+          if (match) {
+            return parseInt(match[1], 10) - 1; // 0-indexed
+          }
+        }
+        return 0;
+      }
+
+      function saveProgress() {
+        var contactId = getContactId();
+        if (!contactId) return;
+        if (window.location.hash.indexOf('assessment') === -1) return;
+
+        // Try to collect answers from localStorage (the monkey-patched fetch stores them)
+        var answers = {};
+        try {
+          var stored = localStorage.getItem('ve_current_answers');
+          if (stored) answers = JSON.parse(stored);
+        } catch(e) {}
+
+        var answerCount = Object.keys(answers).length;
+        if (answerCount === 0) return; // nothing to save
+        if (answerCount === lastSavedAnswerCount) return; // no change
+
+        var currentIndex = 0;
+        try {
+          var idx = localStorage.getItem('ve_current_question_index');
+          if (idx) currentIndex = parseInt(idx, 10);
+        } catch(e) {}
+
+        var depth = window.__veDepth || 'quick';
+        var totalQuestions = 0;
+        try {
+          var tq = localStorage.getItem('ve_total_questions');
+          if (tq) totalQuestions = parseInt(tq, 10);
+        } catch(e) {}
+
+        fetch('/api/save-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contactId: parseInt(contactId, 10),
+            answers: answers,
+            currentQuestionIndex: currentIndex,
+            mode: 'individual',
+            depth: depth,
+            totalQuestions: totalQuestions,
+          }),
+        }).then(function() {
+          lastSavedAnswerCount = answerCount;
+          console.log('[VE] Progress saved: ' + answerCount + ' answers');
+        }).catch(function(e) {
+          console.warn('[VE] Save progress failed:', e);
+        });
+      }
+
+      // Save every 30 seconds
+      saveInterval = setInterval(saveProgress, 30000);
+
+      // Also save on page unload
+      window.addEventListener('beforeunload', function() {
+        saveProgress();
+      });
+
+      // === INJECT ANSWER TRACKING INTO FETCH MONKEY-PATCH ===
+      // Intercept the React app's state changes to track answers for auto-save
+      var _origFetch = window.fetch;
+      window.fetch = function(url, opts) {
+        // When assessment is submitted, capture the body for our records
+        if (typeof url === 'string' && url.indexOf('/api/assessment') !== -1 && opts && opts.method === 'POST' && opts.body) {
+          try {
+            var body = JSON.parse(opts.body);
+            // Inject contactId from our gate
+            var cId = getContactId();
+            if (cId) body.contactId = parseInt(cId, 10);
+
+            // Clean up saved progress and resume state on submit
+            try {
+              localStorage.removeItem('ve_saved_answers');
+              localStorage.removeItem('ve_saved_question_index');
+              localStorage.removeItem('ve_resume_mode');
+              localStorage.removeItem('ve_current_answers');
+              localStorage.removeItem('ve_current_question_index');
+              localStorage.removeItem('ve_total_questions');
+            } catch(e) {}
+
+            opts = Object.assign({}, opts, { body: JSON.stringify(body) });
+          } catch(e) {}
+        }
+        return _origFetch.call(this, url, opts);
+      };
+
+      // === TRACK ANSWERS VIA DOM OBSERVATION ===
+      // Watch for radio button selections and store them for auto-save
+      var answerTracker = new MutationObserver(function() {
+        if (window.location.hash.indexOf('assessment') === -1) return;
+        var root = document.getElementById('root');
+        if (!root) return;
+
+        // Track the current question index
+        var allEls = root.querySelectorAll('*');
+        for (var i = 0; i < allEls.length; i++) {
+          var txt = allEls[i].textContent || '';
+          var match = txt.match(/^Question\s+(\d+)\s+of\s+(\d+)$/);
+          if (match) {
+            try {
+              localStorage.setItem('ve_current_question_index', match[1]);
+              localStorage.setItem('ve_total_questions', match[2]);
+            } catch(e) {}
+            break;
+          }
+        }
+      });
+
+      // Start observing once body is available
+      function startAnswerTracking() {
+        if (document.body) {
+          answerTracker.observe(document.body, { childList: true, subtree: true });
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startAnswerTracking);
+      } else {
+        startAnswerTracking();
+      }
+
+      // === ANSWER CAPTURE VIA CLICK DELEGATION ===
+      // Capture radio button clicks to store answers for save-progress
+      document.addEventListener('click', function(e) {
+        if (window.location.hash.indexOf('assessment') === -1) return;
+
+        // Check if click was on a radio option button
+        var target = e.target;
+        var radioItem = target.closest ? target.closest('[role="radio"]') : null;
+        if (!radioItem) return;
+
+        var value = radioItem.getAttribute('value') || radioItem.dataset.value;
+        if (!value) return;
+
+        // Get the question's field name — try to find it from the current question context
+        // The React app stores the field name in various ways; we'll use a timer to let state update
+        setTimeout(function() {
+          // Read answers from the React form's internal state by checking the body the fetch will send
+          // We intercept via the existing monkey-patched fetch
+          // For now, track by observing the Next button clicks
+
+          // Approach: find all visible radiogroups and map field→value
+          var root = document.getElementById('root');
+          if (!root) return;
+
+          // The questions from window.__veQuestions have fieldName — match by index
+          var questions = window.__veQuestions || [];
+          var currentIdx = 0;
+          try {
+            var idx = localStorage.getItem('ve_current_question_index');
+            if (idx) currentIdx = parseInt(idx, 10) - 1; // ve_current_question_index is 1-based
+          } catch(e) {}
+
+          if (questions[currentIdx]) {
+            var fieldName = questions[currentIdx].fieldName;
+            if (fieldName && value) {
+              var answers = {};
+              try {
+                var stored = localStorage.getItem('ve_current_answers');
+                if (stored) answers = JSON.parse(stored);
+              } catch(e) {}
+              answers[fieldName] = parseInt(value, 10) || value;
+              try { localStorage.setItem('ve_current_answers', JSON.stringify(answers)); } catch(e) {}
+
+              // Auto-save every 5 questions
+              var answerCount = Object.keys(answers).length;
+              if (answerCount > 0 && answerCount % 5 === 0) {
+                saveProgress();
+              }
+            }
+          }
+        }, 100);
+      }, true);
+
+      // === RESUME FLOW: Inject saved answers into React form ===
+      function attemptResumeInjection() {
+        var shouldResume = false;
+        try { shouldResume = localStorage.getItem('ve_resume_mode') === 'true'; } catch(e) {}
+        if (!shouldResume) return;
+
+        var savedAnswers = null;
+        try {
+          var stored = localStorage.getItem('ve_saved_answers');
+          if (stored) savedAnswers = JSON.parse(stored);
+        } catch(e) {}
+        if (!savedAnswers || Object.keys(savedAnswers).length === 0) return;
+
+        // Store answers for auto-save tracking
+        try { localStorage.setItem('ve_current_answers', JSON.stringify(savedAnswers)); } catch(e) {}
+
+        // Clear resume flag so we don't re-inject
+        try { localStorage.removeItem('ve_resume_mode'); } catch(e) {}
+
+        console.log('[VE] Resume: injecting ' + Object.keys(savedAnswers).length + ' saved answers');
+
+        // The React app reads answers via its internal state — we can't directly inject into React
+        // But we can auto-click through questions that have saved answers
+        // This is done by watching for assessment pages and auto-selecting answers
+        var resumeObserver = new MutationObserver(function() {
+          if (window.location.hash.indexOf('assessment') === -1) return;
+
+          var root = document.getElementById('root');
+          if (!root) return;
+
+          // Find current question
+          var questions = window.__veQuestions || [];
+          var currentIdx = 0;
+          try {
+            var idx = localStorage.getItem('ve_current_question_index');
+            if (idx) currentIdx = parseInt(idx, 10) - 1;
+          } catch(e) {}
+
+          if (currentIdx < 0) currentIdx = 0;
+          var currentQ = questions[currentIdx];
+          if (!currentQ) return;
+
+          var savedValue = savedAnswers[currentQ.fieldName];
+          if (savedValue === undefined || savedValue === null) return;
+
+          // Find the radio group and select the right option
+          var radioGroup = root.querySelector('[role="radiogroup"]');
+          if (!radioGroup) return;
+
+          // Check if already selected
+          var checkedItem = radioGroup.querySelector('[data-state="checked"]');
+          if (checkedItem) return; // Already answered this question
+
+          // Find the radio item with matching value
+          var radioItems = radioGroup.querySelectorAll('[role="radio"]');
+          for (var i = 0; i < radioItems.length; i++) {
+            var itemValue = radioItems[i].getAttribute('value') || radioItems[i].dataset.value;
+            if (String(itemValue) === String(savedValue)) {
+              radioItems[i].click();
+
+              // Auto-advance after a short delay
+              setTimeout(function() {
+                var nextBtn = root.querySelector('[data-testid="button-next"]');
+                if (nextBtn) nextBtn.click();
+              }, 300);
+              break;
+            }
+          }
+        });
+
+        // Start observing for assessment questions
+        if (document.body) {
+          resumeObserver.observe(document.body, { childList: true, subtree: true });
+        } else {
+          document.addEventListener('DOMContentLoaded', function() {
+            resumeObserver.observe(document.body, { childList: true, subtree: true });
+          });
+        }
+
+        // Stop after 60 seconds to prevent infinite loops
+        setTimeout(function() { resumeObserver.disconnect(); }, 60000);
+      }
+
+      // Run resume injection when assessment page loads
+      window.addEventListener('hashchange', function() {
+        if (window.location.hash.indexOf('assessment') !== -1) {
+          setTimeout(attemptResumeInjection, 500);
+        }
+      });
+      // Also on initial load
+      setTimeout(attemptResumeInjection, 1000);
+    })();
+    </script>
+
     <div id="root"></div>
 
     <!-- Free Book Section -->

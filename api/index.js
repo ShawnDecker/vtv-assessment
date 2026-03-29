@@ -254,6 +254,118 @@ module.exports = async (req, res) => {
   const url = req.url.replace(/^\/api/, '');
 
   try {
+    // POST /api/start-assessment — early lead capture: create/find contact before assessment begins
+    if (req.method === 'POST' && url === '/start-assessment') {
+      const b = req.body || {};
+      if (!b.email || !b.email.trim()) {
+        return res.status(400).json({ error: 'Email is required.' });
+      }
+      const cleanEmail = b.email.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        return res.status(400).json({ error: 'Please enter a valid email address.' });
+      }
+      if (!b.firstName || !b.firstName.trim()) {
+        return res.status(400).json({ error: 'First name is required.' });
+      }
+
+      let contact;
+      let isReturning = false;
+      let previousAssessments = 0;
+
+      const existing = await sql`SELECT * FROM contacts WHERE email = ${cleanEmail} LIMIT 1`;
+      if (existing.length > 0) {
+        contact = existing[0];
+        isReturning = true;
+        // Update name/phone if provided
+        if (b.firstName || b.phone) {
+          await sql`UPDATE contacts SET first_name = COALESCE(NULLIF(${b.firstName.trim()}, ''), first_name), phone = COALESCE(NULLIF(${b.phone || ''}, ''), phone) WHERE id = ${contact.id}`;
+          contact.first_name = b.firstName.trim() || contact.first_name;
+        }
+        const countRows = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE contact_id = ${contact.id}`;
+        previousAssessments = Number(countRows[0]?.cnt || 0);
+      } else {
+        const rows = await sql`INSERT INTO contacts (first_name, last_name, email, phone, created_at) VALUES (${b.firstName.trim()}, ${b.lastName || ''}, ${cleanEmail}, ${b.phone || null}, ${new Date().toISOString()}) RETURNING *`;
+        contact = rows[0];
+      }
+
+      // Store email in case questions endpoint needs it
+      try { await sql`SELECT 1 FROM assessment_progress LIMIT 0`; } catch(e) { /* table may not exist yet */ }
+
+      console.log(`start-assessment: contact ${contact.id} (${cleanEmail}), returning=${isReturning}, prev=${previousAssessments}`);
+      return res.json({ contactId: contact.id, firstName: contact.first_name, isReturning, previousAssessments });
+    }
+
+    // POST /api/save-progress — periodic auto-save of partial answers
+    if (req.method === 'POST' && url === '/save-progress') {
+      const b = req.body || {};
+      if (!b.contactId) return res.status(400).json({ error: 'contactId required' });
+
+      const answers = typeof b.answers === 'string' ? b.answers : JSON.stringify(b.answers || {});
+      const currentIndex = b.currentQuestionIndex || 0;
+      const mode = b.mode || 'individual';
+      const depth = b.depth || 'quick';
+      const totalQuestions = b.totalQuestions || 0;
+
+      try {
+        await sql`INSERT INTO assessment_progress (contact_id, answers, current_question_index, mode, depth, total_questions, updated_at)
+          VALUES (${b.contactId}, ${answers}::jsonb, ${currentIndex}, ${mode}, ${depth}, ${totalQuestions}, NOW())
+          ON CONFLICT (contact_id) DO UPDATE SET
+            answers = ${answers}::jsonb,
+            current_question_index = ${currentIndex},
+            mode = ${mode},
+            depth = ${depth},
+            total_questions = ${totalQuestions},
+            updated_at = NOW()`;
+        return res.json({ success: true, savedAt: new Date().toISOString() });
+      } catch (e) {
+        console.error('save-progress error:', e.message);
+        return res.status(500).json({ error: 'Failed to save progress', details: e.message });
+      }
+    }
+
+    // GET /api/get-progress?contactId=X — retrieve saved progress for a contact
+    if (req.method === 'GET' && url.startsWith('/get-progress')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const contactId = params.get('contactId');
+      if (!contactId) return res.status(400).json({ error: 'contactId required' });
+
+      try {
+        const rows = await sql`SELECT * FROM assessment_progress WHERE contact_id = ${contactId} LIMIT 1`;
+        if (rows.length === 0) return res.json({ progress: null });
+        const p = rows[0];
+        return res.json({
+          progress: {
+            contactId: p.contact_id,
+            answers: typeof p.answers === 'string' ? JSON.parse(p.answers) : p.answers,
+            currentQuestionIndex: p.current_question_index,
+            mode: p.mode,
+            depth: p.depth,
+            totalQuestions: p.total_questions,
+            updatedAt: p.updated_at,
+          }
+        });
+      } catch (e) {
+        // Table may not exist yet
+        return res.json({ progress: null });
+      }
+    }
+
+    // DELETE /api/save-progress?contactId=X — cleanup after full submission
+    if (req.method === 'DELETE' && url.startsWith('/save-progress')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const contactId = params.get('contactId');
+      if (!contactId) return res.status(400).json({ error: 'contactId required' });
+
+      try {
+        await sql`DELETE FROM assessment_progress WHERE contact_id = ${contactId}`;
+        return res.json({ success: true });
+      } catch (e) {
+        // Table may not exist — that's fine
+        return res.json({ success: true });
+      }
+    }
+
     // GET /api/questions?email=xxx&mode=individual|relationship|leadership&depth=quick|extensive|pillar&pillar=time|people|influence|numbers|knowledge
     if (req.method === 'GET' && url.startsWith('/questions')) {
       const params = new URL('http://x' + req.url).searchParams;
@@ -775,6 +887,11 @@ Don't guess. Run the system.
         console.warn('Email not sent: missing GMAIL_USER or GMAIL_APP_PASSWORD env vars, or no contact email. Email:', contactEmail, 'GMAIL_USER set:', !!process.env.GMAIL_USER, 'GMAIL_APP_PASSWORD set:', !!process.env.GMAIL_APP_PASSWORD);
       }
       // === END AUTO-EMAIL ===
+
+      // Cleanup: delete saved progress now that assessment is fully submitted
+      try {
+        await sql`DELETE FROM assessment_progress WHERE contact_id = ${contact.id}`;
+      } catch (e) { /* table may not exist — that's fine */ }
 
       return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name }, emailSent, emailError: !emailSent ? 'Your results are saved but the email delivery encountered an issue. You can view your report at the link below.' : null, depth: assessmentDepth, focusPillar: assessmentFocusPillar });
     }
