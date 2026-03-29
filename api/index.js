@@ -1402,7 +1402,16 @@ https://assessment.valuetovictory.com/report/${assessment.id}
         ],
       };
 
-      // Build plain text roadmap section
+      // Build plain text cross-pillar and roadmap sections
+      let crossPillarPlainText = '';
+      try {
+        const rxData = typeof a.prescription === 'string' ? JSON.parse(a.prescription) : (a.prescription || {});
+        const cpi = rxData.crossPillarImpact || {};
+        const pi = cpi.primaryImpact;
+        if (pi && pi.headline) {
+          crossPillarPlainText = `\nCROSS-PILLAR IMPACT: ${pi.from} \u2192 ${pi.to}\n"${pi.headline}"\n${pi.explanation || ''}\n`;
+        }
+      } catch (e) { /* no cross-pillar data */ }
       let roadmapText = '';
       if (pillarsBelow35.length > 0) {
         roadmapText = '\n--- YOUR IMPROVEMENT ROADMAP ---\n';
@@ -1542,7 +1551,7 @@ ${buildActionCardHtml('Mentor or teach what you know. The fastest way to deepen 
       // Cross-Pillar Impact section for email
       const cpi = prescription.crossPillarImpact;
       let crossPillarEmailHtml = '';
-      let crossPillarPlainText = '';
+      // crossPillarPlainText already declared above — reassign with full detail here
       if (cpi && cpi.primaryImpact && cpi.severity !== 'balanced') {
         const pi = cpi.primaryImpact;
         const sevColors = { critical: '#ef4444', significant: '#f97316', moderate: '#eab308' };
