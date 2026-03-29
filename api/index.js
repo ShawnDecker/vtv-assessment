@@ -793,6 +793,30 @@ module.exports = async (req, res) => {
       // === AUTO-EMAIL: Send report email automatically after assessment submission ===
       let emailSent = false;
       const contactEmail = contact.email;
+
+      // --- PAYWALL GATING LOGIC ---
+      // Check how many completed assessments this contact has
+      let assessmentCount = 1;
+      try {
+        const countRows = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE contact_id = ${contact.id}`;
+        assessmentCount = Number(countRows[0].cnt);
+      } catch (e) { /* fallback to 1 */ }
+
+      // Check if user has an active membership
+      let hasMembership = false;
+      try {
+        const memberRows = await sql`SELECT membership_tier FROM user_profiles WHERE contact_id = ${contact.id} AND membership_tier IS NOT NULL AND membership_tier != 'free' LIMIT 1`;
+        hasMembership = memberRows.length > 0;
+      } catch (e) { /* table may not exist */ }
+
+      const isFirstReport = assessmentCount <= 1;
+      const sendFullReport = isFirstReport || hasMembership;
+
+      // Ensure report_unlocked column exists (safe ALTER — no-op if already exists)
+      try {
+        await sql`ALTER TABLE assessments ADD COLUMN IF NOT EXISTS report_unlocked BOOLEAN DEFAULT FALSE`;
+      } catch (e) { /* column may already exist */ }
+
       if (contactEmail && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
         try {
           const nodemailer = require('nodemailer');
@@ -800,6 +824,7 @@ module.exports = async (req, res) => {
           const eMasterScore = masterScore;
           const eScoreRange = scoreRange;
           const eWeakestPillar = prescription.weakestPillar;
+          const pillarMax = 50; // all depths now normalized to 50-point scale
 
           const recTexts = {
             Crisis: "YOUR NEXT STEP: You need the full system. Start with The Value Engine book — the diagnostic that shows you exactly where your life is undervalued. $29 at valuetovictory.com",
@@ -820,8 +845,11 @@ module.exports = async (req, res) => {
             }
           } catch (e) { /* table may not exist */ }
 
-          const pillarMax = 50; // all depths now normalized to 50-point scale
-          const emailBody = `${efName},
+          let subject, emailBody;
+
+          if (sendFullReport) {
+            // FULL REPORT EMAIL (first assessment or member)
+            emailBody = `${efName},
 
 Your Value Engine Assessment is complete.
 
@@ -851,8 +879,41 @@ Don't guess. Run the system.
 
 — The Value Engine
    ValueToVictory.com`;
+            subject = `Your Value Engine Score: ${eMasterScore} (${eScoreRange}) — Personal Report Ready`;
+          } else {
+            // TEASER EMAIL (non-first, non-member — report is gated)
+            emailBody = `${efName},
 
-          const subject = `Your Value Engine Score: ${eMasterScore} (${eScoreRange}) — Personal Report Ready`;
+Your Value Engine Assessment is complete.
+
+MASTER VALUE SCORE: ${eMasterScore} (${eScoreRange})
+
+Pillar Snapshot:
+  Time:      ${tt}/${pillarMax}
+  People:    ${pt}/${pillarMax}
+  Influence: ${it}/${pillarMax}
+  Numbers:   ${nt}/${pillarMax}
+  Knowledge: ${kt}/${pillarMax}
+
+Your full diagnostic report is ready — including sub-category breakdowns, cross-pillar impact analysis, personalized prescription, and where you rank against other users.
+
+UNLOCK YOUR FULL REPORT:
+
+Option 1 — Pay $1.99 for this report:
+https://assessment.valuetovictory.com/api/checkout?tier=report&aid=${assessment.id}&email=${encodeURIComponent(contactEmail)}
+
+Option 2 — Join VictoryPath ($29/mo) for unlimited reports:
+https://buy.stripe.com/9B6dR81WcdusfVL0RK6oo0c
+
+Already a member? Your report is included — check your email or contact support.
+
+View your report page:
+https://assessment.valuetovictory.com/report/${assessment.id}
+
+— The Value Engine
+   ValueToVictory.com`;
+            subject = `Your Value Engine Score: ${eMasterScore} (${eScoreRange}) — Unlock Your Full Report`;
+          }
 
           const transporter = nodemailer.createTransport({
             service: 'gmail',
@@ -865,7 +926,7 @@ Don't guess. Run the system.
             text: emailBody,
           });
           emailSent = true;
-          console.log(`Auto-email sent to ${contactEmail} for assessment ${assessment.id}`);
+          console.log(`Auto-email sent to ${contactEmail} for assessment ${assessment.id} (${sendFullReport ? 'full' : 'teaser'})`);
         } catch (emailErr) {
           console.error('Auto-email FAILED for', contactEmail, ':', emailErr.message);
           // Retry once after 2 second delay
@@ -875,6 +936,7 @@ Don't guess. Run the system.
               service: 'gmail',
               auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
             });
+            // subject and emailBody already defined above
             await retryTransporter.sendMail({
               from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
               to: contactEmail,
@@ -1205,6 +1267,32 @@ Don't guess. Run the system.
         totalAnswered = Number(answeredResult[0]?.cnt || 0);
       } catch (e) { /* tables may not exist */ }
 
+      // --- GATING LOGIC for report endpoint ---
+      // Ensure column exists
+      try {
+        await sql`ALTER TABLE assessments ADD COLUMN IF NOT EXISTS report_unlocked BOOLEAN DEFAULT FALSE`;
+      } catch (e) { /* column may already exist */ }
+
+      // Check if this is the contact's first assessment
+      let reportContactAssessmentCount = 0;
+      try {
+        const rcRows = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE contact_id = ${a.contact_id}`;
+        reportContactAssessmentCount = Number(rcRows[0].cnt);
+      } catch (e) { /* fallback */ }
+      const reportIsFirst = reportContactAssessmentCount <= 1;
+
+      // Check membership
+      let reportHasMembership = false;
+      try {
+        const mRows = await sql`SELECT membership_tier FROM user_profiles WHERE contact_id = ${a.contact_id} AND membership_tier IS NOT NULL AND membership_tier != 'free' LIMIT 1`;
+        reportHasMembership = mRows.length > 0;
+      } catch (e) { /* table may not exist */ }
+
+      // Check if payment unlocked this report
+      const reportPaymentUnlocked = !!(a.report_unlocked);
+
+      const reportGated = !reportIsFirst && !reportHasMembership && !reportPaymentUnlocked;
+
       return res.json({
         assessment,
         contact: { firstName: a.first_name, lastName: a.last_name, email: a.email },
@@ -1220,6 +1308,9 @@ Don't guess. Run the system.
         questionsAvailable: totalAvailable,
         depth: a.depth || 'extensive',
         focusPillar: a.focus_pillar || null,
+        isFirstReport: reportIsFirst,
+        isMember: reportHasMembership,
+        gated: reportGated,
       });
     }
 

@@ -47,8 +47,59 @@ module.exports = async (req, res) => {
         const customerId = session.customer;
         const subscriptionId = session.subscription;
         const tier = session.metadata?.tier;
+        const sessionType = session.metadata?.type;
 
-        if (email && tier) {
+        // Handle one-time report purchase
+        if (sessionType === 'report') {
+          const assessmentId = session.metadata?.assessmentId;
+          if (assessmentId) {
+            try {
+              // Ensure column exists
+              await sql`ALTER TABLE assessments ADD COLUMN IF NOT EXISTS report_unlocked BOOLEAN DEFAULT FALSE`;
+            } catch (e) { /* already exists */ }
+            // Mark report as unlocked
+            try {
+              await sql`UPDATE assessments SET report_unlocked = TRUE WHERE id = ${parseInt(assessmentId)}`;
+              console.log(`Report unlocked for assessment ${assessmentId}`);
+            } catch (e) {
+              console.error('Failed to unlock report:', e.message);
+            }
+            // Send full report email if we have an email
+            if (email) {
+              try {
+                const aRows = await sql`SELECT a.*, c.first_name, c.last_name, c.email FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE a.id = ${parseInt(assessmentId)} LIMIT 1`;
+                if (aRows.length > 0) {
+                  const a = aRows[0];
+                  const nodemailer = require('nodemailer');
+                  const firstName = a.first_name || 'there';
+                  const masterScore = a.master_score;
+                  const scoreRange = a.score_range;
+                  const reportUrl = `https://assessment.valuetovictory.com/report/${assessmentId}?unlocked=true`;
+
+                  const fullReportSubject = `Your Full Value Engine Report is Ready \u2014 ${masterScore} (${scoreRange})`;
+                  const fullReportBody = `${firstName},\n\nYour payment was received and your full Value Engine report is now unlocked.\n\nView your complete diagnostic report here:\n${reportUrl}\n\nYour report includes sub-category breakdowns, cross-pillar impact analysis, personalized prescription, and benchmark percentiles.\n\n\u2014 The Value Engine\n   ValueToVictory.com`;
+
+                  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+                    const transporter = nodemailer.createTransport({
+                      service: 'gmail',
+                      auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+                    });
+                    await transporter.sendMail({
+                      from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
+                      to: email,
+                      subject: fullReportSubject,
+                      text: fullReportBody,
+                    });
+                    console.log(`Full report unlock email sent to ${email} for assessment ${assessmentId}`);
+                  }
+                }
+              } catch (e) {
+                console.error('Failed to send report unlock email:', e.message);
+              }
+            }
+          }
+        } else if (email && tier) {
+          // Handle subscription purchase (existing logic)
           // Find contact by email
           const contacts = await sql`SELECT id FROM contacts WHERE email = ${email} LIMIT 1`;
           if (contacts.length > 0) {
@@ -137,9 +188,44 @@ module.exports = async (req, res) => {
       const params = new URL('http://x' + req.url).searchParams;
       const tier = params.get('tier');
       const email = params.get('email');
+      const aid = params.get('aid');
+
+      // Handle one-time $1.99 report purchase
+      if (tier === 'report') {
+        if (!aid) return res.status(400).json({ error: 'aid (assessmentId) required for report purchase' });
+        const sql = neon(process.env.DATABASE_URL);
+
+        // Look up contact ID from the assessment
+        let contactId = null;
+        try {
+          const aRows = await sql`SELECT contact_id FROM assessments WHERE id = ${parseInt(aid)} LIMIT 1`;
+          if (aRows.length > 0) contactId = aRows[0].contact_id;
+        } catch (e) { /* assessment may not exist */ }
+
+        const session = await stripe.checkout.sessions.create({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: 'P.I.N.K. Assessment Report',
+                description: 'Full diagnostic report with Individual, Relationship, and Company impact analysis',
+              },
+              unit_amount: 199, // $1.99
+            },
+            quantity: 1,
+          }],
+          customer_email: email || undefined,
+          metadata: { assessmentId: aid, contactId: String(contactId || ''), type: 'report' },
+          success_url: `https://assessment.valuetovictory.com/report/${aid}?unlocked=true`,
+          cancel_url: `https://assessment.valuetovictory.com/report/${aid}?payment=cancelled`,
+        });
+        res.writeHead(303, { Location: session.url });
+        return res.end();
+      }
 
       if (!tier || !TIER_CONFIG[tier]) {
-        return res.status(400).json({ error: 'Invalid tier. Must be: victorypath, builder, or vip' });
+        return res.status(400).json({ error: 'Invalid tier. Must be: victorypath, builder, vip, or report' });
       }
 
       const config = TIER_CONFIG[tier];

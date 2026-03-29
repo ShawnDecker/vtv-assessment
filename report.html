@@ -192,6 +192,96 @@
       .sub-grid { grid-template-columns: 1fr; }
       .pillar-label, .pct-label { width: 70px; font-size: 0.75rem; }
     }
+
+    /* --- PAYWALL GATING --- */
+    .gated-wrapper { position: relative; }
+    .gated-content-blurred { filter: blur(6px); pointer-events: none; user-select: none; }
+    .gating-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 2rem;
+    }
+    .gating-card {
+      background: #18181b;
+      border: 2px solid #D4A847;
+      border-radius: 1rem;
+      padding: 2rem 1.75rem;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+    }
+    .gating-card .gate-badge {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #D4A847;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .gating-card h2 {
+      font-size: 1.375rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.75rem;
+      line-height: 1.3;
+    }
+    .gating-card p {
+      font-size: 0.9rem;
+      color: #a1a1aa;
+      line-height: 1.65;
+      margin-bottom: 1.5rem;
+    }
+    .gate-btn-primary {
+      display: block;
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #0a0a0a;
+      border-radius: 0.625rem;
+      font-weight: 800;
+      text-decoration: none;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      transition: opacity 0.2s;
+    }
+    .gate-btn-primary:hover { opacity: 0.9; }
+    .gate-btn-secondary {
+      display: block;
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      background: transparent;
+      border: 1px solid #3b82f6;
+      color: #3b82f6;
+      border-radius: 0.625rem;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+      transition: all 0.2s;
+    }
+    .gate-btn-secondary:hover { background: rgba(59,130,246,0.1); }
+    .gate-already-member {
+      font-size: 0.8rem;
+      color: #52525b;
+    }
+  
+    /* Disclaimer */
+    .disclaimer { background: #1a1a2e; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.25rem 1.5rem; margin-top: 1.5rem; }
+    .disclaimer .disc-title { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: #D4A847; font-weight: 700; margin-bottom: 0.5rem; }
+    .disclaimer p { color: #a1a1aa; font-size: 0.8rem; line-height: 1.6; margin: 0 0 0.5rem; }
+    .disclaimer p:last-child { margin-bottom: 0; }
+    .limited-data { background: linear-gradient(135deg, #1a1a2e 0%, #18181b 100%); border: 1px solid #f97316; border-radius: 0.75rem; padding: 1.25rem 1.5rem; margin-top: 1rem; text-align: center; }
+    .limited-data .ld-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .limited-data .ld-title { color: #f97316; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.5rem; }
+    .limited-data p { color: #a1a1aa; font-size: 0.85rem; line-height: 1.5; margin: 0 0 0.75rem; }
+    .limited-data a { display: inline-block; padding: 0.5rem 1.25rem; background: #f97316; color: #0a0a0a; font-weight: 700; border-radius: 0.5rem; text-decoration: none; font-size: 0.85rem; }
+
   </style>
 </head>
 <body>
@@ -229,6 +319,24 @@
       <div class="section-title">Pillar Breakdown</div>
       <div class="pillar-bars" id="pillarBars"></div>
     </div>
+
+    <!-- GATING WRAPPER: sections below are blurred for non-member, non-first reports -->
+    <div class="gated-wrapper" id="gatedWrapper">
+
+    <!-- Paywall Overlay (shown only when gated) -->
+    <div class="gating-overlay" id="gatingOverlay" style="display:none;">
+      <div class="gating-card">
+        <div class="gate-badge">Full Report</div>
+        <h2>Unlock Your Full Report</h2>
+        <p>Your first report was free. Get your complete diagnostic with sub-category breakdowns, cross-pillar impact analysis, personalized prescription, and benchmark percentiles.</p>
+        <a class="gate-btn-primary" id="gatePayBtn" href="#">Unlock This Report &mdash; $1.99</a>
+        <a class="gate-btn-secondary" href="https://buy.stripe.com/9B6dR81WcdusfVL0RK6oo0c" target="_blank" rel="noopener">Join VictoryPath &mdash; $29/mo (Unlimited Reports)</a>
+        <div class="gate-already-member">Already a member? Your report is included &mdash; check your email.</div>
+      </div>
+    </div>
+
+    <!-- Gated content starts here -->
+    <div id="gatedContent">
 
     <!-- Section 2: Pillar Deep Dive -->
     <div class="section">
@@ -340,6 +448,27 @@
       <div id="pillarDiveBtnsExt" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;"></div>
     </div>
 
+    
+    <!-- Disclaimer -->
+    <div class="section" style="padding:0;border:none;background:none;">
+      <div class="disclaimer">
+        <div class="disc-title">Important Disclaimer</div>
+        <p>The scores, insights, and recommendations in this report are generated based on your self-reported answers and are intended as general guidance only. They are <strong style="color:#d4d4d8;">not</strong> a substitute for professional counseling, financial advice, or clinical diagnosis.</p>
+        <p>The accuracy of your results improves significantly with <strong style="color:#d4d4d8;">direct involvement from our coaching team</strong>. This is why we offer personal coaching &mdash; so we can add specifics to your individual situation that no automated system can capture. For the most actionable results, we recommend combining this report with a <a href="https://calendly.com/valuetovictory" target="_blank" rel="noopener" style="color:#D4A847;">one-on-one coaching session</a>.</p>
+        <p style="color:#71717a;font-size:0.75rem;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker. All rights reserved. This report is confidential and intended for the named recipient only.</p>
+      </div>
+    </div>
+
+    <!-- Limited Data Notice (shown when depth=quick or few assessments) -->
+    <div id="limitedDataNotice" class="section" style="padding:0;border:none;background:none;display:none;">
+      <div class="limited-data">
+        <div class="ld-icon">&#9888;&#65039;</div>
+        <div class="ld-title">Limited Data &mdash; Accuracy Can Be Improved</div>
+        <p>This report is based on limited assessment data. For more accurate and personalized insights, we recommend taking additional assessments including pillar deep-dives and the extensive version.</p>
+        <a href="https://assessment.valuetovictory.com/?depth=extensive">Take the Full Assessment for Added Accuracy</a>
+      </div>
+    </div>
+
     <!-- Section 11: Re-Assessment CTA -->
     <div class="section" style="padding:0;border:none;background:none;">
       <div class="reassess">
@@ -355,6 +484,9 @@
       <div class="tagline">"Don't guess. Run the system."</div>
       <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>
     </div>
+
+    </div><!-- /gatedContent -->
+    </div><!-- /gatedWrapper -->
   </div>
 
   <script>
@@ -409,6 +541,11 @@
       }
       var assessmentId = match[1];
 
+      // Check URL params for payment unlock signal
+      var urlParams = new URLSearchParams(window.location.search);
+      var unlockedParam = urlParams.get('unlocked') === 'true';
+      var paymentCancelled = urlParams.get('payment') === 'cancelled';
+
       try {
         var resp = await fetch('/api/report/' + assessmentId);
         if (!resp.ok) throw new Error('not found');
@@ -417,6 +554,41 @@
         document.getElementById('loading').style.display = 'none';
         document.getElementById('report').style.display = 'block';
         renderReport(data);
+
+        // --- PAYWALL GATING ---
+        // A report is gated if the API says so AND the URL doesn't have ?unlocked=true
+        var isGated = data.gated && !unlockedParam;
+
+        if (isGated) {
+          // Blur the gated content
+          document.getElementById('gatedContent').classList.add('gated-content-blurred');
+
+          // Set the pay button URL with the assessment ID
+          var payBtn = document.getElementById('gatePayBtn');
+          if (payBtn) {
+            var payUrl = '/api/checkout?tier=report&aid=' + assessmentId;
+            // Include email if available
+            if (data.contact && data.contact.email) {
+              payUrl += '&email=' + encodeURIComponent(data.contact.email);
+            }
+            payBtn.href = payUrl;
+          }
+
+          // Show the overlay
+          document.getElementById('gatingOverlay').style.display = 'flex';
+
+          // Set min-height on gated wrapper so the overlay has space
+          document.getElementById('gatedWrapper').style.minHeight = '520px';
+        }
+
+        if (paymentCancelled) {
+          // Show a subtle notice that payment was cancelled (non-blocking)
+          var notice = document.createElement('div');
+          notice.style.cssText = 'background:#1e1e1e;border:1px solid #52525b;border-radius:0.5rem;padding:0.875rem 1.25rem;margin-bottom:1rem;font-size:0.85rem;color:#a1a1aa;text-align:center;';
+          notice.textContent = 'Payment was cancelled. Your report is still available to unlock.';
+          var gatedWrapper = document.getElementById('gatedWrapper');
+          gatedWrapper.parentNode.insertBefore(notice, gatedWrapper);
+        }
       } catch (e) {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'flex';
@@ -435,6 +607,15 @@
       document.getElementById('reportName').textContent = (data.contact.firstName || '') + ' ' + (data.contact.lastName || '');
       var d = new Date(a.completedAt);
       var dateStr = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      // Show limited data notice for quick assessments or first-time users
+      var assessmentDepth = data.depth || 'quick';
+      var isQuick = assessmentDepth === 'quick';
+      var limitedNotice = document.getElementById('limitedDataNotice');
+      if (limitedNotice && isQuick) {
+        limitedNotice.style.display = 'block';
+      }
+
       if (depth === 'quick') dateStr += ' (Quick Assessment)';
       else if (depth === 'pillar') dateStr += ' (Pillar Deep-Dive: ' + (data.focusPillar || a.focusPillar || '') + ')';
       document.getElementById('reportDate').textContent = dateStr;
