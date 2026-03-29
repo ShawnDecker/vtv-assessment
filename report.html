@@ -193,7 +193,11 @@
       .pillar-label, .pct-label { width: 70px; font-size: 0.75rem; }
     }
   </style>
-</head>
+    <script type="module">
+      import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@2/dist/index.mjs';
+      inject();
+    </script>
+  </head>
 <body>
   <div id="loading" class="loading">
     <span class="loading-text">Loading your report...</span>

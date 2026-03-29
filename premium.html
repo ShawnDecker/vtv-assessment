@@ -98,7 +98,11 @@
       .membership-form { flex-direction: column; }
     }
   </style>
-</head>
+    <script type="module">
+      import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@2/dist/index.mjs';
+      inject();
+    </script>
+  </head>
 <body>
   <div id="promoBanner" style="background:#D4A847;color:#0a0a0a;text-align:center;padding:1rem 1.5rem;font-weight:700;font-size:1rem;letter-spacing:0.05em;animation:promoGlow 2s ease-in-out infinite;">
     🎉 LAUNCH PROMOTION — All Premium Reports FREE Through April 25, 2026

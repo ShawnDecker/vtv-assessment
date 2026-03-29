@@ -104,7 +104,11 @@
       .report { padding: 1.5rem 1rem 3rem; }
     }
   </style>
-</head>
+    <script type="module">
+      import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@2/dist/index.mjs';
+      inject();
+    </script>
+  </head>
 <body>
   <div id="promoBanner" style="background:#D4A847;color:#0a0a0a;text-align:center;padding:0.75rem 1.5rem;font-weight:700;font-size:0.875rem;letter-spacing:0.03em;">
     Free during launch promotion — ends April 25, 2026

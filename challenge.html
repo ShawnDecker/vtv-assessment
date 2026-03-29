@@ -75,7 +75,11 @@
     .expired-banner { border-color: #D4A847; background: linear-gradient(135deg, #2a2210 0%, #18181b 100%); }
     .expired-banner h3 { color: #D4A847; }
   </style>
-</head>
+    <script type="module">
+      import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@2/dist/index.mjs';
+      inject();
+    </script>
+  </head>
 <body>
   <div class="container">
     <div class="brand">THE VALUE ENGINE</div>
