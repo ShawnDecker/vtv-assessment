@@ -316,7 +316,9 @@
     <div>
       <h2>Report Not Found</h2>
       <p style="color:#a1a1aa;margin-bottom:1rem;">This assessment could not be loaded.</p>
-      <a href="https://assessment.valuetovictory.com">Take the Assessment</a>
+      <p id="errorDebug" style="color:#52525b;font-size:0.75rem;margin-bottom:1rem;"></p>
+      <a href="https://assessment.valuetovictory.com" style="display:inline-block;padding:0.75rem 2rem;background:#3b82f6;color:#fff;border-radius:0.5rem;text-decoration:none;font-weight:600;">Take the Assessment</a>
+      <p style="color:#52525b;font-size:0.75rem;margin-top:1rem;">If you received a report link via email, make sure you're using the full URL including the report number (e.g., /report/6).</p>
     </div>
   </div>
   <div id="report" class="report" style="display:none;">
@@ -555,15 +557,32 @@
     };
 
     (async function() {
-      // Extract assessmentId from URL path
+      // Extract assessmentId from URL path or query params
       var path = window.location.pathname;
       var match = path.match(/\/report\/(\d+)/);
-      if (!match) {
+      var assessmentId = match ? match[1] : null;
+      
+      // Fallback: check query params (?id=6)
+      if (!assessmentId) {
+        var qp = new URLSearchParams(window.location.search);
+        assessmentId = qp.get('id') || qp.get('aid') || qp.get('assessmentId');
+      }
+      
+      // Fallback: check hash (#6)
+      if (!assessmentId && window.location.hash) {
+        var hashMatch = window.location.hash.match(/(\d+)/);
+        if (hashMatch) assessmentId = hashMatch[1];
+      }
+      
+      if (!assessmentId) {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'flex';
+        // Show debug info
+        console.log('Report ID not found. URL:', window.location.href, 'Path:', path);
+        var dbg = document.getElementById('errorDebug');
+        if (dbg) dbg.textContent = 'URL: ' + window.location.pathname;
         return;
       }
-      var assessmentId = match[1];
 
       // Check URL params for payment unlock signal
       var urlParams = new URLSearchParams(window.location.search);
@@ -571,9 +590,18 @@
       var paymentCancelled = urlParams.get('payment') === 'cancelled';
 
       try {
+        console.log('Fetching report for ID:', assessmentId);
         var resp = await fetch('/api/report/' + assessmentId);
-        if (!resp.ok) throw new Error('not found');
+        console.log('API response status:', resp.status);
+        if (!resp.ok) {
+          var errText = await resp.text();
+          console.error('API error:', resp.status, errText);
+          var dbg = document.getElementById('errorDebug');
+          if (dbg) dbg.textContent = 'Report #' + assessmentId + ' - API error ' + resp.status;
+          throw new Error('API returned ' + resp.status);
+        }
         var data = await resp.json();
+        console.log('Report data loaded for:', data.contact ? data.contact.firstName : 'unknown');
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('report').style.display = 'block';
