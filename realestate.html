@@ -1,411 +1,291 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-TT6PYLPP31');
+  gtag('config', 'G-MJ1SXZJ399');
+</script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <link rel="icon" type="image/png" href="/favicon.png" />
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-  <title>Real Estate Professionals — The Value Engine</title>
-  <meta name="description" content="The P.I.N.K. Assessment built for real estate professionals. Appraisers, agents, investors, and property managers — measure your professional value." />
-
-  <!-- Open Graph -->
+  <title>Real Estate Professionals — The Value Engine by Value to Victory</title>
+  <meta name="description" content="Most agents are grinding 60-hour weeks and still can't break through. The Value Engine diagnoses exactly where your business is undervalued." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://assessment.valuetovictory.com/realestate" />
-  <meta property="og:title" content="Real Estate Pros: Know Your Value Score" />
-  <meta property="og:description" content="Industry-specific P.I.N.K. Assessment for appraisers, agents, investors, and property managers. Coming soon — sign up to be first." />
+  <meta property="og:title" content="Your Real Estate Business Has a Value Problem" />
+  <meta property="og:description" content="Most agents are grinding 60-hour weeks and still can't break through. The Value Engine diagnoses exactly where your business is undervalued." />
   <meta property="og:image" content="https://assessment.valuetovictory.com/og-realestate.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:site_name" content="Value to Victory" />
-
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Real Estate Pros: Know Your Value Score" />
-  <meta name="twitter:description" content="Industry-specific P.I.N.K. Assessment for appraisers, agents, investors, and property managers." />
+  <meta name="twitter:title" content="Your Real Estate Business Has a Value Problem" />
+  <meta name="twitter:description" content="Diagnose exactly where your business is leaking value across 5 pillars." />
   <meta name="twitter:image" content="https://assessment.valuetovictory.com/og-realestate.png" />
-
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #1a1a2e; color: #fff; min-height: 100vh; line-height: 1.6; }
+
+    /* Promo Banner */
+    .promo-banner {
+      background: linear-gradient(135deg, rgba(212,168,83,0.15) 0%, rgba(212,168,83,0.05) 100%);
+      border-bottom: 1px solid rgba(212,168,83,0.3);
+      text-align: center;
+      padding: 0.75rem 1rem;
+    }
+    .promo-banner p { font-size: 0.88rem; color: #d4a853; font-weight: 600; margin: 0; }
+
+    /* Header */
+    .page-header { text-align: center; padding: 2rem 1.5rem 0; }
+    .page-header .brand { font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; color: #d4a853; font-weight: 700; }
 
     /* Hero */
-    .hero {
-      text-align: center;
-      padding: 4rem 1.5rem 3rem;
-      max-width: 720px;
-      margin: 0 auto;
-    }
-    .hero .badge {
+    .hero { max-width: 760px; margin: 0 auto; padding: 3rem 1.5rem 2.5rem; text-align: center; }
+    .hero h1 { font-size: 2.75rem; font-weight: 700; color: #fff; margin-bottom: 1rem; line-height: 1.15; }
+    .hero .subtitle { font-size: 1.1rem; color: #a1a1b5; max-width: 640px; margin: 0 auto 2rem; line-height: 1.6; }
+    .hero .divider { width: 60px; height: 2px; background: linear-gradient(90deg, transparent, #d4a853, transparent); margin: 0 auto 2rem; }
+    .cta-btn {
       display: inline-block;
+      background: linear-gradient(135deg, #d4a853, #b8942e);
+      color: #1a1a2e;
+      font-weight: 700;
+      font-size: 1.05rem;
+      text-decoration: none;
+      padding: 1rem 2.5rem;
+      border-radius: 0.625rem;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .cta-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .section-label {
       font-size: 0.7rem;
       letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: #D4A847;
-      background: rgba(212,168,71,0.1);
-      border: 1px solid rgba(212,168,71,0.2);
-      padding: 0.4rem 1rem;
-      border-radius: 2rem;
+      color: #d4a853;
+      font-weight: 700;
+      text-align: center;
       margin-bottom: 1.5rem;
-      font-weight: 700;
-    }
-    .hero h1 {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 2.75rem;
-      line-height: 1.15;
-      color: #fff;
-      margin-bottom: 1rem;
-    }
-    .hero h1 span { color: #D4A847; }
-    .hero .subtitle {
-      font-size: 1.1rem;
-      color: #a1a1aa;
-      max-width: 580px;
-      margin: 0 auto 1.5rem;
-    }
-    .hero .coming-tag {
-      display: inline-block;
-      font-size: 0.75rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #eab308;
-      background: rgba(234,179,8,0.1);
-      border: 1px solid rgba(234,179,8,0.2);
-      padding: 0.35rem 1rem;
-      border-radius: 2rem;
-      font-weight: 700;
     }
 
-    /* Tracks */
-    .tracks-section {
-      max-width: 780px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem 3rem;
-    }
-    .tracks-section h2 {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 1.75rem;
-      color: #fff;
-      text-align: center;
-      margin-bottom: 0.5rem;
-    }
-    .tracks-section .tracks-sub {
-      text-align: center;
-      font-size: 0.85rem;
-      color: #71717a;
-      margin-bottom: 2rem;
-    }
-    .tracks-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1.25rem;
-    }
-    .track-card {
-      background: #18181b;
-      border: 1px solid #27272a;
+    /* Pain Section */
+    .pain-section { max-width: 700px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    .pain-list { list-style: none; }
+    .pain-list li {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 0.75rem;
-      padding: 2rem 1.5rem;
-      text-align: center;
-      transition: border-color 0.2s;
+      padding: 1.1rem 1.5rem 1.1rem 2.75rem;
+      margin-bottom: 0.6rem;
+      font-size: 1rem;
+      color: #d4d4e0;
+      line-height: 1.5;
       position: relative;
-      overflow: hidden;
     }
-    .track-card:hover { border-color: #3f3f46; }
-    .track-card .track-icon { font-size: 2.5rem; margin-bottom: 1rem; }
-    .track-card h3 { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
-    .track-card p { font-size: 0.85rem; color: #a1a1aa; line-height: 1.5; margin-bottom: 1rem; }
-    .track-card .track-pillars {
-      font-size: 0.75rem;
-      color: #71717a;
-      border-top: 1px solid #27272a;
-      padding-top: 0.75rem;
-      margin-top: 0.5rem;
-    }
-    .track-card .track-pillars strong { color: #D4A847; }
-    .track-card .coming-badge {
+    .pain-list li::before {
+      content: "\2022";
       position: absolute;
-      top: 1rem;
-      right: -2rem;
-      background: rgba(234,179,8,0.15);
-      color: #eab308;
-      font-size: 0.6rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 0.25rem 2.5rem;
-      transform: rotate(35deg);
+      left: 1.25rem;
+      color: #d4a853;
+      font-size: 1.25rem;
+      line-height: 1.5;
     }
 
-    /* Notify Section */
-    .notify-section {
-      max-width: 560px;
+    /* How It Works */
+    .how-section { max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    .steps-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-top: 1.5rem; }
+    .step-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1rem;
+      padding: 1.75rem 1.5rem;
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #d4a853, #b8942e);
+      color: #1a1a2e;
+      font-weight: 800;
+      font-size: 0.85rem;
+      border-radius: 50%;
+      margin-bottom: 0.75rem;
+    }
+    .step-card h3 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+    .step-card p { font-size: 0.88rem; color: #a1a1b5; line-height: 1.5; }
+
+    /* RE Coaching Callout */
+    .coaching-callout {
+      max-width: 640px;
       margin: 0 auto;
       padding: 0 1.5rem 3rem;
+      text-align: center;
     }
-    .notify-card {
-      background: #18181b;
-      border: 1px solid #D4A84730;
+    .callout-card {
+      background: linear-gradient(160deg, rgba(212,168,83,0.08) 0%, rgba(26,26,46,1) 40%, rgba(212,168,83,0.04) 100%);
+      border: 1px solid rgba(212,168,83,0.3);
       border-radius: 1rem;
       padding: 2.5rem 2rem;
-      text-align: center;
     }
-    .notify-card h2 {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 1.5rem;
-      color: #D4A847;
-      margin-bottom: 0.5rem;
-    }
-    .notify-card .notify-desc {
-      font-size: 0.9rem;
-      color: #a1a1aa;
-      margin-bottom: 1.5rem;
-    }
-    .notify-form {
-      display: flex;
-      gap: 0.75rem;
-      max-width: 420px;
-      margin: 0 auto;
-    }
-    .notify-form input {
-      flex: 1;
-      padding: 0.75rem 1rem;
-      background: #0a0a0a;
-      border: 1px solid #27272a;
-      border-radius: 0.5rem;
-      color: #fff;
-      font-family: 'Satoshi', sans-serif;
-      font-size: 0.9rem;
-      transition: border-color 0.2s;
-    }
-    .notify-form input:focus { outline: none; border-color: #D4A847; }
-    .notify-form input::placeholder { color: #52525b; }
-    .notify-form button {
-      padding: 0.75rem 1.5rem;
-      background: linear-gradient(135deg, #D4A847, #b8942e);
-      color: #0a0a0a;
-      font-family: 'Satoshi', sans-serif;
-      font-size: 0.9rem;
+    .callout-card h3 {
+      font-size: 1.25rem;
       font-weight: 700;
-      border: none;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      white-space: nowrap;
+      color: #d4a853;
+      margin-bottom: 0.75rem;
     }
-    .notify-form button:hover { opacity: 0.9; }
-    .notify-form button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .notify-note {
-      font-size: 0.78rem;
-      color: #52525b;
-      margin-top: 0.75rem;
+    .callout-card p {
+      font-size: 0.95rem;
+      color: #a1a1b5;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
     }
-    .notify-msg {
-      margin-top: 1rem;
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      font-size: 0.88rem;
-      display: none;
-    }
-    .notify-msg.ok { display: block; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; }
-    .notify-msg.err { display: block; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
 
-    /* Meanwhile CTA */
-    .meanwhile {
-      max-width: 560px;
+    /* Pricing */
+    .pricing-callout {
+      max-width: 520px;
       margin: 0 auto;
       padding: 0 1.5rem 3rem;
       text-align: center;
     }
-    .meanwhile-card {
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 0.75rem;
-      padding: 2rem;
+    .pricing-card {
+      background: rgba(212,168,83,0.06);
+      border: 1px solid rgba(212,168,83,0.25);
+      border-radius: 1rem;
+      padding: 2rem 1.75rem;
     }
-    .meanwhile-card h3 {
-      font-size: 1rem;
-      color: #d4d4d8;
-      margin-bottom: 0.5rem;
-    }
-    .meanwhile-card p {
-      font-size: 0.85rem;
-      color: #71717a;
-      margin-bottom: 1.25rem;
-    }
-    .meanwhile-card .cta-btn {
-      display: inline-block;
-      padding: 0.875rem 2rem;
-      background: linear-gradient(135deg, #D4A847, #b8942e);
-      color: #0a0a0a;
-      font-family: 'Satoshi', sans-serif;
-      font-size: 0.95rem;
+    .pricing-card .tier-name {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #d4a853;
       font-weight: 700;
-      border: none;
-      border-radius: 0.625rem;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      text-decoration: none;
+      margin-bottom: 0.75rem;
     }
-    .meanwhile-card .cta-btn:hover { opacity: 0.9; }
+    .pricing-card .old-price { font-size: 1.05rem; color: #71717a; text-decoration: line-through; }
+    .pricing-card .new-price { font-size: 2.25rem; font-weight: 800; color: #fff; }
+    .pricing-card .new-price span { font-size: 1rem; color: #71717a; font-weight: 500; }
+    .pricing-card .price-note { font-size: 0.82rem; color: #a1a1b5; margin-bottom: 1.25rem; margin-top: 0.5rem; }
+
+    /* Final CTA */
+    .final-cta { text-align: center; padding: 3rem 1.5rem 2rem; }
+    .final-cta h2 { font-size: 1.75rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; }
 
     /* Footer */
-    .page-footer {
-      text-align: center;
-      padding: 3rem 1.5rem 2.5rem;
-      border-top: 1px solid #27272a;
-      margin-top: 2rem;
-    }
-    .page-footer .tagline {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 1.125rem;
-      color: #D4A847;
-      margin-bottom: 1rem;
-    }
+    .page-footer { text-align: center; padding: 3rem 1.5rem 2.5rem; border-top: 1px solid rgba(255,255,255,0.08); }
+    .page-footer .tagline { font-size: 1.05rem; color: #d4a853; font-weight: 600; margin-bottom: 1rem; }
     .page-footer .copy { color: #71717a; font-size: 0.8rem; }
-    .page-footer a { color: #D4A847; text-decoration: none; }
+    .page-footer a { color: #d4a853; text-decoration: none; }
     .page-footer a:hover { text-decoration: underline; }
 
-    /* Mobile */
-    @media (max-width: 600px) {
-      .hero { padding: 3rem 1rem 2rem; }
+    @media (max-width: 700px) {
+      .steps-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
+      .hero { padding: 2rem 1rem 2rem; }
       .hero h1 { font-size: 2rem; }
-      .tracks-grid { grid-template-columns: 1fr; }
-      .notify-form { flex-direction: column; }
+      .hero .subtitle { font-size: 1rem; }
+      .pain-section { padding: 1.5rem 1rem 2rem; }
+      .how-section { padding: 1.5rem 1rem 2rem; }
+      .coaching-callout { padding: 0 1rem 2rem; }
+      .pricing-callout { padding: 0 1rem 2rem; }
     }
   </style>
 </head>
 <body>
 
+  <!-- Promo Banner -->
+  <div class="promo-banner">
+    <p>Reports normally $1.99 &mdash; FREE through April 25, 2026</p>
+  </div>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="brand">VALUE TO VICTORY</div>
+  </header>
+
   <!-- Hero -->
   <section class="hero">
-    <div class="badge">Real Estate Professionals</div>
-    <h1>Your Market Knowledge Is Strong. But Is Your <span>Value</span>?</h1>
-    <p class="subtitle">The P.I.N.K. Assessment calibrated for real estate professionals. Four industry tracks. One framework that reveals whether your career is appreciating or depreciating.</p>
-    <div class="coming-tag">Coming Soon</div>
+    <h1>Your Real Estate Business Has a Value Problem</h1>
+    <div class="divider"></div>
+    <p class="subtitle">Most agents are grinding 60-hour weeks and still can't break through. The Value Engine diagnoses exactly where your business is undervalued &mdash; Time, People, Influence, Numbers, or Knowledge &mdash; and gives you the prescription.</p>
+    <a href="https://assessment.valuetovictory.com" class="cta-btn">Diagnose Your Business &rarr;</a>
   </section>
 
-  <!-- Tracks -->
-  <section class="tracks-section">
-    <h2>Four Industry Tracks</h2>
-    <p class="tracks-sub">Each track applies the five P.I.N.K. pillars to your specific role in real estate.</p>
+  <!-- Pain Section -->
+  <section class="pain-section">
+    <div class="section-label">Sound Familiar?</div>
+    <ul class="pain-list">
+      <li>Working 60 hours but your income doesn't reflect the effort</li>
+      <li>Can't take a vacation without your business falling apart</li>
+      <li>Spending money on leads that don't convert</li>
+      <li>Your sphere knows you but doesn't refer you</li>
+      <li>Competing on price because you can't articulate your value</li>
+    </ul>
+  </section>
 
-    <div class="tracks-grid">
-      <div class="track-card">
-        <div class="coming-badge">Coming Soon</div>
-        <div class="track-icon">&#128269;</div>
-        <h3>Appraiser</h3>
-        <p>Are you pricing properties — or your own career? Measure the value you bring beyond the report.</p>
-        <div class="track-pillars"><strong>Focus:</strong> Time efficiency per report, client relationships, market influence, fee structures, continuing education</div>
+  <!-- How It Works -->
+  <section class="how-section">
+    <div class="section-label">How It Works</div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h3>Take the 5-Minute Assessment</h3>
+        <p>The Value Engine assessment adapts to you &mdash; 140+ rotating questions, never the same test twice.</p>
       </div>
-
-      <div class="track-card">
-        <div class="coming-badge">Coming Soon</div>
-        <div class="track-icon">&#127968;</div>
-        <h3>Agent / Broker</h3>
-        <p>Closings measure transactions. This measures you. Find out where your business is leaking value.</p>
-        <div class="track-pillars"><strong>Focus:</strong> Time per transaction, sphere of influence, market positioning, GCI optimization, skill development</div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h3>See Where You're Leaking Value</h3>
+        <p>Get scored across 5 pillars and instantly see where your business is weakest.</p>
       </div>
-
-      <div class="track-card">
-        <div class="coming-badge">Coming Soon</div>
-        <div class="track-icon">&#128200;</div>
-        <h3>Investor</h3>
-        <p>ROI measures your portfolio. P.I.N.K. measures the investor behind it.</p>
-        <div class="track-pillars"><strong>Focus:</strong> Deal pipeline timing, partner/mentor network, deal flow influence, portfolio metrics, market knowledge</div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h3>Get Your Action Plan</h3>
+        <p>Receive a personalized action plan with specific Value Engine tools for your weakest areas.</p>
       </div>
-
-      <div class="track-card">
-        <div class="coming-badge">Coming Soon</div>
-        <div class="track-icon">&#128736;</div>
-        <h3>Property Manager</h3>
-        <p>Managing properties is one thing. Managing your professional growth is another.</p>
-        <div class="track-pillars"><strong>Focus:</strong> Response time efficiency, tenant relationships, reputation authority, NOI optimization, regulatory knowledge</div>
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <h3>Free RE Coaching Report</h3>
+        <p>We'll analyze your results through a real estate lens and email you a custom report within 5 minutes.</p>
       </div>
     </div>
   </section>
 
-  <!-- Notify -->
-  <section class="notify-section">
-    <div class="notify-card">
-      <h2>Get Notified at Launch</h2>
-      <p class="notify-desc">Be the first to access the real estate-specific assessment. We'll email you the moment it's live.</p>
-
-      <div class="notify-form">
-        <input type="email" id="notifyEmail" placeholder="your@email.com" />
-        <button id="notifyBtn" onclick="submitNotify()">Notify Me</button>
-      </div>
-      <p class="notify-note">No spam. Just a single email when we launch.</p>
-      <div id="notifyMsg" class="notify-msg"></div>
+  <!-- RE Coaching Track Callout -->
+  <section class="coaching-callout">
+    <div class="callout-card">
+      <h3>Real Estate Coaching Track</h3>
+      <p>After your assessment, choose the Real Estate track. Tell us your years in RE, your specialty, and your annual volume. We'll build a coaching report tailored to your business.</p>
+      <a href="/coaching?track=real_estate" class="cta-btn">Get Your Free RE Coaching Report &rarr;</a>
     </div>
   </section>
 
-  <!-- Meanwhile -->
-  <section class="meanwhile">
-    <div class="meanwhile-card">
-      <h3>Don't wait — take the general assessment now</h3>
-      <p>The core P.I.N.K. Assessment works for everyone. Get your Value Score today and see where you stand across all five pillars.</p>
-      <a class="cta-btn" href="/">Take the P.I.N.K. Assessment &rarr;</a>
+  <!-- Pricing -->
+  <section class="pricing-callout">
+    <div class="pricing-card">
+      <div class="tier-name">VictoryPath Membership</div>
+      <div class="old-price">$49/mo</div>
+      <div class="new-price">$29<span>/mo</span></div>
+      <p class="price-note">All 3 premium reports included &bull; 2026 promo rate</p>
+      <a href="https://assessment.valuetovictory.com" class="cta-btn" style="display:block; text-align:center;">Start My Path &rarr;</a>
     </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final-cta">
+    <h2>Stop Grinding. Start Diagnosing.</h2>
+    <a href="https://assessment.valuetovictory.com" class="cta-btn">Take the Free Assessment &rarr;</a>
   </section>
 
   <!-- Footer -->
   <footer class="page-footer">
     <div class="tagline">Value to Victory</div>
-    <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br>
-      <a href="https://valuetovictory.com">valuetovictory.com</a> &middot;
-      <a href="/">Full Assessment</a> &middot;
-      <a href="/pricing">Pricing</a>
-    </div>
+    <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>
   </footer>
-
-  <script>
-    function submitNotify() {
-      var email = document.getElementById('notifyEmail').value.trim();
-      var msg = document.getElementById('notifyMsg');
-      var btn = document.getElementById('notifyBtn');
-
-      if (!email) {
-        msg.className = 'notify-msg err';
-        msg.textContent = 'Please enter your email address.';
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = 'Submitting...';
-      msg.className = 'notify-msg';
-      msg.style.display = 'none';
-
-      // Try to submit to the free-book-signup endpoint (reuse for notification list)
-      fetch('/api/free-book-signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'RE Pro', email: email, source: 'realestate-notify' })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        msg.className = 'notify-msg ok';
-        msg.textContent = "You're on the list. We'll email you when the real estate assessment launches.";
-        btn.textContent = 'Subscribed!';
-      })
-      .catch(function() {
-        // Even on error, store locally and show success (graceful degradation)
-        try {
-          var list = JSON.parse(localStorage.getItem('ve_re_notify') || '[]');
-          list.push({ email: email, date: new Date().toISOString() });
-          localStorage.setItem('ve_re_notify', JSON.stringify(list));
-        } catch(e) {}
-        msg.className = 'notify-msg ok';
-        msg.textContent = "You're on the list. We'll email you when the real estate assessment launches.";
-        btn.textContent = 'Subscribed!';
-      });
-    }
-  </script>
 
 </body>
 </html>

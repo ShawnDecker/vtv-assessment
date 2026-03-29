@@ -1,497 +1,307 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-TT6PYLPP31');
+  gtag('config', 'G-MJ1SXZJ399');
+</script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <link rel="icon" type="image/png" href="/favicon.png" />
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-  <title>Team Assessment — The Value Engine</title>
-  <meta name="description" content="Measure your team's collective value across the P.I.N.K. pillars. Aggregate scores, identify blind spots, and build a stronger organization." />
-
-  <!-- Open Graph -->
+  <title>Teams &amp; Companies — The Value Engine by Value to Victory</title>
+  <meta name="description" content="Employee wellbeing isn't just benefits — it's measurable. The Value Engine scores your team across 5 pillars and identifies exactly where they need support." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://assessment.valuetovictory.com/teams" />
-  <meta property="og:title" content="How Strong Is Your Team? Measure It." />
-  <meta property="og:description" content="Aggregate P.I.N.K. pillar scores across your team. Find collective blind spots and strengths. Individual scores stay anonymous." />
+  <meta property="og:title" content="Your Team Has Blind Spots. The Value Engine Finds Them." />
+  <meta property="og:description" content="Employee wellbeing isn't just benefits — it's measurable. Score your team across 5 pillars and identify exactly where they need support." />
   <meta property="og:image" content="https://assessment.valuetovictory.com/og-teams.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:site_name" content="Value to Victory" />
-
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="How Strong Is Your Team? Measure It." />
-  <meta name="twitter:description" content="Aggregate P.I.N.K. pillar scores across your team. Individual scores stay anonymous." />
+  <meta name="twitter:title" content="Your Team Has Blind Spots. The Value Engine Finds Them." />
+  <meta name="twitter:description" content="Data-driven development across 5 pillars. No guessing." />
   <meta name="twitter:image" content="https://assessment.valuetovictory.com/og-teams.png" />
-
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #1a1a2e; color: #fff; min-height: 100vh; line-height: 1.6; }
 
-    /* Hero */
-    .hero {
+    .promo-banner {
+      background: linear-gradient(135deg, rgba(212,168,83,0.15) 0%, rgba(212,168,83,0.05) 100%);
+      border-bottom: 1px solid rgba(212,168,83,0.3);
       text-align: center;
-      padding: 4rem 1.5rem 3rem;
-      max-width: 720px;
-      margin: 0 auto;
+      padding: 0.75rem 1rem;
     }
-    .hero .badge {
+    .promo-banner p { font-size: 0.88rem; color: #d4a853; font-weight: 600; margin: 0; }
+
+    .page-header { text-align: center; padding: 2rem 1.5rem 0; }
+    .page-header .brand { font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; color: #d4a853; font-weight: 700; }
+
+    .hero { max-width: 760px; margin: 0 auto; padding: 3rem 1.5rem 2.5rem; text-align: center; }
+    .hero h1 { font-size: 2.5rem; font-weight: 700; color: #fff; margin-bottom: 1rem; line-height: 1.15; }
+    .hero .subtitle { font-size: 1.1rem; color: #a1a1b5; max-width: 640px; margin: 0 auto 2rem; line-height: 1.6; }
+    .hero .divider { width: 60px; height: 2px; background: linear-gradient(90deg, transparent, #d4a853, transparent); margin: 0 auto 2rem; }
+
+    .cta-btn {
       display: inline-block;
+      background: linear-gradient(135deg, #d4a853, #b8942e);
+      color: #1a1a2e;
+      font-weight: 700;
+      font-size: 1.05rem;
+      text-decoration: none;
+      padding: 1rem 2.5rem;
+      border-radius: 0.625rem;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .cta-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .section-label {
       font-size: 0.7rem;
       letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: #D4A847;
-      background: rgba(212,168,71,0.1);
-      border: 1px solid rgba(212,168,71,0.2);
-      padding: 0.4rem 1rem;
-      border-radius: 2rem;
-      margin-bottom: 1.5rem;
+      color: #d4a853;
       font-weight: 700;
-    }
-    .hero h1 {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 2.75rem;
-      line-height: 1.15;
-      color: #fff;
-      margin-bottom: 1rem;
-    }
-    .hero h1 span { color: #D4A847; }
-    .hero .subtitle {
-      font-size: 1.1rem;
-      color: #a1a1aa;
-      max-width: 580px;
-      margin: 0 auto 2.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
     }
 
-    /* Action Section */
-    .action-section {
+    /* Pain Section */
+    .pain-section { max-width: 700px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    .pain-list { list-style: none; }
+    .pain-list li {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 0.75rem;
+      padding: 1.1rem 1.5rem 1.1rem 2.75rem;
+      margin-bottom: 0.6rem;
+      font-size: 1rem;
+      color: #d4d4e0;
+      line-height: 1.5;
+      position: relative;
+    }
+    .pain-list li::before {
+      content: "\2022";
+      position: absolute;
+      left: 1.25rem;
+      color: #d4a853;
+      font-size: 1.25rem;
+      line-height: 1.5;
+    }
+
+    /* Value Props */
+    .value-props { max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    .props-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-top: 1.5rem; }
+    .prop-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1rem;
+      padding: 1.75rem 1.5rem;
+    }
+    .prop-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #d4a853, #b8942e);
+      color: #1a1a2e;
+      font-weight: 800;
+      font-size: 0.85rem;
+      border-radius: 50%;
+      margin-bottom: 0.75rem;
+    }
+    .prop-card h3 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+    .prop-card p { font-size: 0.88rem; color: #a1a1b5; line-height: 1.5; }
+    .prop-card.full-width { grid-column: 1 / -1; }
+
+    /* Trend Callout */
+    .trend-callout {
       max-width: 640px;
       margin: 0 auto;
       padding: 0 1.5rem 3rem;
-    }
-    .action-tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    .action-tab {
-      background: #18181b;
-      border: 2px solid #27272a;
-      border-radius: 0.75rem;
-      padding: 1.5rem;
       text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
     }
-    .action-tab:hover { border-color: #3f3f46; }
-    .action-tab.active { border-color: #D4A847; box-shadow: 0 0 20px rgba(212,168,71,0.12); }
-    .action-tab .tab-icon { font-size: 1.75rem; margin-bottom: 0.5rem; }
-    .action-tab .tab-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; }
-    .action-tab .tab-desc { font-size: 0.8rem; color: #a1a1aa; }
-
-    /* Create Team Panel */
-    .panel { display: none; }
-    .panel.active { display: block; }
-
-    .form-card {
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 0.75rem;
+    .trend-card {
+      background: rgba(212,168,83,0.06);
+      border: 1px solid rgba(212,168,83,0.2);
+      border-radius: 1rem;
       padding: 2rem 1.75rem;
     }
-    .form-card h2 {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 1.5rem;
-      color: #fff;
-      margin-bottom: 0.5rem;
-    }
-    .form-card .form-desc {
-      font-size: 0.85rem;
-      color: #71717a;
-      margin-bottom: 1.75rem;
-    }
-    .form-group { margin-bottom: 1.25rem; }
-    .form-group label {
-      display: block;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #d4d4d8;
-      margin-bottom: 0.375rem;
-    }
-    .form-group input {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      background: #0a0a0a;
-      border: 1px solid #27272a;
-      border-radius: 0.5rem;
-      color: #fff;
-      font-family: 'Satoshi', sans-serif;
-      font-size: 0.9rem;
-      transition: border-color 0.2s;
-    }
-    .form-group input:focus { outline: none; border-color: #D4A847; }
-    .form-group input::placeholder { color: #52525b; }
-    .form-group .helper { font-size: 0.75rem; color: #52525b; margin-top: 0.25rem; }
-
-    .submit-btn {
-      display: block;
-      width: 100%;
-      padding: 1rem;
-      background: linear-gradient(135deg, #D4A847, #b8942e);
-      color: #0a0a0a;
-      font-family: 'Satoshi', sans-serif;
+    .trend-card p {
       font-size: 1rem;
-      font-weight: 700;
-      border: none;
-      border-radius: 0.625rem;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      margin-top: 0.5rem;
-    }
-    .submit-btn:hover { opacity: 0.9; }
-    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* Success state */
-    .success-panel {
-      display: none;
-      text-align: center;
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 0.75rem;
-      padding: 2.5rem 2rem;
-    }
-    .success-panel .success-icon { font-size: 3rem; margin-bottom: 1rem; }
-    .success-panel h2 {
-      font-family: 'Instrument Serif', serif;
+      color: #e4e4e7;
+      line-height: 1.6;
       font-style: italic;
-      font-size: 1.5rem;
-      color: #D4A847;
-      margin-bottom: 0.75rem;
     }
-    .success-panel p { font-size: 0.9rem; color: #a1a1aa; margin-bottom: 0.5rem; }
-    .invite-link-box {
-      background: #0a0a0a;
-      border: 1px solid #27272a;
-      border-radius: 0.5rem;
-      padding: 0.75rem 1rem;
-      margin: 1.5rem 0;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    .invite-link-box input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #D4A847;
-      font-family: 'Satoshi', sans-serif;
-      font-size: 0.85rem;
-      outline: none;
-    }
-    .copy-btn {
-      padding: 0.5rem 1rem;
-      background: #27272a;
-      border: 1px solid #3f3f46;
-      border-radius: 0.375rem;
-      color: #d4d4d8;
-      font-family: 'Satoshi', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .copy-btn:hover { background: #3f3f46; }
-
-    /* Status msg */
-    .status-msg {
-      text-align: center;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      font-size: 0.88rem;
-      margin-top: 1rem;
-      display: none;
-    }
-    .status-msg.err { display: block; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
-    .status-msg.ok { display: block; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; }
-
-    /* Features */
-    .features {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 3rem 1.5rem;
-      border-top: 1px solid #1a1a1a;
-    }
-    .features h2 {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 1.75rem;
-      color: #fff;
-      text-align: center;
-      margin-bottom: 0.5rem;
-    }
-    .features .feat-sub {
-      text-align: center;
-      font-size: 0.85rem;
+    .trend-card .source {
+      font-size: 0.78rem;
       color: #71717a;
-      margin-bottom: 2rem;
+      margin-top: 0.75rem;
+      font-style: normal;
     }
-    .feat-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.25rem;
-    }
-    .feat-card {
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 0.75rem;
-      padding: 1.5rem;
-      text-align: center;
-    }
-    .feat-card .feat-icon { font-size: 1.75rem; margin-bottom: 0.75rem; }
-    .feat-card h3 { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.375rem; }
-    .feat-card p { font-size: 0.8rem; color: #a1a1aa; line-height: 1.5; }
 
-    /* Footer */
-    .page-footer {
+    /* Pricing */
+    .pricing-section {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
       text-align: center;
-      padding: 3rem 1.5rem 2.5rem;
-      border-top: 1px solid #27272a;
-      margin-top: 2rem;
     }
-    .page-footer .tagline {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 1.125rem;
-      color: #D4A847;
-      margin-bottom: 1rem;
+    .pricing-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-top: 1.5rem;
     }
+    .pricing-option {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1rem;
+      padding: 2rem 1.5rem;
+    }
+    .pricing-option.featured {
+      background: rgba(212,168,83,0.06);
+      border-color: rgba(212,168,83,0.25);
+    }
+    .pricing-option h3 { font-size: 1rem; font-weight: 700; color: #d4a853; margin-bottom: 0.75rem; }
+    .pricing-option .price-big { font-size: 1.75rem; font-weight: 800; color: #fff; }
+    .pricing-option .price-big span { font-size: 0.88rem; color: #71717a; font-weight: 500; }
+    .pricing-option .old-price { font-size: 0.95rem; color: #71717a; text-decoration: line-through; }
+    .pricing-option p { font-size: 0.85rem; color: #a1a1b5; margin-top: 0.5rem; line-height: 1.5; }
+
+    .final-cta { text-align: center; padding: 3rem 1.5rem 2rem; }
+    .final-cta h2 { font-size: 1.75rem; font-weight: 700; color: #fff; margin-bottom: 1rem; }
+    .final-cta p { font-size: 1rem; color: #a1a1b5; margin-bottom: 1.5rem; }
+
+    .page-footer { text-align: center; padding: 3rem 1.5rem 2.5rem; border-top: 1px solid rgba(255,255,255,0.08); }
+    .page-footer .tagline { font-size: 1.05rem; color: #d4a853; font-weight: 600; margin-bottom: 1rem; }
     .page-footer .copy { color: #71717a; font-size: 0.8rem; }
-    .page-footer a { color: #D4A847; text-decoration: none; }
+    .page-footer a { color: #d4a853; text-decoration: none; }
     .page-footer a:hover { text-decoration: underline; }
 
-    /* Mobile */
-    @media (max-width: 600px) {
-      .hero { padding: 3rem 1rem 2rem; }
-      .hero h1 { font-size: 2rem; }
-      .feat-grid { grid-template-columns: 1fr; }
-      .action-tabs { grid-template-columns: 1fr; }
+    @media (max-width: 700px) {
+      .props-grid { grid-template-columns: 1fr; }
+      .pricing-options { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
+      .hero { padding: 2rem 1rem 2rem; }
+      .hero h1 { font-size: 1.85rem; }
+      .hero .subtitle { font-size: 1rem; }
+      .pain-section { padding: 1.5rem 1rem 2rem; }
+      .value-props { padding: 1.5rem 1rem 2rem; }
+      .trend-callout { padding: 0 1rem 2rem; }
+      .pricing-section { padding: 0 1rem 2rem; }
     }
   </style>
 </head>
 <body>
 
+  <!-- Promo Banner -->
+  <div class="promo-banner">
+    <p>Reports normally $1.99 &mdash; FREE through April 25, 2026</p>
+  </div>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="brand">VALUE TO VICTORY</div>
+  </header>
+
   <!-- Hero -->
   <section class="hero">
-    <div class="badge">B2B &bull; Teams &bull; Organizations</div>
-    <h1>How Strong Is <span>Your Team</span>?</h1>
-    <p class="subtitle">Measure your organization's collective value across the five P.I.N.K. pillars. Aggregate scores reveal blind spots no individual assessment can. Individual results stay anonymous.</p>
+    <h1>Your Team Has Blind Spots. The Value Engine Finds Them.</h1>
+    <div class="divider"></div>
+    <p class="subtitle">Employee wellbeing isn't just benefits &mdash; it's measurable. The Value Engine scores your team across 5 pillars and identifies exactly where they need support. No guessing. Data-driven development.</p>
+    <a href="https://assessment.valuetovictory.com" class="cta-btn">Assess Your Team &rarr;</a>
   </section>
 
-  <!-- Action Section -->
-  <section class="action-section">
-    <div class="action-tabs">
-      <div class="action-tab active" id="tabCreate" onclick="switchTab('create')">
-        <div class="tab-icon">&#10133;</div>
-        <div class="tab-title">Create a Team</div>
-        <div class="tab-desc">Start a new team and invite members</div>
+  <!-- Pain Section -->
+  <section class="pain-section">
+    <div class="section-label">Sound Familiar?</div>
+    <ul class="pain-list">
+      <li>High turnover and you can't figure out why</li>
+      <li>Employee engagement surveys give you feelings, not numbers</li>
+      <li>You invest in training but can't measure the ROI</li>
+      <li>Team members are burned out but won't say it directly</li>
+      <li>You need L&amp;D programs that actually move the needle</li>
+    </ul>
+  </section>
+
+  <!-- Value Props -->
+  <section class="value-props">
+    <div class="section-label">What Your Team Gets</div>
+    <div class="props-grid">
+      <div class="prop-card">
+        <div class="prop-num">1</div>
+        <h3>Individual Assessments</h3>
+        <p>Every team member takes the 5-minute Value Engine assessment and gets their own Master Value Score.</p>
       </div>
-      <div class="action-tab" id="tabJoin" onclick="switchTab('join')">
-        <div class="tab-icon">&#128279;</div>
-        <div class="tab-title">Join a Team</div>
-        <div class="tab-desc">Enter an invite code to join</div>
+      <div class="prop-card">
+        <div class="prop-num">2</div>
+        <h3>Aggregate Team Data</h3>
+        <p>See where the whole team is strong and weak across all 5 pillars at a glance.</p>
       </div>
-    </div>
-
-    <!-- Create Team -->
-    <div class="panel active" id="panelCreate">
-      <div class="form-card">
-        <h2>Create Your Team</h2>
-        <p class="form-desc">Set up your team and get an invite link to share with members. Each person takes the assessment individually — you see the aggregate.</p>
-
-        <div class="form-group">
-          <label>Team Name</label>
-          <input type="text" id="teamName" placeholder="e.g., Sales Team Q2, Decker & Associates" />
-        </div>
-        <div class="form-group">
-          <label>Your Name</label>
-          <input type="text" id="adminName" placeholder="Your full name" />
-        </div>
-        <div class="form-group">
-          <label>Your Email</label>
-          <input type="email" id="adminEmail" placeholder="you@company.com" />
-          <div class="helper">You'll receive the team dashboard link and aggregate reports here.</div>
-        </div>
-        <div class="form-group">
-          <label>Company / Organization (optional)</label>
-          <input type="text" id="orgName" placeholder="Your company name" />
-        </div>
-
-        <button class="submit-btn" id="createBtn" onclick="createTeam()">Create Team &amp; Get Invite Link</button>
-        <div id="createMsg" class="status-msg"></div>
+      <div class="prop-card">
+        <div class="prop-num">3</div>
+        <h3>Company Analysis Report</h3>
+        <p>Identifies organizational blind spots and gives leadership actionable insights.</p>
       </div>
-
-      <!-- Success state -->
-      <div class="success-panel" id="createSuccess">
-        <div class="success-icon">&#127881;</div>
-        <h2>Team Created</h2>
-        <p>Share this link with your team members:</p>
-        <div class="invite-link-box">
-          <input type="text" id="inviteLink" readonly value="" />
-          <button class="copy-btn" onclick="copyInvite()">Copy</button>
-        </div>
-        <p style="font-size:0.78rem;color:#52525b;">Each member takes the assessment using this link. Their individual scores stay private — you only see the team aggregate.</p>
+      <div class="prop-card">
+        <div class="prop-num">4</div>
+        <h3>Coaching Prep Reports</h3>
+        <p>Each team member receives a personalized coaching preparation report.</p>
       </div>
-    </div>
-
-    <!-- Join Team -->
-    <div class="panel" id="panelJoin">
-      <div class="form-card">
-        <h2>Join a Team</h2>
-        <p class="form-desc">Got an invite code or link? Enter it below to join your team's assessment.</p>
-
-        <div class="form-group">
-          <label>Invite Code</label>
-          <input type="text" id="inviteCode" placeholder="e.g., TEAM-A1B2C3" />
-        </div>
-        <div class="form-group">
-          <label>Your Email</label>
-          <input type="email" id="joinEmail" placeholder="you@company.com" />
-        </div>
-
-        <button class="submit-btn" id="joinBtn" onclick="joinTeam()">Join Team &amp; Start Assessment</button>
-        <div id="joinMsg" class="status-msg"></div>
+      <div class="prop-card full-width">
+        <div class="prop-num">5</div>
+        <h3>Track Improvement Over Time</h3>
+        <p>Retest your team quarterly or annually. With 140+ rotating questions, each assessment is unique &mdash; and you can measure real progress.</p>
       </div>
     </div>
   </section>
 
-  <!-- Features -->
-  <section class="features">
-    <h2>What Teams Get</h2>
-    <p class="feat-sub">Built on the P.I.N.K. framework from <em>The Lost Art of Value</em> by Shawn E. Decker</p>
-    <div class="feat-grid">
-      <div class="feat-card">
-        <div class="feat-icon">&#128202;</div>
-        <h3>Aggregate Dashboard</h3>
-        <p>See your team's average scores across all five pillars in one view.</p>
+  <!-- Trend Callout -->
+  <section class="trend-callout">
+    <div class="trend-card">
+      <p>&ldquo;In 2026, employee wellbeing is a core L&amp;D priority. Companies integrating mental fitness, stress management, and resilience into development programs are outperforming those that don't.&rdquo;</p>
+      <div class="source">&mdash; GoodHabitz 2026 Report</div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing-section">
+    <div class="section-label">Pricing</div>
+    <div class="pricing-options">
+      <div class="pricing-option featured">
+        <h3>Team Pricing</h3>
+        <div class="price-big">Custom</div>
+        <p>Contact us for volume discounts, onboarding support, and enterprise features.</p>
+        <a href="/coaching?track=company" class="cta-btn" style="display:block; text-align:center; margin-top:1.25rem; font-size:0.92rem; padding:0.85rem 1.5rem;">Contact for Pricing &rarr;</a>
       </div>
-      <div class="feat-card">
-        <div class="feat-icon">&#128274;</div>
-        <h3>Anonymous Scores</h3>
-        <p>Individual scores are private. Only the team aggregate is visible to the organizer.</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">&#127919;</div>
-        <h3>Blind Spot Detection</h3>
-        <p>Identify which pillar your entire team is weakest in — and address it together.</p>
+      <div class="pricing-option">
+        <h3>Individual Seats</h3>
+        <div class="old-price">$49/mo per seat</div>
+        <div class="price-big">$29<span>/mo</span></div>
+        <p>VictoryPath membership for each team member. All 3 premium reports included.</p>
+        <a href="https://assessment.valuetovictory.com" class="cta-btn" style="display:block; text-align:center; margin-top:1.25rem; font-size:0.92rem; padding:0.85rem 1.5rem;">Get Started &rarr;</a>
       </div>
     </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final-cta">
+    <h2>Stop Guessing. Start Measuring.</h2>
+    <p>Give your team the diagnostic they need &mdash; and the development plan that actually works.</p>
+    <a href="https://assessment.valuetovictory.com" class="cta-btn">Assess Your Team &rarr;</a>
   </section>
 
   <!-- Footer -->
   <footer class="page-footer">
     <div class="tagline">Value to Victory</div>
-    <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br>
-      <a href="https://valuetovictory.com">valuetovictory.com</a> &middot;
-      <a href="/">Full Assessment</a> &middot;
-      <a href="/pricing">Pricing</a>
-    </div>
+    <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>
   </footer>
-
-  <script>
-    function switchTab(tab) {
-      document.querySelectorAll('.action-tab').forEach(function(t) { t.classList.remove('active'); });
-      document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
-
-      if (tab === 'create') {
-        document.getElementById('tabCreate').classList.add('active');
-        document.getElementById('panelCreate').classList.add('active');
-      } else {
-        document.getElementById('tabJoin').classList.add('active');
-        document.getElementById('panelJoin').classList.add('active');
-      }
-    }
-
-    function generateCode() {
-      var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      var code = 'TEAM-';
-      for (var i = 0; i < 6; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return code;
-    }
-
-    function createTeam() {
-      var name = document.getElementById('teamName').value.trim();
-      var adminName = document.getElementById('adminName').value.trim();
-      var adminEmail = document.getElementById('adminEmail').value.trim();
-      var msg = document.getElementById('createMsg');
-      var btn = document.getElementById('createBtn');
-
-      if (!name || !adminName || !adminEmail) {
-        msg.className = 'status-msg err';
-        msg.textContent = 'Please fill in team name, your name, and email.';
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = 'Creating...';
-
-      // Generate a team code and build the invite link
-      var code = generateCode();
-      var link = window.location.origin + '/?team=' + code;
-
-      // Store team info (would normally go to API)
-      try {
-        var teams = JSON.parse(localStorage.getItem('ve_teams') || '{}');
-        teams[code] = { name: name, admin: adminName, email: adminEmail, org: document.getElementById('orgName').value.trim(), created: new Date().toISOString(), members: [] };
-        localStorage.setItem('ve_teams', JSON.stringify(teams));
-      } catch(e) {}
-
-      document.getElementById('inviteLink').value = link;
-      document.querySelector('#panelCreate .form-card').style.display = 'none';
-      document.getElementById('createSuccess').style.display = 'block';
-    }
-
-    function copyInvite() {
-      var input = document.getElementById('inviteLink');
-      input.select();
-      document.execCommand('copy');
-      var btn = input.parentElement.querySelector('.copy-btn');
-      btn.textContent = 'Copied!';
-      setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
-    }
-
-    function joinTeam() {
-      var code = document.getElementById('inviteCode').value.trim();
-      var email = document.getElementById('joinEmail').value.trim();
-      var msg = document.getElementById('joinMsg');
-
-      if (!code || !email) {
-        msg.className = 'status-msg err';
-        msg.textContent = 'Please enter both the invite code and your email.';
-        return;
-      }
-
-      // Redirect to assessment with team param
-      window.location.href = '/?team=' + encodeURIComponent(code) + '&email=' + encodeURIComponent(email);
-    }
-
-    // Check URL for invite code
-    (function() {
-      var params = new URLSearchParams(window.location.search);
-      var code = params.get('code') || params.get('team');
-      if (code) {
-        switchTab('join');
-        document.getElementById('inviteCode').value = code;
-      }
-    })();
-  </script>
 
 </body>
 </html>

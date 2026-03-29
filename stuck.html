@@ -1,504 +1,545 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-TT6PYLPP31');
+  gtag('config', 'G-MJ1SXZJ399');
+</script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <link rel="icon" type="image/png" href="/favicon.png" />
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-  <title>Feeling Stuck? — The Value Engine</title>
-  <meta name="description" content="Take a quick 5-question diagnostic to find out which pillar of value is holding you back. Free. 2 minutes. Instant clarity." />
-
-  <!-- Open Graph -->
+  <title>Feeling Stuck? — The Value Engine by Value to Victory</title>
+  <meta name="description" content="You're not broken. You're not lazy. You just don't have a diagnostic. Take the Value Engine — 5 minutes, 50 dimensions, 1 score that changes everything." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://assessment.valuetovictory.com/stuck" />
-  <meta property="og:title" content="Feeling Stuck? Find Out Why in 2 Minutes." />
-  <meta property="og:description" content="Quick 5-question diagnostic shows which pillar of value is holding you back — and what to do next." />
+  <meta property="og:title" content="Where Is Your Life Undervalued?" />
+  <meta property="og:description" content="You're not broken. You're not lazy. You just don't have a diagnostic. Take the Value Engine — 5 minutes, 50 dimensions, 1 score that changes everything." />
   <meta property="og:image" content="https://assessment.valuetovictory.com/og-stuck.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:site_name" content="Value to Victory" />
-
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Feeling Stuck? Find Out Why in 2 Minutes." />
-  <meta name="twitter:description" content="Quick 5-question diagnostic shows which pillar of value is holding you back." />
+  <meta name="twitter:title" content="Where Is Your Life Undervalued?" />
+  <meta name="twitter:description" content="5 minutes. 50 dimensions. 1 score that changes everything. Take the free Value Engine assessment." />
   <meta name="twitter:image" content="https://assessment.valuetovictory.com/og-stuck.png" />
-
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #1a1a2e; color: #fff; min-height: 100vh; line-height: 1.6; }
+
+    /* Promo Banner */
+    .promo-banner {
+      background: linear-gradient(135deg, rgba(212,168,83,0.15) 0%, rgba(212,168,83,0.05) 100%);
+      border-bottom: 1px solid rgba(212,168,83,0.3);
+      text-align: center;
+      padding: 0.75rem 1rem;
+    }
+    .promo-banner p {
+      font-size: 0.88rem;
+      color: #d4a853;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    /* Header */
+    .page-header {
+      text-align: center;
+      padding: 2rem 1.5rem 0;
+    }
+    .page-header .brand {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #d4a853;
+      font-weight: 700;
+    }
 
     /* Hero */
     .hero {
-      text-align: center;
-      padding: 4rem 1.5rem 3rem;
-      max-width: 720px;
+      max-width: 760px;
       margin: 0 auto;
+      padding: 3rem 1.5rem 2.5rem;
+      text-align: center;
     }
-    .hero .badge {
+    .hero h1 {
+      font-size: 2.75rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 1rem;
+      line-height: 1.15;
+    }
+    .hero .subtitle {
+      font-size: 1.1rem;
+      color: #a1a1b5;
+      max-width: 620px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+    .hero .divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #d4a853, transparent);
+      margin: 0 auto 2rem;
+    }
+    .cta-btn {
       display: inline-block;
+      background: linear-gradient(135deg, #d4a853, #b8942e);
+      color: #1a1a2e;
+      font-weight: 700;
+      font-size: 1.05rem;
+      text-decoration: none;
+      padding: 1rem 2.5rem;
+      border-radius: 0.625rem;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .cta-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* Pain Section */
+    .pain-section {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3rem;
+    }
+    .section-label {
       font-size: 0.7rem;
       letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: #D4A847;
-      background: rgba(212,168,71,0.1);
-      border: 1px solid rgba(212,168,71,0.2);
-      padding: 0.4rem 1rem;
-      border-radius: 2rem;
+      color: #d4a853;
+      font-weight: 700;
+      text-align: center;
       margin-bottom: 1.5rem;
-      font-weight: 700;
     }
-    .hero h1 {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 2.75rem;
-      line-height: 1.15;
-      color: #fff;
-      margin-bottom: 1rem;
+    .pain-list {
+      list-style: none;
     }
-    .hero h1 span { color: #D4A847; }
-    .hero .subtitle {
-      font-size: 1.1rem;
-      color: #a1a1aa;
-      max-width: 560px;
-      margin: 0 auto 2.5rem;
-    }
-    .hero .cta-btn {
-      display: inline-block;
-      padding: 1rem 2.5rem;
-      background: linear-gradient(135deg, #D4A847, #b8942e);
-      color: #0a0a0a;
-      font-family: 'Satoshi', sans-serif;
-      font-size: 1.05rem;
-      font-weight: 700;
-      border: none;
-      border-radius: 0.625rem;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      text-decoration: none;
-    }
-    .hero .cta-btn:hover { opacity: 0.9; }
-    .hero .cta-note {
-      font-size: 0.8rem;
-      color: #52525b;
-      margin-top: 0.75rem;
-    }
-
-    /* Diagnostic Section */
-    .diagnostic {
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 0 1.5rem 3rem;
-    }
-    .diagnostic-intro {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .diagnostic-intro h2 {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 1.75rem;
-      color: #fff;
-      margin-bottom: 0.5rem;
-    }
-    .diagnostic-intro p {
-      font-size: 0.9rem;
-      color: #71717a;
-    }
-
-    /* Question cards */
-    .q-card {
-      background: #18181b;
-      border: 1px solid #27272a;
+    .pain-list li {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 0.75rem;
-      padding: 1.75rem;
-      margin-bottom: 1rem;
-      transition: border-color 0.2s;
-    }
-    .q-card:hover { border-color: #3f3f46; }
-    .q-card .q-label {
-      font-size: 0.65rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: #D4A847;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    .q-card .q-text {
+      padding: 1.1rem 1.5rem;
+      margin-bottom: 0.6rem;
       font-size: 1rem;
-      font-weight: 600;
-      color: #d4d4d8;
-      margin-bottom: 1rem;
+      color: #d4d4e0;
+      line-height: 1.5;
+      position: relative;
+      padding-left: 2.75rem;
     }
-    .q-options {
-      display: flex;
-      gap: 0.5rem;
-    }
-    .q-option {
-      flex: 1;
-      padding: 0.625rem 0.5rem;
-      background: #0a0a0a;
-      border: 1px solid #27272a;
-      border-radius: 0.5rem;
-      color: #a1a1aa;
-      font-family: 'Satoshi', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.2s;
-    }
-    .q-option:hover { border-color: #D4A847; color: #D4A847; }
-    .q-option.selected {
-      border-color: #D4A847;
-      background: rgba(212,168,71,0.1);
-      color: #D4A847;
+    .pain-list li::before {
+      content: "\2022";
+      position: absolute;
+      left: 1.25rem;
+      color: #d4a853;
+      font-size: 1.25rem;
+      line-height: 1.5;
     }
 
-    /* Results */
-    .results-section {
-      display: none;
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 0 1.5rem 4rem;
-      text-align: center;
-    }
-    .results-card {
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 1rem;
-      padding: 2.5rem 2rem;
-    }
-    .results-card .result-icon { font-size: 3rem; margin-bottom: 1rem; }
-    .results-card h2 {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 1.75rem;
-      color: #D4A847;
-      margin-bottom: 0.75rem;
-    }
-    .results-card .result-desc {
-      font-size: 0.95rem;
-      color: #a1a1aa;
-      line-height: 1.6;
-      margin-bottom: 2rem;
-    }
-    .results-card .pillar-bar {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 0.75rem;
-    }
-    .pillar-bar .p-name {
-      width: 100px;
-      text-align: right;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #d4d4d8;
-    }
-    .pillar-bar .p-track {
-      flex: 1;
-      height: 8px;
-      background: #27272a;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .pillar-bar .p-fill {
-      height: 100%;
-      border-radius: 4px;
-      transition: width 0.6s ease;
-    }
-    .pillar-bar .p-fill.low { background: #ef4444; }
-    .pillar-bar .p-fill.mid { background: #eab308; }
-    .pillar-bar .p-fill.high { background: #22c55e; }
-    .results-card .cta-full {
-      display: inline-block;
-      padding: 1rem 2.5rem;
-      background: linear-gradient(135deg, #D4A847, #b8942e);
-      color: #0a0a0a;
-      font-family: 'Satoshi', sans-serif;
-      font-size: 1rem;
-      font-weight: 700;
-      border: none;
-      border-radius: 0.625rem;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      text-decoration: none;
-      margin-top: 2rem;
-    }
-    .results-card .cta-full:hover { opacity: 0.9; }
-
-    /* How it works */
+    /* How It Works */
     .how-section {
-      max-width: 720px;
+      max-width: 760px;
       margin: 0 auto;
-      padding: 3rem 1.5rem;
-      border-top: 1px solid #1a1a1a;
+      padding: 2rem 1.5rem 3rem;
     }
-    .how-section h2 {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 1.75rem;
-      color: #fff;
-      text-align: center;
-      margin-bottom: 0.5rem;
-    }
-    .how-section .how-sub {
-      text-align: center;
-      font-size: 0.85rem;
-      color: #71717a;
-      margin-bottom: 2rem;
-    }
-    .how-grid {
+    .steps-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 1.25rem;
+      margin-top: 1.5rem;
     }
-    .how-card {
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 0.75rem;
-      padding: 1.5rem;
-      text-align: center;
+    .step-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1rem;
+      padding: 1.75rem 1.5rem;
     }
-    .how-card .how-num {
+    .step-num {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 2rem;
-      height: 2rem;
-      background: rgba(212,168,71,0.15);
-      color: #D4A847;
-      font-weight: 700;
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #d4a853, #b8942e);
+      color: #1a1a2e;
+      font-weight: 800;
       font-size: 0.85rem;
       border-radius: 50%;
       margin-bottom: 0.75rem;
     }
-    .how-card h3 {
-      font-size: 0.95rem;
+    .step-card h3 {
+      font-size: 1rem;
       font-weight: 700;
       color: #fff;
-      margin-bottom: 0.375rem;
+      margin-bottom: 0.5rem;
     }
-    .how-card p {
-      font-size: 0.8rem;
-      color: #a1a1aa;
+    .step-card p {
+      font-size: 0.88rem;
+      color: #a1a1b5;
       line-height: 1.5;
     }
+
+    /* Stats Bar */
+    .stats-bar {
+      background: rgba(212,168,83,0.08);
+      border-top: 1px solid rgba(212,168,83,0.2);
+      border-bottom: 1px solid rgba(212,168,83,0.2);
+      padding: 2.5rem 1.5rem;
+    }
+    .stats-grid {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      text-align: center;
+    }
+    .stat-item .stat-number {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #d4a853;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    .stat-item .stat-text {
+      font-size: 0.85rem;
+      color: #a1a1b5;
+      line-height: 1.45;
+    }
+    .stat-item .stat-source {
+      font-size: 0.72rem;
+      color: #71717a;
+      margin-top: 0.35rem;
+      display: block;
+    }
+
+    /* Social Proof */
+    .social-proof {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+    }
+    .proof-card {
+      background: rgba(212,168,83,0.06);
+      border: 1px solid rgba(212,168,83,0.2);
+      border-radius: 1rem;
+      padding: 2rem 1.75rem;
+    }
+    .proof-card p {
+      font-size: 1.05rem;
+      color: #e4e4e7;
+      line-height: 1.6;
+      font-style: italic;
+    }
+
+    /* FAQ Section */
+    .faq-section {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3rem;
+    }
+    .faq-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 0.6rem;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .faq-item:hover { border-color: rgba(255,255,255,0.15); }
+    .faq-question {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #e4e4e7;
+    }
+    .faq-question .arrow {
+      font-size: 0.8rem;
+      color: #71717a;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-left: 1rem;
+    }
+    .faq-item.open .faq-question .arrow { transform: rotate(180deg); }
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      font-size: 0.88rem;
+      color: #a1a1b5;
+      line-height: 1.55;
+    }
+    .faq-item.open .faq-answer {
+      max-height: 300px;
+      padding-top: 0.75rem;
+    }
+
+    /* Pricing Callout */
+    .pricing-callout {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+      text-align: center;
+    }
+    .pricing-card {
+      background: rgba(212,168,83,0.06);
+      border: 1px solid rgba(212,168,83,0.25);
+      border-radius: 1rem;
+      padding: 2rem 1.75rem;
+    }
+    .pricing-card .tier-name {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #d4a853;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .pricing-card .price-row {
+      margin-bottom: 0.75rem;
+    }
+    .pricing-card .old-price {
+      font-size: 1.05rem;
+      color: #71717a;
+      text-decoration: line-through;
+    }
+    .pricing-card .new-price {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .pricing-card .new-price span {
+      font-size: 1rem;
+      color: #71717a;
+      font-weight: 500;
+    }
+    .pricing-card .price-note {
+      font-size: 0.82rem;
+      color: #a1a1b5;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Final CTA */
+    .final-cta {
+      text-align: center;
+      padding: 3rem 1.5rem 2rem;
+    }
+    .final-cta h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 1.5rem;
+    }
+
 
     /* Footer */
     .page-footer {
       text-align: center;
       padding: 3rem 1.5rem 2.5rem;
-      border-top: 1px solid #27272a;
-      margin-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
     }
     .page-footer .tagline {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: 1.125rem;
-      color: #D4A847;
+      font-size: 1.05rem;
+      color: #d4a853;
+      font-weight: 600;
       margin-bottom: 1rem;
     }
-    .page-footer .copy { color: #71717a; font-size: 0.8rem; }
-    .page-footer a { color: #D4A847; text-decoration: none; }
+    .page-footer .copy {
+      color: #71717a;
+      font-size: 0.8rem;
+    }
+    .page-footer a { color: #d4a853; text-decoration: none; }
     .page-footer a:hover { text-decoration: underline; }
 
     /* Mobile */
-    @media (max-width: 600px) {
-      .hero { padding: 3rem 1rem 2rem; }
+    @media (max-width: 700px) {
+      .stats-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+      .steps-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
+      .hero { padding: 2rem 1rem 2rem; }
       .hero h1 { font-size: 2rem; }
-      .how-grid { grid-template-columns: 1fr; }
-      .q-options { flex-direction: column; }
+      .hero .subtitle { font-size: 1rem; }
+      .pain-section { padding: 1.5rem 1rem 2rem; }
+      .how-section { padding: 1.5rem 1rem 2rem; }
+      .faq-section { padding: 1.5rem 1rem 2rem; }
+      .pricing-callout { padding: 0 1rem 2rem; }
     }
   </style>
 </head>
 <body>
 
+  <!-- Promo Banner -->
+  <div class="promo-banner">
+    <p>Reports normally $1.99 &mdash; FREE through April 25, 2026</p>
+  </div>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="brand">VALUE TO VICTORY</div>
+  </header>
+
   <!-- Hero -->
   <section class="hero">
-    <div class="badge">Free &bull; 5 Questions &bull; 2 Minutes</div>
-    <h1>You're Not Stuck. You're <span>Leaking Value</span> in One Place.</h1>
-    <p class="subtitle">Most people don't need more hustle. They need to find the one pillar that's dragging everything else down. This quick diagnostic shows you exactly which one.</p>
-    <a href="#diagnostic" class="cta-btn" onclick="document.getElementById('diagnostic').scrollIntoView({behavior:'smooth'});return false;">Find My Weak Spot &rarr;</a>
-    <p class="cta-note">No login. No email required. Just honest answers.</p>
+    <h1>Where Is Your Life Undervalued?</h1>
+    <div class="divider"></div>
+    <p class="subtitle">You're not broken. You're not lazy. You just don't have a diagnostic. Take the Value Engine &mdash; 5 minutes, 50 dimensions, 1 score that changes everything.</p>
+    <a href="https://assessment.valuetovictory.com" class="cta-btn">Run the System &rarr;</a>
+  </section>
+
+  <!-- Pain Section -->
+  <section class="pain-section">
+    <div class="section-label">Sound Familiar?</div>
+    <ul class="pain-list">
+      <li>I built the life I was supposed to want and I'm miserable</li>
+      <li>I feel stuck but I can't explain why</li>
+      <li>I lack direction, not motivation</li>
+      <li>Every year feels harder than the last</li>
+      <li>I just feel busy all the time</li>
+      <li>My days are consumed by other people's priorities</li>
+      <li>If someone audited my calendar, they'd see a different person than I claim to be</li>
+    </ul>
   </section>
 
   <!-- How It Works -->
   <section class="how-section">
-    <h2>How This Works</h2>
-    <p class="how-sub">Built on the P.I.N.K. framework from <em>The Lost Art of Value</em> by Shawn E. Decker</p>
-    <div class="how-grid">
-      <div class="how-card">
-        <div class="how-num">1</div>
-        <h3>Answer 5 Questions</h3>
-        <p>One question per pillar. Quick gut-check answers. No overthinking.</p>
+    <div class="section-label">How It Works</div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h3>Take the 5-Minute Assessment</h3>
+        <p>140+ questions in the bank &mdash; you'll never see the same test twice.</p>
       </div>
-      <div class="how-card">
-        <div class="how-num">2</div>
-        <h3>See Your Weak Spot</h3>
-        <p>Instantly see which pillar is holding back the other four.</p>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h3>Get Your Master Value Score</h3>
+        <p>Scored across 5 pillars: Time, People, Influence, Numbers, and Knowledge.</p>
       </div>
-      <div class="how-card">
-        <div class="how-num">3</div>
-        <h3>Take the Full Assessment</h3>
-        <p>Ready to go deeper? Get your complete P.I.N.K. Value Score and prescription.</p>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h3>Receive Your Personalized Report</h3>
+        <p>Your exact weakest area and a step-by-step action plan to fix it.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <h3>Optional: Free Coaching Report</h3>
+        <p>Request a free coaching preparation report &mdash; Personal, Real Estate, or Company track.</p>
       </div>
     </div>
   </section>
 
-  <!-- Diagnostic -->
-  <section class="diagnostic" id="diagnostic">
-    <div class="diagnostic-intro">
-      <h2>Quick Diagnostic</h2>
-      <p>Answer honestly. There are no wrong answers.</p>
-    </div>
-
-    <div class="q-card" data-pillar="time">
-      <div class="q-label">Time</div>
-      <div class="q-text">How often do you feel like you're running out of time for what matters most?</div>
-      <div class="q-options">
-        <button class="q-option" data-value="1" onclick="selectAnswer(this)">Always</button>
-        <button class="q-option" data-value="2" onclick="selectAnswer(this)">Often</button>
-        <button class="q-option" data-value="3" onclick="selectAnswer(this)">Sometimes</button>
-        <button class="q-option" data-value="4" onclick="selectAnswer(this)">Rarely</button>
-        <button class="q-option" data-value="5" onclick="selectAnswer(this)">Never</button>
+  <!-- Stats Bar -->
+  <section class="stats-bar">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <span class="stat-number">75%</span>
+        <span class="stat-text">of 25&ndash;33 year olds have experienced a quarter-life crisis</span>
+        <span class="stat-source">&mdash; LinkedIn</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">35%</span>
+        <span class="stat-text">of young people say loneliness disrupts their daily life</span>
+        <span class="stat-source">&mdash; Hopelab 2025</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">40%</span>
+        <span class="stat-text">of weekly hours can't be accounted for by the average person</span>
+        <span class="stat-source">&nbsp;</span>
       </div>
     </div>
-
-    <div class="q-card" data-pillar="people">
-      <div class="q-label">People</div>
-      <div class="q-text">Do the people closest to you add energy to your life — or drain it?</div>
-      <div class="q-options">
-        <button class="q-option" data-value="1" onclick="selectAnswer(this)">Mostly drain</button>
-        <button class="q-option" data-value="2" onclick="selectAnswer(this)">More drain</button>
-        <button class="q-option" data-value="3" onclick="selectAnswer(this)">Mixed</button>
-        <button class="q-option" data-value="4" onclick="selectAnswer(this)">More energy</button>
-        <button class="q-option" data-value="5" onclick="selectAnswer(this)">Mostly energy</button>
-      </div>
-    </div>
-
-    <div class="q-card" data-pillar="influence">
-      <div class="q-label">Influence</div>
-      <div class="q-text">When you speak, do people listen — and act on what you say?</div>
-      <div class="q-options">
-        <button class="q-option" data-value="1" onclick="selectAnswer(this)">Almost never</button>
-        <button class="q-option" data-value="2" onclick="selectAnswer(this)">Rarely</button>
-        <button class="q-option" data-value="3" onclick="selectAnswer(this)">Sometimes</button>
-        <button class="q-option" data-value="4" onclick="selectAnswer(this)">Usually</button>
-        <button class="q-option" data-value="5" onclick="selectAnswer(this)">Always</button>
-      </div>
-    </div>
-
-    <div class="q-card" data-pillar="numbers">
-      <div class="q-label">Numbers</div>
-      <div class="q-text">Do you feel in control of your financial situation right now?</div>
-      <div class="q-options">
-        <button class="q-option" data-value="1" onclick="selectAnswer(this)">Not at all</button>
-        <button class="q-option" data-value="2" onclick="selectAnswer(this)">Barely</button>
-        <button class="q-option" data-value="3" onclick="selectAnswer(this)">Somewhat</button>
-        <button class="q-option" data-value="4" onclick="selectAnswer(this)">Mostly</button>
-        <button class="q-option" data-value="5" onclick="selectAnswer(this)">Completely</button>
-      </div>
-    </div>
-
-    <div class="q-card" data-pillar="knowledge">
-      <div class="q-label">Knowledge</div>
-      <div class="q-text">Are you actively growing and learning — or coasting on what you already know?</div>
-      <div class="q-options">
-        <button class="q-option" data-value="1" onclick="selectAnswer(this)">Coasting</button>
-        <button class="q-option" data-value="2" onclick="selectAnswer(this)">Mostly coasting</button>
-        <button class="q-option" data-value="3" onclick="selectAnswer(this)">Mix of both</button>
-        <button class="q-option" data-value="4" onclick="selectAnswer(this)">Mostly growing</button>
-        <button class="q-option" data-value="5" onclick="selectAnswer(this)">Actively growing</button>
-      </div>
-    </div>
-
-    <button class="cta-btn" id="showResults" onclick="showResults()" style="width:100%;margin-top:1rem;display:none;">See My Results &rarr;</button>
   </section>
 
-  <!-- Results -->
-  <section class="results-section" id="results">
-    <div class="results-card">
-      <div class="result-icon" id="resultIcon">&#9888;</div>
-      <h2 id="resultTitle">Your Biggest Leak</h2>
-      <p class="result-desc" id="resultDesc"></p>
-
-      <div id="pillarBars"></div>
-
-      <a class="cta-full" href="/">Take the Full P.I.N.K. Assessment &rarr;</a>
+  <!-- Social Proof -->
+  <section class="social-proof">
+    <div class="proof-card">
+      <p>&ldquo;12 people have taken the Value Engine. The average score is 126.5 out of 250. The #1 weakness? Time.&rdquo;</p>
     </div>
+  </section>
+
+  <!-- Objection FAQ -->
+  <section class="faq-section">
+    <div class="section-label">Common Questions</div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-question">&ldquo;I've taken personality tests before &mdash; how is this different?&rdquo;<span class="arrow">&#9660;</span></div>
+      <div class="faq-answer">Personality tests tell you what you are. The Value Engine tells you where your life is undervalued &mdash; and gives you the exact prescription to fix it. It's a diagnostic, not a label.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-question">&ldquo;I don't have time for another assessment.&rdquo;<span class="arrow">&#9660;</span></div>
+      <div class="faq-answer">It takes 5 minutes. If you can scroll social media for 20, you can invest 5 in understanding where your life is leaking value.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-question">&ldquo;How accurate can a free test really be?&rdquo;<span class="arrow">&#9660;</span></div>
+      <div class="faq-answer">The Value Engine uses 140+ rotating questions across 50 dimensions. It's more comprehensive than most paid assessments &mdash; and it never gives you the same test twice.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-question">&ldquo;What if I already know my problems?&rdquo;<span class="arrow">&#9660;</span></div>
+      <div class="faq-answer">Knowing you have a problem and knowing exactly which pillar is weakest are different things. The Value Engine quantifies it &mdash; so you stop guessing and start fixing.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-question">&ldquo;Is this just going to try to sell me something?&rdquo;<span class="arrow">&#9660;</span></div>
+      <div class="faq-answer">The assessment and your score are 100% free. Reports are normally $1.99 but free through April 25. Coaching is optional, never required.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-question">&ldquo;I'm not in a crisis &mdash; is this still for me?&rdquo;<span class="arrow">&#9660;</span></div>
+      <div class="faq-answer">You don't need to be in crisis. Most people who take the Value Engine are functioning just fine &mdash; they just sense they're capable of more and want the data to prove it.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-question">&ldquo;What happens with my data?&rdquo;<span class="arrow">&#9660;</span></div>
+      <div class="faq-answer">Your results are private. We never sell your data. Your assessment is linked to your email so you can retest and track progress over time.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-question">&ldquo;Can I retake it?&rdquo;<span class="arrow">&#9660;</span></div>
+      <div class="faq-answer">Absolutely. The Value Engine is designed for retesting. With 140+ rotating questions, you'll never see the same test twice &mdash; and you can track your improvement over time.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-question">&ldquo;I don't believe in self-help.&rdquo;<span class="arrow">&#9660;</span></div>
+      <div class="faq-answer">Good &mdash; this isn't self-help. It's a value diagnostic. No affirmations. No fluff. Just a score, your weakest pillar, and the specific tools to improve it.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-question">&ldquo;What's the catch?&rdquo;<span class="arrow">&#9660;</span></div>
+      <div class="faq-answer">No catch. The assessment is free. The report is free (through April 25). If you want ongoing coaching and tools, VictoryPath is $29/mo. But you get your score and action plan without paying a cent.</div>
+    </div>
+  </section>
+
+  <!-- Pricing Callout -->
+  <section class="pricing-callout">
+    <div class="pricing-card">
+      <div class="tier-name">VictoryPath Membership</div>
+      <div class="price-row">
+        <div class="old-price">$49/mo</div>
+        <div class="new-price">$29<span>/mo</span></div>
+      </div>
+      <p class="price-note">All 3 premium reports included &bull; Lock in 2026 promo rate</p>
+      <a href="https://assessment.valuetovictory.com" class="cta-btn" style="display:block; text-align:center;">Start My Path &rarr;</a>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final-cta">
+    <h2>Don't Guess. Run the System.</h2>
+    <a href="https://assessment.valuetovictory.com" class="cta-btn">Take the Free Assessment &rarr;</a>
   </section>
 
   <!-- Footer -->
   <footer class="page-footer">
     <div class="tagline">Value to Victory</div>
-    <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br>
-      <a href="https://valuetovictory.com">valuetovictory.com</a> &middot;
-      <a href="/">Full Assessment</a> &middot;
-      <a href="/pricing">Pricing</a>
-    </div>
+    <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br><a href="https://valuetovictory.com">valuetovictory.com</a></div>
   </footer>
-
-  <script>
-    var answers = {};
-    var pillarInfo = {
-      time: { icon: '&#9200;', name: 'Time', desc: 'Time is your most finite resource. Every other pillar runs on it — or runs out of it. When Time is your weakest pillar, everything feels urgent, nothing feels finished, and burnout is around the corner.' },
-      people: { icon: '&#128101;', name: 'People', desc: 'The people around you either multiply your value or divide it. When People is your weakest pillar, you\'re carrying dead weight — emotionally, relationally, or professionally.' },
-      influence: { icon: '&#128227;', name: 'Influence', desc: 'Influence is your ability to move people and outcomes. When Influence is your weakest pillar, you have ideas but no traction. You know what needs to happen but can\'t make it stick.' },
-      numbers: { icon: '&#128176;', name: 'Numbers', desc: 'Numbers aren\'t just money — they\'re the scoreboard of your decisions. When Numbers is your weakest pillar, there\'s a gap between what you earn and what you\'re worth.' },
-      knowledge: { icon: '&#128218;', name: 'Knowledge', desc: 'Knowledge is the compound interest of personal growth. When Knowledge is your weakest pillar, you\'re making decisions with yesterday\'s information in tomorrow\'s world.' }
-    };
-
-    function selectAnswer(btn) {
-      var card = btn.closest('.q-card');
-      var pillar = card.getAttribute('data-pillar');
-      var value = parseInt(btn.getAttribute('data-value'));
-
-      card.querySelectorAll('.q-option').forEach(function(o) { o.classList.remove('selected'); });
-      btn.classList.add('selected');
-      answers[pillar] = value;
-
-      if (Object.keys(answers).length === 5) {
-        document.getElementById('showResults').style.display = 'block';
-      }
-    }
-
-    function showResults() {
-      var lowest = null;
-      var lowestScore = 6;
-
-      for (var pillar in answers) {
-        if (answers[pillar] < lowestScore) {
-          lowestScore = answers[pillar];
-          lowest = pillar;
-        }
-      }
-
-      var info = pillarInfo[lowest];
-      document.getElementById('resultIcon').innerHTML = info.icon;
-      document.getElementById('resultTitle').textContent = 'Your Biggest Leak: ' + info.name;
-      document.getElementById('resultDesc').textContent = info.desc;
-
-      var barsHTML = '';
-      var pillars = ['time', 'people', 'influence', 'numbers', 'knowledge'];
-      pillars.forEach(function(p) {
-        var score = answers[p];
-        var pct = (score / 5) * 100;
-        var cls = pct <= 40 ? 'low' : pct <= 60 ? 'mid' : 'high';
-        barsHTML += '<div class="pillar-bar"><span class="p-name">' + pillarInfo[p].name + '</span><div class="p-track"><div class="p-fill ' + cls + '" style="width:' + pct + '%"></div></div></div>';
-      });
-      document.getElementById('pillarBars').innerHTML = barsHTML;
-
-      document.querySelector('.diagnostic').style.display = 'none';
-      document.querySelector('.how-section').style.display = 'none';
-      document.getElementById('results').style.display = 'block';
-      document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-    }
-  </script>
 
 </body>
 </html>

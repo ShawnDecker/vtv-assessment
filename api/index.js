@@ -1,5 +1,209 @@
 const { neon } = require('@neondatabase/serverless');
 
+// Cross-Pillar Impact Matrix — 20 directional relationships (5 pillars × 4 targets each)
+const CROSS_PILLAR_IMPACT_MATRIX = {
+  "Time→People": {
+    from: "Time", to: "People",
+    headline: "You don't have time for the people who matter.",
+    explanation: "Low Time Awareness + Low Time Protection = you're so consumed by urgent tasks that your strongest relationships get leftovers. Your People score may look decent, but your Love Bank is running on deposits you made months ago. Eventually, it catches up.",
+    subCategoryLinks: [{ from: "Time Allocation", to: "Love Bank Deposits" }, { from: "Time Protection", to: "Boundary Quality" }]
+  },
+  "Time→Influence": {
+    from: "Time", to: "Influence",
+    headline: "No one follows someone who can't manage their own schedule.",
+    explanation: "If you can't protect your own time, people notice. Your Influence score says you have credibility, but your calendar tells people you're reactive, not strategic. Leaders lead their time first.",
+    subCategoryLinks: [{ from: "Time Leverage", to: "Leadership Level" }, { from: "Foresight", to: "Professional Credibility" }]
+  },
+  "Time→Numbers": {
+    from: "Time", to: "Numbers",
+    headline: "You can't build wealth in hours you don't control.",
+    explanation: "Every hour you waste is money you didn't earn, invest, or compound. Your Financial Awareness means nothing if your Five-Hour Leak is draining the time you'd need to act on what you know.",
+    subCategoryLinks: [{ from: "Five-Hour Leak", to: "Income Multiplier" }, { from: "Value Per Hour", to: "Financial Awareness" }]
+  },
+  "Time→Knowledge": {
+    from: "Time", to: "Knowledge",
+    headline: "You're too busy to learn what would change everything.",
+    explanation: "Knowledge compounds, but only if you have hours to invest. Low Time scores mean your Learning Hours stay low, your Application Rate drops, and your Knowledge Compounding stalls.",
+    subCategoryLinks: [{ from: "Time Investment", to: "Learning Hours" }, { from: "Downtime Quality", to: "Application Rate" }]
+  },
+  "People→Time": {
+    from: "People", to: "Time",
+    headline: "The wrong people are eating your clock.",
+    explanation: "Low People Audit scores mean Takers are consuming your peak hours. Your Time pillar looks managed, but 30% of your schedule is dedicated to people who drain more than they give.",
+    subCategoryLinks: [{ from: "People Audit", to: "Time Allocation" }, { from: "Relational ROI", to: "Five-Hour Leak" }]
+  },
+  "People→Influence": {
+    from: "People", to: "Influence",
+    headline: "You can't lead people you don't understand.",
+    explanation: "Influence requires trust, and trust requires relational skill. If your Communication Clarity is low, your Empathetic Listening is performative. People follow you for now — but not for long.",
+    subCategoryLinks: [{ from: "Communication Clarity", to: "Empathetic Listening" }, { from: "Trust Investment", to: "Integrity Alignment" }]
+  },
+  "People→Numbers": {
+    from: "People", to: "Numbers",
+    headline: "Bad relationships are expensive.",
+    explanation: "Every unresolved conflict, misaligned partnership, or toxic relationship has a financial cost — legal fees, lost opportunities, stress-driven spending, bad joint decisions. Your Numbers pillar is quietly bleeding from People.",
+    subCategoryLinks: [{ from: "Boundary Quality", to: "Negative Math" }, { from: "Alliance Building", to: "Negotiation Skill" }]
+  },
+  "People→Knowledge": {
+    from: "People", to: "Knowledge",
+    headline: "Your circle determines your ceiling.",
+    explanation: "If your Network Depth is shallow and your Mentorship Access is low, you're learning from the internet instead of from people who've done it. Knowledge without relationship is just information.",
+    subCategoryLinks: [{ from: "Network Depth", to: "Knowledge Compounding" }, { from: "Alliance Building", to: "Highest & Best Use" }]
+  },
+  "Influence→Time": {
+    from: "Influence", to: "Time",
+    headline: "Without influence, you spend time convincing instead of executing.",
+    explanation: "Low Adaptive Influence means every decision takes longer because you can't move people efficiently. You spend hours in meetings that a respected leader would close in minutes.",
+    subCategoryLinks: [{ from: "Adaptive Influence", to: "Time Leverage" }, { from: "Word Management", to: "Time Protection" }]
+  },
+  "Influence→People": {
+    from: "Influence", to: "People",
+    headline: "People don't stay around someone they can't respect.",
+    explanation: "If your Integrity Alignment is off — your actions don't match your words — people distance themselves. Your People score erodes slowly because trust isn't built on intentions, it's built on consistency.",
+    subCategoryLinks: [{ from: "Integrity Alignment", to: "Trust Investment" }, { from: "Micro-Honesties", to: "Love Bank Deposits" }]
+  },
+  "Influence→Numbers": {
+    from: "Influence", to: "Numbers",
+    headline: "You can't negotiate from a position of low credibility.",
+    explanation: "Negotiation Skill depends on perceived authority. If your Professional Credibility is low, your financial deals are weaker, your salary conversations are shorter, and your investment partnerships don't materialize.",
+    subCategoryLinks: [{ from: "Professional Credibility", to: "Negotiation Skill" }, { from: "Leadership Level", to: "Income Multiplier" }]
+  },
+  "Influence→Knowledge": {
+    from: "Influence", to: "Knowledge",
+    headline: "People won't teach you what you haven't earned the right to learn.",
+    explanation: "Access to high-level knowledge often requires relational credibility. Mentors, advisors, and industry leaders share their real playbook with people they respect, not just people who ask.",
+    subCategoryLinks: [{ from: "Gravitational Center", to: "Highest & Best Use" }, { from: "Influence Multiplier", to: "Knowledge Compounding" }]
+  },
+  "Numbers→Time": {
+    from: "Numbers", to: "Time",
+    headline: "Financial stress steals your time.",
+    explanation: "When Financial Awareness is low and Negative Math is running, you spend hours worrying, scrambling for cash, and working overtime instead of strategically. Money problems become time problems.",
+    subCategoryLinks: [{ from: "Financial Awareness", to: "Five-Hour Leak" }, { from: "Negative Math", to: "Time Investment" }]
+  },
+  "Numbers→People": {
+    from: "Numbers", to: "People",
+    headline: "Money problems destroy relationships.",
+    explanation: "The #1 cause of relational stress is financial misalignment. If you can't manage your Numbers, your partner doesn't trust your judgment, your friends distance themselves, and your family relationships strain.",
+    subCategoryLinks: [{ from: "Cost vs Value", to: "Love Bank Deposits" }, { from: "Goal Specificity", to: "Communication Clarity" }]
+  },
+  "Numbers→Influence": {
+    from: "Numbers", to: "Influence",
+    headline: "No one trusts financial advice from someone who's broke.",
+    explanation: "Your Influence score says people listen to you — but if your Numbers tell a different story, your credibility has an expiration date. People can feel financial instability even when you don't say it.",
+    subCategoryLinks: [{ from: "Financial Awareness", to: "Professional Credibility" }, { from: "Investment Logic", to: "Integrity Alignment" }]
+  },
+  "Numbers→Knowledge": {
+    from: "Numbers", to: "Knowledge",
+    headline: "You can't invest in learning without margin.",
+    explanation: "Books cost money. Courses cost money. Conferences cost money. Time off to learn costs money. When Numbers are low, Knowledge becomes a luxury instead of an investment.",
+    subCategoryLinks: [{ from: "Investment Logic", to: "Learning Hours" }, { from: "Small Improvements", to: "Application Rate" }]
+  },
+  "Knowledge→Time": {
+    from: "Knowledge", to: "Time",
+    headline: "You repeat mistakes that cost you years.",
+    explanation: "Low Double Jeopardy scores mean you're paying for the same lessons twice. Low Bias Awareness means you keep making the same time allocation errors because you can't see your own patterns.",
+    subCategoryLinks: [{ from: "Double Jeopardy", to: "Time Reallocation" }, { from: "Bias Awareness", to: "Foresight" }]
+  },
+  "Knowledge→People": {
+    from: "Knowledge", to: "People",
+    headline: "You can't help people you don't understand.",
+    explanation: "Relationships require understanding — understanding communication styles, conflict resolution, love languages. If your Knowledge application is low, your relational skills plateau even if your intentions are good.",
+    subCategoryLinks: [{ from: "Application Rate", to: "Communication Clarity" }, { from: "Perception vs Perspective", to: "Empathetic Listening" }]
+  },
+  "Knowledge→Influence": {
+    from: "Knowledge", to: "Influence",
+    headline: "You can't lead beyond what you know.",
+    explanation: "Influence has a ceiling, and that ceiling is Knowledge. You can only lead people to the level of your own understanding. Low Substitution Risk awareness means you're replaceable — and replaceable people don't have lasting influence.",
+    subCategoryLinks: [{ from: "Substitution Risk", to: "Leadership Level" }, { from: "Weighted Analysis", to: "Adaptive Influence" }]
+  },
+  "Knowledge→Numbers": {
+    from: "Knowledge", to: "Numbers",
+    headline: "What you don't know is the most expensive thing in your life.",
+    explanation: "The true cost of ignorance is always financial. Low Supply & Demand awareness means you're underpricing yourself. Low Highest & Best Use means you're investing time and money in areas that will never compound.",
+    subCategoryLinks: [{ from: "Supply & Demand", to: "Negotiation Skill" }, { from: "Highest & Best Use", to: "Cost vs Value" }]
+  }
+};
+
+function generateCrossPillarImpact(assessmentData) {
+  const a = assessmentData;
+  const pillars = [
+    { name: "Time", score: Number(a.time_total) || 0 },
+    { name: "People", score: Number(a.people_total) || 0 },
+    { name: "Influence", score: Number(a.influence_total) || 0 },
+    { name: "Numbers", score: Number(a.numbers_total) || 0 },
+    { name: "Knowledge", score: Number(a.knowledge_total) || 0 },
+  ];
+
+  // For pillar deep-dive assessments, skip cross-pillar analysis
+  if (a.depth === 'pillar') {
+    return null;
+  }
+
+  // Filter out pillars with 0 score (unscored)
+  const scoredPillars = pillars.filter(p => p.score > 0);
+  if (scoredPillars.length < 2) return null;
+
+  const sorted = [...scoredPillars].sort((x, y) => x.score - y.score);
+  const weakest = sorted[0];
+  const strongest = sorted[sorted.length - 1];
+
+  // Handle tied pillars — if weakest and strongest are the same score, balanced
+  if (weakest.score === strongest.score) {
+    return { primaryImpact: null, secondaryImpacts: [], overallMessage: "Your pillars are well-aligned. No single weakness is dragging down your strengths.", severity: "balanced" };
+  }
+
+  // Calculate gap severity as percentage of strongest
+  const gapPct = ((strongest.score - weakest.score) / strongest.score) * 100;
+
+  let severity;
+  if (gapPct > 50) severity = "critical";
+  else if (gapPct >= 30) severity = "significant";
+  else if (gapPct >= 15) severity = "moderate";
+  else severity = "balanced";
+
+  if (severity === "balanced") {
+    return { primaryImpact: null, secondaryImpacts: [], overallMessage: "Your pillars are well-aligned. No single weakness is dragging down your strengths.", severity: "balanced" };
+  }
+
+  // Look up primary impact: weakest → strongest
+  const primaryKey = weakest.name + "→" + strongest.name;
+  const primaryMatrix = CROSS_PILLAR_IMPACT_MATRIX[primaryKey];
+
+  const primaryImpact = primaryMatrix ? {
+    from: weakest.name,
+    to: strongest.name,
+    fromScore: weakest.score,
+    toScore: strongest.score,
+    severity,
+    headline: primaryMatrix.headline,
+    explanation: primaryMatrix.explanation,
+    subCategoryLinks: primaryMatrix.subCategoryLinks
+  } : null;
+
+  // Secondary impacts: weakest → other above-average pillars (excluding strongest)
+  const avgScore = scoredPillars.reduce((sum, p) => sum + p.score, 0) / scoredPillars.length;
+  const aboveAvgPillars = scoredPillars.filter(p => p.name !== weakest.name && p.name !== strongest.name && p.score > avgScore);
+  const secondaryImpacts = [];
+  for (const target of aboveAvgPillars) {
+    const secKey = weakest.name + "→" + target.name;
+    const secMatrix = CROSS_PILLAR_IMPACT_MATRIX[secKey];
+    if (secMatrix) {
+      secondaryImpacts.push({
+        from: weakest.name,
+        to: target.name,
+        fromScore: weakest.score,
+        toScore: target.score,
+        headline: secMatrix.headline,
+        subCategoryLinks: secMatrix.subCategoryLinks
+      });
+    }
+  }
+
+  const overallMessage = `Your ${weakest.name} isn't just low — it's actively dragging down your ${strongest.name}. Here's exactly how.`;
+
+  return { primaryImpact, secondaryImpacts, overallMessage, severity };
+}
+
 function getScoreRange(score, maxScore) {
   // Scale thresholds proportionally to the max possible score.
   // All depths now normalize pillar scores to 50-point scale, so maxScore = 250 for all.
@@ -36,7 +240,8 @@ function generatePrescription(a) {
     Knowledge: { diagnosis: "Your Knowledge pillar is your biggest gap. You may be consuming information without applying it, or investing learning hours in areas that don't compound.", immediate: "Run the Knowledge ROI Calculator (Tool #7). Calculate hours invested vs. income and opportunity return.", tool: "Map your knowledge gaps against the 1,800-hour framework. Identify the single most expensive gap.", thirtyDay: "Commit to one high-ROI learning track. Apply the Rule of Double Jeopardy — never pay for the same mistake twice." },
   };
   const rx = prescriptions[weakest.name];
-  return { weakestPillar: weakest.name, weakestScore: weakest.score, strongestPillar: strongest.name, strongestScore: strongest.score, weakestSubCategory: weakestSubs[0][0], weakestSubScore: weakestSubs[0][1], ...rx, pillars: pillars.map(p => ({ name: p.name, score: p.score })) };
+  const crossPillarImpact = generateCrossPillarImpact(a);
+  return { weakestPillar: weakest.name, weakestScore: weakest.score, strongestPillar: strongest.name, strongestScore: strongest.score, weakestSubCategory: weakestSubs[0][0], weakestSubScore: weakestSubs[0][1], ...rx, pillars: pillars.map(p => ({ name: p.name, score: p.score })), crossPillarImpact };
 }
 
 module.exports = async (req, res) => {
@@ -656,9 +861,19 @@ Don't guess. Run the system.
     // GET /api/admin/export (CSV)
     if (req.method === 'GET' && url === '/admin/export') {
       const all = await sql`SELECT a.*, c.first_name, c.last_name, c.email, c.phone FROM assessments a JOIN contacts c ON a.contact_id = c.id ORDER BY a.completed_at DESC`;
-      let csv = "First Name,Last Name,Email,Phone,Date,Time,People,Influence,Numbers,Knowledge,Raw,Multiplier,Master Score,Range,Weakest,Depth,Focus Pillar\n";
+      let csv = "First Name,Last Name,Email,Phone,Date,Time,People,Influence,Numbers,Knowledge,Raw,Multiplier,Master Score,Range,Weakest,Depth,Focus Pillar,Impact From,Impact To,Impact Severity\n";
       for (const r of all) {
-        csv += `"${r.first_name}","${r.last_name}","${r.email}","${r.phone||''}","${r.completed_at}",${r.time_total},${r.people_total},${r.influence_total},${r.numbers_total},${r.knowledge_total},${r.raw_score},${r.time_multiplier},${r.master_score},"${r.score_range}","${r.weakest_pillar}","${r.depth||'extensive'}","${r.focus_pillar||''}"\n`;
+        // Extract cross-pillar impact from stored prescription
+        let impactFrom = '', impactTo = '', impactSeverity = '';
+        try {
+          const rx = typeof r.prescription === 'string' ? JSON.parse(r.prescription) : (r.prescription || {});
+          if (rx.crossPillarImpact && rx.crossPillarImpact.primaryImpact) {
+            impactFrom = rx.crossPillarImpact.primaryImpact.from || '';
+            impactTo = rx.crossPillarImpact.primaryImpact.to || '';
+            impactSeverity = rx.crossPillarImpact.severity || '';
+          }
+        } catch (e) { /* prescription parse error — skip */ }
+        csv += `"${r.first_name}","${r.last_name}","${r.email}","${r.phone||''}","${r.completed_at}",${r.time_total},${r.people_total},${r.influence_total},${r.numbers_total},${r.knowledge_total},${r.raw_score},${r.time_multiplier},${r.master_score},"${r.score_range}","${r.weakest_pillar}","${r.depth||'extensive'}","${r.focus_pillar||''}","${impactFrom}","${impactTo}","${impactSeverity}"\n`;
       }
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', 'attachment; filename=value-engine-export.csv');
@@ -1002,7 +1217,7 @@ Pillar Breakdown:
   Knowledge: ${a.knowledge_total}/${reportPillarMax}
 
 Your biggest opportunity for growth is ${weakestPillar}. ${prescription.diagnosis || ''}
-${roadmapText}
+${crossPillarPlainText}${roadmapText}
 View your full diagnostic report:
 https://assessment.valuetovictory.com/report/${assessmentId}
 
@@ -1112,6 +1327,39 @@ ${buildActionCardHtml('Mentor or teach what you know. The fastest way to deepen 
 
       const weakDiag = pillarDiagnosis[minPillar.key] || pillarDiagnosis.Time;
 
+      // Cross-Pillar Impact section for email
+      const cpi = prescription.crossPillarImpact;
+      let crossPillarEmailHtml = '';
+      let crossPillarPlainText = '';
+      if (cpi && cpi.primaryImpact && cpi.severity !== 'balanced') {
+        const pi = cpi.primaryImpact;
+        const sevColors = { critical: '#ef4444', significant: '#f97316', moderate: '#eab308' };
+        const sevColor = sevColors[cpi.severity] || '#eab308';
+        const sevLabel = cpi.severity.charAt(0).toUpperCase() + cpi.severity.slice(1);
+        const subLinks = (pi.subCategoryLinks || []).map(l => `Your ${l.from} is limiting your ${l.to}`).join(' · ');
+
+        crossPillarPlainText = `\n--- WHERE YOUR WEAKNESS IS COSTING YOU MOST ---\n${sevLabel} Impact: ${pi.from} → ${pi.to}\n"${pi.headline}"\n${pi.explanation}\n${subLinks ? subLinks + '\n' : ''}See your full impact analysis: https://assessment.valuetovictory.com/report/${assessmentId}\n`;
+
+        crossPillarEmailHtml = `
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Cross-Pillar Impact -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px 16px 40px;">
+<h2 style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#d4a853;text-transform:uppercase;letter-spacing:1px;">&#9888; Where Your Weakness Is Costing You Most</h2>
+<p style="margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">Your ${pi.from} isn't just low — it's actively dragging down your ${pi.to}.</p>
+<div style="text-align:center;margin-bottom:16px;">
+<span style="display:inline-block;padding:4px 16px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:${sevColor};letter-spacing:1px;text-transform:uppercase;">${sevLabel} Impact</span>
+</div>
+<div style="background:#22223a;border-radius:8px;padding:20px 24px;border:1px solid #2a2a4a;border-left:4px solid ${sevColor};margin-bottom:16px;">
+<p style="margin:0 0 10px 0;font-family:Georgia,serif;font-style:italic;font-size:18px;color:#d4a853;line-height:1.4;">"${pi.headline}"</p>
+<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#a0a0b8;line-height:1.6;">${pi.explanation}</p>
+</div>
+${subLinks ? `<p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6a6a84;">${subLinks}</p>` : ''}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:6px;border:1px solid #d4a853;" align="center"><a href="https://assessment.valuetovictory.com/report/${assessmentId}" target="_blank" style="display:inline-block;padding:10px 28px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#d4a853;text-decoration:none;letter-spacing:0.5px;">See Your Full Impact Analysis &rarr;</a></td></tr></table>
+</td></tr></table>`;
+      }
+
       // Action plan cards from prescription data (weakest pillar focus)
       const actionSteps = [];
       if (prescription.immediate) actionSteps.push(prescription.immediate);
@@ -1158,6 +1406,8 @@ ${pillars.map(p => buildPillarRowHtml(p)).join('\n')}
 
 <!-- Weakest Pillar Callout \u2014 Encouraging Tone -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px;"><div style="background:linear-gradient(135deg,#1a2035,#1f1525);border:1px solid #d4a853;border-left:4px solid #d4a853;border-radius:8px;padding:24px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td><p style="margin:0 0 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#d4a853;letter-spacing:2px;text-transform:uppercase;font-weight:700;">&#127775; Your Biggest Opportunity for Growth</p><h3 style="margin:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#ffffff;">${minPillar.key} \u2014 ${minPillar.score} out of ${reportPillarMax}</h3><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#a0a0b8;line-height:1.6;">${weakDiag}</p></td></tr></table></div></td></tr></table>
+
+${crossPillarEmailHtml}
 
 <!-- Action Plan Header -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:8px 40px 16px 40px;"><h2 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:1px;">Your 3-Step Action Plan</h2><p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">Based on your results, here is where to focus first.</p></td></tr></table>
@@ -2556,6 +2806,8 @@ function mapAssessment(a) {
     timeMultiplier: a.time_multiplier, rawScore: a.raw_score, masterScore: a.master_score, scoreRange: a.score_range, weakestPillar: a.weakest_pillar, prescription: a.prescription,
     overlayAnswers: a.overlay_answers, overlayTotal: a.overlay_total,
     depth: a.depth || 'extensive', focusPillar: a.focus_pillar || null,
+    // Extract cross-pillar impact summary for admin visibility
+    crossPillarImpact: (() => { try { const rx = typeof a.prescription === 'string' ? JSON.parse(a.prescription) : (a.prescription || {}); return rx.crossPillarImpact || null; } catch (e) { return null; } })(),
     // Pass through any join fields
     ...(a.first_name ? { firstName: a.first_name, lastName: a.last_name, email: a.email } : {}),
   };
