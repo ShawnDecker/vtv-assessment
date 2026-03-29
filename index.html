@@ -517,6 +517,101 @@
       qPatchObserver.observe(document.body || document.documentElement, { childList: true, subtree: true, characterData: true });
     })();
     </script>
+    <script>
+    // === FIX 1: Enforce answer selection on EVERY question ===
+    // The React bundle's validation (xe()) uses fieldName-based state tracking,
+    // which breaks when the API returns multiple questions sharing the same fieldName
+    // (e.g., two "timeAwareness" questions). Answering the first silently satisfies
+    // the validation for the second, letting users click Next without selecting.
+    // This fix checks the actual DOM for a selected radio option before allowing Next.
+    (function() {
+      function enforceValidation() {
+        if (window.location.hash.indexOf('assessment') === -1) return;
+        var root = document.getElementById('root');
+        if (!root) return;
+        var nextBtn = root.querySelector('[data-testid="button-next"]');
+        if (!nextBtn || nextBtn.__veValidationHooked) return;
+        nextBtn.__veValidationHooked = true;
+
+        nextBtn.addEventListener('click', function(e) {
+          // Find the radiogroup or option list for the current question
+          var radioGroup = root.querySelector('[role="radiogroup"]');
+          if (radioGroup) {
+            var checked = radioGroup.querySelector('[data-state="checked"]');
+            if (!checked) {
+              e.stopImmediatePropagation();
+              e.preventDefault();
+              // Brief visual feedback
+              nextBtn.style.opacity = '0.5';
+              setTimeout(function() { nextBtn.style.opacity = ''; }, 300);
+              return false;
+            }
+          }
+          // Also check for select-based questions (time multiplier uses a select/slider)
+          // Those have separate validation that works correctly, so we only block radio questions
+        }, true); // capture phase to fire before React's handler
+      }
+
+      // Re-hook after every DOM change since React re-renders the button
+      var valObserver = new MutationObserver(function() {
+        if (window.location.hash.indexOf('assessment') !== -1) {
+          enforceValidation();
+        }
+      });
+      if (document.body) {
+        valObserver.observe(document.body, { childList: true, subtree: true });
+      } else {
+        document.addEventListener('DOMContentLoaded', function() {
+          valObserver.observe(document.body, { childList: true, subtree: true });
+        });
+      }
+    })();
+    </script>
+    <script>
+    // === FIX 2: Hide non-assessment content during assessment ===
+    // The free-book section and other landing page content bleeds through below
+    // the question area when on the #/assessment route.
+    (function() {
+      var sectionsToHide = ['free-book-section', 'faq-objections-section'];
+
+      function updateVisibility() {
+        var onAssessment = window.location.hash.indexOf('assessment') !== -1;
+        for (var i = 0; i < sectionsToHide.length; i++) {
+          var el = document.getElementById(sectionsToHide[i]);
+          if (el) {
+            el.style.display = onAssessment ? 'none' : '';
+          }
+        }
+      }
+
+      window.addEventListener('hashchange', updateVisibility);
+      // Also run on DOM ready and periodically during assessment
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateVisibility);
+      } else {
+        updateVisibility();
+      }
+
+      // Watch for React rendering the sections back
+      var hideObserver = new MutationObserver(function() {
+        if (window.location.hash.indexOf('assessment') !== -1) {
+          for (var i = 0; i < sectionsToHide.length; i++) {
+            var el = document.getElementById(sectionsToHide[i]);
+            if (el && el.style.display !== 'none') {
+              el.style.display = 'none';
+            }
+          }
+        }
+      });
+      if (document.body) {
+        hideObserver.observe(document.body, { childList: true, subtree: true });
+      } else {
+        document.addEventListener('DOMContentLoaded', function() {
+          hideObserver.observe(document.body, { childList: true, subtree: true });
+        });
+      }
+    })();
+    </script>
     <script type="module" crossorigin src="./assets/index-DXoDn4Oe.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-CHzibysT.css">
   </head>
@@ -789,13 +884,14 @@
     </div>
 
     <script>
-    // Show the free book section and FAQ section once React has rendered
+    // Show the free book section and FAQ section once React has rendered (but NOT during assessment)
     (function() {
       var section = document.getElementById('free-book-section');
       var faqSection = document.getElementById('faq-objections-section');
       function showSections() {
-        if (section) section.style.display = 'block';
-        if (faqSection) faqSection.style.display = 'block';
+        var onAssessment = window.location.hash.indexOf('assessment') !== -1;
+        if (section) section.style.display = onAssessment ? 'none' : 'block';
+        if (faqSection) faqSection.style.display = onAssessment ? 'none' : 'block';
       }
       if (section) {
         var root = document.getElementById('root');
