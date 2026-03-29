@@ -378,7 +378,7 @@
       var pct = data.percentiles || {};
       var rec = data.recommendation || {};
       var depth = data.depth || a.depth || 'extensive';
-      var pillarMax = depth === 'quick' ? 25 : 50;
+      var pillarMax = 50; // all depths now normalized to 50-point scale
 
       // Header
       document.getElementById('reportName').textContent = (data.contact.firstName || '') + ' ' + (data.contact.lastName || '');

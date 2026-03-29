@@ -2,9 +2,8 @@ const { neon } = require('@neondatabase/serverless');
 
 function getScoreRange(score, maxScore) {
   // Scale thresholds proportionally to the max possible score.
-  // Default (extensive): maxScore = 250 → thresholds at 50/100/150/200
-  // Quick (25 questions): maxScore = 125 → thresholds at 25/50/75/100
-  // Pillar deep-dive (10 questions): maxScore = 50 → thresholds at 10/20/30/40
+  // All depths now normalize pillar scores to 50-point scale, so maxScore = 250 for all.
+  // Pillar deep-dive (single pillar) still uses maxScore = 50.
   const max = maxScore || 250;
   const t1 = max * 0.2;  // Crisis ceiling  (20%)
   const t2 = max * 0.4;  // Survival ceiling (40%)
@@ -290,58 +289,106 @@ module.exports = async (req, res) => {
       // Dynamic scoring: if questionIds provided, compute pillar totals from question_bank
       let tt, pt, it, nt, kt;
       const questionIds = b.questionIds || [];
+      const assessmentDepth = b.depth || 'quick';
 
       if (questionIds.length > 0) {
         // Dynamic scoring: look up pillar for each question and sum by pillar
         let questionMeta = [];
         try {
           questionMeta = await sql`SELECT id, pillar, field_name FROM question_bank WHERE id = ANY(${questionIds})`;
-        } catch (e) { /* table may not exist, fall through to legacy */ }
+        } catch (e) {
+          console.warn('question_bank query failed, falling through to legacy scoring:', e.message);
+        }
 
         if (questionMeta.length > 0) {
           const pillarSums = { time: 0, people: 0, influence: 0, numbers: 0, knowledge: 0 };
+          const pillarCounts = { time: 0, people: 0, influence: 0, numbers: 0, knowledge: 0 };
           for (const qm of questionMeta) {
-            const val = b[qm.field_name] || 0;
+            const rawVal = b[qm.field_name];
+            const val = (rawVal !== undefined && rawVal !== null) ? Number(rawVal) : 0;
+            if (isNaN(val)) {
+              console.warn(`Non-numeric answer for field ${qm.field_name}: ${rawVal}`);
+              continue;
+            }
             if (pillarSums.hasOwnProperty(qm.pillar)) {
               pillarSums[qm.pillar] += val;
+              if (val > 0) pillarCounts[qm.pillar]++;
             }
           }
+
+          // Normalize pillar scores to 50-point scale (10 questions × 5 max).
+          // Quick mode only asks ~5 questions per pillar so we extrapolate:
+          //   normalized = (sum / questionsAnswered) * 10
+          // This makes quick and extensive scores directly comparable.
+          const FULL_QUESTIONS_PER_PILLAR = 10;
+          for (const pillar of Object.keys(pillarSums)) {
+            const answered = pillarCounts[pillar];
+            if (answered > 0 && answered < FULL_QUESTIONS_PER_PILLAR) {
+              const avg = pillarSums[pillar] / answered;
+              pillarSums[pillar] = Math.round(avg * FULL_QUESTIONS_PER_PILLAR);
+            }
+          }
+
           tt = pillarSums.time;
           pt = pillarSums.people;
           it = pillarSums.influence;
           nt = pillarSums.numbers;
           kt = pillarSums.knowledge;
+
+          console.log(`Dynamic scoring (${assessmentDepth}): time=${tt} people=${pt} influence=${it} numbers=${nt} knowledge=${kt} (counts: ${JSON.stringify(pillarCounts)})`);
+
+          // If dynamic scoring produced all zeros but body has legacy fields, fall through
+          if (tt === 0 && pt === 0 && it === 0 && nt === 0 && kt === 0) {
+            const hasLegacyFields = b.timeAwareness !== undefined || b.trustInvestment !== undefined || b.leadershipLevel !== undefined;
+            if (hasLegacyFields) {
+              console.warn('Dynamic scoring produced all zeros but legacy fields present — falling through to legacy scoring');
+              tt = undefined; // trigger legacy fallback
+            }
+          }
         }
       }
 
       // Legacy fallback: hardcoded field sums (backward compatible)
       if (tt === undefined) {
-        tt = (b.timeAwareness||0)+(b.timeAllocation||0)+(b.timeProtection||0)+(b.timeLeverage||0)+(b.fiveHourLeak||0)+(b.valuePerHour||0)+(b.timeInvestment||0)+(b.downtimeQuality||0)+(b.foresight||0)+(b.timeReallocation||0);
-        pt = (b.trustInvestment||0)+(b.boundaryQuality||0)+(b.networkDepth||0)+(b.relationalRoi||0)+(b.peopleAudit||0)+(b.allianceBuilding||0)+(b.loveBankDeposits||0)+(b.communicationClarity||0)+(b.restraintPractice||0)+(b.valueReplacement||0);
-        it = (b.leadershipLevel||0)+(b.integrityAlignment||0)+(b.professionalCredibility||0)+(b.empatheticListening||0)+(b.gravitationalCenter||0)+(b.microHonesties||0)+(b.wordManagement||0)+(b.personalResponsibility||0)+(b.adaptiveInfluence||0)+(b.influenceMultiplier||0);
-        nt = (b.financialAwareness||0)+(b.goalSpecificity||0)+(b.investmentLogic||0)+(b.measurementHabit||0)+(b.costVsValue||0)+(b.numberOneClarity||0)+(b.smallImprovements||0)+(b.negativeMath||0)+(b.incomeMultiplier||0)+(b.negotiationSkill||0);
-        kt = (b.learningHours||0)+(b.applicationRate||0)+(b.biasAwareness||0)+(b.highestBestUse||0)+(b.supplyAndDemand||0)+(b.substitutionRisk||0)+(b.doubleJeopardy||0)+(b.knowledgeCompounding||0)+(b.weightedAnalysis||0)+(b.perceptionVsPerspective||0);
+        const num = (v) => { const n = Number(v); return isNaN(n) ? 0 : n; };
+        tt = num(b.timeAwareness)+num(b.timeAllocation)+num(b.timeProtection)+num(b.timeLeverage)+num(b.fiveHourLeak)+num(b.valuePerHour)+num(b.timeInvestment)+num(b.downtimeQuality)+num(b.foresight)+num(b.timeReallocation);
+        pt = num(b.trustInvestment)+num(b.boundaryQuality)+num(b.networkDepth)+num(b.relationalRoi)+num(b.peopleAudit)+num(b.allianceBuilding)+num(b.loveBankDeposits)+num(b.communicationClarity)+num(b.restraintPractice)+num(b.valueReplacement);
+        it = num(b.leadershipLevel)+num(b.integrityAlignment)+num(b.professionalCredibility)+num(b.empatheticListening)+num(b.gravitationalCenter)+num(b.microHonesties)+num(b.wordManagement)+num(b.personalResponsibility)+num(b.adaptiveInfluence)+num(b.influenceMultiplier);
+        nt = num(b.financialAwareness)+num(b.goalSpecificity)+num(b.investmentLogic)+num(b.measurementHabit)+num(b.costVsValue)+num(b.numberOneClarity)+num(b.smallImprovements)+num(b.negativeMath)+num(b.incomeMultiplier)+num(b.negotiationSkill);
+        kt = num(b.learningHours)+num(b.applicationRate)+num(b.biasAwareness)+num(b.highestBestUse)+num(b.supplyAndDemand)+num(b.substitutionRisk)+num(b.doubleJeopardy)+num(b.knowledgeCompounding)+num(b.weightedAnalysis)+num(b.perceptionVsPerspective);
+
+        // For quick mode using legacy fallback, count how many questions were actually
+        // answered per pillar and normalize to 50-point scale
+        if (assessmentDepth === 'quick') {
+          const FULL_Q = 10;
+          const countNonZero = (...vals) => vals.filter(v => v > 0).length;
+          const normalize = (sum, count) => count > 0 && count < FULL_Q ? Math.round((sum / count) * FULL_Q) : sum;
+
+          const tc = countNonZero(num(b.timeAwareness),num(b.timeAllocation),num(b.timeProtection),num(b.timeLeverage),num(b.fiveHourLeak),num(b.valuePerHour),num(b.timeInvestment),num(b.downtimeQuality),num(b.foresight),num(b.timeReallocation));
+          const pc = countNonZero(num(b.trustInvestment),num(b.boundaryQuality),num(b.networkDepth),num(b.relationalRoi),num(b.peopleAudit),num(b.allianceBuilding),num(b.loveBankDeposits),num(b.communicationClarity),num(b.restraintPractice),num(b.valueReplacement));
+          const ic = countNonZero(num(b.leadershipLevel),num(b.integrityAlignment),num(b.professionalCredibility),num(b.empatheticListening),num(b.gravitationalCenter),num(b.microHonesties),num(b.wordManagement),num(b.personalResponsibility),num(b.adaptiveInfluence),num(b.influenceMultiplier));
+          const nc = countNonZero(num(b.financialAwareness),num(b.goalSpecificity),num(b.investmentLogic),num(b.measurementHabit),num(b.costVsValue),num(b.numberOneClarity),num(b.smallImprovements),num(b.negativeMath),num(b.incomeMultiplier),num(b.negotiationSkill));
+          const kc = countNonZero(num(b.learningHours),num(b.applicationRate),num(b.biasAwareness),num(b.highestBestUse),num(b.supplyAndDemand),num(b.substitutionRisk),num(b.doubleJeopardy),num(b.knowledgeCompounding),num(b.weightedAnalysis),num(b.perceptionVsPerspective));
+
+          tt = normalize(tt, tc);
+          pt = normalize(pt, pc);
+          it = normalize(it, ic);
+          nt = normalize(nt, nc);
+          kt = normalize(kt, kc);
+        }
+
+        console.log(`Legacy scoring (${assessmentDepth}): time=${tt} people=${pt} influence=${it} numbers=${nt} knowledge=${kt}`);
       }
 
       const rawScore = tt + pt + it + nt + kt;
       const tm = Math.max(0.1, Math.min(2.0, b.timeMultiplier || 1.0));
       const masterScore = Math.round(rawScore * tm * 10) / 10;
       const mode = b.mode || 'individual';
-      const assessmentDepth = b.depth || 'quick';
       const assessmentFocusPillar = b.focusPillar || null;
 
-      // Calculate max possible score based on depth for proportional score ranges
-      // quick: 5 questions × 5 max per question × 5 pillars = 125 max raw
-      // extensive: 10 × 5 × 5 = 250 max raw
-      // pillar: 10 × 5 × 1 = 50 max raw
-      let maxRawScore;
-      if (assessmentDepth === 'pillar') {
-        maxRawScore = 50;
-      } else if (assessmentDepth === 'quick') {
-        maxRawScore = 125;
-      } else {
-        maxRawScore = 250;
-      }
+      // Quick and extensive both normalize to 50-point-per-pillar scale (250 max raw).
+      // Pillar deep-dive only scores one pillar (max 50 raw).
+      const maxRawScore = (assessmentDepth === 'pillar') ? 50 : 250;
       // Apply same multiplier range to max for consistent tier mapping
       const maxMasterScore = maxRawScore * tm;
       const scoreRange = getScoreRange(masterScore, maxMasterScore);
@@ -401,15 +448,19 @@ module.exports = async (req, res) => {
       if (questionIds.length > 0) {
         try {
           const questionMeta = await sql`SELECT id, field_name FROM question_bank WHERE id = ANY(${questionIds})`;
+          let savedCount = 0;
           for (const qm of questionMeta) {
-            const val = b[qm.field_name];
-            if (val && typeof val === 'number') {
+            const rawVal = b[qm.field_name];
+            const val = Number(rawVal);
+            if (val > 0 && !isNaN(val)) {
               await sql`INSERT INTO answer_history (contact_id, question_id, answer_value, assessment_id, answered_at)
                 VALUES (${contact.id}, ${qm.id}, ${val}, ${assessment.id}, NOW())
                 ON CONFLICT (contact_id, question_id)
                 DO UPDATE SET answer_value = EXCLUDED.answer_value, assessment_id = EXCLUDED.assessment_id, answered_at = NOW()`;
+              savedCount++;
             }
           }
+          console.log(`answer_history: saved ${savedCount}/${questionMeta.length} answers for contact ${contact.id}, assessment ${assessment.id}`);
         } catch (e) {
           console.error('answer_history upsert error (non-fatal):', e.message);
         }
@@ -448,7 +499,7 @@ module.exports = async (req, res) => {
             }
           } catch (e) { /* table may not exist */ }
 
-          const pillarMax = assessmentDepth === 'quick' ? 25 : 50;
+          const pillarMax = 50; // all depths now normalized to 50-point scale
           const emailBody = `${efName},
 
 Your Value Engine Assessment is complete.
@@ -879,7 +930,7 @@ Don't guess. Run the system.
 
       // --- Pillar data ---
       const reportDepth = a.depth || 'extensive';
-      const reportPillarMax = reportDepth === 'quick' ? 25 : 50;
+      const reportPillarMax = 50; // all depths normalized to 50-point scale
       const pillars = [
         { key: 'Time', icon: '&#9201;', score: Number(a.time_total) || 0 },
         { key: 'People', icon: '&#128101;', score: Number(a.people_total) || 0 },
@@ -887,8 +938,7 @@ Don't guess. Run the system.
         { key: 'Numbers', icon: '&#128200;', score: Number(a.numbers_total) || 0 },
         { key: 'Knowledge', icon: '&#128218;', score: Number(a.knowledge_total) || 0 },
       ];
-      // Scale the "below 35" threshold proportionally to depth
-      const belowThreshold = reportDepth === 'quick' ? 18 : 35; // 35/50 ~ 70% → 18/25 ~ 72%
+      const belowThreshold = 35; // 35/50 ~ 70%
       const pillarsBelow35 = pillars.filter(p => p.score < belowThreshold);
 
       // Per-pillar action items (from spec)
@@ -1089,7 +1139,7 @@ ${buildActionCardHtml('Mentor or teach what you know. The fastest way to deepen 
 
 <!-- Master Score -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 12px 40px;text-align:center;"><p style="margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">Master Value Score</p>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="width:180px;height:180px;border-radius:50%;border:10px solid #2a2a44;text-align:center;vertical-align:middle;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:44px;font-weight:800;color:#d4a853;line-height:1;">${masterScore}</span><br><span style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">of ${reportDepth === 'quick' ? 125 : (reportDepth === 'pillar' ? 50 : 250)}</span></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="width:180px;height:180px;border-radius:50%;border:10px solid #2a2a44;text-align:center;vertical-align:middle;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:44px;font-weight:800;color:#d4a853;line-height:1;">${masterScore}</span><br><span style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6a6a84;">of ${reportDepth === 'pillar' ? 50 : 250}</span></td></tr></table>
 <!-- Tier Badge -->
 <div style="margin-top:20px;"><span style="display:inline-block;background:${tier.bg};border:1px solid ${tier.border};border-radius:20px;padding:6px 20px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:${tier.color};letter-spacing:1.5px;text-transform:uppercase;">${tier.arrow} ${scoreRange} Tier</span></div>
 <p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#a0a0b8;line-height:1.6;max-width:480px;display:inline-block;">${tierDescriptions[scoreRange] || tierDescriptions.Growth}</p></td></tr></table>
@@ -2342,7 +2392,7 @@ This link expires in 24 hours.
 
         // Assessment summary (if available)
         if (assessment) {
-          const cPillarMax = (assessment.depth === 'quick') ? 25 : 50;
+          const cPillarMax = 50; // all depths normalized to 50-point scale
           report += `ASSESSMENT SUMMARY\n${'-'.repeat(30)}\n`;
           report += `Master Value Score: ${assessment.master_score} (${assessment.score_range})\n`;
           report += `Assessment Depth: ${assessment.depth || 'extensive'}\n`;
