@@ -579,6 +579,9 @@
         document.getElementById('report').style.display = 'block';
         renderReport(data);
 
+        // Show PDF download bar
+        if (typeof showDownloadBar === 'function') showDownloadBar(data.gated || false);
+
         // --- PAYWALL GATING ---
         // A report is gated if the API says so AND the URL doesn't have ?unlocked=true
         var isGated = data.gated && !unlockedParam;
@@ -632,7 +635,6 @@
       var d = new Date(a.completedAt);
       var dateStr = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-      showDownloadBar(false);
       // Show limited data notice for quick assessments or first-time users
       var assessmentDepth = data.depth || 'quick';
       var isQuick = assessmentDepth === 'quick';
