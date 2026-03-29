@@ -3029,6 +3029,7 @@ This link expires in 24 hours.
     // GET /api/couples/invite/:code — Get couple invite details
     if (req.method === 'GET' && url.startsWith('/couples/invite/')) {
       const code = url.split('/couples/invite/')[1];
+      await sql`CREATE TABLE IF NOT EXISTS couples (id SERIAL PRIMARY KEY, initiator_contact_id INTEGER NOT NULL, partner_email TEXT NOT NULL, partner_contact_id INTEGER, partner_name TEXT NOT NULL, invite_code TEXT NOT NULL UNIQUE, status TEXT DEFAULT 'pending', created_at TIMESTAMPTZ DEFAULT NOW(), completed_at TIMESTAMPTZ)`;
       const rows = await sql`SELECT * FROM couples WHERE invite_code = ${code} LIMIT 1`;
       if (rows.length === 0) return res.status(404).json({ error: 'Invite not found or expired' });
       const couple = rows[0];
