@@ -244,6 +244,374 @@ function generatePrescription(a) {
   return { weakestPillar: weakest.name, weakestScore: weakest.score, strongestPillar: strongest.name, strongestScore: strongest.score, weakestSubCategory: weakestSubs[0][0], weakestSubScore: weakestSubs[0][1], ...rx, pillars: pillars.map(p => ({ name: p.name, score: p.score })), crossPillarImpact };
 }
 
+// ============================
+// COACHING EMAIL ENGINE
+// ============================
+
+function generateCoachingEmail(day, assessmentData, prescription, email) {
+  const a = assessmentData;
+  const firstName = a.first_name || 'there';
+  const weakest = prescription.weakestPillar;
+  const strongest = prescription.strongestPillar;
+  const weakestScore = prescription.weakestScore;
+  const strongestScore = prescription.strongestScore;
+  const weakestSub = prescription.weakestSubCategory;
+  const crossPillar = prescription.crossPillarImpact || {};
+  const primaryImpact = crossPillar.primaryImpact || {};
+  const crossHeadline = primaryImpact.headline || `Your ${weakest} is holding back your ${strongest}.`;
+  const crossExplanation = primaryImpact.explanation || '';
+  const severity = crossPillar.severity || 'moderate';
+  const scoreRange = a.score_range || 'Growth';
+  const masterScore = a.master_score || 0;
+  const targetScore = Math.min(50, Math.round(weakestScore * 1.5));
+
+  const unsubToken = Buffer.from(email).toString('base64');
+  const unsubUrl = `https://assessment.valuetovictory.com/api/coaching/unsubscribe?email=${encodeURIComponent(email)}&token=${encodeURIComponent(unsubToken)}`;
+  const retakeUrl = 'https://assessment.valuetovictory.com';
+  const reportUrl = `https://assessment.valuetovictory.com/report/${a.id}`;
+
+  // Pillar-specific content for 8+8+8 rule (Day 2)
+  const rule888 = {
+    Time: "Your 8 hours of work aren't laser-focused — they're scattered. Your 8 hours for you? You're spending them on other people's priorities. Tomorrow, I want you to draw three columns on a piece of paper: WORK / ME / SLEEP. Be brutally honest about where each hour actually goes.",
+    People: "Your 8 hours for relationships are getting eaten by work overflow. When was the last time you spent a full hour — just ONE — with someone who matters? Not while checking your phone. Not while half-working. A real, full hour.",
+    Influence: "Your 8 work hours aren't building authority — they're maintaining. You're working 8 but influencing 0. The question isn't whether you're busy. It's whether anyone notices when you're not in the room.",
+    Numbers: "Your 8 work hours aren't tracked against actual income per hour. You're busy but not profitable. If I asked you right now what each hour of your work is worth in dollars, could you answer? Most can't.",
+    Knowledge: "Where in your 8+8+8 is learning? If it's not scheduled, it's not happening. You've got 8 hours for work, 8 for you, 8 for sleep — but learning isn't in any of those blocks. That's why your Knowledge score is where it is."
+  };
+
+  // Pillar-specific 10-minute challenges (Day 4)
+  const rule10min = {
+    Time: "Set a timer. 10 minutes. Open your calendar and delete or delegate ONE thing that isn't moving you forward. 2 minute break. Repeat. You'll be shocked at how much of your schedule exists out of habit, not intention.",
+    People: "Set a timer. 10 minutes. Text 3 people who matter with something real — not a meme, not small talk. Tell them something you appreciate about them. Something specific. 2 minute break. Repeat.",
+    Influence: "Set a timer. 10 minutes. Write down your 3 core values. Then pull up your last week's calendar — does it match? Where are the gaps between what you say matters and what you actually did? 2 minute break. Repeat.",
+    Numbers: "Set a timer. 10 minutes. Pull up your bank statement. Calculate your actual cost per hour this month. Total expenses divided by hours worked. 2 minute break. Write down the number. Let it sink in.",
+    Knowledge: "Set a timer. 10 minutes. Find one podcast, video, or book chapter that directly addresses ${weakestSub}. Consume it. 2 minute break. Apply one thing you learned immediately — even if it's small."
+  };
+
+  // Pillar-specific 90-minute daily blocks (Day 5)
+  const rule9090 = {
+    Time: "90 minutes of calendar audit + priority restructuring every morning before email. Before you open a single notification, you decide what today is for.",
+    People: "90 minutes of intentional relationship investment — calls, meals, real conversations. Not networking. Not transactional. Real investment in the people who matter.",
+    Influence: "90 minutes of skill development and professional authority building. Writing, creating, teaching, leading — whatever builds your credibility in your space.",
+    Numbers: "90 minutes of financial review, tracking, goal-setting, and investment research. Know your numbers the way a CEO knows their P&L.",
+    Knowledge: "90 minutes of deliberate learning in your highest-ROI knowledge gap. Not scrolling articles. Not passive podcasts during commute. Deliberate, focused learning with application."
+  };
+
+  let subject, body;
+
+  switch (day) {
+    case 1:
+      subject = `Your ${weakest} isn't just low — it's costing your ${strongest}`;
+      body = `${firstName},
+
+Yesterday you took the Value Engine Assessment. Your Master Score came in at ${masterScore} (${scoreRange}).
+
+But here's what most people miss — and what I need you to understand right now:
+
+Your ${weakest} score (${weakestScore}/50) isn't just a weakness. It's actively dragging down your ${strongest} (${strongestScore}/50).
+
+${crossHeadline}
+
+${crossExplanation}
+
+This is what I call the cross-pillar bleed. A weakness doesn't stay in its lane. It spreads. And the longer you ignore it, the more it costs you in areas you think are strong.
+
+This week, I'm going to show you exactly how to fix this using 4 rules that will restructure how you spend your time. Each one is simple. Each one is actionable. And each one is personalized to your exact scores.
+
+Tomorrow: The 8+8+8 Rule — and why your ${weakest} is stealing from the wrong 8.
+
+— Shawn`;
+      break;
+
+    case 2:
+      subject = `The 8+8+8 Rule — and why your ${weakest} is stealing from the wrong 8`;
+      body = `${firstName},
+
+The 8+8+8 Rule is simple: 8 hours for you (workouts, hobbies, friends) + 8 hours of laser-focused work + 8 hours of deep, guilt-free sleep.
+
+Most people know this. Almost nobody lives it. And your ${weakest} score tells me exactly where the breakdown is.
+
+${rule888[weakest] || rule888.Time}
+
+Here's the thing — when one of your 8s is off, they all suffer. Your ${weakest} isn't just one pillar. It's the leak that's draining every other block of your day.
+
+YOUR MOVE TODAY:
+Run the Time Audit using the 8+8+8 framework. Track tomorrow in three blocks. Write down every hour. No guessing. No rounding. Just truth.
+
+At the end of the day, you'll see exactly where the bleed is happening. That awareness alone changes behavior.
+
+Tomorrow: The 1-3-5 Rule — I'm going to give you your exact 1, your 3, and your 5.
+
+— Shawn`;
+      break;
+
+    case 3:
+      subject = `1 goal. 3 moves. 5 wins. Here's yours.`;
+      body = `${firstName},
+
+The 1-3-5 Rule: 1 massive goal that scares you + 3 key tasks that move you forward + 5 quick wins you can knock out today.
+
+Here's the part most people get wrong — they pick the wrong 1. They pick something comfortable. Something that sounds ambitious but doesn't actually require change.
+
+Your 1 is clear. Fix your ${weakest}. Not because it's your lowest score — but because it's bleeding into your ${strongest}. ${crossHeadline}
+
+YOUR 1 (The Massive Goal):
+${prescription.diagnosis}
+
+YOUR 3 (Key Tasks):
+1. ${prescription.immediate}
+2. ${prescription.tool}
+3. ${prescription.thirtyDay}
+
+YOUR 5 (Quick Wins for Today):
+1. Open your assessment report and re-read your ${weakest} breakdown
+2. Write down the single biggest way ${weakest} is costing you this week
+3. Block 30 minutes on your calendar tomorrow for ${weakest} work
+4. Tell one person what you're working on (accountability changes everything)
+5. Delete or cancel one thing this week that doesn't serve your ${weakest} improvement
+
+YOUR MOVE TODAY:
+Write your 1-3-5 list RIGHT NOW. Pin it where you'll see it every morning. On your bathroom mirror. On your phone lock screen. Wherever your eyes go first.
+
+Tomorrow: The 10-Minute Rule — because you don't need motivation. You need 10 minutes.
+
+— Shawn`;
+      break;
+
+    case 4:
+      subject = `You don't need motivation. You need 10 minutes.`;
+      body = `${firstName},
+
+Your ${weakest} score is ${weakestScore}/50. Your weakest sub-category is ${weakestSub}.
+
+I know that feels overwhelming. When a score is that clear about a gap, the natural response is to freeze. To say "I'll deal with that later." To wait for motivation.
+
+Here's what I've learned coaching people through this: motivation is a lie. It shows up after you start, not before.
+
+The 10-Minute Rule: Work with deadly focus for 10 minutes. Rest for 2 minutes. Repeat. That's it. It kills procrastination. It builds momentum. And it works especially well on the thing you've been avoiding.
+
+YOUR 10-MINUTE CHALLENGE:
+${rule10min[weakest] || rule10min.Time}
+
+That's it. One round. 10 minutes of focused work on the thing your score says you've been avoiding.
+
+Most people who do this end up doing 2-3 rounds because once you start, the resistance breaks. But I'm not asking for 2-3 rounds. I'm asking for one. 10 minutes.
+
+YOUR MOVE TODAY:
+Do ONE 10-minute round. Just one. Screenshot what you did and save it. I want you to have proof that 10 minutes is enough to start changing a score.
+
+Tomorrow: The 90/90/1 Rule — this is where it gets real.
+
+— Shawn`;
+      break;
+
+    case 5:
+      subject = `90 minutes. 90 days. 1 pillar. This is where it changes.`;
+      body = `${firstName},
+
+The 90/90/1 Rule is the most powerful framework I teach. And it's the simplest.
+
+Dedicate 90 focused minutes every day, for 90 days, to ONE life-changing goal.
+
+Your goal: Move your ${weakest} from ${weakestScore} to ${targetScore}.
+
+That sounds like a lot. But think about it — 90 minutes a day is only 6% of your waking hours. You're already spending more than that on things that don't compound. This just redirects existing time toward the one thing that will move everything else.
+
+Remember — your ${weakest} isn't just holding you back in one area. It's dragging your ${strongest} down with it.
+
+${crossHeadline}
+
+YOUR 90-MINUTE DAILY BLOCK:
+${rule9090[weakest] || rule9090.Time}
+
+HERE'S WHY THIS WORKS:
+Day 1-7: It feels forced. You'll want to skip.
+Day 8-21: It becomes routine. Resistance drops.
+Day 22-60: You start seeing changes. In your behavior. In your relationships. In your numbers.
+Day 61-90: Other people start noticing.
+
+YOUR MOVE TODAY:
+Block 90 minutes on your calendar RIGHT NOW. Same time, every day, for 90 days. Non-negotiable. This is the one thing that separates people who know their score from people who change it.
+
+Retake the assessment on Day 90 to measure your shift: ${retakeUrl}
+
+Tomorrow: How your ${weakest} is silently destroying your ${strongest} — the full breakdown.
+
+— Shawn`;
+      break;
+
+    case 6:
+      subject = `How your ${weakest} is silently destroying your ${strongest}`;
+      body = `${firstName},
+
+Let's go deeper on something I mentioned on Day 1.
+
+Your ${weakest} score is ${weakestScore}/50. Your ${strongest} score is ${strongestScore}/50. The gap between them is ${strongestScore - weakestScore} points.
+
+That gap has a severity level: ${severity.toUpperCase()}.
+
+Here's what that means in practice:
+
+${crossHeadline}
+
+${crossExplanation}
+
+${primaryImpact.subCategoryLinks ? `Specifically, your ${primaryImpact.subCategoryLinks.map(l => l.from).join(' and ')} in ${weakest} are directly impacting your ${primaryImpact.subCategoryLinks.map(l => l.to).join(' and ')} in ${strongest}.` : ''}
+
+This is why fixing your ${weakest} isn't just about that one pillar. It's about unlocking the full potential of your ${strongest} — which is already your best area. Imagine what happens when it's no longer being held back.
+
+THE CASCADE EFFECT:
+When you improve ${weakest}, here's what happens across your other pillars:
+• Your ${strongest} stops bleeding — the drag disappears
+• Your overall Master Score jumps because the lowest pillar has the highest leverage
+• Confidence compounds — fixing a weakness builds momentum everywhere
+
+YOUR MOVE TODAY:
+Retake the assessment to see your updated cross-pillar impact. Even if your scores haven't changed much yet, seeing the relationships clearly changes how you prioritize.
+
+${retakeUrl}
+
+Tomorrow: I'm going to give you the complete daily system that combines all 4 rules into one routine.
+
+— Shawn`;
+      break;
+
+    case 7:
+      subject = `Your complete daily system for the next 90 days`;
+      body = `${firstName},
+
+You now have all 4 rules:
+• The 8+8+8 Rule — structure your day in three equal blocks
+• The 1-3-5 Rule — know your one goal, three tasks, five quick wins
+• The 10-Minute Rule — kill procrastination with focused sprints
+• The 90/90/1 Rule — 90 minutes daily for 90 days on ${weakest}
+
+Today I'm combining them into one daily routine. Personalized to your scores. Print this out. Tape it to your mirror. Start tomorrow.
+
+YOUR DAILY SYSTEM:
+
+6:00 AM — 8+8+8 Check
+Ask yourself: Is today structured for value or just activity? Are my three 8-hour blocks protected?
+
+6:15 AM — 1-3-5 List
+Write down your 1 goal (improve ${weakest}), your 3 key tasks for today, and 5 quick wins you can knock out.
+
+6:30 AM — Start Your 90/90/1 Block
+${rule9090[weakest] || rule9090.Time}
+This is your non-negotiable 90 minutes. No phone. No email. No interruptions.
+
+Throughout the Day — The 10-Minute Rule
+Whenever resistance hits — whenever you want to avoid ${weakest} work — set a timer for 10 minutes and just start. The resistance always breaks after the first round.
+
+9:00 PM — Evening Review
+Did I invest in ${weakest} today? Did my 8+8+8 hold? What's my 1-3-5 for tomorrow?
+
+THE TRUTH ABOUT SYSTEMS:
+A system doesn't need to be complicated to work. It needs to be consistent. This one is designed around YOUR specific weakness, YOUR cross-pillar impact, and YOUR score. It's not generic advice. It's your playbook.
+
+YOUR MOVE TODAY:
+Print this schedule. Or screenshot it. Put it somewhere you'll see it before 6 AM tomorrow. Then start.
+
+Tomorrow: the final email in this series — and the one action that will tell you if this week mattered.
+
+— Shawn`;
+      break;
+
+    case 8:
+      subject = `It's been a week. Let's see what changed.`;
+      body = `${firstName},
+
+One week ago, you took the Value Engine Assessment and scored ${masterScore} (${scoreRange}). Your ${weakest} was ${weakestScore}/50.
+
+Since then, you've learned:
+• The 8+8+8 Rule — how to structure your day for value
+• The 1-3-5 Rule — how to prioritize what actually moves the needle
+• The 10-Minute Rule — how to beat procrastination on the spot
+• The 90/90/1 Rule — how to commit 90 minutes a day for 90 days to ${weakest}
+
+You've seen how your ${weakest} is bleeding into your ${strongest}. You've seen the cross-pillar impact. You've had the framework.
+
+Now let's measure the shift.
+
+Even if you only applied ONE of these rules — even if you only did ONE 10-minute sprint — something has changed. Maybe it's awareness. Maybe it's a new habit. Maybe it's just the fact that you know your weakness by name now.
+
+That matters. Because most people never get that far.
+
+YOUR FINAL MOVE:
+Retake the assessment. New questions. Same pillars. Real progress.
+
+${retakeUrl}
+
+Your scores will tell you what changed. And if you keep running the system — 90 minutes a day, 90 days — the next retake will shock you.
+
+This isn't the end of coaching. It's the beginning. The assessment is the diagnostic. The 4 rules are the treatment. Your consistency is the cure.
+
+I'm in your corner.
+
+— Shawn
+
+P.S. If you want to go deeper — structured accountability, monthly progress tracking, and direct coaching access — check out our membership options at valuetovictory.com/pricing. But the 4 rules above? Those are free. And they work.`;
+      break;
+
+    default:
+      subject = `Your coaching update from The Value Engine`;
+      body = `${firstName},\n\nKeep running the system. Your ${weakest} is where the leverage is.\n\n— Shawn`;
+  }
+
+  // Build HTML version with dark/gold styling matching existing emails
+  const htmlBody = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Value Engine Coaching — Day ${day}</title></head><body style="margin:0;padding:0;background:#111122;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;">
+
+<!-- Header -->
+<tr><td style="background:#1a1a2e;border-radius:4px 4px 0 0;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">VALUE <span style="color:#d4a853;">TO</span> VICTORY</h1><p style="margin:4px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">Daily Coaching — Day ${day} of 8</p></td></tr></table>
+
+<!-- Gold Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#d4a853,transparent);"></div></td></tr></table>
+
+<!-- Body -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 32px 40px;">
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#c0c0d8;line-height:1.7;white-space:pre-wrap;">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\n/g, '</div><div style="height:16px;"></div><div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#c0c0d8;line-height:1.7;white-space:pre-wrap;">').replace(/YOUR MOVE TODAY:|YOUR 10-MINUTE CHALLENGE:|YOUR 90-MINUTE DAILY BLOCK:|YOUR DAILY SYSTEM:|YOUR 1 \(The Massive Goal\):|YOUR 3 \(Key Tasks\):|YOUR 5 \(Quick Wins for Today\):|YOUR FINAL MOVE:|THE CASCADE EFFECT:|THE TRUTH ABOUT SYSTEMS:|HERE'S WHY THIS WORKS:/g, match => `<strong style="color:#d4a853;text-transform:uppercase;letter-spacing:1px;font-size:13px;">${match}</strong>`)}</div>
+</td></tr></table>
+
+${day === 6 || day === 8 ? `<!-- Retake CTA -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px 32px 40px;text-align:center;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;background:linear-gradient(135deg,#d4a853,#c89030);" align="center"><a href="${retakeUrl}" target="_blank" style="display:inline-block;padding:14px 40px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:800;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Retake the Assessment &rarr;</a></td></tr></table>
+</td></tr></table>` : ''}
+
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
+
+<!-- Footer -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px 32px 40px;text-align:center;"><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#4a4a64;letter-spacing:1.5px;text-transform:uppercase;">Value to Victory</p><p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#3a3a54;line-height:1.6;">Don't guess. Run the system.</p><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3a3a54;">You're receiving this because you completed the Value Engine Assessment.</p><p style="margin:0 0 8px 0;"><a href="${unsubUrl}" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6a6a84;text-decoration:underline;">Unsubscribe from coaching emails</a></p><p style="margin:8px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#2a2a44;">&copy; 2026 Value to Victory | Goodview, VA | valuetovictory.com</p></td></tr></table>
+
+</td></tr>
+</table>
+</body></html>`;
+
+  return { subject, html: htmlBody, text: body };
+}
+
+// Ensure coaching_sequences table exists
+async function ensureCoachingTable(sql) {
+  try {
+    await sql`CREATE TABLE IF NOT EXISTS coaching_sequences (
+      id SERIAL PRIMARY KEY,
+      email TEXT NOT NULL,
+      assessment_id INTEGER NOT NULL,
+      current_day INTEGER DEFAULT 0,
+      last_sent_at TIMESTAMP,
+      started_at TIMESTAMP DEFAULT NOW(),
+      unsubscribed BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_coaching_email ON coaching_sequences(email)`;
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_coaching_email_unique ON coaching_sequences(email)`;
+  } catch (e) {
+    // table may already exist
+  }
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -958,6 +1326,24 @@ https://assessment.valuetovictory.com/report/${assessment.id}
       try {
         await sql`DELETE FROM assessment_progress WHERE contact_id = ${contact.id}`;
       } catch (e) { /* table may not exist — that's fine */ }
+
+      // Auto-enroll in coaching email sequence (upsert by email — reset to day 0 on new assessment)
+      try {
+        await ensureCoachingTable(sql);
+        // Ensure unique constraint exists for ON CONFLICT
+        await sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_coaching_email_unique ON coaching_sequences(email)`;
+        await sql`INSERT INTO coaching_sequences (email, assessment_id, current_day, last_sent_at, started_at, unsubscribed)
+          VALUES (${cleanEmail}, ${assessment.id}, 0, NULL, NOW(), FALSE)
+          ON CONFLICT (email) DO UPDATE SET
+            assessment_id = EXCLUDED.assessment_id,
+            current_day = 0,
+            last_sent_at = NULL,
+            started_at = NOW(),
+            unsubscribed = FALSE`;
+        console.log(`Coaching sequence enrolled/reset for ${cleanEmail}, assessment ${assessment.id}`);
+      } catch (coachErr) {
+        console.error('Coaching enroll error (non-fatal):', coachErr.message);
+      }
 
       return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name }, emailSent, emailError: !emailSent ? 'Your results are saved but the email delivery encountered an issue. You can view your report at the link below.' : null, depth: assessmentDepth, focusPillar: assessmentFocusPillar });
     }
@@ -3205,6 +3591,188 @@ This link expires in 24 hours.
           numbers: Math.abs(iScores.numbers - pScores.numbers),
           knowledge: Math.abs(iScores.knowledge - pScores.knowledge)
         }
+      });
+    }
+
+    // ============================
+    // COACHING EMAIL ENDPOINTS
+    // ============================
+
+    // GET /api/coaching/send — called by cron job to send daily coaching emails
+    if (req.method === 'GET' && url === '/coaching/send') {
+      await ensureCoachingTable(sql);
+
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      // Find all active sequences: not unsubscribed, day < 8, last_sent_at is null or before today
+      const sequences = await sql`
+        SELECT cs.* FROM coaching_sequences cs
+        WHERE cs.unsubscribed = FALSE
+          AND cs.current_day < 8
+          AND (cs.last_sent_at IS NULL OR cs.last_sent_at < ${todayStart.toISOString()})
+        ORDER BY cs.id
+      `;
+
+      if (sequences.length === 0) {
+        return res.json({ sent: 0, message: 'No coaching emails to send today.' });
+      }
+
+      const results = [];
+      let sentCount = 0;
+      let skippedCount = 0;
+
+      for (const seq of sequences) {
+        try {
+          // Day 0 = assessment day. Don't send coaching email on the same day as assessment.
+          // Only send if started_at is before today.
+          const startedDate = new Date(seq.started_at);
+          startedDate.setHours(0, 0, 0, 0);
+          if (startedDate.getTime() >= todayStart.getTime() && seq.current_day === 0) {
+            results.push({ email: seq.email, status: 'skipped', reason: 'assessment was today (day 0)' });
+            skippedCount++;
+            continue;
+          }
+
+          // Respect 3-per-day email limit — check emails sent today to this user
+          let emailsTodayCount = 0;
+          try {
+            const emailsTodayRows = await sql`
+              SELECT COUNT(*) as cnt FROM coaching_sequences
+              WHERE email = ${seq.email}
+                AND last_sent_at >= ${todayStart.toISOString()}
+            `;
+            emailsTodayCount = Number(emailsTodayRows[0]?.cnt || 0);
+          } catch (e) { /* ignore */ }
+          if (emailsTodayCount >= 3) {
+            results.push({ email: seq.email, status: 'skipped', reason: '3-per-day limit reached' });
+            skippedCount++;
+            continue;
+          }
+
+          // Look up the assessment data
+          const assessmentRows = await sql`
+            SELECT a.*, c.first_name, c.last_name, c.email
+            FROM assessments a
+            JOIN contacts c ON a.contact_id = c.id
+            WHERE a.id = ${seq.assessment_id}
+            LIMIT 1
+          `;
+          if (assessmentRows.length === 0) {
+            results.push({ email: seq.email, status: 'skipped', reason: 'assessment not found' });
+            skippedCount++;
+            continue;
+          }
+
+          const assessmentData = assessmentRows[0];
+          let prescription;
+          try {
+            prescription = typeof assessmentData.prescription === 'string'
+              ? JSON.parse(assessmentData.prescription)
+              : assessmentData.prescription;
+          } catch (e) {
+            prescription = generatePrescription(assessmentData);
+          }
+
+          const nextDay = seq.current_day + 1;
+          const emailContent = generateCoachingEmail(nextDay, assessmentData, prescription, seq.email);
+
+          // Send via nodemailer
+          if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+            results.push({ email: seq.email, status: 'skipped', reason: 'email credentials not configured' });
+            skippedCount++;
+            continue;
+          }
+
+          const nodemailer = require('nodemailer');
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+          });
+
+          await transporter.sendMail({
+            from: `"Shawn @ Value Engine" <${process.env.GMAIL_USER}>`,
+            to: seq.email,
+            subject: emailContent.subject,
+            text: emailContent.text,
+            html: emailContent.html,
+          });
+
+          // Update sequence
+          await sql`
+            UPDATE coaching_sequences
+            SET current_day = ${nextDay}, last_sent_at = NOW()
+            WHERE id = ${seq.id}
+          `;
+
+          results.push({ email: seq.email, status: 'sent', day: nextDay });
+          sentCount++;
+          console.log(`Coaching email Day ${nextDay} sent to ${seq.email}`);
+
+        } catch (sendErr) {
+          console.error(`Coaching email error for ${seq.email}:`, sendErr.message);
+          results.push({ email: seq.email, status: 'error', error: sendErr.message });
+        }
+      }
+
+      return res.json({ sent: sentCount, skipped: skippedCount, total: sequences.length, results });
+    }
+
+    // GET /api/coaching/unsubscribe — unsubscribe from coaching emails
+    if (req.method === 'GET' && (url === '/coaching/unsubscribe' || url.startsWith('/coaching/unsubscribe'))) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = params.get('email');
+      const token = params.get('token');
+
+      if (!email || !token) {
+        res.setHeader('Content-Type', 'text/html');
+        return res.status(400).send('<!DOCTYPE html><html><body style="margin:0;padding:40px;background:#111122;font-family:Arial,sans-serif;text-align:center;"><h1 style="color:#d4a853;">Missing Parameters</h1><p style="color:#a0a0b8;">Invalid unsubscribe link. Please use the link from your coaching email.</p></body></html>');
+      }
+
+      // Validate token (base64 of email)
+      const expectedToken = Buffer.from(email).toString('base64');
+      if (token !== expectedToken) {
+        res.setHeader('Content-Type', 'text/html');
+        return res.status(400).send('<!DOCTYPE html><html><body style="margin:0;padding:40px;background:#111122;font-family:Arial,sans-serif;text-align:center;"><h1 style="color:#d4a853;">Invalid Link</h1><p style="color:#a0a0b8;">This unsubscribe link is not valid. Please use the link from your coaching email.</p></body></html>');
+      }
+
+      await ensureCoachingTable(sql);
+      await sql`UPDATE coaching_sequences SET unsubscribed = TRUE WHERE email = ${email}`;
+
+      res.setHeader('Content-Type', 'text/html');
+      return res.status(200).send(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Unsubscribed</title></head><body style="margin:0;padding:0;background:#111122;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:500px;margin:60px auto;">
+<tr><td style="background:#1a1a2e;border-radius:8px;padding:48px 40px;text-align:center;">
+<h1 style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">VALUE <span style="color:#d4a853;">TO</span> VICTORY</h1>
+<div style="height:1px;background:linear-gradient(90deg,transparent,#d4a853,transparent);margin:16px 0 24px 0;"></div>
+<h2 style="margin:0 0 12px 0;font-size:20px;color:#d4a853;">You've been unsubscribed</h2>
+<p style="margin:0 0 20px 0;font-size:15px;color:#a0a0b8;line-height:1.6;">You'll no longer receive daily coaching emails from The Value Engine.</p>
+<p style="margin:0 0 24px 0;font-size:14px;color:#6a6a84;line-height:1.6;">If you ever want to restart, just retake the assessment and you'll be re-enrolled automatically.</p>
+<a href="https://assessment.valuetovictory.com" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#d4a853,#c89030);border-radius:6px;font-size:14px;font-weight:700;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Retake Assessment</a>
+</td></tr>
+</table>
+</body></html>`);
+    }
+
+    // GET /api/coaching/status?email=X — check coaching sequence status
+    if (req.method === 'GET' && (url === '/coaching/status' || url.startsWith('/coaching/status'))) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = params.get('email');
+      if (!email) return res.status(400).json({ error: 'email parameter required' });
+
+      await ensureCoachingTable(sql);
+      const rows = await sql`SELECT * FROM coaching_sequences WHERE email = ${email} ORDER BY created_at DESC LIMIT 1`;
+      if (rows.length === 0) return res.json({ enrolled: false });
+
+      const seq = rows[0];
+      return res.json({
+        enrolled: true,
+        currentDay: seq.current_day,
+        totalDays: 8,
+        lastSentAt: seq.last_sent_at,
+        startedAt: seq.started_at,
+        unsubscribed: seq.unsubscribed,
+        assessmentId: seq.assessment_id,
       });
     }
 
