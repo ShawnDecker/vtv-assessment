@@ -15,7 +15,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
-  <title>Value Engine — Diagnostic Report</title>
+  <title>P.I.N.K.'s Value Engine — Diagnostic Report</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
@@ -685,7 +685,7 @@
       document.getElementById('rawScore').textContent = a.rawScore;
       document.getElementById('timeMult').textContent = a.timeMultiplier + 'x';
       if (pct.masterScore !== undefined) {
-        document.getElementById('masterPct').textContent = 'Your Master Score ranks higher than ' + pct.masterScore + '% of all Value Engine users';
+        document.getElementById('masterPct').textContent = 'Your Master Score ranks higher than ' + pct.masterScore + '% of all P.I.N.K.'s Value Engine users';
       }
 
       // Pillar Bars
@@ -796,7 +796,7 @@
           '<div class="pct-track"><div class="pct-fill" style="width:' + v + '%"></div></div>' +
           '<div class="pct-val">' + v + '%</div></div>';
       });
-      benchHtml += '<p style="color:#71717a;font-size:0.75rem;margin-top:0.5rem;">Percentile rank vs. all Value Engine users (' + (data.totalAssessments || 0) + ' assessments)</p>';
+      benchHtml += '<p style="color:#71717a;font-size:0.75rem;margin-top:0.5rem;">Percentile rank vs. all P.I.N.K.'s Value Engine users (' + (data.totalAssessments || 0) + ' assessments)</p>';
       document.getElementById('benchmarks').innerHTML = benchHtml;
 
       // Insights

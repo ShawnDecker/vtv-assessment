@@ -304,7 +304,7 @@ function generateCoachingEmail(day, assessmentData, prescription, email) {
       subject = `Your ${weakest} isn't just low — it's costing your ${strongest}`;
       body = `${firstName},
 
-Yesterday you took the Value Engine Assessment. Your Master Score came in at ${masterScore} (${scoreRange}).
+Yesterday you took the P.I.N.K.'s P.I.N.K.'s Value Engine Assessment. Your Master Score came in at ${masterScore} (${scoreRange}).
 
 But here's what most people miss — and what I need you to understand right now:
 
@@ -521,7 +521,7 @@ Tomorrow: the final email in this series — and the one action that will tell y
       subject = `It's been a week. Let's see what changed.`;
       body = `${firstName},
 
-One week ago, you took the Value Engine Assessment and scored ${masterScore} (${scoreRange}). Your ${weakest} was ${weakestScore}/50.
+One week ago, you took the P.I.N.K.'s P.I.N.K.'s Value Engine Assessment and scored ${masterScore} (${scoreRange}). Your ${weakest} was ${weakestScore}/50.
 
 Since then, you've learned:
 • The 8+8+8 Rule — how to structure your day for value
@@ -583,7 +583,7 @@ ${day === 6 || day === 8 ? `<!-- Retake CTA -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
 
 <!-- Footer -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px 32px 40px;text-align:center;"><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#4a4a64;letter-spacing:1.5px;text-transform:uppercase;">Value to Victory</p><p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#3a3a54;line-height:1.6;">Don't guess. Run the system.</p><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3a3a54;">You're receiving this because you completed the Value Engine Assessment.</p><p style="margin:0 0 8px 0;"><a href="${unsubUrl}" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6a6a84;text-decoration:underline;">Unsubscribe from coaching emails</a></p><p style="margin:8px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#2a2a44;">&copy; 2026 Value to Victory | Goodview, VA | valuetovictory.com</p></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px 32px 40px;text-align:center;"><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#4a4a64;letter-spacing:1.5px;text-transform:uppercase;">Value to Victory</p><p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#3a3a54;line-height:1.6;">Don't guess. Run the system.</p><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3a3a54;">You're receiving this because you completed the P.I.N.K.'s P.I.N.K.'s Value Engine Assessment.</p><p style="margin:0 0 8px 0;"><a href="${unsubUrl}" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6a6a84;text-decoration:underline;">Unsubscribe from coaching emails</a></p><p style="margin:8px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#2a2a44;">&copy; 2026 Value to Victory | Goodview, VA | valuetovictory.com</p></td></tr></table>
 
 </td></tr>
 </table>
@@ -1219,7 +1219,7 @@ module.exports = async (req, res) => {
             // FULL REPORT EMAIL (first assessment or member)
             emailBody = `${efName},
 
-Your Value Engine Assessment is complete.
+Your P.I.N.K.'s P.I.N.K.'s Value Engine Assessment is complete.
 
 MASTER VALUE SCORE: ${eMasterScore} (${eScoreRange})
 
@@ -1247,12 +1247,12 @@ Don't guess. Run the system.
 
 — The Value Engine
    ValueToVictory.com`;
-            subject = `Your Value Engine Score: ${eMasterScore} (${eScoreRange}) — Personal Report Ready`;
+            subject = `Your P.I.N.K.'s Value Engine Score: ${eMasterScore} (${eScoreRange}) — Personal Report Ready`;
           } else {
             // TEASER EMAIL (non-first, non-member — report is gated)
             emailBody = `${efName},
 
-Your Value Engine Assessment is complete.
+Your P.I.N.K.'s P.I.N.K.'s Value Engine Assessment is complete.
 
 MASTER VALUE SCORE: ${eMasterScore} (${eScoreRange})
 
@@ -1280,7 +1280,7 @@ https://assessment.valuetovictory.com/report/${assessment.id}
 
 — The Value Engine
    ValueToVictory.com`;
-            subject = `Your Value Engine Score: ${eMasterScore} (${eScoreRange}) — Unlock Your Full Report`;
+            subject = `Your P.I.N.K.'s Value Engine Score: ${eMasterScore} (${eScoreRange}) — Unlock Your Full Report`;
           }
 
           const transporter = nodemailer.createTransport({
@@ -1812,7 +1812,7 @@ https://assessment.valuetovictory.com/report/${assessment.id}
 
       const emailBody = `${firstName},
 
-Your Value Engine Assessment is complete.
+Your P.I.N.K.'s P.I.N.K.'s Value Engine Assessment is complete.
 
 MASTER VALUE SCORE: ${masterScore} (${scoreRange})
 
@@ -1984,13 +1984,13 @@ ${subLinks ? `<p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif
 <tr><td style="background:#1a1a2e;">
 
 <!-- Header -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:36px 40px 20px 40px;text-align:center;"><h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">VALUE <span style="color:#d4a853;">TO</span> VICTORY</h1><p style="margin:4px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">The Value Engine Report</p></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:36px 40px 20px 40px;text-align:center;"><h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">VALUE <span style="color:#d4a853;">TO</span> VICTORY</h1><p style="margin:4px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">P.I.N.K.'s - Value Engine Report</p></td></tr></table>
 
 <!-- Gold Divider -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#d4a853,transparent);"></div></td></tr></table>
 
 <!-- Greeting -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 8px 40px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#a0a0b8;line-height:1.6;">Hello <strong style="color:#ffffff;">${firstName}</strong>,</p><p style="margin:10px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#a0a0b8;line-height:1.6;">Your Value Engine assessment is complete. Below is a detailed breakdown of where you stand across the <strong style="color:#d4a853;">five pillars of value</strong>.</p></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 8px 40px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#a0a0b8;line-height:1.6;">Hello <strong style="color:#ffffff;">${firstName}</strong>,</p><p style="margin:10px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#a0a0b8;line-height:1.6;">Your P.I.N.K.'s Value Engine assessment is complete. Below is a detailed breakdown of where you stand across the <strong style="color:#d4a853;">five pillars of value</strong>.</p></td></tr></table>
 
 <!-- Master Score -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 12px 40px;text-align:center;"><p style="margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">Master Value Score</p>
@@ -2047,13 +2047,13 @@ ${roadmapHtml}
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
 
 <!-- Footer -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 36px 40px;text-align:center;"><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#4a4a64;letter-spacing:1.5px;text-transform:uppercase;">Value to Victory</p><p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#3a3a54;line-height:1.6;">Don't guess. Run the system.</p><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3a3a54;">You're receiving this because you completed the Value Engine Assessment.</p><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6a6a84;">To unsubscribe, reply with UNSUBSCRIBE in the subject line.</p><p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#2a2a44;">&copy; 2026 Value to Victory | Goodview, VA | valuetovictory.com</p></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 36px 40px;text-align:center;"><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#4a4a64;letter-spacing:1.5px;text-transform:uppercase;">Value to Victory</p><p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#3a3a54;line-height:1.6;">Don't guess. Run the system.</p><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3a3a54;">You're receiving this because you completed the P.I.N.K.'s P.I.N.K.'s Value Engine Assessment.</p><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6a6a84;">To unsubscribe, reply with UNSUBSCRIBE in the subject line.</p><p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#2a2a44;">&copy; 2026 Value to Victory | Goodview, VA | valuetovictory.com</p></td></tr></table>
 
 </td></tr>
 </table>
 </body></html>`;
 
-      const subject = `Your Value Engine Score: ${masterScore} (${scoreRange}) \u2014 Personal Report Ready`;
+      const subject = `Your P.I.N.K.'s Value Engine Score: ${masterScore} (${scoreRange}) \u2014 Personal Report Ready`;
 
       // Check if email credentials are configured
       if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
@@ -2979,7 +2979,7 @@ DISCLAIMER: This is a self-assessment tool and should not be used as a clinical 
 — The Value Engine
    ValueToVictory.com`;
       } else if (reportType === 'team') {
-        subject = `Team Analysis Report — Value Engine Assessment`;
+        subject = `Team Analysis Report — P.I.N.K.'s Value Engine Assessment`;
         emailBody = `Your Team Analysis Report is ready.
 
 This report includes anonymous, aggregated team data showing:
@@ -3204,13 +3204,13 @@ This link expires in 24 hours.
       // Look up the coaching request
       const rows = await sql`SELECT * FROM coaching_requests WHERE verification_token = ${token} LIMIT 1`;
       if (rows.length === 0) {
-        return res.status(404).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invalid Link</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#ef4444;">Invalid or Expired Link</h2><p style="color:#a1a1aa;">This verification link is invalid or has already been used.</p><p><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;">Go to Value Engine</a></p></div></body></html>');
+        return res.status(404).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invalid Link</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#ef4444;">Invalid or Expired Link</h2><p style="color:#a1a1aa;">This verification link is invalid or has already been used.</p><p><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;">Go to P.I.N.K.'s Value Engine</a></p></div></body></html>');
       }
       const cr = rows[0];
 
       // Check if already verified
       if (cr.verified) {
-        return res.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Already Verified</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#D4A847;">Already Verified</h2><p style="color:#a1a1aa;">Your email has already been verified. Your coaching report has been sent.</p><p><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;">Go to Value Engine</a></p></div></body></html>');
+        return res.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Already Verified</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#D4A847;">Already Verified</h2><p style="color:#a1a1aa;">Your email has already been verified. Your coaching report has been sent.</p><p><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;">Go to P.I.N.K.'s Value Engine</a></p></div></body></html>');
       }
 
       // Check expiration (24 hours)
@@ -3345,7 +3345,7 @@ This link expires in 24 hours.
 
         // Value Engine tools recommendation (ALWAYS first)
         report += `RECOMMENDED TOOLS (Value Engine)\n${'-'.repeat(30)}\n`;
-        report += `1. The Value Engine Assessment — your diagnostic baseline (valuetovictory.com)\n`;
+        report += `1. The P.I.N.K.'s Value Engine Assessment — your diagnostic baseline (valuetovictory.com)\n`;
         report += `2. VictoryPath Membership ($29/mo) — structured tools, community, and accountability\n`;
         report += `3. Value Builder ($47/mo) — full course access, advanced tools, and monthly Q&A\n`;
         if (cr.track === 'real_estate') {
@@ -3390,7 +3390,7 @@ This link expires in 24 hours.
       const statusMsg = reportSent
         ? 'Your personalized coaching report has been sent to your email.'
         : 'Your email has been verified. Your coaching report will be sent shortly.';
-      return res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Email Verified</title><style>body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style><link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet"></head><body><div style="max-width:480px;padding:2rem;"><div style="font-size:3rem;margin-bottom:1rem;">&#10003;</div><h2 style="color:#D4A847;margin-bottom:0.75rem;">Email Verified!</h2><p style="color:#a1a1aa;margin-bottom:1.5rem;">${statusMsg}</p><p style="color:#71717a;font-size:0.85rem;">Check your inbox (and spam folder) for your coaching report.</p><p style="margin-top:1.5rem;"><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;text-decoration:none;">Return to Value Engine &rarr;</a></p></div></body></html>`);
+      return res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Email Verified</title><style>body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style><link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet"></head><body><div style="max-width:480px;padding:2rem;"><div style="font-size:3rem;margin-bottom:1rem;">&#10003;</div><h2 style="color:#D4A847;margin-bottom:0.75rem;">Email Verified!</h2><p style="color:#a1a1aa;margin-bottom:1.5rem;">${statusMsg}</p><p style="color:#71717a;font-size:0.85rem;">Check your inbox (and spam folder) for your coaching report.</p><p style="margin-top:1.5rem;"><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;text-decoration:none;">Return to P.I.N.K.'s Value Engine &rarr;</a></p></div></body></html>`);
     }
 
     // GET /api/admin/abandoned — contacts who started but never completed
