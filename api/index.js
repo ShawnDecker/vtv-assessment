@@ -305,7 +305,7 @@ function generateCoachingEmail(day, assessmentData, prescription, email) {
       subject = `Your ${weakest} isn't just low — it's costing your ${strongest}`;
       body = `${firstName},
 
-Yesterday you took the P.I.N.K.'s P.I.N.K.'s Value Engine Assessment. Your Master Score came in at ${masterScore} (${scoreRange}).
+Yesterday you took the P.I.N.K.'s Value Engine Assessment. Your Master Score came in at ${masterScore} (${scoreRange}).
 
 But here's what most people miss — and what I need you to understand right now:
 
@@ -522,7 +522,7 @@ Tomorrow: the final email in this series — and the one action that will tell y
       subject = `It's been a week. Let's see what changed.`;
       body = `${firstName},
 
-One week ago, you took the P.I.N.K.'s P.I.N.K.'s Value Engine Assessment and scored ${masterScore} (${scoreRange}). Your ${weakest} was ${weakestScore}/50.
+One week ago, you took the P.I.N.K.'s Value Engine Assessment and scored ${masterScore} (${scoreRange}). Your ${weakest} was ${weakestScore}/50.
 
 Since then, you've learned:
 • The 8+8+8 Rule — how to structure your day for value
@@ -584,7 +584,7 @@ ${day === 6 || day === 8 ? `<!-- Retake CTA -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
 
 <!-- Footer -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px 32px 40px;text-align:center;"><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#4a4a64;letter-spacing:1.5px;text-transform:uppercase;">Value to Victory</p><p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#3a3a54;line-height:1.6;">Don't guess. Run the system.</p><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3a3a54;">You're receiving this because you completed the P.I.N.K.'s P.I.N.K.'s Value Engine Assessment.</p><p style="margin:0 0 8px 0;"><a href="${unsubUrl}" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6a6a84;text-decoration:underline;">Unsubscribe from coaching emails</a></p><p style="margin:8px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#2a2a44;">&copy; 2026 Value to Victory | Goodview, VA | valuetovictory.com</p></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px 32px 40px;text-align:center;"><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#4a4a64;letter-spacing:1.5px;text-transform:uppercase;">Value to Victory</p><p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#3a3a54;line-height:1.6;">Don't guess. Run the system.</p><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3a3a54;">You're receiving this because you completed the P.I.N.K.'s Value Engine Assessment.</p><p style="margin:0 0 8px 0;"><a href="${unsubUrl}" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6a6a84;text-decoration:underline;">Unsubscribe from coaching emails</a></p><p style="margin:8px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#2a2a44;">&copy; 2026 Value to Victory | Goodview, VA | valuetovictory.com</p></td></tr></table>
 
 </td></tr>
 </table>
@@ -1220,7 +1220,7 @@ module.exports = async (req, res) => {
             // FULL REPORT EMAIL (first assessment or member)
             emailBody = `${efName},
 
-Your P.I.N.K.'s P.I.N.K.'s Value Engine Assessment is complete.
+Your P.I.N.K.'s Value Engine Assessment is complete.
 
 MASTER VALUE SCORE: ${eMasterScore} (${eScoreRange})
 
@@ -1253,7 +1253,7 @@ Don't guess. Run the system.
             // TEASER EMAIL (non-first, non-member — report is gated)
             emailBody = `${efName},
 
-Your P.I.N.K.'s P.I.N.K.'s Value Engine Assessment is complete.
+Your P.I.N.K.'s Value Engine Assessment is complete.
 
 MASTER VALUE SCORE: ${eMasterScore} (${eScoreRange})
 
@@ -1813,7 +1813,7 @@ https://assessment.valuetovictory.com/report/${assessment.id}
 
       const emailBody = `${firstName},
 
-Your P.I.N.K.'s P.I.N.K.'s Value Engine Assessment is complete.
+Your P.I.N.K.'s Value Engine Assessment is complete.
 
 MASTER VALUE SCORE: ${masterScore} (${scoreRange})
 
@@ -2048,7 +2048,7 @@ ${roadmapHtml}
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
 
 <!-- Footer -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 36px 40px;text-align:center;"><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#4a4a64;letter-spacing:1.5px;text-transform:uppercase;">Value to Victory</p><p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#3a3a54;line-height:1.6;">Don't guess. Run the system.</p><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3a3a54;">You're receiving this because you completed the P.I.N.K.'s P.I.N.K.'s Value Engine Assessment.</p><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6a6a84;">To unsubscribe, reply with UNSUBSCRIBE in the subject line.</p><p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#2a2a44;">&copy; 2026 Value to Victory | Goodview, VA | valuetovictory.com</p></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 36px 40px;text-align:center;"><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#4a4a64;letter-spacing:1.5px;text-transform:uppercase;">Value to Victory</p><p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#3a3a54;line-height:1.6;">Don't guess. Run the system.</p><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3a3a54;">You're receiving this because you completed the P.I.N.K.'s Value Engine Assessment.</p><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6a6a84;">To unsubscribe, reply with UNSUBSCRIBE in the subject line.</p><p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#2a2a44;">&copy; 2026 Value to Victory | Goodview, VA | valuetovictory.com</p></td></tr></table>
 
 </td></tr>
 </table>
@@ -3205,13 +3205,13 @@ This link expires in 24 hours.
       // Look up the coaching request
       const rows = await sql`SELECT * FROM coaching_requests WHERE verification_token = ${token} LIMIT 1`;
       if (rows.length === 0) {
-        return res.status(404).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invalid Link</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#ef4444;">Invalid or Expired Link</h2><p style="color:#a1a1aa;">This verification link is invalid or has already been used.</p><p><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;">Go to P.I.N.K.'s Value Engine</a></p></div></body></html>');
+        return res.status(404).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invalid Link</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#ef4444;">Invalid or Expired Link</h2><p style="color:#a1a1aa;">This verification link is invalid or has already been used.</p><p><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;">Go to P.I.N.K.&#39;s Value Engine</a></p></div></body></html>');
       }
       const cr = rows[0];
 
       // Check if already verified
       if (cr.verified) {
-        return res.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Already Verified</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#D4A847;">Already Verified</h2><p style="color:#a1a1aa;">Your email has already been verified. Your coaching report has been sent.</p><p><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;">Go to P.I.N.K.'s Value Engine</a></p></div></body></html>');
+        return res.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Already Verified</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#D4A847;">Already Verified</h2><p style="color:#a1a1aa;">Your email has already been verified. Your coaching report has been sent.</p><p><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;">Go to P.I.N.K.&#39;s Value Engine</a></p></div></body></html>');
       }
 
       // Check expiration (24 hours)
