@@ -3599,6 +3599,29 @@ This link expires in 24 hours.
     // COACHING EMAIL ENDPOINTS
     // ============================
 
+
+    // POST /api/coaching/enroll-batch — enroll multiple users into coaching sequence
+    if (req.method === 'POST' && url === '/coaching/enroll-batch') {
+      try {
+        await ensureCoachingTable(sql);
+        const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        const users = body.users || [];
+        let enrolled = 0;
+        for (const u of users) {
+          if (!u.email || !u.assessment_id) continue;
+          try {
+            await sql`INSERT INTO coaching_sequences (email, assessment_id, current_day, started_at, unsubscribed)
+              VALUES (${u.email}, ${u.assessment_id}, 0, NOW() - INTERVAL '1 day', FALSE)
+              ON CONFLICT (email) DO UPDATE SET assessment_id = ${u.assessment_id}, current_day = 0, started_at = NOW() - INTERVAL '1 day', unsubscribed = FALSE, last_sent_at = NULL`;
+            enrolled++;
+          } catch (e) { console.error('Enroll error for', u.email, e.message); }
+        }
+        return res.json({ enrolled, total: users.length });
+      } catch (e) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
     // GET /api/coaching/send — called by cron job to send daily coaching emails
     if (req.method === 'GET' && url === '/coaching/send') {
       try {
