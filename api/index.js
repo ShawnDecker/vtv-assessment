@@ -1,4 +1,5 @@
 const { neon } = require('@neondatabase/serverless');
+const nodemailer = require('nodemailer');
 
 // Cross-Pillar Impact Matrix — 20 directional relationships (5 pillars × 4 targets each)
 const CROSS_PILLAR_IMPACT_MATRIX = {
@@ -608,7 +609,7 @@ async function ensureCoachingTable(sql) {
     await sql`CREATE INDEX IF NOT EXISTS idx_coaching_email ON coaching_sequences(email)`;
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_coaching_email_unique ON coaching_sequences(email)`;
   } catch (e) {
-    // table may already exist
+    console.error('[ensureCoachingTable] Error creating coaching_sequences table:', e.message);
   }
 }
 
@@ -3600,122 +3601,130 @@ This link expires in 24 hours.
 
     // GET /api/coaching/send — called by cron job to send daily coaching emails
     if (req.method === 'GET' && url === '/coaching/send') {
-      await ensureCoachingTable(sql);
+      try {
+        await ensureCoachingTable(sql);
 
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
 
-      // Find all active sequences: not unsubscribed, day < 8, last_sent_at is null or before today
-      const sequences = await sql`
-        SELECT cs.* FROM coaching_sequences cs
-        WHERE cs.unsubscribed = FALSE
-          AND cs.current_day < 8
-          AND (cs.last_sent_at IS NULL OR cs.last_sent_at < ${todayStart.toISOString()})
-        ORDER BY cs.id
-      `;
+        // Find all active sequences: not unsubscribed, day < 8, last_sent_at is null or before today
+        const sequences = await sql`
+          SELECT cs.* FROM coaching_sequences cs
+          WHERE cs.unsubscribed = FALSE
+            AND cs.current_day < 8
+            AND (cs.last_sent_at IS NULL OR cs.last_sent_at < ${todayStart.toISOString()})
+          ORDER BY cs.id
+        `;
 
-      if (sequences.length === 0) {
-        return res.json({ sent: 0, message: 'No coaching emails to send today.' });
-      }
+        if (sequences.length === 0) {
+          return res.json({ sent: 0, message: 'No coaching emails to send today.' });
+        }
 
-      const results = [];
-      let sentCount = 0;
-      let skippedCount = 0;
-
-      for (const seq of sequences) {
-        try {
-          // Day 0 = assessment day. Don't send coaching email on the same day as assessment.
-          // Only send if started_at is before today.
-          const startedDate = new Date(seq.started_at);
-          startedDate.setHours(0, 0, 0, 0);
-          if (startedDate.getTime() >= todayStart.getTime() && seq.current_day === 0) {
-            results.push({ email: seq.email, status: 'skipped', reason: 'assessment was today (day 0)' });
-            skippedCount++;
-            continue;
-          }
-
-          // Respect 3-per-day email limit — check emails sent today to this user
-          let emailsTodayCount = 0;
-          try {
-            const emailsTodayRows = await sql`
-              SELECT COUNT(*) as cnt FROM coaching_sequences
-              WHERE email = ${seq.email}
-                AND last_sent_at >= ${todayStart.toISOString()}
-            `;
-            emailsTodayCount = Number(emailsTodayRows[0]?.cnt || 0);
-          } catch (e) { /* ignore */ }
-          if (emailsTodayCount >= 3) {
-            results.push({ email: seq.email, status: 'skipped', reason: '3-per-day limit reached' });
-            skippedCount++;
-            continue;
-          }
-
-          // Look up the assessment data
-          const assessmentRows = await sql`
-            SELECT a.*, c.first_name, c.last_name, c.email
-            FROM assessments a
-            JOIN contacts c ON a.contact_id = c.id
-            WHERE a.id = ${seq.assessment_id}
-            LIMIT 1
-          `;
-          if (assessmentRows.length === 0) {
-            results.push({ email: seq.email, status: 'skipped', reason: 'assessment not found' });
-            skippedCount++;
-            continue;
-          }
-
-          const assessmentData = assessmentRows[0];
-          let prescription;
-          try {
-            prescription = typeof assessmentData.prescription === 'string'
-              ? JSON.parse(assessmentData.prescription)
-              : assessmentData.prescription;
-          } catch (e) {
-            prescription = generatePrescription(assessmentData);
-          }
-
-          const nextDay = seq.current_day + 1;
-          const emailContent = generateCoachingEmail(nextDay, assessmentData, prescription, seq.email);
-
-          // Send via nodemailer
-          if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-            results.push({ email: seq.email, status: 'skipped', reason: 'email credentials not configured' });
-            skippedCount++;
-            continue;
-          }
-
-          const nodemailer = require('nodemailer');
-          const transporter = nodemailer.createTransport({
+        // Create transporter once outside the loop
+        let transporter = null;
+        if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+          transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
           });
-
-          await transporter.sendMail({
-            from: `"Shawn @ Value Engine" <${process.env.GMAIL_USER}>`,
-            to: seq.email,
-            subject: emailContent.subject,
-            text: emailContent.text,
-            html: emailContent.html,
-          });
-
-          // Update sequence
-          await sql`
-            UPDATE coaching_sequences
-            SET current_day = ${nextDay}, last_sent_at = NOW()
-            WHERE id = ${seq.id}
-          `;
-
-          results.push({ email: seq.email, status: 'sent', day: nextDay });
-          sentCount++;
-          console.log(`Coaching email Day ${nextDay} sent to ${seq.email}`);
-
-        } catch (sendErr) {
-          console.error(`Coaching email error for ${seq.email}:`, sendErr.message);
-          results.push({ email: seq.email, status: 'error', error: sendErr.message });
         }
-      }
 
-      return res.json({ sent: sentCount, skipped: skippedCount, total: sequences.length, results });
+        const results = [];
+        let sentCount = 0;
+        let skippedCount = 0;
+
+        for (const seq of sequences) {
+          try {
+            // Day 0 = assessment day. Don't send coaching email on the same day as assessment.
+            // Only send if started_at is before today.
+            const startedDate = new Date(seq.started_at);
+            startedDate.setHours(0, 0, 0, 0);
+            if (startedDate.getTime() >= todayStart.getTime() && seq.current_day === 0) {
+              results.push({ email: seq.email, status: 'skipped', reason: 'assessment was today (day 0)' });
+              skippedCount++;
+              continue;
+            }
+
+            // Respect 3-per-day email limit — check emails sent today to this user
+            let emailsTodayCount = 0;
+            try {
+              const emailsTodayRows = await sql`
+                SELECT COUNT(*) as cnt FROM coaching_sequences
+                WHERE email = ${seq.email}
+                  AND last_sent_at >= ${todayStart.toISOString()}
+              `;
+              emailsTodayCount = Number(emailsTodayRows[0]?.cnt || 0);
+            } catch (e) { /* ignore */ }
+            if (emailsTodayCount >= 3) {
+              results.push({ email: seq.email, status: 'skipped', reason: '3-per-day limit reached' });
+              skippedCount++;
+              continue;
+            }
+
+            // Look up the assessment data
+            const assessmentRows = await sql`
+              SELECT a.*, c.first_name, c.last_name, c.email
+              FROM assessments a
+              JOIN contacts c ON a.contact_id = c.id
+              WHERE a.id = ${seq.assessment_id}
+              LIMIT 1
+            `;
+            if (assessmentRows.length === 0) {
+              results.push({ email: seq.email, status: 'skipped', reason: 'assessment not found' });
+              skippedCount++;
+              continue;
+            }
+
+            const assessmentData = assessmentRows[0];
+            let prescription;
+            try {
+              prescription = typeof assessmentData.prescription === 'string'
+                ? JSON.parse(assessmentData.prescription)
+                : assessmentData.prescription;
+            } catch (e) {
+              prescription = generatePrescription(assessmentData);
+            }
+
+            const nextDay = seq.current_day + 1;
+            const emailContent = generateCoachingEmail(nextDay, assessmentData, prescription, seq.email);
+
+            // Send via nodemailer
+            if (!transporter) {
+              results.push({ email: seq.email, status: 'skipped', reason: 'email credentials not configured' });
+              skippedCount++;
+              continue;
+            }
+
+            await transporter.sendMail({
+              from: `"Shawn @ Value Engine" <${process.env.GMAIL_USER}>`,
+              to: seq.email,
+              subject: emailContent.subject,
+              text: emailContent.text,
+              html: emailContent.html,
+            });
+
+            // Update sequence
+            await sql`
+              UPDATE coaching_sequences
+              SET current_day = ${nextDay}, last_sent_at = NOW()
+              WHERE id = ${seq.id}
+            `;
+
+            results.push({ email: seq.email, status: 'sent', day: nextDay });
+            sentCount++;
+            console.log(`Coaching email Day ${nextDay} sent to ${seq.email}`);
+
+          } catch (sendErr) {
+            console.error(`Coaching email error for ${seq.email}:`, sendErr.message);
+            results.push({ email: seq.email, status: 'error', error: sendErr.message });
+          }
+        }
+
+        return res.json({ sent: sentCount, skipped: skippedCount, total: sequences.length, results });
+      } catch (coachingSendErr) {
+        console.error('[coaching/send] Handler error:', coachingSendErr);
+        return res.status(500).json({ error: 'Coaching send failed', details: coachingSendErr.message, stack: coachingSendErr.stack });
+      }
     }
 
     // GET /api/coaching/unsubscribe — unsubscribe from coaching emails
@@ -3756,24 +3765,29 @@ This link expires in 24 hours.
 
     // GET /api/coaching/status?email=X — check coaching sequence status
     if (req.method === 'GET' && (url === '/coaching/status' || url.startsWith('/coaching/status'))) {
-      const params = new URL('http://x' + req.url).searchParams;
-      const email = params.get('email');
-      if (!email) return res.status(400).json({ error: 'email parameter required' });
+      try {
+        const params = new URL('http://x' + req.url).searchParams;
+        const email = params.get('email');
+        if (!email) return res.status(400).json({ error: 'email parameter required' });
 
-      await ensureCoachingTable(sql);
-      const rows = await sql`SELECT * FROM coaching_sequences WHERE email = ${email} ORDER BY created_at DESC LIMIT 1`;
-      if (rows.length === 0) return res.json({ enrolled: false });
+        await ensureCoachingTable(sql);
+        const rows = await sql`SELECT * FROM coaching_sequences WHERE email = ${email} ORDER BY created_at DESC LIMIT 1`;
+        if (rows.length === 0) return res.json({ enrolled: false });
 
-      const seq = rows[0];
-      return res.json({
-        enrolled: true,
-        currentDay: seq.current_day,
-        totalDays: 8,
-        lastSentAt: seq.last_sent_at,
-        startedAt: seq.started_at,
-        unsubscribed: seq.unsubscribed,
-        assessmentId: seq.assessment_id,
-      });
+        const seq = rows[0];
+        return res.json({
+          enrolled: true,
+          currentDay: seq.current_day,
+          totalDays: 8,
+          lastSentAt: seq.last_sent_at,
+          startedAt: seq.started_at,
+          unsubscribed: seq.unsubscribed,
+          assessmentId: seq.assessment_id,
+        });
+      } catch (coachingStatusErr) {
+        console.error('[coaching/status] Handler error:', coachingStatusErr);
+        return res.status(500).json({ error: 'Coaching status failed', details: coachingStatusErr.message });
+      }
     }
 
     return res.status(404).json({ error: 'Not found' });
