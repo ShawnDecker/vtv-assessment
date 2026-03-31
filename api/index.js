@@ -207,6 +207,50 @@ module.exports = async (req, res) => {
       });
     }
 
+    // POST /api/member/set-pin — Set or update PIN for member portal
+    if (req.method === 'POST' && url === '/member/set-pin') {
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      const pin = (b.pin || '').trim();
+      if (!email || !pin) return res.status(400).json({ error: 'Email and PIN required' });
+      if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) return res.status(400).json({ error: 'PIN must be 4-6 digits' });
+
+      const crypto = require('crypto');
+      const pinHash = crypto.createHash('sha256').update(pin + '_vtv_salt_2026').digest('hex');
+
+      const rows = await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE LOWER(email) = ${email} RETURNING id, first_name`;
+      if (rows.length === 0) return res.status(404).json({ error: 'No account with that email' });
+      return res.json({ success: true, message: 'PIN set successfully' });
+    }
+
+    // POST /api/member/verify-pin — Verify PIN for member portal login
+    if (req.method === 'POST' && url === '/member/verify-pin') {
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      const pin = (b.pin || '').trim();
+      if (!email || !pin) return res.status(400).json({ error: 'Email and PIN required' });
+
+      const crypto = require('crypto');
+      const pinHash = crypto.createHash('sha256').update(pin + '_vtv_salt_2026').digest('hex');
+
+      const rows = await sql`SELECT id, first_name, pin_hash FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (rows.length === 0) return res.json({ verified: false, error: 'No account found' });
+      if (!rows[0].pin_hash) return res.json({ verified: false, needsPin: true, message: 'No PIN set yet' });
+      if (rows[0].pin_hash !== pinHash) return res.json({ verified: false, error: 'Incorrect PIN' });
+      return res.json({ verified: true });
+    }
+
+    // GET /api/member/has-pin?email=xxx — Check if member has a PIN set
+    if (req.method === 'GET' && url.startsWith('/member/has-pin')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = (params.get('email') || '').toLowerCase().trim();
+      if (!email) return res.status(400).json({ error: 'Email required' });
+
+      const rows = await sql`SELECT pin_hash FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (rows.length === 0) return res.json({ exists: false, hasPin: false });
+      return res.json({ exists: true, hasPin: !!rows[0].pin_hash });
+    }
+
     // GET /api/member?email=xxx — Member portal: profile, tier, assessments, teams
     if (req.method === 'GET' && url.startsWith('/member') && !url.startsWith('/member/portal')) {
       const params = new URL('http://x' + req.url).searchParams;

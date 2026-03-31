@@ -1068,6 +1068,62 @@
   </div>
 </div>
 
+<!-- ===== STATE: SET PIN (first time) ===== -->
+<div id="stateSetPin" class="state">
+  <div class="entry-wrap">
+    <div class="entry-card">
+      <div style="font-size:2rem;margin-bottom:0.75rem">🔐</div>
+      <h2>Create Your PIN</h2>
+      <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.5rem">
+        Welcome, <strong id="setPinEmail"></strong>. Set a 4-6 digit PIN to secure your Member Portal.
+      </p>
+      <div class="form-group">
+        <label class="form-label">NEW PIN</label>
+        <input type="password" id="newPin" maxlength="6" inputmode="numeric" pattern="[0-9]*"
+               placeholder="Enter 4-6 digits" style="text-align:center;font-size:1.5rem;letter-spacing:0.5rem"
+               onkeydown="if(event.key==='Enter') document.getElementById('confirmPin').focus()" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">CONFIRM PIN</label>
+        <input type="password" id="confirmPin" maxlength="6" inputmode="numeric" pattern="[0-9]*"
+               placeholder="Confirm PIN" style="text-align:center;font-size:1.5rem;letter-spacing:0.5rem"
+               onkeydown="if(event.key==='Enter') submitSetPin()" />
+      </div>
+      <div id="setPinError" class="error-msg hidden"></div>
+      <button class="btn btn-gold btn-block" id="setPinBtn" onclick="submitSetPin()">
+        Set PIN & Continue
+      </button>
+      <a href="#" onclick="showState('stateEntry');return false" style="display:block;text-align:center;margin-top:1rem;color:var(--text-muted);font-size:0.85rem">← Back</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATE: ENTER PIN ===== -->
+<div id="stateEnterPin" class="state">
+  <div class="entry-wrap">
+    <div class="entry-card">
+      <div style="font-size:2rem;margin-bottom:0.75rem">🔑</div>
+      <h2>Enter Your PIN</h2>
+      <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.5rem">
+        <span id="enterPinEmail"></span>
+      </p>
+      <div class="form-group">
+        <input type="password" id="loginPin" maxlength="6" inputmode="numeric" pattern="[0-9]*"
+               placeholder="Enter PIN" style="text-align:center;font-size:1.5rem;letter-spacing:0.5rem"
+               onkeydown="if(event.key==='Enter') submitVerifyPin()" />
+      </div>
+      <div id="verifyPinError" class="error-msg hidden"></div>
+      <button class="btn btn-gold btn-block" id="verifyPinBtn" onclick="submitVerifyPin()">
+        Unlock Dashboard
+      </button>
+      <div style="display:flex;justify-content:space-between;margin-top:1rem">
+        <a href="#" onclick="showState('stateEntry');return false" style="color:var(--text-muted);font-size:0.85rem">← Different email</a>
+        <a href="#" onclick="resetPin();return false" style="color:var(--gold);font-size:0.85rem">Forgot PIN?</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== STATE 3: LOADING ===== -->
 <div id="stateLoading" class="state">
   <div class="entry-wrap">
@@ -1253,59 +1309,161 @@
 
     currentEmail = email;
     btn.disabled = true;
-    btn.textContent = 'Loading…';
-    showState('stateLoading');
+    btn.textContent = 'Checking…';
 
     try {
-      const apiUrl = '/api/member?email=' + encodeURIComponent(email);
-      console.log('Fetching:', apiUrl);
-      const res = await fetch(apiUrl);
-      console.log('Response status:', res.status);
-      const text = await res.text();
-      console.log('Response body:', text.substring(0, 200));
-      
-      let data;
-      try { data = JSON.parse(text); } catch(pe) {
-        console.error('JSON parse error:', pe, 'Body:', text.substring(0, 100));
-        document.getElementById('debugError').textContent = 'Parse error: ' + text.substring(0, 80);
+      // Step 1: Check if this email exists and has a PIN
+      const checkRes = await fetch('/api/member/has-pin?email=' + encodeURIComponent(email));
+      const checkData = await checkRes.json();
+
+      if (!checkData.exists) {
         showState('stateNotFound');
         btn.disabled = false;
         btn.textContent = 'Access My Dashboard';
         return;
       }
 
-      console.log('Data found:', data.found, 'Contact:', data.contact?.firstName);
+      if (!checkData.hasPin) {
+        // First-time user — show set PIN screen
+        document.getElementById('setPinEmail').textContent = email;
+        showState('stateSetPin');
+        document.getElementById('newPin').focus();
+        btn.disabled = false;
+        btn.textContent = 'Access My Dashboard';
+        return;
+      }
 
+      // Has PIN — show enter PIN screen
+      document.getElementById('enterPinEmail').textContent = email;
+      showState('stateEnterPin');
+      document.getElementById('loginPin').focus();
+      btn.disabled = false;
+      btn.textContent = 'Access My Dashboard';
+    } catch (err) {
+      console.error('PIN check error:', err);
+      document.getElementById('debugError').textContent = 'Error: ' + err.message;
+      showState('stateNotFound');
+      btn.disabled = false;
+      btn.textContent = 'Access My Dashboard';
+    }
+    return; // Stop here — the PIN screens handle the rest
+
+
+  }
+
+
+  // ── PIN Functions ──────────────────────────────────────────────────────────
+  async function submitSetPin() {
+    var pin1 = document.getElementById('newPin').value.trim();
+    var pin2 = document.getElementById('confirmPin').value.trim();
+    var errEl = document.getElementById('setPinError');
+    errEl.classList.add('hidden');
+
+    if (!pin1 || pin1.length < 4 || !/^\d+$/.test(pin1)) {
+      errEl.textContent = 'PIN must be 4-6 digits.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (pin1 !== pin2) {
+      errEl.textContent = 'PINs do not match.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    var btn = document.getElementById('setPinBtn');
+    btn.disabled = true;
+    btn.textContent = 'Setting PIN…';
+
+    try {
+      var res = await fetch('/api/member/set-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentEmail, pin: pin1 })
+      });
+      var data = await res.json();
+      if (data.success) {
+        // PIN set — now load the dashboard
+        await loadFullDashboard();
+      } else {
+        errEl.textContent = data.error || 'Failed to set PIN.';
+        errEl.classList.remove('hidden');
+      }
+    } catch (e) {
+      errEl.textContent = 'Error: ' + e.message;
+      errEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Set PIN & Continue';
+    }
+  }
+
+  async function submitVerifyPin() {
+    var pin = document.getElementById('loginPin').value.trim();
+    var errEl = document.getElementById('verifyPinError');
+    errEl.classList.add('hidden');
+
+    if (!pin) {
+      errEl.textContent = 'Enter your PIN.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    var btn = document.getElementById('verifyPinBtn');
+    btn.disabled = true;
+    btn.textContent = 'Verifying…';
+
+    try {
+      var res = await fetch('/api/member/verify-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentEmail, pin: pin })
+      });
+      var data = await res.json();
+      if (data.verified) {
+        await loadFullDashboard();
+      } else {
+        errEl.textContent = data.error || 'Incorrect PIN. Try again.';
+        errEl.classList.remove('hidden');
+        document.getElementById('loginPin').value = '';
+        document.getElementById('loginPin').focus();
+      }
+    } catch (e) {
+      errEl.textContent = 'Error: ' + e.message;
+      errEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Unlock Dashboard';
+    }
+  }
+
+  function resetPin() {
+    if (confirm('This will send a PIN reset to your email. Continue?')) {
+      alert('For now, contact valuetovictory@gmail.com to reset your PIN.');
+    }
+  }
+
+  async function loadFullDashboard() {
+    showState('stateLoading');
+    try {
+      var res = await fetch('/api/member?email=' + encodeURIComponent(currentEmail));
+      var data = await res.json();
       if (!data || data.found === false) {
-        document.getElementById('debugError').textContent = 'API returned found=false. Status: ' + res.status;
         showState('stateNotFound');
-        btn.disabled = false;
-        btn.textContent = 'Access My Dashboard';
         return;
       }
-
-      localStorage.setItem('vtv_member_email', email);
+      localStorage.setItem('vtv_member_email', currentEmail);
       memberData = data;
-
-      // Fetch teams and affiliate in parallel (errors won't block dashboard)
-      const contactId = data.contact?.id || data.id || '';
+      var contactId = data.contact?.id || data.id || '';
       try {
-        await Promise.all([
-          loadTeams(contactId),
-          loadAffiliate(email)
-        ]);
-      } catch(e) { console.warn('Teams/affiliate load non-fatal:', e); }
-
+        await Promise.all([loadTeams(contactId), loadAffiliate(currentEmail)]);
+      } catch(e) {}
       renderDashboard();
       showState('stateDashboard');
     } catch (err) {
-      console.error('Member fetch error:', err);
+      console.error(err);
       var errDiv = document.getElementById('debugError');
-      if (errDiv) errDiv.textContent = 'Error: ' + (err.message || JSON.stringify(err));
+      if (errDiv) errDiv.textContent = 'Error: ' + err.message;
       showState('stateNotFound');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Access My Dashboard';
     }
   }
 

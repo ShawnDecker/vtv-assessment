@@ -68,6 +68,10 @@ module.exports = async (req, res) => {
     )
   `;
 
+  // Member PIN for portal authentication
+  await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS pin_hash TEXT DEFAULT NULL`;
+  await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS pin_set_at TIMESTAMP DEFAULT NULL`;
+
   // Company CMA fields on teams table
   await sql`ALTER TABLE teams ADD COLUMN IF NOT EXISTS company_email TEXT DEFAULT ''`;
   await sql`ALTER TABLE teams ADD COLUMN IF NOT EXISTS company_name TEXT DEFAULT ''`;
