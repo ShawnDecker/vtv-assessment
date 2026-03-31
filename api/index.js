@@ -538,15 +538,72 @@ Don't guess. Run the system.
       if (rows.length === 0) return res.status(404).json({ error: 'Team not found' });
       const team = rows[0];
       const creator = await sql`SELECT * FROM contacts WHERE id = ${team.created_by} LIMIT 1`;
-      return res.json({ ...team, creatorName: creator.length > 0 ? `${creator[0].first_name} ${creator[0].last_name}` : 'Unknown' });
+      // Only return team name and mode — never expose creator identity to team members
+      return res.json({ id: team.id, name: team.name, mode: team.mode, inviteCode: team.invite_code, createdAt: team.created_at });
     }
 
     // GET /api/teams/:id/results
+    // CRITICAL: Individual identities are ALWAYS masked for organizations.
+    // Team admins NEVER see who filled out what. Only aggregate/anonymous data.
     if (req.method === 'GET' && url.match(/^\/teams\/\d+\/results$/)) {
       const teamId = parseInt(url.split('/')[2]);
-      const members = await sql`SELECT a.*, c.first_name, c.last_name, c.email FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE a.team_id = ${teamId} ORDER BY a.completed_at DESC`;
+      const members = await sql`SELECT a.* FROM assessments a WHERE a.team_id = ${teamId} ORDER BY a.completed_at DESC`;
       const ratings = await sql`SELECT * FROM peer_ratings WHERE team_id = ${teamId}`;
-      return res.json({ members: members.map(mapAssessment), ratings });
+      const team = await sql`SELECT * FROM teams WHERE id = ${teamId} LIMIT 1`;
+
+      // Anonymize: strip all identity, assign random participant labels
+      const anonymized = members.map((m, i) => {
+        const mapped = mapAssessment(m);
+        // Remove any identity fields
+        delete mapped.contactId;
+        delete mapped.email;
+        delete mapped.firstName;
+        delete mapped.lastName;
+        delete mapped.first_name;
+        delete mapped.last_name;
+        // Assign anonymous label
+        mapped.participantLabel = 'Participant ' + String.fromCharCode(65 + (i % 26));
+        mapped.participantIndex = i + 1;
+        return mapped;
+      });
+
+      // Anonymize peer ratings too
+      const anonRatings = ratings.map(r => {
+        const clean = { ...r };
+        delete clean.rater_contact_id;
+        delete clean.rated_contact_id;
+        clean.raterLabel = 'Anonymous';
+        return clean;
+      });
+
+      // Calculate aggregates
+      const count = anonymized.length;
+      const avg = (field) => count > 0 ? Math.round(anonymized.reduce((s, m) => s + (m[field] || 0), 0) / count * 10) / 10 : 0;
+      const aggregates = {
+        participantCount: count,
+        averageScores: {
+          time: avg('timeTotal'),
+          people: avg('peopleTotal'),
+          influence: avg('influenceTotal'),
+          numbers: avg('numbersTotal'),
+          knowledge: avg('knowledgeTotal'),
+          masterScore: avg('masterScore'),
+        },
+        weakestPillarDistribution: {},
+      };
+      // Count weakest pillar distribution
+      anonymized.forEach(m => {
+        const wp = m.weakestPillar || 'Unknown';
+        aggregates.weakestPillarDistribution[wp] = (aggregates.weakestPillarDistribution[wp] || 0) + 1;
+      });
+
+      return res.json({
+        team: team.length > 0 ? { id: team[0].id, name: team[0].name, mode: team[0].mode } : null,
+        aggregates,
+        anonymizedMembers: anonymized,
+        anonymizedRatings: anonRatings,
+        privacyNotice: 'Individual identities are protected. All data shown is anonymous. Names and emails are never disclosed to team administrators.',
+      });
     }
 
     // POST /api/peer-rating
