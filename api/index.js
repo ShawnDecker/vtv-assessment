@@ -415,8 +415,42 @@ module.exports = async (req, res) => {
         }
       }
 
+      // === AUTO-IMPORT: Domain-match this contact to any team with matching company_domain ===
+      // If someone with @acme.com takes an assessment, and a team has company_domain = 'acme.com',
+      // they auto-join that team with a member number. No invite link needed.
+      let autoJoinedTeam = null;
+      try {
+        const emailDomain = cleanEmail.split('@')[1];
+        if (emailDomain) {
+          const matchingTeams = await sql`
+            SELECT id, name, company_domain FROM teams
+            WHERE LOWER(company_domain) = ${emailDomain.toLowerCase()}
+            AND company_domain != ''
+          `;
+          for (const team of matchingTeams) {
+            // Check if already a member
+            const existing = await sql`SELECT id FROM team_members WHERE team_id = ${team.id} AND contact_id = ${contact.id}`;
+            if (existing.length === 0) {
+              const maxRow = await sql`SELECT COALESCE(MAX(member_number), 0) as max_num FROM team_members WHERE team_id = ${team.id}`;
+              const nextNum = (maxRow[0]?.max_num || 0) + 1;
+              await sql`INSERT INTO team_members (team_id, contact_id, member_number) VALUES (${team.id}, ${contact.id}, ${nextNum}) ON CONFLICT (team_id, contact_id) DO NOTHING`;
+              autoJoinedTeam = { teamId: team.id, teamName: team.name, memberNumber: nextNum };
+
+              // If this assessment wasn't already linked to a team, update it
+              if (!d.team_id) {
+                await sql`UPDATE assessments SET team_id = ${team.id} WHERE id = ${assessment.id}`;
+                assessment.team_id = team.id;
+              }
+            }
+          }
+        }
+      } catch (autoJoinErr) {
+        console.error('Auto-join by domain error (non-fatal):', autoJoinErr.message);
+      }
+
       // Map snake_case back to camelCase for frontend compatibility
       const mapped = mapAssessment(assessment);
+      if (autoJoinedTeam) mapped.autoJoinedTeam = autoJoinedTeam;
 
       // === AUTO-EMAIL: Send report email automatically after assessment submission ===
       let emailSent = false;
@@ -523,12 +557,52 @@ Don't guess. Run the system.
       return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name }, emailSent, emailError: !emailSent ? 'Your results are saved but the email delivery encountered an issue. You can view your report at the link below.' : null, depth: assessmentDepth, focusPillar: assessmentFocusPillar });
     }
 
-    // POST /api/teams
+    // POST /api/teams — Create team with optional company CMA fields for fast org integration
     if (req.method === 'POST' && url === '/teams') {
       const b = req.body || {};
       const code = Math.random().toString(36).substring(2, 10);
-      const rows = await sql`INSERT INTO teams (name, mode, created_by, invite_code, created_at) VALUES (${b.name}, ${b.mode}, ${b.contactId}, ${code}, ${new Date().toISOString()}) RETURNING *`;
-      return res.json(rows[0]);
+      const companyDomain = (b.companyDomain || b.company_domain || '').toLowerCase().replace('@', '').trim();
+      const companyEmail = (b.companyEmail || b.company_email || '').trim();
+      const companyName = (b.companyName || b.company_name || '').trim();
+      const adminContactName = (b.adminContactName || b.admin_contact_name || '').trim();
+      const billingEmail = (b.billingEmail || b.billing_email || '').trim();
+      const integrationWebhook = (b.integrationWebhook || b.integration_webhook || '').trim();
+      const reportFrequency = (b.reportFrequency || b.report_frequency || 'monthly').toLowerCase();
+      const autoReportEnabled = b.autoReportEnabled || b.auto_report_enabled || false;
+
+      const rows = await sql`
+        INSERT INTO teams (name, mode, created_by, invite_code, created_at,
+          company_email, company_name, company_domain, admin_contact_name,
+          billing_email, integration_webhook, report_frequency, auto_report_enabled)
+        VALUES (
+          ${b.name}, ${b.mode}, ${b.contactId}, ${code}, ${new Date().toISOString()},
+          ${companyEmail}, ${companyName}, ${companyDomain}, ${adminContactName},
+          ${billingEmail}, ${integrationWebhook}, ${reportFrequency}, ${autoReportEnabled}
+        ) RETURNING *
+      `;
+
+      // If company domain was provided, auto-import existing contacts with matching email domain
+      let autoImported = 0;
+      if (companyDomain && rows.length > 0) {
+        const teamId = rows[0].id;
+        try {
+          const matchingContacts = await sql`
+            SELECT DISTINCT c.id FROM contacts c
+            WHERE LOWER(c.email) LIKE ${'%@' + companyDomain}
+            AND c.id NOT IN (SELECT contact_id FROM team_members WHERE team_id = ${teamId})
+          `;
+          // Get current max member number
+          const maxRow = await sql`SELECT COALESCE(MAX(member_number), 0) as max_num FROM team_members WHERE team_id = ${teamId}`;
+          let nextNumber = (maxRow[0]?.max_num || 0) + 1;
+          for (const contact of matchingContacts) {
+            await sql`INSERT INTO team_members (team_id, contact_id, member_number) VALUES (${teamId}, ${contact.id}, ${nextNumber}) ON CONFLICT (team_id, contact_id) DO NOTHING`;
+            nextNumber++;
+            autoImported++;
+          }
+        } catch (e) { /* team_members table may not exist yet */ }
+      }
+
+      return res.json({ ...rows[0], autoImported, domainConfigured: !!companyDomain });
     }
 
     // GET /api/teams/invite/:code
@@ -544,66 +618,414 @@ Don't guess. Run the system.
 
     // GET /api/teams/:id/results
     // CRITICAL: Individual identities are ALWAYS masked for organizations.
-    // Team admins NEVER see who filled out what. Only aggregate/anonymous data.
+    // Team admins NEVER see who filled out what. Only member numbers.
     if (req.method === 'GET' && url.match(/^\/teams\/\d+\/results$/)) {
       const teamId = parseInt(url.split('/')[2]);
-      const members = await sql`SELECT a.* FROM assessments a WHERE a.team_id = ${teamId} ORDER BY a.completed_at DESC`;
-      const ratings = await sql`SELECT * FROM peer_ratings WHERE team_id = ${teamId}`;
       const team = await sql`SELECT * FROM teams WHERE id = ${teamId} LIMIT 1`;
+      if (team.length === 0) return res.status(404).json({ error: 'Team not found' });
 
-      // Anonymize: strip all identity, assign random participant labels
-      const anonymized = members.map((m, i) => {
+      // Get assessments and join with team_members for persistent numbering
+      let memberData = [];
+      try {
+        memberData = await sql`
+          SELECT a.*, tm.member_number, tm.current_focus, tm.end_year_goals, tm.department, tm.role_title, tm.custom_code, tm.notes
+          FROM assessments a
+          LEFT JOIN team_members tm ON tm.contact_id = a.contact_id AND tm.team_id = a.team_id
+          WHERE a.team_id = ${teamId}
+          ORDER BY tm.member_number ASC, a.completed_at DESC
+        `;
+      } catch (e) {
+        // team_members table may not exist yet — fall back to basic query
+        memberData = await sql`SELECT a.* FROM assessments a WHERE a.team_id = ${teamId} ORDER BY a.completed_at DESC`;
+      }
+
+      const ratings = await sql`SELECT * FROM peer_ratings WHERE team_id = ${teamId}`;
+
+      // Auto-assign member numbers for anyone who doesn't have one yet
+      let maxNumber = 0;
+      memberData.forEach(m => { if (m.member_number > maxNumber) maxNumber = m.member_number; });
+      const seenContacts = new Set();
+      for (const m of memberData) {
+        if (!m.member_number && m.contact_id && !seenContacts.has(m.contact_id)) {
+          maxNumber++;
+          try {
+            await sql`INSERT INTO team_members (team_id, contact_id, member_number) VALUES (${teamId}, ${m.contact_id}, ${maxNumber}) ON CONFLICT (team_id, contact_id) DO NOTHING`;
+            m.member_number = maxNumber;
+          } catch (e) { m.member_number = maxNumber; }
+        }
+        seenContacts.add(m.contact_id);
+      }
+
+      // Build anonymized response — ONLY member numbers, scores, goals. NEVER names/emails.
+      const anonymized = memberData.map(m => {
         const mapped = mapAssessment(m);
-        // Remove any identity fields
-        delete mapped.contactId;
-        delete mapped.email;
-        delete mapped.firstName;
-        delete mapped.lastName;
-        delete mapped.first_name;
-        delete mapped.last_name;
-        // Assign anonymous label
-        mapped.participantLabel = 'Participant ' + String.fromCharCode(65 + (i % 26));
-        mapped.participantIndex = i + 1;
+        // Strip ALL identity
+        delete mapped.contactId; delete mapped.email;
+        delete mapped.firstName; delete mapped.lastName;
+        delete mapped.first_name; delete mapped.last_name;
+        delete mapped.contact_id;
+        // Add member number and org fields
+        mapped.memberNumber = m.member_number || 0;
+        mapped.memberLabel = 'Member #' + (m.member_number || '?');
+        mapped.currentFocus = m.current_focus || '';
+        mapped.endYearGoals = m.end_year_goals || '';
+        mapped.department = m.department || '';
+        mapped.roleTitle = m.role_title || '';
+        mapped.customCode = m.custom_code || '';
+        mapped.adminNotes = m.notes || '';
         return mapped;
       });
 
-      // Anonymize peer ratings too
+      // Anonymize peer ratings
       const anonRatings = ratings.map(r => {
         const clean = { ...r };
-        delete clean.rater_contact_id;
-        delete clean.rated_contact_id;
+        delete clean.rater_contact_id; delete clean.rated_contact_id;
         clean.raterLabel = 'Anonymous';
         return clean;
       });
 
       // Calculate aggregates
-      const count = anonymized.length;
-      const avg = (field) => count > 0 ? Math.round(anonymized.reduce((s, m) => s + (m[field] || 0), 0) / count * 10) / 10 : 0;
+      const uniqueMembers = [...new Set(memberData.map(m => m.contact_id))];
+      const latestPerMember = uniqueMembers.map(cid => memberData.find(m => m.contact_id === cid)).filter(Boolean);
+      const count = latestPerMember.length;
+      const avg = (field) => count > 0 ? Math.round(latestPerMember.reduce((s, m) => s + (m[field] || 0), 0) / count * 10) / 10 : 0;
       const aggregates = {
         participantCount: count,
         averageScores: {
-          time: avg('timeTotal'),
-          people: avg('peopleTotal'),
-          influence: avg('influenceTotal'),
-          numbers: avg('numbersTotal'),
-          knowledge: avg('knowledgeTotal'),
-          masterScore: avg('masterScore'),
+          time: avg('time_total'), people: avg('people_total'),
+          influence: avg('influence_total'), numbers: avg('numbers_total'),
+          knowledge: avg('knowledge_total'), masterScore: avg('master_score'),
         },
         weakestPillarDistribution: {},
       };
-      // Count weakest pillar distribution
-      anonymized.forEach(m => {
-        const wp = m.weakestPillar || 'Unknown';
+      latestPerMember.forEach(m => {
+        const wp = m.weakest_pillar || 'Unknown';
         aggregates.weakestPillarDistribution[wp] = (aggregates.weakestPillarDistribution[wp] || 0) + 1;
       });
 
       return res.json({
-        team: team.length > 0 ? { id: team[0].id, name: team[0].name, mode: team[0].mode } : null,
+        team: { id: team[0].id, name: team[0].name, mode: team[0].mode },
         aggregates,
-        anonymizedMembers: anonymized,
-        anonymizedRatings: anonRatings,
-        privacyNotice: 'Individual identities are protected. All data shown is anonymous. Names and emails are never disclosed to team administrators.',
+        members: anonymized,
+        ratings: anonRatings,
+        privacyNotice: 'Individual identities are protected. Members are identified by number only. Names and emails are never disclosed to team administrators.',
       });
+    }
+
+    // POST /api/teams/:id/member-goals — Update goals/focus for a member by number
+    // Organization admins use this to set what each numbered member is working on
+    if (req.method === 'POST' && url.match(/^\/teams\/\d+\/member-goals$/)) {
+      const teamId = parseInt(url.split('/')[2]);
+      const b = req.body || {};
+      const memberNumber = b.memberNumber;
+      if (!memberNumber) return res.status(400).json({ error: 'memberNumber is required' });
+
+      try {
+        const result = await sql`
+          UPDATE team_members SET
+            current_focus = COALESCE(${b.currentFocus || null}, current_focus),
+            end_year_goals = COALESCE(${b.endYearGoals || null}, end_year_goals),
+            department = COALESCE(${b.department || null}, department),
+            role_title = COALESCE(${b.roleTitle || null}, role_title),
+            custom_code = COALESCE(${b.customCode || null}, custom_code),
+            notes = COALESCE(${b.notes || null}, notes),
+            updated_at = NOW()
+          WHERE team_id = ${teamId} AND member_number = ${memberNumber}
+          RETURNING member_number, current_focus, end_year_goals, department, role_title, custom_code, notes
+        `;
+        if (result.length === 0) return res.status(404).json({ error: 'Member not found in this team' });
+        return res.json({ success: true, member: result[0] });
+      } catch (e) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
+    // POST /api/teams/:id/settings — Update company CMA settings for an existing team
+    if (req.method === 'POST' && url.match(/^\/teams\/\d+\/settings$/)) {
+      const teamId = parseInt(url.split('/')[2]);
+      const b = req.body || {};
+      try {
+        const companyDomain = b.companyDomain !== undefined ? (b.companyDomain || '').toLowerCase().replace('@', '').trim() : null;
+        const result = await sql`
+          UPDATE teams SET
+            company_email = COALESCE(${b.companyEmail || null}, company_email),
+            company_name = COALESCE(${b.companyName || null}, company_name),
+            company_domain = COALESCE(${companyDomain}, company_domain),
+            admin_contact_name = COALESCE(${b.adminContactName || null}, admin_contact_name),
+            billing_email = COALESCE(${b.billingEmail || null}, billing_email),
+            integration_webhook = COALESCE(${b.integrationWebhook || null}, integration_webhook),
+            report_frequency = COALESCE(${b.reportFrequency || null}, report_frequency),
+            auto_report_enabled = COALESCE(${b.autoReportEnabled !== undefined ? b.autoReportEnabled : null}, auto_report_enabled)
+          WHERE id = ${teamId}
+          RETURNING id, company_email, company_name, company_domain, admin_contact_name, billing_email, integration_webhook, report_frequency, auto_report_enabled
+        `;
+        if (result.length === 0) return res.status(404).json({ error: 'Team not found' });
+
+        // If domain was just set/changed, auto-import matching contacts
+        let autoImported = 0;
+        const activeDomain = result[0].company_domain;
+        if (activeDomain) {
+          const matchingContacts = await sql`
+            SELECT DISTINCT c.id FROM contacts c
+            WHERE LOWER(c.email) LIKE ${'%@' + activeDomain}
+            AND c.id NOT IN (SELECT contact_id FROM team_members WHERE team_id = ${teamId})
+          `;
+          const maxRow = await sql`SELECT COALESCE(MAX(member_number), 0) as max_num FROM team_members WHERE team_id = ${teamId}`;
+          let nextNumber = (maxRow[0]?.max_num || 0) + 1;
+          for (const contact of matchingContacts) {
+            await sql`INSERT INTO team_members (team_id, contact_id, member_number) VALUES (${teamId}, ${contact.id}, ${nextNumber}) ON CONFLICT (team_id, contact_id) DO NOTHING`;
+            nextNumber++;
+            autoImported++;
+          }
+        }
+
+        return res.json({ success: true, settings: result[0], autoImported });
+      } catch (e) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
+    // POST /api/teams/:id/import — Bulk import members (CSV-style: email, department, role, goals)
+    // Company admin sends a list of employees. They get member numbers but identities stay masked in reports.
+    if (req.method === 'POST' && url.match(/^\/teams\/\d+\/import$/)) {
+      const teamId = parseInt(url.split('/')[2]);
+      const b = req.body || {};
+      const members = b.members || []; // Array of { email, department?, roleTitle?, goals?, customCode? }
+
+      if (!Array.isArray(members) || members.length === 0) {
+        return res.status(400).json({ error: 'members array is required. Each entry: { email, department?, roleTitle?, goals?, customCode? }' });
+      }
+
+      try {
+        const team = await sql`SELECT * FROM teams WHERE id = ${teamId} LIMIT 1`;
+        if (team.length === 0) return res.status(404).json({ error: 'Team not found' });
+
+        // Get current max member number
+        const maxRow = await sql`SELECT COALESCE(MAX(member_number), 0) as max_num FROM team_members WHERE team_id = ${teamId}`;
+        let nextNumber = (maxRow[0]?.max_num || 0) + 1;
+
+        const imported = [];
+        const skipped = [];
+        const preRegistered = []; // Emails that already have contacts in system
+
+        for (const m of members) {
+          const email = (m.email || '').toLowerCase().trim();
+          if (!email) { skipped.push({ reason: 'missing email', entry: m }); continue; }
+
+          // Check if this person already has a contact record
+          const existing = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+
+          if (existing.length > 0) {
+            // Contact exists — create team_member link with their goals/dept
+            const contactId = existing[0].id;
+            try {
+              await sql`
+                INSERT INTO team_members (team_id, contact_id, member_number, department, role_title, end_year_goals, custom_code)
+                VALUES (${teamId}, ${contactId}, ${nextNumber}, ${m.department || ''}, ${m.roleTitle || ''}, ${m.goals || ''}, ${m.customCode || ''})
+                ON CONFLICT (team_id, contact_id) DO UPDATE SET
+                  department = COALESCE(NULLIF(${m.department || ''}, ''), team_members.department),
+                  role_title = COALESCE(NULLIF(${m.roleTitle || ''}, ''), team_members.role_title),
+                  end_year_goals = COALESCE(NULLIF(${m.goals || ''}, ''), team_members.end_year_goals),
+                  custom_code = COALESCE(NULLIF(${m.customCode || ''}, ''), team_members.custom_code),
+                  updated_at = NOW()
+              `;
+              preRegistered.push({ memberNumber: nextNumber, email: email.replace(/^(.{2}).*(@.*)$/, '$1***$2'), status: 'linked' });
+              nextNumber++;
+            } catch (e) {
+              skipped.push({ reason: 'already in team', email: email.replace(/^(.{2}).*(@.*)$/, '$1***$2') });
+            }
+          } else {
+            // Contact doesn't exist yet — create a placeholder and pre-assign member number
+            // When they actually take the assessment, domain-matching or invite link will connect them
+            const placeholder = await sql`
+              INSERT INTO contacts (first_name, last_name, email, created_at)
+              VALUES ('Pre-registered', 'Member', ${email}, ${new Date().toISOString()})
+              RETURNING id
+            `;
+            await sql`
+              INSERT INTO team_members (team_id, contact_id, member_number, department, role_title, end_year_goals, custom_code)
+              VALUES (${teamId}, ${placeholder[0].id}, ${nextNumber}, ${m.department || ''}, ${m.roleTitle || ''}, ${m.goals || ''}, ${m.customCode || ''})
+              ON CONFLICT (team_id, contact_id) DO NOTHING
+            `;
+            imported.push({ memberNumber: nextNumber, email: email.replace(/^(.{2}).*(@.*)$/, '$1***$2'), status: 'pre-registered' });
+            nextNumber++;
+          }
+        }
+
+        return res.json({
+          success: true,
+          teamId,
+          totalProcessed: members.length,
+          imported: imported.length,
+          preRegistered: preRegistered.length,
+          skipped: skipped.length,
+          details: { imported, preRegistered, skipped },
+          note: 'Pre-registered members will be fully linked when they complete their first assessment. Identities remain anonymous in all team reports.'
+        });
+      } catch (e) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
+    // GET /api/teams/:id/report — Generate anonymized aggregate report data for the CMA email
+    if (req.method === 'GET' && url.match(/^\/teams\/\d+\/report$/)) {
+      const teamId = parseInt(url.split('/')[2]);
+      try {
+        const team = await sql`SELECT * FROM teams WHERE id = ${teamId} LIMIT 1`;
+        if (team.length === 0) return res.status(404).json({ error: 'Team not found' });
+
+        // Get all assessments with member data
+        let memberData = await sql`
+          SELECT a.*, tm.member_number, tm.department, tm.role_title, tm.end_year_goals, tm.custom_code
+          FROM assessments a
+          LEFT JOIN team_members tm ON tm.contact_id = a.contact_id AND tm.team_id = a.team_id
+          WHERE a.team_id = ${teamId}
+          ORDER BY tm.member_number ASC, a.completed_at DESC
+        `;
+
+        // Get unique members (latest assessment per person)
+        const seen = new Set();
+        const latestPerMember = [];
+        for (const m of memberData) {
+          if (!seen.has(m.contact_id)) {
+            seen.add(m.contact_id);
+            latestPerMember.push(m);
+          }
+        }
+
+        const count = latestPerMember.length;
+        const avg = (field) => count > 0 ? Math.round(latestPerMember.reduce((s, m) => s + (m[field] || 0), 0) / count * 10) / 10 : 0;
+
+        // Department breakdown
+        const deptScores = {};
+        latestPerMember.forEach(m => {
+          const dept = m.department || 'Unassigned';
+          if (!deptScores[dept]) deptScores[dept] = { count: 0, totalMaster: 0, pillarTotals: { time: 0, people: 0, influence: 0, numbers: 0, knowledge: 0 } };
+          deptScores[dept].count++;
+          deptScores[dept].totalMaster += m.master_score || 0;
+          deptScores[dept].pillarTotals.time += m.time_total || 0;
+          deptScores[dept].pillarTotals.people += m.people_total || 0;
+          deptScores[dept].pillarTotals.influence += m.influence_total || 0;
+          deptScores[dept].pillarTotals.numbers += m.numbers_total || 0;
+          deptScores[dept].pillarTotals.knowledge += m.knowledge_total || 0;
+        });
+        Object.keys(deptScores).forEach(dept => {
+          const d = deptScores[dept];
+          d.averageMasterScore = Math.round(d.totalMaster / d.count * 10) / 10;
+          d.averagePillars = {
+            time: Math.round(d.pillarTotals.time / d.count * 10) / 10,
+            people: Math.round(d.pillarTotals.people / d.count * 10) / 10,
+            influence: Math.round(d.pillarTotals.influence / d.count * 10) / 10,
+            numbers: Math.round(d.pillarTotals.numbers / d.count * 10) / 10,
+            knowledge: Math.round(d.pillarTotals.knowledge / d.count * 10) / 10,
+          };
+          delete d.totalMaster; delete d.pillarTotals;
+        });
+
+        // Score distribution
+        const distribution = { crisis: 0, survival: 0, growth: 0, momentum: 0, mastery: 0 };
+        latestPerMember.forEach(m => {
+          const range = (m.score_range || '').toLowerCase();
+          if (distribution[range] !== undefined) distribution[range]++;
+        });
+
+        // Weakest pillar heat map
+        const weakestPillars = {};
+        latestPerMember.forEach(m => {
+          const wp = m.weakest_pillar || 'Unknown';
+          weakestPillars[wp] = (weakestPillars[wp] || 0) + 1;
+        });
+
+        // Completion rate
+        const totalMembers = await sql`SELECT COUNT(*) as total FROM team_members WHERE team_id = ${teamId}`;
+        const totalRegistered = totalMembers[0]?.total || count;
+
+        const report = {
+          generatedAt: new Date().toISOString(),
+          team: {
+            id: team[0].id,
+            name: team[0].name,
+            companyName: team[0].company_name || team[0].name,
+          },
+          summary: {
+            totalRegistered: parseInt(totalRegistered),
+            totalCompleted: count,
+            completionRate: totalRegistered > 0 ? Math.round(count / totalRegistered * 100) : 0,
+            averageMasterScore: avg('master_score'),
+            averagePillars: {
+              time: avg('time_total'),
+              people: avg('people_total'),
+              influence: avg('influence_total'),
+              numbers: avg('numbers_total'),
+              knowledge: avg('knowledge_total'),
+            },
+          },
+          scoreDistribution: distribution,
+          weakestPillarHeatMap: weakestPillars,
+          departmentBreakdown: deptScores,
+          recommendations: generateTeamRecommendations(avg, weakestPillars, distribution),
+          privacyNotice: 'This report contains only aggregate and anonymized data. Individual identities are never disclosed.',
+        };
+
+        return res.json(report);
+      } catch (e) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
+    // POST /api/teams/:id/send-report — Send anonymized aggregate report to company CMA email
+    if (req.method === 'POST' && url.match(/^\/teams\/\d+\/send-report$/)) {
+      const teamId = parseInt(url.split('/')[2]);
+      try {
+        const team = await sql`SELECT * FROM teams WHERE id = ${teamId} LIMIT 1`;
+        if (team.length === 0) return res.status(404).json({ error: 'Team not found' });
+        const cmaEmail = team[0].company_email;
+        if (!cmaEmail) return res.status(400).json({ error: 'No company CMA email configured for this team. Update team settings first.' });
+
+        // Fetch report data (reuse report logic)
+        const reportRes = await fetch(`${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}/api/teams/${teamId}/report`);
+        let reportData;
+        try {
+          reportData = await reportRes.json();
+        } catch (e) {
+          // If internal fetch fails, build minimal report
+          reportData = { summary: { totalCompleted: 0, averageMasterScore: 0 }, generatedAt: new Date().toISOString() };
+        }
+
+        // Build email HTML
+        const teamName = team[0].company_name || team[0].name;
+        const emailHtml = buildTeamReportEmail(teamName, reportData);
+
+        // Send via nodemailer
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+        });
+
+        await transporter.sendMail({
+          from: `"Value to Victory" <${process.env.GMAIL_USER}>`,
+          to: cmaEmail,
+          cc: team[0].billing_email || undefined,
+          subject: `${teamName} — P.I.N.K. Value Engine Team Report`,
+          html: emailHtml,
+        });
+
+        // Fire webhook if configured
+        if (team[0].integration_webhook) {
+          try {
+            await fetch(team[0].integration_webhook, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ event: 'team_report', teamId, teamName, report: reportData }),
+            });
+          } catch (e) { /* webhook delivery is best-effort */ }
+        }
+
+        return res.json({ success: true, sentTo: cmaEmail, generatedAt: reportData.generatedAt });
+      } catch (e) {
+        return res.status(500).json({ error: e.message });
+      }
     }
 
     // POST /api/peer-rating
@@ -2549,6 +2971,121 @@ This link expires in 24 hours.
     return res.status(500).json({ error: err.message });
   }
 };
+
+// Generate team-level recommendations based on aggregate scores
+function generateTeamRecommendations(avg, weakestPillars, distribution) {
+  const recs = [];
+  const pillars = [
+    { key: 'time_total', name: 'Time', label: 'Time Management' },
+    { key: 'people_total', name: 'People', label: 'Relationship Investment' },
+    { key: 'influence_total', name: 'Influence', label: 'Leadership & Influence' },
+    { key: 'numbers_total', name: 'Numbers', label: 'Financial Awareness' },
+    { key: 'knowledge_total', name: 'Knowledge', label: 'Knowledge & Growth' },
+  ];
+
+  // Find weakest pillar org-wide
+  let weakest = pillars[0];
+  for (const p of pillars) {
+    if (avg(p.key) < avg(weakest.key)) weakest = p;
+  }
+  recs.push(`Organization-wide focus area: ${weakest.label}. Consider targeted workshops or coaching around ${weakest.name} skills.`);
+
+  // Check crisis/survival concentration
+  const atRisk = (distribution.crisis || 0) + (distribution.survival || 0);
+  const total = Object.values(distribution).reduce((s, v) => s + v, 0);
+  if (total > 0 && atRisk / total > 0.3) {
+    recs.push(`${Math.round(atRisk / total * 100)}% of your team is in Crisis or Survival range. Immediate intervention recommended.`);
+  }
+
+  // Most common weakest pillar across individuals
+  const topWeak = Object.entries(weakestPillars).sort((a, b) => b[1] - a[1])[0];
+  if (topWeak) {
+    recs.push(`Most common individual gap: ${topWeak[0]} (${topWeak[1]} members). Suggest group development in this area.`);
+  }
+
+  recs.push('Encourage all team members to retake the assessment regularly. Growth is measured, not guessed.');
+  return recs;
+}
+
+// Build HTML email for team report sent to CMA
+function buildTeamReportEmail(teamName, report) {
+  const s = report.summary || {};
+  const dist = report.scoreDistribution || {};
+  const depts = report.departmentBreakdown || {};
+  const recs = report.recommendations || [];
+
+  let deptRows = '';
+  Object.entries(depts).forEach(([dept, data]) => {
+    deptRows += `<tr><td style="padding:8px;border-bottom:1px solid #333;color:#fff">${dept}</td><td style="padding:8px;border-bottom:1px solid #333;color:#D4A847;text-align:center">${data.count}</td><td style="padding:8px;border-bottom:1px solid #333;color:#D4A847;text-align:center">${data.averageMasterScore}</td></tr>`;
+  });
+
+  let recsHtml = recs.map(r => `<li style="margin-bottom:8px;color:#d4d4d8">${r}</li>`).join('');
+
+  return `
+    <div style="font-family:Segoe UI,sans-serif;background:#0a0a0a;padding:40px 20px;max-width:640px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:32px">
+        <h1 style="color:#D4A847;font-size:28px;margin:0">P.I.N.K. Value Engine</h1>
+        <p style="color:#a1a1aa;font-size:14px;margin:4px 0">Team Assessment Report</p>
+      </div>
+
+      <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:24px;margin-bottom:24px">
+        <h2 style="color:#fff;font-size:20px;margin:0 0 16px">${teamName}</h2>
+        <p style="color:#a1a1aa;margin:0">Generated: ${new Date(report.generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      </div>
+
+      <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:24px;margin-bottom:24px">
+        <h3 style="color:#D4A847;margin:0 0 16px">Summary</h3>
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:6px 0;color:#a1a1aa">Registered Members</td><td style="color:#fff;text-align:right">${s.totalRegistered || 0}</td></tr>
+          <tr><td style="padding:6px 0;color:#a1a1aa">Completed Assessments</td><td style="color:#fff;text-align:right">${s.totalCompleted || 0}</td></tr>
+          <tr><td style="padding:6px 0;color:#a1a1aa">Completion Rate</td><td style="color:#fff;text-align:right">${s.completionRate || 0}%</td></tr>
+          <tr><td style="padding:6px 0;color:#a1a1aa">Average Master Score</td><td style="color:#D4A847;text-align:right;font-weight:bold">${s.averageMasterScore || 0}</td></tr>
+        </table>
+      </div>
+
+      <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:24px;margin-bottom:24px">
+        <h3 style="color:#D4A847;margin:0 0 16px">Pillar Averages</h3>
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:6px 0;color:#a1a1aa">Time (P)</td><td style="color:#fff;text-align:right">${s.averagePillars?.time || 0}/50</td></tr>
+          <tr><td style="padding:6px 0;color:#a1a1aa">People (I)</td><td style="color:#fff;text-align:right">${s.averagePillars?.people || 0}/50</td></tr>
+          <tr><td style="padding:6px 0;color:#a1a1aa">Influence (N)</td><td style="color:#fff;text-align:right">${s.averagePillars?.influence || 0}/50</td></tr>
+          <tr><td style="padding:6px 0;color:#a1a1aa">Numbers (K)</td><td style="color:#fff;text-align:right">${s.averagePillars?.numbers || 0}/50</td></tr>
+          <tr><td style="padding:6px 0;color:#a1a1aa">Knowledge</td><td style="color:#fff;text-align:right">${s.averagePillars?.knowledge || 0}/50</td></tr>
+        </table>
+      </div>
+
+      <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:24px;margin-bottom:24px">
+        <h3 style="color:#D4A847;margin:0 0 16px">Score Distribution</h3>
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:6px 0;color:#ef4444">Crisis</td><td style="color:#fff;text-align:right">${dist.crisis || 0}</td></tr>
+          <tr><td style="padding:6px 0;color:#f97316">Survival</td><td style="color:#fff;text-align:right">${dist.survival || 0}</td></tr>
+          <tr><td style="padding:6px 0;color:#eab308">Growth</td><td style="color:#fff;text-align:right">${dist.growth || 0}</td></tr>
+          <tr><td style="padding:6px 0;color:#22c55e">Momentum</td><td style="color:#fff;text-align:right">${dist.momentum || 0}</td></tr>
+          <tr><td style="padding:6px 0;color:#D4A847">Mastery</td><td style="color:#fff;text-align:right">${dist.mastery || 0}</td></tr>
+        </table>
+      </div>
+
+      ${deptRows ? `
+      <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:24px;margin-bottom:24px">
+        <h3 style="color:#D4A847;margin:0 0 16px">Department Breakdown</h3>
+        <table style="width:100%;border-collapse:collapse">
+          <tr><th style="text-align:left;padding:8px;color:#a1a1aa;border-bottom:1px solid #444">Department</th><th style="text-align:center;padding:8px;color:#a1a1aa;border-bottom:1px solid #444">Members</th><th style="text-align:center;padding:8px;color:#a1a1aa;border-bottom:1px solid #444">Avg Score</th></tr>
+          ${deptRows}
+        </table>
+      </div>` : ''}
+
+      <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:24px;margin-bottom:24px">
+        <h3 style="color:#D4A847;margin:0 0 16px">Recommendations</h3>
+        <ul style="padding-left:20px;margin:0">${recsHtml}</ul>
+      </div>
+
+      <div style="text-align:center;padding:24px;color:#71717a;font-size:12px">
+        <p>This report contains only aggregate data. Individual identities are never disclosed.</p>
+        <p style="color:#D4A847">Value to Victory • The P.I.N.K. Value Engine</p>
+      </div>
+    </div>
+  `;
+}
 
 // Map snake_case DB columns to camelCase for frontend
 function mapAssessment(a) {
