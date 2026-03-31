@@ -7,22 +7,6 @@ module.exports = async (req, res) => {
 
   const sql = neon(process.env.DATABASE_URL);
 
-  // One-time cleanup via ?cleanup=deckerindustries
-  const urlObj = new URL(req.url, `https://${req.headers.host}`);
-  if (urlObj.searchParams.get('cleanup') === 'deckerindustries') {
-    try {
-      await sql`DELETE FROM team_members WHERE team_id = 11`;
-      await sql`DELETE FROM feedback WHERE contact_id IN (43,44,45,46,47,48)`;
-      await sql`DELETE FROM answer_history WHERE contact_id IN (43,44,45,46,47,48)`;
-      await sql`DELETE FROM assessments WHERE contact_id IN (43,44,45,46,47,48)`;
-      await sql`DELETE FROM teams WHERE id = 11`;
-      await sql`DELETE FROM contacts WHERE id IN (43,44,45,46,47,48)`;
-      return res.json({ success: true, cleaned: 'team 11, contacts 43-48, team_members, assessments' });
-    } catch (e) {
-      return res.status(500).json({ error: e.message });
-    }
-  }
-
   try {
   
   await sql`
