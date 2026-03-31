@@ -1037,6 +1037,16 @@ Don't guess. Run the system.
       return res.json(rows[0]);
     }
 
+    // ========== ADMIN ENDPOINTS — REQUIRE API KEY ==========
+    // All /admin/* routes require x-api-key header matching ADMIN_API_KEY env var
+    if (url.startsWith('/admin')) {
+      const apiKey = req.headers['x-api-key'] || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!validKey || apiKey !== validKey) {
+        return res.status(401).json({ error: 'Unauthorized. Valid API key required.' });
+      }
+    }
+
     // GET /api/admin/contacts
     if (req.method === 'GET' && url === '/admin/contacts') {
       const allContacts = await sql`SELECT * FROM contacts ORDER BY created_at DESC`;
