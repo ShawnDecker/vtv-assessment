@@ -303,30 +303,31 @@
               email: profileData.email,
               firstName: '',
               lastName: '',
-              // Minimal assessment to create contact — we just need the contact ID
-              timeAwareness: 0, timeAllocation: 0, timeProtection: 0, timeLeverage: 0,
-              fiveHourLeak: 0, valuePerHour: 0, timeInvestment: 0, downtimeQuality: 0,
-              foresight: 0, timeReallocation: 0,
-              trustInvestment: 0, boundaryQuality: 0, networkDepth: 0, relationalRoi: 0,
-              peopleAudit: 0, allianceBuilding: 0, loveBankDeposits: 0, communicationClarity: 0,
-              restraintPractice: 0, valueReplacement: 0,
-              leadershipLevel: 0, integrityAlignment: 0, professionalCredibility: 0,
-              empatheticListening: 0, gravitationalCenter: 0, microHonesties: 0,
-              wordManagement: 0, personalResponsibility: 0, adaptiveInfluence: 0,
-              influenceMultiplier: 0,
-              financialAwareness: 0, goalSpecificity: 0, investmentLogic: 0,
-              measurementHabit: 0, costVsValue: 0, numberOneClarity: 0,
-              smallImprovements: 0, negativeMath: 0, incomeMultiplier: 0,
-              negotiationSkill: 0,
-              learningHours: 0, applicationRate: 0, biasAwareness: 0,
-              highestBestUse: 0, supplyAndDemand: 0, substitutionRisk: 0,
-              doubleJeopardy: 0, knowledgeCompounding: 0, weightedAnalysis: 0,
-              perceptionVsPerspective: 0,
+              // Minimal assessment to create contact — use 3s to avoid zero-score artifacts
+              timeAwareness: 3, timeAllocation: 3, timeProtection: 3, timeLeverage: 3,
+              fiveHourLeak: 3, valuePerHour: 3, timeInvestment: 3, downtimeQuality: 3,
+              foresight: 3, timeReallocation: 3,
+              trustInvestment: 3, boundaryQuality: 3, networkDepth: 3, relationalRoi: 3,
+              peopleAudit: 3, allianceBuilding: 3, loveBankDeposits: 3, communicationClarity: 3,
+              restraintPractice: 3, valueReplacement: 3,
+              leadershipLevel: 3, integrityAlignment: 3, professionalCredibility: 3,
+              empatheticListening: 3, gravitationalCenter: 3, microHonesties: 3,
+              wordManagement: 3, personalResponsibility: 3, adaptiveInfluence: 3,
+              influenceMultiplier: 3,
+              financialAwareness: 3, goalSpecificity: 3, investmentLogic: 3,
+              measurementHabit: 3, costVsValue: 3, numberOneClarity: 3,
+              smallImprovements: 3, negativeMath: 3, incomeMultiplier: 3,
+              negotiationSkill: 3,
+              learningHours: 3, applicationRate: 3, biasAwareness: 3,
+              highestBestUse: 3, supplyAndDemand: 3, substitutionRisk: 3,
+              doubleJeopardy: 3, knowledgeCompounding: 3, weightedAnalysis: 3,
+              perceptionVsPerspective: 3,
               timeMultiplier: 1
             })
           });
           var contactData = await contactResp.json();
-          profileData.contactId = contactData.contactId;
+          // API returns { contact: { id: N } } not { contactId: N }
+          profileData.contactId = (contactData.contact && contactData.contact.id) || contactData.contactId || contactData.id;
         }
 
         if (!profileData.contactId) {
