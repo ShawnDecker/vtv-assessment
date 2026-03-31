@@ -2,7 +2,11 @@
 const { neon } = require('@neondatabase/serverless');
 
 module.exports = async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   const sql = neon(process.env.DATABASE_URL);
+  try {
   
   await sql`
     CREATE TABLE IF NOT EXISTS contacts (
@@ -107,4 +111,8 @@ module.exports = async (req, res) => {
   }
 
   res.json({ success: true, message: "Database tables created + team members migration complete", backfilledMembers: backfilled });
+  } catch (err) {
+    console.error('Setup DB error:', err);
+    return res.status(500).json({ error: err.message, stack: err.stack });
+  }
 };
