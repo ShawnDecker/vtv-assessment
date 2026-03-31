@@ -41,14 +41,14 @@ const CROSS_PILLAR_IMPACT_MATRIX = {
   },
   "People→Numbers": {
     from: "People", to: "Numbers",
-    headline: "Bad relationships are expensive.",
-    explanation: "Every unresolved conflict, misaligned partnership, or toxic relationship has a financial cost — legal fees, lost opportunities, stress-driven spending, bad joint decisions. Your Numbers pillar is quietly bleeding from People.",
+    headline: "Misaligned relationships have a price tag.",
+    explanation: "This isn't about bad relationships — it's about unstructured ones. When your network isn't strategically aligned with your financial goals, you miss partnerships, leave negotiation leverage on the table, and carry relational overhead that doesn't compound. Structuring your People pillar protects your Numbers.",
     subCategoryLinks: [{ from: "Boundary Quality", to: "Negative Math" }, { from: "Alliance Building", to: "Negotiation Skill" }]
   },
   "People→Knowledge": {
     from: "People", to: "Knowledge",
     headline: "Your circle determines your ceiling.",
-    explanation: "If your Network Depth is shallow and your Mentorship Access is low, you're learning from the internet instead of from people who've done it. Knowledge without relationship is just information.",
+    explanation: "This isn't about whether you can build relationships — it's about whether your current network is structured to accelerate your knowledge growth. When your inner circle isn't aligned with where you're going, you end up learning alone instead of learning from people who've already been there.",
     subCategoryLinks: [{ from: "Network Depth", to: "Knowledge Compounding" }, { from: "Alliance Building", to: "Highest & Best Use" }]
   },
   "Influence→Time": {
@@ -235,14 +235,23 @@ function generatePrescription(a) {
   const weakestSubs = Object.entries(weakest.subs).sort(([,a],[,b]) => a - b);
   const prescriptions = {
     Time: { diagnosis: "Your Time pillar is your biggest constraint. You're likely losing 5+ hours per week to low-value activities without realizing it.", immediate: "Run the Time Audit (Tool #2). Track every hour for 3 days. Find your Five-Hour Leak.", tool: "Time Reallocation Planner (Tool #9) — Sort your activities by Covey Quadrant. Schedule Q2 priorities first.", thirtyDay: "Eliminate or reduce 3 specific Q3/Q4 activities. Protect your peak hours. Calculate your Value Per Hour." },
-    People: { diagnosis: "Your People pillar is dragging your score. You may be over-investing in Takers or under-investing in Exchangers who could multiply your results.", immediate: "Run the People Audit (Tool #3). Map your top 15-20 relationships against the four types: Givers, Receivers, Exchangers, Takers.", tool: "Relationship Matrix (Tool #6) — Classify your network by alliance type: Confidants, Constituents, Comrades, Companions.", thirtyDay: "Use the Value Replacement Map (Tool #10) to redirect relational energy from low-ROI to high-ROI relationships." },
+    People: { diagnosis: "Your People pillar is where your next level of growth lives. This isn't about your ability to connect — it's about how you structure, protect, and leverage those connections for maximum impact.", diagnosisHighPerformer: "You know how to build relationships. The assessment is showing you the next frontier: structuring stronger boundaries, aligning your inner circle with your long-term vision, and ensuring every relational investment compounds. This is advanced-level People work.", immediate: "Run the People Audit (Tool #3). Map your top 15-20 relationships — not by who you like, but by who aligns with where you're going. Classify: Givers, Receivers, Exchangers, Takers.", tool: "Relationship Matrix (Tool #6) — Classify your network by alliance type: Confidants, Constituents, Comrades, Companions. Protect the inner circle. Restructure the rest.", thirtyDay: "Use the Value Replacement Map (Tool #10) to redirect relational energy from maintenance relationships to growth-multiplying alliances." },
     Influence: { diagnosis: "Your Influence pillar needs work. You may be operating at a lower level of leadership than your experience warrants, or there's a gap between your stated and lived values.", immediate: "Run the Influence Ladder (Tool #8). Identify which of Maxwell's five levels you currently operate at.", tool: "Gravitational Center Alignment (Tool #11) — Audit your calendar and bank statement against your core values.", thirtyDay: "Score the gap between stated and lived values. Create one specific alignment action per week." },
     Numbers: { diagnosis: "Your Numbers pillar is your weakest area. You're likely not tracking what matters, or there's a disconnect between your goals and your financial reality.", immediate: "Run the Financial Snapshot (Tool #4). Document actual income, expenses, surplus/deficit, and real cost per hour.", tool: "Value Per Hour Calculator (Tool #5) — Calculate your actual hourly worth and your potential hourly worth.", thirtyDay: "Use the Income Multiplier Model (Tool #12) to map compound improvements over 90 days." },
     Knowledge: { diagnosis: "Your Knowledge pillar is your biggest gap. You may be consuming information without applying it, or investing learning hours in areas that don't compound.", immediate: "Run the Knowledge ROI Calculator (Tool #7). Calculate hours invested vs. income and opportunity return.", tool: "Map your knowledge gaps against the 1,800-hour framework. Identify the single most expensive gap.", thirtyDay: "Commit to one high-ROI learning track. Apply the Rule of Double Jeopardy — never pay for the same mistake twice." },
   };
   const rx = prescriptions[weakest.name];
+
+  // High-performer detection: if the person has any sub-scores >= 4 in their weakest pillar,
+  // they're not fundamentally weak — they're working on next-level structural growth.
+  const highSubs = Object.values(weakest.subs).filter(v => v >= 4).length;
+  const isHighPerformer = highSubs >= 2 || (weakest.score > 15 && highSubs >= 1);
+  if (isHighPerformer && rx.diagnosisHighPerformer) {
+    rx.diagnosis = rx.diagnosisHighPerformer;
+  }
+
   const crossPillarImpact = generateCrossPillarImpact(a);
-  return { weakestPillar: weakest.name, weakestScore: weakest.score, strongestPillar: strongest.name, strongestScore: strongest.score, weakestSubCategory: weakestSubs[0][0], weakestSubScore: weakestSubs[0][1], ...rx, pillars: pillars.map(p => ({ name: p.name, score: p.score })), crossPillarImpact };
+  return { weakestPillar: weakest.name, weakestScore: weakest.score, strongestPillar: strongest.name, strongestScore: strongest.score, weakestSubCategory: weakestSubs[0][0], weakestSubScore: weakestSubs[0][1], ...rx, isHighPerformer, pillars: pillars.map(p => ({ name: p.name, score: p.score })), crossPillarImpact };
 }
 
 // ============================
