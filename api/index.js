@@ -1047,6 +1047,12 @@ Don't guess. Run the system.
       }
     }
 
+    // GET /api/admin/teams — List all teams with company settings (for n8n auto-report)
+    if (req.method === 'GET' && url === '/admin/teams') {
+      const teams = await sql`SELECT t.*, (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = t.id) as member_count FROM teams t ORDER BY t.created_at DESC`;
+      return res.json(teams);
+    }
+
     // GET /api/admin/contacts
     if (req.method === 'GET' && url === '/admin/contacts') {
       const allContacts = await sql`SELECT * FROM contacts ORDER BY created_at DESC`;
