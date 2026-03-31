@@ -39,7 +39,7 @@
       try { savedEmail = localStorage.getItem('ve_email'); } catch(e) {}
       var email = params.get('email') || savedEmail;
       var mode = params.get('mode') || 'individual';
-      var depth = params.get('depth') || (window.__veDepth) || 'quick';
+      var depth = params.get('depth') || (window.__veDepth) || 'extensive';
       var pillar = params.get('pillar') || '';
 
       // Persist depth choice for the session
@@ -49,11 +49,10 @@
       if (email) {
         try { localStorage.setItem('ve_email', email); } catch(e) {}
       }
-      // Fetch questions when we have context: either an email (returning user) or
-      // depth is explicitly in the URL (redirected from depth selector) and we're heading to assessment
-      var depthInUrl = params.has('depth');
-      var onAssessmentPage = window.location.hash.indexOf('assessment') !== -1;
-      var shouldFetch = email || (depthInUrl && (onAssessmentPage || window.location.hash === '' || window.location.hash === '#/'));
+      // Always fetch dynamic questions from the bank so the rotation pool is used.
+      // The API returns personalized questions (unanswered first) if email is provided,
+      // otherwise returns a shuffled set from the full 281-question pool.
+      var shouldFetch = true;
       if (shouldFetch) {
         var xhr = new XMLHttpRequest();
         var apiUrl = '/api/questions?' + (email ? 'email=' + encodeURIComponent(email) + '&' : '') + 'mode=' + encodeURIComponent(mode) + '&depth=' + encodeURIComponent(depth);

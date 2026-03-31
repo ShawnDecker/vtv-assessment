@@ -1,56 +1,1257 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/><link rel="icon" type="image/png" href="/favicon.png"/>
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
-<title>The Value Engine — Team Assessment</title>
-<meta name="description" content="Assess your team's collective strengths across all 5 P.I.N.K. pillars. Build stronger teams with data, not guesswork.">
-<meta property="og:title" content="Team Assessment — The Value Engine">
-<meta property="og:description" content="Measure your team's strengths across Time, People, Influence, Numbers & Knowledge. Build stronger teams with data.">
-<meta property="og:image" content="https://assessment.valuetovictory.com/og-teams.png">
-<meta property="og:url" content="https://assessment.valuetovictory.com/teams">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Team Assessment — The Value Engine">
-<meta name="twitter:description" content="Measure your team's strengths across 5 pillars. Build stronger teams with data.">
-<meta name="twitter:image" content="https://assessment.valuetovictory.com/og-teams.png">
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}.page{max-width:640px;margin:0 auto;padding:2rem 1.5rem 4rem}.brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;margin-bottom:.5rem}h1{font-size:1.75rem;font-weight:900;margin-bottom:.25rem}.subtitle{color:#a1a1aa;margin-bottom:2rem;font-size:.95rem;line-height:1.5}
-.card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.5rem;margin-bottom:1.5rem}.card h2{font-size:1rem;font-weight:700;margin-bottom:.75rem;color:#D4A847}
-input{width:100%;padding:.75rem;background:#27272a;border:1px solid #3f3f46;border-radius:.5rem;color:#fff;font-size:.9rem;font-family:inherit;margin-bottom:.75rem}input::placeholder{color:#71717a}
-.btn{width:100%;padding:.875rem;background:#D4A847;color:#0a0a0a;border:none;border-radius:.5rem;font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s}.btn:hover{background:#b8942e}
-.btn-outline{background:transparent;border:1px solid #D4A847;color:#D4A847}.btn-outline:hover{background:rgba(212,168,71,.1)}
-.steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:2rem 0}.step{text-align:center;padding:1rem}.step-num{width:32px;height:32px;border-radius:50%;background:#D4A847;color:#0a0a0a;font-weight:900;font-size:.9rem;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem}.step-text{font-size:.8rem;color:#a1a1aa;line-height:1.4}
-.features{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0}.feature{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.25rem}.feat-icon{font-size:1.5rem;margin-bottom:.5rem}.feat-title{font-size:.9rem;font-weight:700;margin-bottom:.25rem}.feat-desc{font-size:.8rem;color:#a1a1aa;line-height:1.4}
-.footer{text-align:center;margin-top:3rem;padding-top:1.5rem;border-top:1px solid #27272a;font-size:.75rem;color:#71717a}a.back{color:#D4A847;text-decoration:none;font-size:.85rem;display:inline-block;margin-bottom:1.5rem}
-.msg{padding:.75rem;border-radius:.5rem;font-size:.85rem;margin-top:.75rem;display:none}.msg-ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e}.msg-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444}
-.team-dash{display:none}
-@media(max-width:500px){.steps{grid-template-columns:1fr}.features{grid-template-columns:1fr}}
-</style></head><body><div class="page">
-<a href="/" class="back">← Back to Assessment</a>
-<div class="brand">THE VALUE ENGINE</div>
-<h1>Team Assessment</h1>
-<div class="subtitle">Measure your team's collective strengths across all 5 P.I.N.K. pillars. Identify where your team leads — and where it leaks value.</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+  <title>Team Admin Dashboard — The Value Engine</title>
+  <meta name="description" content="Create, manage, and grow your team on the P.I.N.K. Value Engine platform. Bulk import members, view anonymized aggregate scores, and schedule automated reports." />
+  <meta property="og:title" content="Team Admin Dashboard — The Value Engine" />
+  <meta property="og:description" content="Manage your team's P.I.N.K. Value Engine assessments. Anonymized insights, bulk imports, and automated reporting." />
+  <meta property="og:image" content="https://assessment.valuetovictory.com/og-teams.png" />
+  <meta property="og:url" content="https://assessment.valuetovictory.com/teams" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Team Admin Dashboard — The Value Engine" />
+  <meta name="twitter:image" content="https://assessment.valuetovictory.com/og-teams.png" />
 
-<div class="steps"><div class="step"><div class="step-num">1</div><div class="step-text">Create your team or join an existing one</div></div><div class="step"><div class="step-num">2</div><div class="step-text">Each member takes the assessment</div></div><div class="step"><div class="step-num">3</div><div class="step-text">See your team's aggregate strengths</div></div></div>
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-TT6PYLPP31');
+    gtag('config', 'G-MJ1SXZJ399');
+  </script>
 
-<div class="card"><h2>Create a New Team</h2>
-<input id="teamName" placeholder="Team or company name"><input id="creatorEmail" type="email" placeholder="Your email (team admin)">
-<button class="btn" onclick="createTeam()">Create Team</button><div class="msg" id="createMsg"></div></div>
+  <style>
+    /* ─── Reset & Base ─── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
 
-<div class="card"><h2>Join an Existing Team</h2>
-<input id="teamCode" placeholder="Team code (from your admin)"><input id="joinEmail" type="email" placeholder="Your email">
-<button class="btn btn-outline" onclick="joinTeam()">Join Team</button><div class="msg" id="joinMsg"></div></div>
+    /* ─── Layout ─── */
+    .page { max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+    .page-wide { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
 
-<div class="features">
-<div class="feature"><div class="feat-icon">📊</div><div class="feat-title">Aggregate Scores</div><div class="feat-desc">See average pillar scores across your entire team</div></div>
-<div class="feature"><div class="feat-icon">🎯</div><div class="feat-title">Blind Spots</div><div class="feat-desc">Identify which pillar is weakest across the group</div></div>
-<div class="feature"><div class="feat-icon">👥</div><div class="feat-title">Anonymous</div><div class="feat-desc">Individual scores stay private — only aggregates are shared</div></div>
-<div class="feature"><div class="feat-icon">📈</div><div class="feat-title">Track Growth</div><div class="feat-desc">Retake quarterly to measure team improvement over time</div></div>
+    /* ─── Header ─── */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      color: #D4A847; text-decoration: none; font-size: 0.85rem; font-weight: 500;
+      margin-bottom: 2rem; transition: opacity 0.2s;
+    }
+    .back-link:hover { opacity: 0.75; }
+    .brand-label {
+      font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: #D4A847; font-weight: 700; margin-bottom: 0.4rem;
+    }
+    .page-title {
+      font-size: 2rem; font-weight: 900; line-height: 1.15; margin-bottom: 0.5rem;
+    }
+    .page-subtitle { color: #a1a1aa; font-size: 0.95rem; line-height: 1.6; margin-bottom: 2.5rem; }
+
+    /* ─── Mode Toggle Tabs ─── */
+    .mode-tabs {
+      display: flex; background: #18181b; border: 1px solid #27272a;
+      border-radius: 0.625rem; padding: 0.25rem; margin-bottom: 2rem;
+      gap: 0.25rem;
+    }
+    .mode-tab {
+      flex: 1; padding: 0.625rem 1rem; border-radius: 0.4rem;
+      border: none; background: transparent; color: #a1a1aa;
+      font-family: inherit; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; text-align: center;
+    }
+    .mode-tab.active {
+      background: #D4A847; color: #0a0a0a;
+    }
+    .mode-tab:not(.active):hover { color: #fff; background: #27272a; }
+
+    /* ─── Cards ─── */
+    .card {
+      background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem;
+      padding: 1.75rem; margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: #D4A847; font-weight: 700; margin-bottom: 1.25rem;
+    }
+    .card-heading {
+      font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem;
+    }
+    .card-desc { font-size: 0.875rem; color: #a1a1aa; margin-bottom: 1.25rem; line-height: 1.5; }
+
+    /* ─── Form Elements ─── */
+    .form-group { margin-bottom: 1rem; }
+    .form-label {
+      display: block; font-size: 0.78rem; font-weight: 600; color: #a1a1aa;
+      margin-bottom: 0.4rem; letter-spacing: 0.03em;
+    }
+    .form-label .req { color: #D4A847; margin-left: 0.2rem; }
+    input[type="text"], input[type="email"], input[type="url"], select, textarea {
+      width: 100%; padding: 0.75rem 0.875rem;
+      background: #27272a; border: 1px solid #3f3f46;
+      border-radius: 0.5rem; color: #fff; font-size: 0.9rem;
+      font-family: inherit; transition: border-color 0.2s;
+      outline: none; -webkit-appearance: none;
+    }
+    input[type="text"]::placeholder, input[type="email"]::placeholder,
+    input[type="url"]::placeholder, textarea::placeholder { color: #52525b; }
+    input[type="text"]:focus, input[type="email"]:focus,
+    input[type="url"]:focus, select:focus, textarea:focus {
+      border-color: #D4A847;
+    }
+    select { cursor: pointer; }
+    select option { background: #18181b; }
+    textarea { resize: vertical; min-height: 120px; line-height: 1.5; }
+
+    /* Toggle */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 0;
+    }
+    .toggle-info { flex: 1; }
+    .toggle-info .toggle-label { font-size: 0.9rem; font-weight: 600; }
+    .toggle-info .toggle-sub { font-size: 0.8rem; color: #a1a1aa; margin-top: 0.15rem; }
+    .toggle-switch {
+      position: relative; width: 44px; height: 24px; flex-shrink: 0; margin-left: 1rem;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: #3f3f46; border-radius: 12px; transition: 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 18px; height: 18px;
+      left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: #D4A847; }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* ─── Buttons ─── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      padding: 0.875rem 1.5rem; border: none; border-radius: 0.5rem;
+      font-family: inherit; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; text-decoration: none;
+    }
+    .btn-primary { background: #D4A847; color: #0a0a0a; width: 100%; }
+    .btn-primary:hover { background: #b8942e; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-outline {
+      background: transparent; border: 1px solid #D4A847; color: #D4A847; width: 100%;
+    }
+    .btn-outline:hover { background: rgba(212,168,71,0.1); }
+    .btn-ghost {
+      background: transparent; border: 1px solid #3f3f46; color: #a1a1aa;
+      padding: 0.5rem 1rem; font-size: 0.825rem;
+    }
+    .btn-ghost:hover { border-color: #a1a1aa; color: #fff; }
+    .btn-sm { padding: 0.5rem 1rem; font-size: 0.8rem; }
+    .btn-danger { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
+    .btn-danger:hover { background: rgba(239,68,68,0.25); }
+
+    /* ─── Alerts / Messages ─── */
+    .alert {
+      padding: 0.875rem 1rem; border-radius: 0.5rem; font-size: 0.875rem;
+      margin-top: 1rem; display: none; line-height: 1.5;
+    }
+    .alert-success {
+      background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); color: #22c55e;
+    }
+    .alert-error {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444;
+    }
+    .alert-info {
+      background: rgba(212,168,71,0.1); border: 1px solid rgba(212,168,71,0.25); color: #D4A847;
+    }
+
+    /* ─── Invite Code Display ─── */
+    .invite-code-box {
+      background: #0a0a0a; border: 2px dashed #D4A847; border-radius: 0.75rem;
+      padding: 1.5rem; text-align: center; margin-top: 1.5rem; display: none;
+    }
+    .invite-code-label { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: #a1a1aa; margin-bottom: 0.5rem; }
+    .invite-code-value {
+      font-size: 2rem; font-weight: 900; color: #D4A847;
+      letter-spacing: 0.1em; font-variant-numeric: tabular-nums;
+    }
+    .invite-code-copy {
+      margin-top: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    .invite-code-url { font-size: 0.78rem; color: #a1a1aa; word-break: break-all; }
+    .copy-btn {
+      padding: 0.3rem 0.75rem; background: #27272a; border: 1px solid #3f3f46;
+      border-radius: 0.375rem; color: #a1a1aa; font-size: 0.75rem; cursor: pointer;
+      font-family: inherit; transition: all 0.15s; white-space: nowrap;
+    }
+    .copy-btn:hover { background: #3f3f46; color: #fff; }
+
+    /* ─── Dashboard ─── */
+    #dashboardSection { display: none; }
+    .dash-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;
+    }
+    .dash-team-name { font-size: 1.5rem; font-weight: 900; }
+    .dash-meta { font-size: 0.85rem; color: #a1a1aa; margin-top: 0.25rem; }
+    .dash-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .stat-tile {
+      background: #0a0a0a; border: 1px solid #27272a; border-radius: 0.625rem;
+      padding: 1.25rem; text-align: center;
+    }
+    .stat-tile .stat-val {
+      font-size: 1.75rem; font-weight: 900; color: #D4A847; line-height: 1;
+    }
+    .stat-tile .stat-lbl { font-size: 0.7rem; color: #71717a; margin-top: 0.3rem; text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* Pillar bars */
+    .pillar-bars { display: flex; flex-direction: column; gap: 0.75rem; }
+    .pillar-row { display: flex; align-items: center; gap: 0.75rem; }
+    .pillar-name { font-size: 0.75rem; font-weight: 600; width: 90px; flex-shrink: 0; color: #a1a1aa; }
+    .pillar-track {
+      flex: 1; height: 8px; background: #27272a; border-radius: 4px; overflow: hidden;
+    }
+    .pillar-fill {
+      height: 100%; background: linear-gradient(90deg, #D4A847, #f0c060);
+      border-radius: 4px; transition: width 0.6s ease;
+    }
+    .pillar-score { font-size: 0.75rem; font-weight: 700; width: 38px; text-align: right; color: #D4A847; }
+
+    /* Distribution badges */
+    .dist-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .dist-badge {
+      padding: 0.3rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 700;
+    }
+    .badge-crisis { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+    .badge-survival { background: rgba(249,115,22,0.12); color: #f97316; border: 1px solid rgba(249,115,22,0.25); }
+    .badge-growth { background: rgba(234,179,8,0.12); color: #eab308; border: 1px solid rgba(234,179,8,0.25); }
+    .badge-momentum { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.25); }
+    .badge-mastery { background: rgba(212,168,71,0.12); color: #D4A847; border: 1px solid rgba(212,168,71,0.25); }
+
+    /* Members table */
+    .members-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .members-table th {
+      text-align: left; padding: 0.6rem 0.875rem; font-size: 0.65rem;
+      letter-spacing: 0.1em; text-transform: uppercase; color: #52525b;
+      border-bottom: 1px solid #27272a; font-weight: 700;
+    }
+    .members-table td {
+      padding: 0.75rem 0.875rem; border-bottom: 1px solid #18181b; color: #d4d4d8;
+      vertical-align: top;
+    }
+    .members-table tr:last-child td { border-bottom: none; }
+    .members-table tr:hover td { background: rgba(212,168,71,0.04); }
+    .member-num { color: #D4A847; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .dept-tag {
+      display: inline-block; padding: 0.2rem 0.5rem; background: #27272a;
+      border-radius: 0.25rem; font-size: 0.75rem; color: #a1a1aa;
+    }
+    .score-pill {
+      display: inline-block; padding: 0.2rem 0.5rem; border-radius: 0.25rem;
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .score-pill.high { background: rgba(34,197,94,0.12); color: #22c55e; }
+    .score-pill.mid { background: rgba(234,179,8,0.12); color: #eab308; }
+    .score-pill.low { background: rgba(239,68,68,0.12); color: #ef4444; }
+
+    /* Dept breakdown */
+    .dept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; }
+    .dept-card {
+      background: #0a0a0a; border: 1px solid #27272a; border-radius: 0.5rem; padding: 1rem;
+    }
+    .dept-card .dept-name { font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .dept-card .dept-stat { font-size: 0.75rem; color: #a1a1aa; }
+    .dept-card .dept-score { font-size: 1.25rem; font-weight: 900; color: #D4A847; }
+
+    /* Recommendations */
+    .rec-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .rec-item {
+      display: flex; gap: 0.875rem; align-items: flex-start;
+      padding: 1rem; background: #0a0a0a; border-radius: 0.5rem;
+      border: 1px solid #27272a;
+    }
+    .rec-icon {
+      width: 28px; height: 28px; border-radius: 50%; background: rgba(212,168,71,0.15);
+      color: #D4A847; font-size: 0.75rem; font-weight: 900; display: flex;
+      align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;
+    }
+    .rec-body { flex: 1; }
+    .rec-title { font-size: 0.875rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .rec-text { font-size: 0.8rem; color: #a1a1aa; line-height: 1.5; }
+
+    /* CSV preview */
+    .csv-preview {
+      background: #0a0a0a; border: 1px solid #27272a; border-radius: 0.5rem;
+      padding: 0.875rem; font-size: 0.75rem; color: #a1a1aa;
+      font-family: 'SF Mono', 'Consolas', monospace; white-space: pre-wrap;
+      max-height: 160px; overflow-y: auto; line-height: 1.6;
+      margin-bottom: 1rem; display: none;
+    }
+
+    /* Privacy notice */
+    .privacy-notice {
+      display: flex; align-items: center; gap: 0.625rem;
+      padding: 0.875rem 1rem; background: rgba(212,168,71,0.06);
+      border: 1px solid rgba(212,168,71,0.2); border-radius: 0.5rem;
+      font-size: 0.8rem; color: #a1a1aa; margin-bottom: 1.5rem;
+    }
+    .privacy-notice .lock-icon {
+      color: #D4A847; font-size: 1rem; flex-shrink: 0;
+    }
+
+    /* Section separator */
+    .section-sep {
+      border: none; border-top: 1px solid #27272a; margin: 2.5rem 0;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(0,0,0,0.2); border-top-color: #0a0a0a;
+      border-radius: 50%; animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 3rem 1rem; color: #52525b;
+    }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.5; }
+    .empty-state p { font-size: 0.875rem; }
+
+    /* Footer */
+    .footer {
+      text-align: center; margin-top: 4rem; padding-top: 1.5rem;
+      border-top: 1px solid #27272a; font-size: 0.75rem; color: #52525b;
+    }
+    .footer a { color: #D4A847; text-decoration: none; }
+    .footer a:hover { opacity: 0.75; }
+
+    /* Divider labels */
+    .divider-label {
+      position: relative; text-align: center; margin: 1.5rem 0;
+    }
+    .divider-label::before {
+      content: ''; position: absolute; top: 50%; left: 0; right: 0;
+      height: 1px; background: #27272a;
+    }
+    .divider-label span {
+      position: relative; background: #0a0a0a; padding: 0 0.75rem;
+      font-size: 0.7rem; color: #52525b; text-transform: uppercase; letter-spacing: 0.1em;
+    }
+
+    /* Report display */
+    #reportDisplay { display: none; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .page { padding: 1.5rem 1rem 4rem; }
+      .page-title { font-size: 1.6rem; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .dash-header { flex-direction: column; }
+      .dash-actions { width: 100%; }
+      .dash-actions .btn { flex: 1; }
+      .members-table { font-size: 0.78rem; }
+      .members-table th, .members-table td { padding: 0.5rem 0.5rem; }
+      .mode-tab { font-size: 0.8rem; padding: 0.5rem 0.5rem; }
+      .invite-code-value { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page" id="mainPage">
+  <a href="/" class="back-link">← Back to Assessment</a>
+
+  <div class="brand-label">THE VALUE ENGINE</div>
+  <h1 class="page-title">Teams Dashboard</h1>
+  <p class="page-subtitle">Create a team, manage members, and get anonymized aggregate insights across all 5 P.I.N.K. pillars.</p>
+
+  <!-- Privacy Notice -->
+  <div class="privacy-notice">
+    <span class="lock-icon">🔒</span>
+    <span>Individual identities are protected. Members are identified by number only.</span>
+  </div>
+
+  <!-- Mode Tabs -->
+  <div class="mode-tabs" id="modeTabs">
+    <button class="mode-tab active" id="tabCreate" onclick="switchTab('create')">Create Team</button>
+    <button class="mode-tab" id="tabJoin" onclick="switchTab('join')">Join Team</button>
+    <button class="mode-tab" id="tabAdmin" onclick="switchTab('admin')">Admin Access</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- CREATE TEAM PANEL -->
+  <!-- ═══════════════════════════════════════ -->
+  <div id="createPanel">
+    <div class="card">
+      <div class="card-title">Create a New Team</div>
+      <p class="card-desc">Set up your organization's team account. After creation you'll receive an invite code to share with members.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Team Name <span class="req">*</span></label>
+          <input type="text" id="c_teamName" placeholder="e.g. Acme Sales Team" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Company Name</label>
+          <input type="text" id="c_companyName" placeholder="Acme Corporation" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Company Email Domain</label>
+          <input type="text" id="c_companyDomain" placeholder="acme.com" />
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">CMA Email <span class="req">*</span></label>
+          <input type="email" id="c_companyEmail" placeholder="reports@acme.com" />
+          <p style="font-size:0.75rem;color:#52525b;margin-top:0.35rem;">Company Management Admin — receives all team reports</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Admin Contact Name</label>
+          <input type="text" id="c_adminContactName" placeholder="Jane Smith" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Billing Email (optional)</label>
+          <input type="email" id="c_billingEmail" placeholder="billing@acme.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Report Frequency</label>
+          <select id="c_reportFrequency">
+            <option value="weekly">Weekly</option>
+            <option value="monthly" selected>Monthly</option>
+            <option value="quarterly">Quarterly</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;">
+          <div class="toggle-row" style="width:100%;padding:0;">
+            <div class="toggle-info">
+              <div class="toggle-label">Auto-Reports</div>
+              <div class="toggle-sub">Send reports automatically</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="c_autoReport" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="createTeamBtn" onclick="createTeam()" style="margin-top:0.5rem;">
+        Create Team
+      </button>
+      <div class="alert alert-error" id="createError"></div>
+      <div class="alert alert-success" id="createSuccess"></div>
+
+      <!-- Invite Code Box (shown after creation) -->
+      <div class="invite-code-box" id="inviteCodeBox">
+        <div class="invite-code-label">Your Team Invite Code</div>
+        <div class="invite-code-value" id="inviteCodeDisplay">—</div>
+        <div class="invite-code-copy">
+          <span class="invite-code-url" id="inviteCodeUrl"></span>
+          <button class="copy-btn" onclick="copyInviteUrl()">Copy Link</button>
+        </div>
+        <p style="font-size:0.75rem;color:#52525b;margin-top:0.75rem;">Share this code with your team members to join.</p>
+        <button class="btn btn-primary" onclick="enterAdminDashboard()" style="margin-top:1rem;max-width:280px;">
+          Open Admin Dashboard →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- JOIN TEAM PANEL -->
+  <!-- ═══════════════════════════════════════ -->
+  <div id="joinPanel" style="display:none;">
+    <div class="card">
+      <div class="card-title">Join a Team</div>
+      <p class="card-desc">Enter your invite code to join your team's assessment group. You'll be redirected to take the P.I.N.K. assessment linked to your team.</p>
+
+      <div class="form-group">
+        <label class="form-label">Invite Code <span class="req">*</span></label>
+        <input type="text" id="j_inviteCode" placeholder="e.g. PINK-ACME-4821"
+          style="text-transform:uppercase;font-size:1.05rem;font-weight:700;letter-spacing:0.05em;"
+          oninput="this.value=this.value.toUpperCase()" />
+      </div>
+
+      <button class="btn btn-primary" onclick="joinTeam()">Join Team & Take Assessment</button>
+      <div class="alert alert-error" id="joinError"></div>
+      <div class="alert alert-success" id="joinSuccess"></div>
+    </div>
+
+    <div class="card" style="background:rgba(212,168,71,0.04);border-color:rgba(212,168,71,0.2);">
+      <div class="card-title">What Happens When You Join?</div>
+      <div style="display:flex;flex-direction:column;gap:0.875rem;">
+        <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#D4A847;color:#0a0a0a;font-size:0.7rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:0.1rem;">1</div>
+          <div>
+            <div style="font-size:0.875rem;font-weight:600;">Take the Assessment</div>
+            <div style="font-size:0.8rem;color:#a1a1aa;">Complete the P.I.N.K. Value Engine assessment linked to your team</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#D4A847;color:#0a0a0a;font-size:0.7rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:0.1rem;">2</div>
+          <div>
+            <div style="font-size:0.875rem;font-weight:600;">Your Score is Anonymized</div>
+            <div style="font-size:0.8rem;color:#a1a1aa;">You're assigned a member number — never identified by name</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#D4A847;color:#0a0a0a;font-size:0.7rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:0.1rem;">3</div>
+          <div>
+            <div style="font-size:0.875rem;font-weight:600;">Team Insights Generated</div>
+            <div style="font-size:0.8rem;color:#a1a1aa;">Your admin receives aggregate pillar scores and recommendations</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- ADMIN ACCESS PANEL -->
+  <!-- ═══════════════════════════════════════ -->
+  <div id="adminPanel" style="display:none;">
+    <div class="card">
+      <div class="card-title">Admin Access</div>
+      <p class="card-desc">Enter your team's invite code or admin code to access the management dashboard.</p>
+
+      <div class="form-group">
+        <label class="form-label">Team Code or Invite Code <span class="req">*</span></label>
+        <input type="text" id="a_adminCode" placeholder="e.g. PINK-ACME-4821"
+          style="text-transform:uppercase;font-size:1.05rem;font-weight:700;letter-spacing:0.05em;"
+          oninput="this.value=this.value.toUpperCase()" />
+      </div>
+
+      <button class="btn btn-primary" onclick="adminLogin()">Access Dashboard</button>
+      <div class="alert alert-error" id="adminLoginError"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    © 2026 Value to Victory — Shawn E. Decker<br>
+    <a href="https://valuetovictory.com">valuetovictory.com</a>
+  </div>
 </div>
 
-<div style="text-align:center;padding:1.25rem;background:#18181b;border:1px solid #27272a;border-radius:.75rem;margin-top:1.5rem"><p style="font-size:.85rem;color:#a1a1aa">Our assessment engine is constantly improving. Encourage your team to retake regularly for more accurate insights.</p></div>
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ADMIN DASHBOARD (full-width, replaces main page)           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="dashboardSection" style="display:none;">
+  <div class="page-wide">
 
-<div class="footer">© 2026 Value to Victory — Shawn E. Decker<br><a href="https://valuetovictory.com" style="color:#D4A847">valuetovictory.com</a></div>
+    <a href="/" class="back-link">← Back to Assessment</a>
+
+    <!-- Privacy Notice -->
+    <div class="privacy-notice">
+      <span class="lock-icon">🔒</span>
+      <span>Individual identities are protected. Members are identified by number only.</span>
+    </div>
+
+    <!-- Dash Header -->
+    <div class="dash-header">
+      <div>
+        <div class="brand-label">TEAM ADMIN DASHBOARD</div>
+        <div class="dash-team-name" id="dashTeamName">—</div>
+        <div class="dash-meta" id="dashTeamMeta">Loading team info…</div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn btn-ghost btn-sm" onclick="refreshDashboard()">⟳ Refresh</button>
+        <button class="btn btn-ghost btn-sm" onclick="exitDashboard()">Exit Dashboard</button>
+      </div>
+    </div>
+
+    <!-- ─── Team Info Card ─── -->
+    <div class="card">
+      <div class="card-title">Team Overview</div>
+      <div class="stats-grid" id="overviewStats">
+        <div class="stat-tile"><div class="stat-val" id="statMembers">—</div><div class="stat-lbl">Members</div></div>
+        <div class="stat-tile"><div class="stat-val" id="statCompletion">—</div><div class="stat-lbl">Completion Rate</div></div>
+        <div class="stat-tile"><div class="stat-val" id="statAvgScore">—</div><div class="stat-lbl">Avg Score</div></div>
+        <div class="stat-tile"><div class="stat-val" id="statDepts">—</div><div class="stat-lbl">Departments</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;font-size:0.83rem;color:#a1a1aa;padding-top:0.75rem;border-top:1px solid #27272a;">
+        <div><span style="color:#52525b;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;">Domain</span><br><span id="infoCompanyDomain" style="color:#d4d4d8;">—</span></div>
+        <div><span style="color:#52525b;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;">CMA Email</span><br><span id="infoCmaEmail" style="color:#d4d4d8;">—</span></div>
+        <div><span style="color:#52525b;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;">Report Schedule</span><br><span id="infoReportFreq" style="color:#d4d4d8;">—</span></div>
+      </div>
+    </div>
+
+    <!-- ─── Bulk Import ─── -->
+    <div class="card">
+      <div class="card-title">Bulk Import Members</div>
+      <p class="card-desc">Paste a CSV with one member per line: <code style="font-size:0.75rem;background:#27272a;padding:0.1rem 0.4rem;border-radius:0.25rem;color:#D4A847;">email, department, role, goals</code><br>Header row is optional and will be skipped automatically.</p>
+
+      <textarea id="csvInput" placeholder="jane.doe@acme.com, Engineering, Senior Engineer, Leadership development
+john.smith@acme.com, Sales, Account Executive, Revenue growth
+sarah.jones@acme.com, Marketing, Director, Brand visibility"></textarea>
+
+      <div class="csv-preview" id="csvPreview"></div>
+
+      <div style="display:flex;gap:0.75rem;margin-top:0.5rem;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="previewCSV()">Preview</button>
+        <button class="btn btn-primary" onclick="importMembers()" style="flex:1;" id="importBtn">
+          Import Members
+        </button>
+      </div>
+      <div class="alert alert-success" id="importSuccess"></div>
+      <div class="alert alert-error" id="importError"></div>
+    </div>
+
+    <!-- ─── Members List ─── -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem;">
+        <div class="card-title" style="margin-bottom:0;">Member List</div>
+        <div style="display:flex;gap:0.5rem;">
+          <select id="filterDept" onchange="renderMembers()" style="width:auto;padding:0.4rem 0.625rem;font-size:0.78rem;">
+            <option value="">All Departments</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="loadMembers()">⟳</button>
+        </div>
+      </div>
+      <div id="membersContainer">
+        <div class="empty-state">
+          <div class="empty-icon">👥</div>
+          <p>No members yet. Import members above or share your invite code.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Reports ─── -->
+    <div class="card">
+      <div class="card-title">Reports</div>
+      <p class="card-desc">Generate an anonymized aggregate report for your team across all P.I.N.K. pillars. Results show group averages only — no individual data.</p>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="generateReport()" style="flex:1;" id="genReportBtn">
+          Generate Report
+        </button>
+        <button class="btn btn-outline" onclick="sendReport()" style="flex:1;" id="sendReportBtn">
+          Send Report to CMA
+        </button>
+      </div>
+      <div class="alert alert-success" id="reportSuccess"></div>
+      <div class="alert alert-error" id="reportError"></div>
+      <div class="alert alert-info" id="reportInfo"></div>
+    </div>
+
+    <!-- ─── Report Display ─── -->
+    <div id="reportDisplay">
+
+      <!-- Pillar Averages -->
+      <div class="card">
+        <div class="card-title">Pillar Averages</div>
+        <div class="pillar-bars" id="pillarBars"></div>
+        <div style="margin-top:1.5rem;">
+          <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:#52525b;margin-bottom:0.75rem;">Score Distribution</div>
+          <div class="dist-row" id="distRow"></div>
+        </div>
+      </div>
+
+      <!-- Department Breakdown -->
+      <div class="card" id="deptBreakdownCard">
+        <div class="card-title">Department Breakdown</div>
+        <div class="dept-grid" id="deptBreakdown"></div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="card" id="recommendationsCard">
+        <div class="card-title">Recommendations</div>
+        <div class="rec-list" id="recommendations"></div>
+      </div>
+
+    </div>
+
+    <!-- ─── Settings ─── -->
+    <div class="card">
+      <div class="card-title">Team Settings</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label class="form-label">CMA Email</label>
+          <input type="email" id="s_cmaEmail" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Report Frequency</label>
+          <select id="s_reportFreq">
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <div class="toggle-row" style="padding:0;">
+            <div class="toggle-info">
+              <div class="toggle-label">Auto-Reports</div>
+              <div class="toggle-sub">Automatically send reports on schedule</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="s_autoReport" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-outline" onclick="saveSettings()" style="max-width:200px;">Save Settings</button>
+      <div class="alert alert-success" id="settingsSuccess"></div>
+      <div class="alert alert-error" id="settingsError"></div>
+    </div>
+
+    <!-- Invite Code Reminder -->
+    <div class="invite-code-box" id="dashInviteBox" style="display:block;margin-bottom:1.5rem;">
+      <div class="invite-code-label">Team Invite Code</div>
+      <div class="invite-code-value" id="dashInviteCode">—</div>
+      <div class="invite-code-copy">
+        <span class="invite-code-url" id="dashInviteUrl"></span>
+        <button class="copy-btn" onclick="copyDashInviteUrl()">Copy Link</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      © 2026 Value to Victory — Shawn E. Decker<br>
+      <a href="https://valuetovictory.com">valuetovictory.com</a>
+    </div>
+  </div>
 </div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- JAVASCRIPT -->
+<!-- ════════════════════════════════════════════ -->
 <script>
-async function createTeam(){const n=document.getElementById('teamName').value.trim(),e=document.getElementById('creatorEmail').value.trim(),m=document.getElementById('createMsg');if(!n||!e){show(m,'err','Please fill in both fields.');return;}try{const r=await fetch('/api/teams',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({teamName:n,creatorEmail:e})});const d=await r.json();if(d.id){show(m,'ok','Team created! Your team code is: <strong>'+d.id+'</strong> — share this with your team members.');}else{show(m,'err',d.error||'Failed to create team.');}}catch(err){show(m,'err','Something went wrong. Try again.');}}
-async function joinTeam(){const c=document.getElementById('teamCode').value.trim(),e=document.getElementById('joinEmail').value.trim(),m=document.getElementById('joinMsg');if(!c||!e){show(m,'err','Please fill in both fields.');return;}show(m,'ok','Redirecting to your assessment...');setTimeout(()=>{window.location.href='/?team='+c+'&email='+encodeURIComponent(e);},1000);}
-function show(el,type,msg){el.className='msg msg-'+type;el.innerHTML=msg;el.style.display='block';}
-</script></body></html>
+// ─── State ───────────────────────────────────────────
+const API = '';  // same-origin
+let _teamId = null;
+let _inviteCode = null;
+let _teamData = null;
+let _membersData = [];
+
+// ─── Init ─────────────────────────────────────────────
+(function init() {
+  // Check URL for auto-login
+  const params = new URLSearchParams(window.location.search);
+  const codeFromUrl = params.get('code') || params.get('teamId');
+  if (codeFromUrl) {
+    document.getElementById('a_adminCode').value = codeFromUrl.toUpperCase();
+    switchTab('admin');
+    adminLogin();
+  }
+  // Check localStorage
+  const saved = tryGet('ve_teamAdmin');
+  if (saved) {
+    _teamId = saved.teamId;
+    _inviteCode = saved.inviteCode;
+  }
+})();
+
+// ─── Tab Switching ────────────────────────────────────
+function switchTab(tab) {
+  ['create','join','admin'].forEach(t => {
+    document.getElementById(t + 'Panel').style.display = t === tab ? 'block' : 'none';
+    document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
+  });
+}
+
+// ─── Utilities ────────────────────────────────────────
+function showAlert(id, msg, show = true) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = show ? 'block' : 'none';
+}
+function hideAlert(id) { showAlert(id, '', false); }
+
+function tryGet(key) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e) { return null; }
+}
+function trySet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
+
+function setLoading(btnId, loading, defaultText) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.innerHTML = loading
+    ? `<span class="spinner"></span> ${defaultText}…`
+    : defaultText;
+}
+
+async function apiFetch(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const resp = await fetch(API + path, opts);
+  const data = await resp.json().catch(() => ({}));
+  return { ok: resp.ok, status: resp.status, data };
+}
+
+// ─── Create Team ─────────────────────────────────────
+async function createTeam() {
+  hideAlert('createError'); hideAlert('createSuccess');
+  const teamName = document.getElementById('c_teamName').value.trim();
+  const companyEmail = document.getElementById('c_companyEmail').value.trim();
+  if (!teamName) { showAlert('createError', 'Team name is required.'); return; }
+  if (!companyEmail) { showAlert('createError', 'CMA email is required.'); return; }
+
+  setLoading('createTeamBtn', true, 'Create Team');
+
+  const payload = {
+    name: teamName,
+    mode: 'team',
+    companyName: document.getElementById('c_companyName').value.trim(),
+    companyDomain: document.getElementById('c_companyDomain').value.trim().replace(/^@/, ''),
+    companyEmail,
+    adminContactName: document.getElementById('c_adminContactName').value.trim(),
+    billingEmail: document.getElementById('c_billingEmail').value.trim(),
+    reportFrequency: document.getElementById('c_reportFrequency').value,
+    autoReportEnabled: document.getElementById('c_autoReport').checked,
+    contactId: null
+  };
+
+  const { ok, data } = await apiFetch('POST', '/api/teams', payload);
+  setLoading('createTeamBtn', false, 'Create Team');
+
+  if (ok && (data.id || data.teamId || data.inviteCode)) {
+    _teamId = data.id || data.teamId;
+    _inviteCode = data.inviteCode || data.invite_code || data.code || 'PINK-' + teamName.toUpperCase().replace(/\s+/g,'').slice(0,4) + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
+    trySet('ve_teamAdmin', { teamId: _teamId, inviteCode: _inviteCode });
+
+    showAlert('createSuccess', '✓ Team created successfully!');
+    document.getElementById('inviteCodeDisplay').textContent = _inviteCode;
+    const joinUrl = `${location.origin}/teams?code=${encodeURIComponent(_inviteCode)}`;
+    document.getElementById('inviteCodeUrl').textContent = joinUrl;
+    document.getElementById('inviteCodeBox').style.display = 'block';
+  } else {
+    const msg = data.error || data.message || 'Failed to create team. Please try again.';
+    showAlert('createError', msg);
+  }
+}
+
+// ─── Enter Admin Dashboard (from create flow) ─────────
+function enterAdminDashboard() {
+  if (!_teamId) return;
+  showDashboard();
+}
+
+// ─── Join Team ────────────────────────────────────────
+async function joinTeam() {
+  hideAlert('joinError'); hideAlert('joinSuccess');
+  const code = document.getElementById('j_inviteCode').value.trim();
+  if (!code) { showAlert('joinError', 'Please enter an invite code.'); return; }
+
+  // Redirect to assessment with teamId param
+  showAlert('joinSuccess', '✓ Redirecting to assessment…');
+  setTimeout(() => {
+    window.location.href = `/?teamCode=${encodeURIComponent(code)}`;
+  }, 800);
+}
+
+// ─── Admin Login ──────────────────────────────────────
+async function adminLogin() {
+  hideAlert('adminLoginError');
+  const code = document.getElementById('a_adminCode').value.trim();
+  if (!code) { showAlert('adminLoginError', 'Please enter your team code.'); return; }
+
+  // Try to look up the team by invite code
+  const { ok, data } = await apiFetch('GET', `/api/teams?inviteCode=${encodeURIComponent(code)}`, null);
+
+  if (ok && (data.id || data.teamId || (data.teams && data.teams[0]))) {
+    const team = data.id ? data : (data.teams ? data.teams[0] : data);
+    _teamId = team.id || team.teamId;
+    _inviteCode = team.inviteCode || team.invite_code || code;
+    _teamData = team;
+    trySet('ve_teamAdmin', { teamId: _teamId, inviteCode: _inviteCode });
+    showDashboard();
+  } else {
+    // Fallback: try treating the code as a team ID directly
+    const { ok: ok2, data: data2 } = await apiFetch('GET', `/api/teams/${encodeURIComponent(code)}`, null);
+    if (ok2 && (data2.id || data2.teamId)) {
+      _teamId = data2.id || data2.teamId;
+      _inviteCode = data2.inviteCode || data2.invite_code || code;
+      _teamData = data2;
+      trySet('ve_teamAdmin', { teamId: _teamId, inviteCode: _inviteCode });
+      showDashboard();
+    } else {
+      showAlert('adminLoginError', 'Team not found. Please check your code and try again.');
+    }
+  }
+}
+
+// ─── Show Dashboard ───────────────────────────────────
+async function showDashboard() {
+  document.getElementById('mainPage').style.display = 'none';
+  document.getElementById('dashboardSection').style.display = 'block';
+  window.scrollTo(0, 0);
+
+  populateDashboardInfo();
+  await loadMembers();
+}
+
+function populateDashboardInfo() {
+  if (!_teamData) return;
+  const t = _teamData;
+  document.getElementById('dashTeamName').textContent = t.name || 'Your Team';
+  document.getElementById('dashTeamMeta').textContent =
+    [(t.companyName || ''), (t.adminContactName ? 'Admin: ' + t.adminContactName : '')].filter(Boolean).join(' · ') || 'Team';
+
+  document.getElementById('infoCompanyDomain').textContent = t.companyDomain || t.domain || '—';
+  document.getElementById('infoCmaEmail').textContent = t.companyEmail || t.cmaEmail || '—';
+  document.getElementById('infoReportFreq').textContent =
+    t.reportFrequency ? (t.reportFrequency.charAt(0).toUpperCase() + t.reportFrequency.slice(1)) : '—';
+
+  // Pre-fill settings
+  if (t.companyEmail || t.cmaEmail) document.getElementById('s_cmaEmail').value = t.companyEmail || t.cmaEmail;
+  if (t.reportFrequency) document.getElementById('s_reportFreq').value = t.reportFrequency;
+  if (t.autoReportEnabled !== undefined) document.getElementById('s_autoReport').checked = t.autoReportEnabled;
+
+  // Invite code
+  const ic = _inviteCode || t.inviteCode || t.invite_code || '—';
+  document.getElementById('dashInviteCode').textContent = ic;
+  const joinUrl = `${location.origin}/teams?code=${encodeURIComponent(ic)}`;
+  document.getElementById('dashInviteUrl').textContent = joinUrl;
+}
+
+// ─── Load Members ─────────────────────────────────────
+async function loadMembers() {
+  if (!_teamId) return;
+  const { ok, data } = await apiFetch('GET', `/api/teams/${_teamId}/results`, null);
+  if (ok) {
+    _membersData = data.members || data.results || data || [];
+    if (!Array.isArray(_membersData)) _membersData = [];
+    updateOverviewStats(_membersData);
+    buildDeptFilter(_membersData);
+    renderMembers();
+  }
+}
+
+function buildDeptFilter(members) {
+  const sel = document.getElementById('filterDept');
+  const depts = [...new Set(members.map(m => m.department || m.dept).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">All Departments</option>';
+  depts.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d;
+    sel.appendChild(o);
+  });
+}
+
+function updateOverviewStats(members) {
+  const total = members.length;
+  const completed = members.filter(m => m.score !== null && m.score !== undefined).length;
+  const compRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const avgScore = completed > 0
+    ? Math.round(members.filter(m => m.score != null).reduce((a, m) => a + (m.score || m.masterScore || 0), 0) / completed)
+    : 0;
+  const depts = new Set(members.map(m => m.department || m.dept).filter(Boolean));
+
+  document.getElementById('statMembers').textContent = total || '—';
+  document.getElementById('statCompletion').textContent = total > 0 ? compRate + '%' : '—';
+  document.getElementById('statAvgScore').textContent = avgScore || '—';
+  document.getElementById('statDepts').textContent = depts.size || '—';
+}
+
+function renderMembers() {
+  const filterDept = document.getElementById('filterDept').value;
+  const members = filterDept
+    ? _membersData.filter(m => (m.department || m.dept) === filterDept)
+    : _membersData;
+
+  const container = document.getElementById('membersContainer');
+  if (!members.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><p>No members yet. Import members above or share your invite code.</p></div>`;
+    return;
+  }
+
+  let html = `<div style="overflow-x:auto;"><table class="members-table">
+    <thead><tr>
+      <th>#</th>
+      <th>Department</th>
+      <th>Role</th>
+      <th>Goals / Focus</th>
+      <th>Score</th>
+      <th>Status</th>
+    </tr></thead><tbody>`;
+
+  members.forEach((m, i) => {
+    const num = m.memberNumber || (i + 1);
+    const dept = m.department || m.dept || '—';
+    const role = m.roleTitle || m.role || '—';
+    const goals = m.goals || m.currentFocus || m.endYearGoals || '—';
+    const score = m.score || m.masterScore;
+    const scoreHtml = score != null
+      ? `<span class="score-pill ${score >= 75 ? 'high' : score >= 50 ? 'mid' : 'low'}">${score}</span>`
+      : '<span style="color:#52525b;font-size:0.75rem;">Pending</span>';
+    const status = m.completedAt || m.completed_at || (score != null)
+      ? '<span style="color:#22c55e;font-size:0.75rem;">✓ Done</span>'
+      : '<span style="color:#52525b;font-size:0.75rem;">Pending</span>';
+
+    html += `<tr>
+      <td><span class="member-num">#${num}</span></td>
+      <td><span class="dept-tag">${dept}</span></td>
+      <td style="color:#a1a1aa;">${role}</td>
+      <td style="color:#a1a1aa;max-width:180px;font-size:0.78rem;">${goals.length > 60 ? goals.slice(0,60)+'…' : goals}</td>
+      <td>${scoreHtml}</td>
+      <td>${status}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
+}
+
+// ─── CSV Preview ──────────────────────────────────────
+function previewCSV() {
+  const raw = document.getElementById('csvInput').value.trim();
+  if (!raw) return;
+  const lines = raw.split('\n').filter(l => l.trim());
+  const preview = document.getElementById('csvPreview');
+  preview.textContent = `Detected ${lines.length} row(s):\n\n` + lines.slice(0,5).map((l,i) => `Row ${i+1}: ${l}`).join('\n') + (lines.length > 5 ? `\n…and ${lines.length-5} more` : '');
+  preview.style.display = 'block';
+}
+
+// ─── Bulk Import ──────────────────────────────────────
+async function importMembers() {
+  hideAlert('importSuccess'); hideAlert('importError');
+  if (!_teamId) { showAlert('importError', 'No team loaded.'); return; }
+  const raw = document.getElementById('csvInput').value.trim();
+  if (!raw) { showAlert('importError', 'Please paste CSV data first.'); return; }
+
+  const lines = raw.split('\n').filter(l => l.trim());
+  const headerRe = /email|department|dept|role|name/i;
+  const rows = headerRe.test(lines[0]) ? lines.slice(1) : lines;
+
+  const members = rows.map(line => {
+    const parts = line.split(',').map(s => s.trim());
+    return {
+      email: parts[0] || '',
+      department: parts[1] || '',
+      roleTitle: parts[2] || '',
+      goals: parts[3] || '',
+      customCode: parts[4] || ''
+    };
+  }).filter(m => m.email && m.email.includes('@'));
+
+  if (!members.length) { showAlert('importError', 'No valid email rows found. Format: email, department, role, goals'); return; }
+
+  setLoading('importBtn', true, 'Import Members');
+  const { ok, data } = await apiFetch('POST', `/api/teams/${_teamId}/import`, { members });
+  setLoading('importBtn', false, 'Import Members');
+
+  if (ok) {
+    const count = data.imported || data.count || members.length;
+    showAlert('importSuccess', `✓ Successfully imported ${count} member(s).`);
+    document.getElementById('csvInput').value = '';
+    document.getElementById('csvPreview').style.display = 'none';
+    await loadMembers();
+  } else {
+    showAlert('importError', data.error || data.message || 'Import failed. Please check your CSV format and try again.');
+  }
+}
+
+// ─── Generate Report ──────────────────────────────────
+async function generateReport() {
+  hideAlert('reportSuccess'); hideAlert('reportError'); hideAlert('reportInfo');
+  if (!_teamId) { showAlert('reportError', 'No team loaded.'); return; }
+
+  setLoading('genReportBtn', true, 'Generate Report');
+  const { ok, data } = await apiFetch('GET', `/api/teams/${_teamId}/report`, null);
+  setLoading('genReportBtn', false, 'Generate Report');
+
+  if (ok && data) {
+    renderReport(data);
+    showAlert('reportSuccess', '✓ Report generated successfully.');
+    document.getElementById('reportDisplay').style.display = 'block';
+    document.getElementById('reportDisplay').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    const fallback = !data || Object.keys(data).length === 0;
+    if (fallback && _membersData.length === 0) {
+      showAlert('reportInfo', 'No assessment data yet. Import members and have them complete the assessment first.');
+    } else {
+      showAlert('reportError', data.error || data.message || 'Could not generate report.');
+    }
+  }
+}
+
+function renderReport(report) {
+  const pillars = report.pillars || report.pillarAverages || report.pillar_averages || {};
+  const distribution = report.distribution || report.scoreDistribution || {};
+  const departments = report.departments || report.deptBreakdown || {};
+  const recommendations = report.recommendations || [];
+
+  // Pillar bars
+  const PILLAR_NAMES = { T: 'Time', P: 'People', I: 'Influence', N: 'Numbers', K: 'Knowledge' };
+  const barsEl = document.getElementById('pillarBars');
+  barsEl.innerHTML = '';
+  Object.entries(pillars).forEach(([key, val]) => {
+    const name = PILLAR_NAMES[key] || key;
+    const pct = Math.min(100, Math.round(val));
+    barsEl.innerHTML += `
+      <div class="pillar-row">
+        <span class="pillar-name">${name}</span>
+        <div class="pillar-track"><div class="pillar-fill" style="width:${pct}%"></div></div>
+        <span class="pillar-score">${pct}</span>
+      </div>`;
+  });
+
+  // Distribution
+  const distEl = document.getElementById('distRow');
+  distEl.innerHTML = '';
+  const distMap = {
+    crisis: ['badge-crisis', 'Crisis'],
+    survival: ['badge-survival', 'Survival'],
+    growth: ['badge-growth', 'Growth'],
+    momentum: ['badge-momentum', 'Momentum'],
+    mastery: ['badge-mastery', 'Mastery']
+  };
+  Object.entries(distMap).forEach(([key, [cls, label]]) => {
+    const count = distribution[key] || 0;
+    if (count > 0) {
+      distEl.innerHTML += `<span class="dist-badge ${cls}">${label}: ${count}</span>`;
+    }
+  });
+  if (!distEl.innerHTML) distEl.innerHTML = '<span style="color:#52525b;font-size:0.8rem;">No distribution data available</span>';
+
+  // Department breakdown
+  const deptEl = document.getElementById('deptBreakdown');
+  deptEl.innerHTML = '';
+  const deptEntries = Object.entries(departments);
+  if (deptEntries.length) {
+    deptEntries.forEach(([dept, info]) => {
+      const avgScore = typeof info === 'object' ? (info.avgScore || info.average || info.avg || '—') : info;
+      const count = typeof info === 'object' ? (info.count || info.members || '') : '';
+      deptEl.innerHTML += `
+        <div class="dept-card">
+          <div class="dept-name">${dept}</div>
+          <div class="dept-score">${Math.round(avgScore) || '—'}</div>
+          <div class="dept-stat">avg score${count ? ` · ${count} members` : ''}</div>
+        </div>`;
+    });
+  } else {
+    deptEl.innerHTML = '<p style="font-size:0.85rem;color:#52525b;">No department data available.</p>';
+  }
+
+  // Recommendations
+  const recEl = document.getElementById('recommendations');
+  recEl.innerHTML = '';
+  if (recommendations.length) {
+    recommendations.forEach((rec, i) => {
+      const title = typeof rec === 'string' ? rec : (rec.title || rec.heading || rec.pillar || `Recommendation ${i+1}`);
+      const text = typeof rec === 'string' ? '' : (rec.text || rec.description || rec.recommendation || '');
+      recEl.innerHTML += `
+        <div class="rec-item">
+          <div class="rec-icon">${i+1}</div>
+          <div class="rec-body">
+            <div class="rec-title">${title}</div>
+            ${text ? `<div class="rec-text">${text}</div>` : ''}
+          </div>
+        </div>`;
+    });
+  } else {
+    recEl.innerHTML = '<p style="font-size:0.85rem;color:#52525b;">Recommendations will appear here once enough members complete the assessment.</p>';
+  }
+}
+
+// ─── Send Report ──────────────────────────────────────
+async function sendReport() {
+  hideAlert('reportSuccess'); hideAlert('reportError'); hideAlert('reportInfo');
+  if (!_teamId) { showAlert('reportError', 'No team loaded.'); return; }
+
+  setLoading('sendReportBtn', true, 'Send Report to CMA');
+  const { ok, data } = await apiFetch('POST', `/api/teams/${_teamId}/send-report`, {});
+  setLoading('sendReportBtn', false, 'Send Report to CMA');
+
+  if (ok) {
+    showAlert('reportSuccess', `✓ Report sent to ${_teamData?.companyEmail || _teamData?.cmaEmail || 'the CMA email'} successfully.`);
+  } else {
+    showAlert('reportError', data.error || data.message || 'Failed to send report.');
+  }
+}
+
+// ─── Save Settings ────────────────────────────────────
+async function saveSettings() {
+  hideAlert('settingsSuccess'); hideAlert('settingsError');
+  if (!_teamId) { showAlert('settingsError', 'No team loaded.'); return; }
+
+  const payload = {
+    companyEmail: document.getElementById('s_cmaEmail').value.trim(),
+    reportFrequency: document.getElementById('s_reportFreq').value,
+    autoReportEnabled: document.getElementById('s_autoReport').checked
+  };
+
+  const { ok, data } = await apiFetch('POST', `/api/teams/${_teamId}/settings`, payload);
+  if (ok) {
+    if (_teamData) Object.assign(_teamData, payload);
+    showAlert('settingsSuccess', '✓ Settings saved.');
+    document.getElementById('infoCmaEmail').textContent = payload.companyEmail || '—';
+    document.getElementById('infoReportFreq').textContent =
+      payload.reportFrequency.charAt(0).toUpperCase() + payload.reportFrequency.slice(1);
+  } else {
+    showAlert('settingsError', data.error || data.message || 'Failed to save settings.');
+  }
+}
+
+// ─── Refresh Dashboard ────────────────────────────────
+async function refreshDashboard() {
+  await loadMembers();
+}
+
+// ─── Exit Dashboard ───────────────────────────────────
+function exitDashboard() {
+  document.getElementById('dashboardSection').style.display = 'none';
+  document.getElementById('mainPage').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+// ─── Copy Invite URLs ─────────────────────────────────
+function copyInviteUrl() {
+  const url = document.getElementById('inviteCodeUrl').textContent;
+  copyText(url, event.target);
+}
+function copyDashInviteUrl() {
+  const url = document.getElementById('dashInviteUrl').textContent;
+  copyText(url, event.target);
+}
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  });
+}
+
+// ─── Keyboard shortcuts ───────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const active = document.querySelector('.mode-tab.active');
+    if (active && active.id === 'tabCreate') {
+      const focused = document.activeElement;
+      if (focused && (focused.tagName === 'INPUT' || focused.tagName === 'SELECT')) createTeam();
+    }
+  }
+});
+</script>
+
+</body>
+</html>
