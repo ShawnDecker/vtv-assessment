@@ -1057,6 +1057,7 @@
     <div class="notfound-card">
       <div class="notfound-icon">🔍</div>
       <h2>No account found</h2>
+      <p id="debugError" style="font-size:11px;color:#ef4444;margin-top:8px"></p>
       <p>We don't have an account with that email yet. Take the free assessment to get started, or view our membership options.</p>
       <div class="notfound-actions">
         <a href="/" class="btn btn-gold btn-block">Take the Assessment</a>
@@ -1256,10 +1257,27 @@
     showState('stateLoading');
 
     try {
-      const res = await fetch('/api/member?email=' + encodeURIComponent(email));
-      const data = await res.json();
+      const apiUrl = '/api/member?email=' + encodeURIComponent(email);
+      console.log('Fetching:', apiUrl);
+      const res = await fetch(apiUrl);
+      console.log('Response status:', res.status);
+      const text = await res.text();
+      console.log('Response body:', text.substring(0, 200));
+      
+      let data;
+      try { data = JSON.parse(text); } catch(pe) {
+        console.error('JSON parse error:', pe, 'Body:', text.substring(0, 100));
+        document.getElementById('debugError').textContent = 'Parse error: ' + text.substring(0, 80);
+        showState('stateNotFound');
+        btn.disabled = false;
+        btn.textContent = 'Access My Dashboard';
+        return;
+      }
 
-      if (!res.ok || !data || data.found === false) {
+      console.log('Data found:', data.found, 'Contact:', data.contact?.firstName);
+
+      if (!data || data.found === false) {
+        document.getElementById('debugError').textContent = 'API returned found=false. Status: ' + res.status;
         showState('stateNotFound');
         btn.disabled = false;
         btn.textContent = 'Access My Dashboard';
@@ -1269,17 +1287,21 @@
       localStorage.setItem('vtv_member_email', email);
       memberData = data;
 
-      // Fetch teams and affiliate in parallel
+      // Fetch teams and affiliate in parallel (errors won't block dashboard)
       const contactId = data.contact?.id || data.id || '';
-      await Promise.all([
-        loadTeams(contactId),
-        loadAffiliate(email)
-      ]);
+      try {
+        await Promise.all([
+          loadTeams(contactId),
+          loadAffiliate(email)
+        ]);
+      } catch(e) { console.warn('Teams/affiliate load non-fatal:', e); }
 
       renderDashboard();
       showState('stateDashboard');
     } catch (err) {
       console.error('Member fetch error:', err);
+      var errDiv = document.getElementById('debugError');
+      if (errDiv) errDiv.textContent = 'Error: ' + (err.message || JSON.stringify(err));
       showState('stateNotFound');
     } finally {
       btn.disabled = false;
