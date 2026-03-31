@@ -207,6 +207,162 @@ module.exports = async (req, res) => {
       });
     }
 
+    // GET /api/member?email=xxx — Member portal: profile, tier, assessments, teams
+    if (req.method === 'GET' && url.startsWith('/member') && !url.startsWith('/member/portal')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = (params.get('email') || '').toLowerCase().trim();
+      if (!email) return res.status(400).json({ error: 'Email required' });
+
+      const contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (contactRows.length === 0) return res.json({ found: false });
+
+      const contact = contactRows[0];
+
+      // Get user profile (membership tier)
+      let profile = { membership_tier: 'free' };
+      try {
+        const profileRows = await sql`SELECT * FROM user_profiles WHERE contact_id = ${contact.id} LIMIT 1`;
+        if (profileRows.length > 0) profile = profileRows[0];
+      } catch (e) { /* user_profiles table may not exist */ }
+
+      // Get assessments
+      const assessments = await sql`SELECT id, completed_at, mode, master_score, score_range, weakest_pillar, depth, focus_pillar FROM assessments WHERE contact_id = ${contact.id} ORDER BY completed_at DESC`;
+
+      // Get teams
+      let teams = [];
+      try {
+        teams = await sql`
+          SELECT DISTINCT t.*, (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = t.id) as member_count
+          FROM teams t
+          LEFT JOIN team_members tm ON tm.team_id = t.id
+          WHERE t.created_by = ${contact.id} OR tm.contact_id = ${contact.id}
+          ORDER BY t.created_at DESC
+        `;
+      } catch (e) { /* teams/team_members may not exist */ }
+
+      return res.json({
+        found: true,
+        contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name, email: contact.email, phone: contact.phone },
+        membership: {
+          tier: profile.membership_tier || 'free',
+          stripeCustomerId: profile.stripe_customer_id || null,
+          stripeSubscriptionId: profile.stripe_subscription_id || null,
+          partnerId: profile.partner_id || null,
+        },
+        assessments: assessments.map(a => ({
+          id: a.id, completedAt: a.completed_at, mode: a.mode,
+          masterScore: a.master_score, scoreRange: a.score_range,
+          weakestPillar: a.weakest_pillar, depth: a.depth, focusPillar: a.focus_pillar
+        })),
+        teams: teams.map(t => ({
+          id: t.id, name: t.name, mode: t.mode, inviteCode: t.invite_code,
+          companyName: t.company_name, companyDomain: t.company_domain,
+          companyEmail: t.company_email, memberCount: parseInt(t.member_count || 0),
+          isCreator: t.created_by === contact.id
+        })),
+      });
+    }
+
+    // POST /api/member/portal — Create Stripe billing portal session
+    if (req.method === 'POST' && url === '/member/portal') {
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      if (!email) return res.status(400).json({ error: 'Email required' });
+
+      try {
+        const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+        if (contactRows.length === 0) return res.status(404).json({ error: 'Contact not found' });
+
+        const profileRows = await sql`SELECT stripe_customer_id FROM user_profiles WHERE contact_id = ${contactRows[0].id} LIMIT 1`;
+        if (profileRows.length === 0 || !profileRows[0].stripe_customer_id) {
+          return res.status(400).json({ error: 'No active subscription found. Subscribe first at /pricing' });
+        }
+
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        const session = await stripe.billingPortal.sessions.create({
+          customer: profileRows[0].stripe_customer_id,
+          return_url: 'https://assessment.valuetovictory.com/member',
+        });
+        return res.json({ url: session.url });
+      } catch (e) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
+    // POST /api/affiliate/apply — Create partner profile
+    if (req.method === 'POST' && url === '/affiliate/apply') {
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      const name = (b.name || '').trim();
+      if (!email) return res.status(400).json({ error: 'Email required' });
+
+      const contactRows = await sql`SELECT id, first_name, last_name FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (contactRows.length === 0) return res.status(404).json({ error: 'Take the assessment first to create your account' });
+
+      const code = (contactRows[0].first_name || 'partner').toLowerCase().replace(/[^a-z0-9]/g, '') + contactRows[0].id;
+      try {
+        await sql`INSERT INTO partner_profiles (contact_id, referral_code, status, created_at)
+          VALUES (${contactRows[0].id}, ${code}, 'active', NOW())
+          ON CONFLICT (contact_id) DO NOTHING`;
+        return res.json({ success: true, referral_code: code, referral_link: 'https://assessment.valuetovictory.com/?ref=' + code });
+      } catch (e) {
+        // Table may not exist
+        return res.json({ success: true, referral_code: code, referral_link: 'https://assessment.valuetovictory.com/?ref=' + code, note: 'Partner profile pending setup' });
+      }
+    }
+
+    // GET /api/affiliate/check?email=xxx — Check if user is a partner
+    if (req.method === 'GET' && url.startsWith('/affiliate/check')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = (params.get('email') || '').toLowerCase().trim();
+      if (!email) return res.json({ is_partner: false });
+
+      const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (contactRows.length === 0) return res.json({ is_partner: false });
+
+      try {
+        const partner = await sql`SELECT referral_code, status FROM partner_profiles WHERE contact_id = ${contactRows[0].id} AND status = 'active' LIMIT 1`;
+        if (partner.length > 0) {
+          return res.json({ is_partner: true, referral_code: partner[0].referral_code });
+        }
+      } catch (e) { /* table may not exist */ }
+      return res.json({ is_partner: false });
+    }
+
+    // GET /api/affiliate/dashboard?email=xxx — Partner dashboard data
+    if (req.method === 'GET' && url.startsWith('/affiliate/dashboard')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = (params.get('email') || '').toLowerCase().trim();
+      if (!email) return res.status(400).json({ error: 'Email required' });
+
+      const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (contactRows.length === 0) return res.json({ error: 'Not found' });
+
+      try {
+        const partner = await sql`SELECT * FROM partner_profiles WHERE contact_id = ${contactRows[0].id} LIMIT 1`;
+        if (partner.length === 0) return res.json({ is_partner: false });
+
+        const referrals = await sql`SELECT * FROM referrals WHERE partner_id = ${partner[0].id} ORDER BY created_at DESC LIMIT 50`;
+        const commissions = await sql`SELECT * FROM commissions WHERE partner_id = ${partner[0].id} ORDER BY created_at DESC LIMIT 50`;
+
+        const totalEarned = commissions.reduce((s, c) => s + (c.amount_cents || 0), 0);
+        const pending = commissions.filter(c => c.status === 'pending').reduce((s, c) => s + (c.amount_cents || 0), 0);
+        const paid = commissions.filter(c => c.status === 'paid').reduce((s, c) => s + (c.amount_cents || 0), 0);
+        const activeRefs = referrals.filter(r => r.status === 'active').length;
+
+        return res.json({
+          is_partner: true,
+          referral_code: partner[0].referral_code,
+          stats: { totalReferrals: referrals.length, activeReferrals: activeRefs, totalEarnedCents: totalEarned, pendingCents: pending, paidCents: paid },
+          royaltyTier: activeRefs >= 250 ? 'platinum' : activeRefs >= 100 ? 'gold' : activeRefs >= 50 ? 'silver' : activeRefs >= 25 ? 'bronze' : 'none',
+          recentReferrals: referrals.slice(0, 10).map(r => ({ id: r.id, status: r.status, createdAt: r.created_at, tier: r.referred_tier })),
+        });
+      } catch (e) {
+        // Tables may not exist yet
+        return res.json({ is_partner: false, note: 'Partner system initializing' });
+      }
+    }
+
     // GET /api/user/history?email=xxx
     if (req.method === 'GET' && url.startsWith('/user/history')) {
       const params = new URL('http://x' + req.url).searchParams;
