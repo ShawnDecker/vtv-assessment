@@ -605,6 +605,32 @@ Don't guess. Run the system.
       return res.json({ ...rows[0], autoImported, domainConfigured: !!companyDomain });
     }
 
+    // GET /api/teams?createdBy=contactId&email=xxx — Get teams for a user (by creator or domain match)
+    if (req.method === 'GET' && (url === '/teams' || url.startsWith('/teams?'))) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const createdBy = params.get('createdBy');
+      const email = params.get('email');
+      let teams = [];
+      if (createdBy) {
+        teams = await sql`SELECT t.*, (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = t.id) as member_count FROM teams t WHERE t.created_by = ${parseInt(createdBy)} ORDER BY t.created_at DESC`;
+      } else if (email) {
+        // Find teams where this email's contact is a member or creator
+        const domain = email.split('@')[1];
+        const contact = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email.toLowerCase()} LIMIT 1`;
+        if (contact.length > 0) {
+          teams = await sql`
+            SELECT DISTINCT t.*, (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = t.id) as member_count
+            FROM teams t
+            LEFT JOIN team_members tm ON tm.team_id = t.id
+            WHERE t.created_by = ${contact[0].id}
+            OR tm.contact_id = ${contact[0].id}
+            ORDER BY t.created_at DESC
+          `;
+        }
+      }
+      return res.json(teams);
+    }
+
     // GET /api/teams/invite/:code
     if (req.method === 'GET' && url.startsWith('/teams/invite/')) {
       const code = url.split('/teams/invite/')[1];

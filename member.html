@@ -1,0 +1,2238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+  <title>Member Portal — The Value Engine</title>
+  <meta name="description" content="Access your Value to Victory member dashboard, assessment history, team tools, and partner earnings." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-TT6PYLPP31');
+    gtag('config', 'G-MJ1SXZJ399');
+  </script>
+
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Satoshi', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ===== LAYOUT ===== */
+    .page-wrap { max-width: 900px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+    /* ===== NAV ===== */
+    .top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #27272a;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      text-decoration: none;
+      color: #fff;
+    }
+    .logo-box {
+      width: 32px;
+      height: 32px;
+      background: #D4A847;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1rem;
+      color: #0a0a0a;
+      flex-shrink: 0;
+    }
+    .logo-text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .nav-back {
+      color: #a1a1aa;
+      text-decoration: none;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: #fff; }
+
+    /* ===== STATES ===== */
+    .state { display: none; }
+    .state.active { display: block; }
+
+    /* ===== EMAIL ENTRY STATE ===== */
+    .entry-wrap {
+      min-height: calc(100vh - 70px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.25rem;
+    }
+    .entry-card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 440px;
+    }
+    .brand-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #D4A847;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .entry-card h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+    .entry-card .sub {
+      color: #a1a1aa;
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .field-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #d4d4d8;
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    input[type="email"], input[type="text"], textarea, select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.5rem;
+      color: #fff;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="email"]:focus,
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus { border-color: #D4A847; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary {
+      background: #3b82f6;
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { background: #2563eb; }
+    .btn-gold {
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #0a0a0a;
+    }
+    .btn-gold:hover:not(:disabled) { background: linear-gradient(135deg, #e0b857, #c4a03c); }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid #27272a;
+      color: #a1a1aa;
+    }
+    .btn-ghost:hover:not(:disabled) { border-color: #52525b; color: #fff; }
+    .btn-sm { padding: 0.4rem 0.875rem; font-size: 0.8rem; }
+    .btn-danger {
+      background: #7f1d1d;
+      color: #fca5a5;
+    }
+    .btn-danger:hover:not(:disabled) { background: #991b1b; }
+    .btn-block { width: 100%; }
+    .btn-green {
+      background: #166534;
+      color: #86efac;
+    }
+    .btn-green:hover:not(:disabled) { background: #15803d; }
+
+    /* ===== ERROR ===== */
+    .error-msg {
+      color: #ef4444;
+      font-size: 0.825rem;
+      margin-top: 0.5rem;
+    }
+
+    /* ===== NOT FOUND STATE ===== */
+    .notfound-wrap {
+      min-height: calc(100vh - 70px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.25rem;
+    }
+    .notfound-card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+    }
+    .notfound-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    .notfound-card h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .notfound-card p {
+      color: #a1a1aa;
+      font-size: 0.9rem;
+      margin-bottom: 1.75rem;
+    }
+    .notfound-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .try-again-link {
+      color: #a1a1aa;
+      font-size: 0.8rem;
+      margin-top: 1rem;
+      display: block;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .try-again-link:hover { color: #fff; }
+
+    /* ===== LOADING SPINNER ===== */
+    .spinner-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #27272a;
+      border-top-color: #D4A847;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== DASHBOARD HEADER ===== */
+    .dash-header {
+      padding: 2rem 0 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .dash-header h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+    }
+    .dash-header h1 span { color: #D4A847; }
+    .tier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.875rem;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-top: 0.35rem;
+    }
+    .badge-free { background: #3f3f46; color: #a1a1aa; }
+    .badge-victorypath { background: #1e3a5f; color: #93c5fd; border: 1px solid #3b82f6; }
+    .badge-builder { background: #292007; color: #D4A847; border: 1px solid #D4A847; }
+    .badge-vip {
+      background: #292007;
+      color: #D4A847;
+      border: 1px solid #D4A847;
+      animation: vip-glow 2.5s ease-in-out infinite;
+    }
+    @keyframes vip-glow {
+      0%, 100% { box-shadow: 0 0 8px rgba(212,168,71,0.4); }
+      50% { box-shadow: 0 0 20px rgba(212,168,71,0.8); }
+    }
+
+    /* ===== SECTION ===== */
+    .section {
+      margin-bottom: 2rem;
+    }
+    .section-title {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #71717a;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    /* ===== CARD ===== */
+    .card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+    }
+    .card + .card { margin-top: 1rem; }
+    .card-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    /* ===== MEMBERSHIP CARD ===== */
+    .membership-card {
+      background: linear-gradient(135deg, #18181b 0%, #1a1a1f 100%);
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 1.75rem;
+    }
+    .membership-card.active-sub { border-color: rgba(59,130,246,0.4); }
+    .membership-card.vip-sub {
+      border-color: rgba(212,168,71,0.5);
+      background: linear-gradient(135deg, #1c1917 0%, #18181b 50%, #1a1710 100%);
+    }
+    .tier-name {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+    .tier-price {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #D4A847;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .tier-price span { font-size: 0.9rem; color: #71717a; font-weight: 400; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.625rem;
+      border-radius: 2rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-active { background: #14532d; color: #86efac; }
+    .status-inactive { background: #431407; color: #fdba74; }
+    .status-free { background: #3f3f46; color: #a1a1aa; }
+
+    /* ===== ASSESSMENT HISTORY ===== */
+    .assessment-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .assessment-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.625rem;
+      padding: 1rem 1.25rem;
+      flex-wrap: wrap;
+    }
+    .score-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      border: 3px solid;
+    }
+    .score-low { border-color: #ef4444; color: #ef4444; }
+    .score-med { border-color: #f97316; color: #f97316; }
+    .score-high { border-color: #22c55e; color: #22c55e; }
+    .score-gold { border-color: #D4A847; color: #D4A847; }
+    .assessment-meta { flex: 1; min-width: 0; }
+    .assessment-date { font-size: 0.8rem; color: #71717a; }
+    .assessment-range {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 2rem;
+      display: inline-block;
+      margin-top: 0.2rem;
+    }
+    .range-low { background: #431407; color: #fdba74; }
+    .range-med { background: #422006; color: #fb923c; }
+    .range-high { background: #14532d; color: #86efac; }
+    .range-excellent { background: #292007; color: #D4A847; }
+
+    /* ===== QUICK LINKS GRID ===== */
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+    .quick-link {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 1.125rem 1rem;
+      text-decoration: none;
+      color: #fff;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      position: relative;
+    }
+    .quick-link:not(.locked):hover {
+      border-color: #52525b;
+      background: #1c1c1f;
+    }
+    .quick-link.locked {
+      opacity: 0.55;
+      cursor: default;
+      pointer-events: none;
+    }
+    .quick-link-icon { font-size: 1.4rem; }
+    .quick-link-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .quick-link-desc {
+      font-size: 0.72rem;
+      color: #71717a;
+    }
+    .lock-badge {
+      position: absolute;
+      top: 0.625rem;
+      right: 0.625rem;
+      font-size: 0.65rem;
+      background: #27272a;
+      border-radius: 2rem;
+      padding: 0.15rem 0.4rem;
+      color: #71717a;
+    }
+
+    /* ===== TEAM ADMIN ===== */
+    .team-tabs {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .team-tab {
+      padding: 0.4rem 0.875rem;
+      border-radius: 2rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: 1px solid #27272a;
+      background: transparent;
+      color: #a1a1aa;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .team-tab.active {
+      background: #1e3a5f;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+    .team-tab:hover:not(.active) { border-color: #52525b; color: #fff; }
+    .team-panel { display: none; }
+    .team-panel.active { display: block; }
+
+    .sub-tabs {
+      display: flex;
+      gap: 0.375rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid #27272a;
+      padding-bottom: 0.75rem;
+    }
+    .sub-tab {
+      padding: 0.35rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #71717a;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .sub-tab.active {
+      background: #27272a;
+      color: #fff;
+    }
+    .sub-tab:hover:not(.active) { color: #a1a1aa; }
+    .sub-panel { display: none; }
+    .sub-panel.active { display: block; }
+
+    /* Team info grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+    .info-item {
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.5rem;
+      padding: 0.875rem 1rem;
+    }
+    .info-label {
+      font-size: 0.7rem;
+      color: #71717a;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.25rem;
+    }
+    .info-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    /* Invite code */
+    .invite-code-box {
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .invite-code-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #71717a;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .invite-code {
+      font-size: 2.25rem;
+      font-weight: 900;
+      letter-spacing: 0.2em;
+      color: #D4A847;
+      font-variant-numeric: tabular-nums;
+    }
+    .invite-url {
+      font-size: 0.78rem;
+      color: #71717a;
+      margin-top: 0.5rem;
+      word-break: break-all;
+    }
+
+    /* Members table */
+    .privacy-notice {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #1a1a0a;
+      border: 1px solid rgba(212,168,71,0.3);
+      border-radius: 0.5rem;
+      padding: 0.625rem 0.875rem;
+      font-size: 0.75rem;
+      color: #a1a1aa;
+      margin-bottom: 1rem;
+    }
+    .privacy-notice-icon { color: #D4A847; flex-shrink: 0; }
+    .members-table-wrap { overflow-x: auto; }
+    .members-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    .members-table th {
+      text-align: left;
+      padding: 0.625rem 0.75rem;
+      color: #71717a;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-bottom: 1px solid #27272a;
+    }
+    .members-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid #1e1e21;
+      color: #d4d4d8;
+    }
+    .members-table tr:last-child td { border-bottom: none; }
+    .members-table tr:hover td { background: #1a1a1d; }
+    .complete-dot { color: #22c55e; }
+    .pending-dot { color: #71717a; }
+
+    /* CSV bulk import */
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .code-hint {
+      font-size: 0.72rem;
+      color: #71717a;
+      margin-top: 0.35rem;
+      font-family: monospace;
+    }
+
+    /* Settings form */
+    .settings-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .settings-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .form-field { display: flex; flex-direction: column; gap: 0.3rem; }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.5rem;
+    }
+    .toggle-label { font-size: 0.85rem; color: #d4d4d8; }
+    .toggle-sub { font-size: 0.72rem; color: #71717a; margin-top: 0.1rem; }
+    .toggle {
+      position: relative;
+      width: 42px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #27272a;
+      border-radius: 2rem;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    .toggle input:checked + .toggle-slider { background: #3b82f6; }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    /* Report section */
+    .report-box {
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.625rem;
+      padding: 1.25rem;
+      margin-top: 1rem;
+      white-space: pre-wrap;
+      font-size: 0.82rem;
+      color: #a1a1aa;
+      max-height: 320px;
+      overflow-y: auto;
+      font-family: monospace;
+      display: none;
+    }
+    .pillar-bar-wrap { margin: 0.35rem 0; }
+    .pillar-name {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #a1a1aa;
+      margin-bottom: 0.25rem;
+    }
+    .pillar-bar {
+      height: 6px;
+      background: #27272a;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .pillar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #D4A847);
+      border-radius: 3px;
+      transition: width 0.8s ease;
+    }
+
+    /* ===== AFFILIATE / PARTNER ===== */
+    .earn-card {
+      background: linear-gradient(135deg, #0f1f0f 0%, #18181b 100%);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      text-align: center;
+    }
+    .earn-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .earn-card h3 { font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .earn-card p { color: #a1a1aa; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .earn-features {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.625rem;
+      margin-bottom: 1.5rem;
+    }
+    .earn-feature {
+      background: #1a2a1a;
+      border: 1px solid rgba(34,197,94,0.2);
+      border-radius: 2rem;
+      padding: 0.3rem 0.875rem;
+      font-size: 0.75rem;
+      color: #86efac;
+    }
+
+    .ref-link-box {
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.625rem;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .ref-link-url {
+      flex: 1;
+      font-size: 0.82rem;
+      color: #D4A847;
+      word-break: break-all;
+      font-weight: 600;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .stat-card {
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.625rem;
+      padding: 1rem;
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #fff;
+    }
+    .stat-lbl {
+      font-size: 0.7rem;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 0.2rem;
+    }
+
+    .earnings-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .earning-item {
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.625rem;
+      padding: 1rem;
+    }
+    .earning-amt {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #22c55e;
+    }
+    .earning-label { font-size: 0.7rem; color: #71717a; margin-top: 0.2rem; }
+
+    .royalty-progress {
+      margin-bottom: 1.25rem;
+    }
+    .royalty-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .royalty-label { font-size: 0.8rem; font-weight: 700; }
+    .royalty-count { font-size: 0.8rem; color: #a1a1aa; }
+    .royalty-bar {
+      height: 10px;
+      background: #27272a;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+    .royalty-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #92400e, #D4A847);
+      border-radius: 5px;
+      transition: width 0.8s ease;
+    }
+    .royalty-tiers {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      color: #52525b;
+    }
+    .royalty-tiers span.active-tier { color: #D4A847; font-weight: 700; }
+
+    .comm-rates-card {
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.625rem;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .comm-rates-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #71717a;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .rate-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid #1e1e21;
+      font-size: 0.8rem;
+    }
+    .rate-row:last-child { border-bottom: none; }
+    .rate-tier-name { color: #a1a1aa; }
+    .rate-amount { color: #22c55e; font-weight: 700; }
+
+    .referrals-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .referral-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.5rem;
+      font-size: 0.82rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .referral-id { color: #71717a; font-size: 0.72rem; font-family: monospace; }
+    .referral-tier {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 2rem;
+      font-weight: 600;
+    }
+    .ref-active { background: #14532d; color: #86efac; }
+    .ref-pending { background: #1e3a5f; color: #93c5fd; }
+    .ref-inactive { background: #3f3f46; color: #a1a1aa; }
+
+    /* ===== BOTTOM PILLS ===== */
+    .bottom-pills {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 24px 0;
+    }
+
+    /* ===== TOASTS ===== */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .toast {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      font-size: 0.85rem;
+      color: #fff;
+      animation: toast-in 0.3s ease;
+      max-width: 300px;
+    }
+    .toast.success { border-color: #22c55e; }
+    .toast.error { border-color: #ef4444; }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== CREATE TEAM FORM ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      display: none;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 2rem;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .modal-title { font-size: 1.1rem; font-weight: 800; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: #71717a;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      line-height: 1;
+    }
+    .modal-close:hover { color: #fff; }
+    .modal-body { display: flex; flex-direction: column; gap: 1rem; }
+
+    /* ===== UTILITIES ===== */
+    .hidden { display: none !important; }
+    .muted { color: #a1a1aa; }
+    .gold { color: #D4A847; }
+    .green { color: #22c55e; }
+    .blue { color: #3b82f6; }
+    .flex { display: flex; }
+    .flex-between { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+    .gap-sm { gap: 0.5rem; }
+    .gap-md { gap: 0.75rem; }
+    .mt-sm { margin-top: 0.5rem; }
+    .mt-md { margin-top: 1rem; }
+    .mt-lg { margin-top: 1.5rem; }
+    .mb-sm { margin-bottom: 0.5rem; }
+    .mb-md { margin-bottom: 1rem; }
+    .text-sm { font-size: 0.82rem; }
+    .text-xs { font-size: 0.72rem; }
+    .fw-bold { font-weight: 700; }
+    .divider { border: none; border-top: 1px solid #27272a; margin: 1.25rem 0; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 680px) {
+      .links-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .earnings-grid { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+      .settings-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 420px) {
+      .links-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .top-nav { padding: 1rem; }
+      .entry-card { padding: 1.75rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== NAV ===== -->
+<nav class="top-nav">
+  <a href="/" class="nav-logo">
+    <div class="logo-box">V</div>
+    <span class="logo-text">Value to Victory</span>
+  </a>
+  <a href="/" class="nav-back">← Back to Assessment</a>
+</nav>
+
+<!-- ===== STATE 1: EMAIL ENTRY ===== -->
+<div id="stateEntry" class="state active">
+  <div class="entry-wrap">
+    <div class="entry-card">
+      <p class="brand-label">The Value Engine</p>
+      <h1>Member Access</h1>
+      <p class="sub">Enter your email to access your dashboard, results, and team tools.</p>
+      <div style="margin-bottom:1.25rem">
+        <label class="field-label" for="memberEmail">Email Address</label>
+        <input type="email" id="memberEmail" placeholder="you@example.com" autocomplete="email"
+               onkeydown="if(event.key==='Enter') accessDashboard()" />
+        <div id="emailError" class="error-msg hidden"></div>
+      </div>
+      <button class="btn btn-gold btn-block" id="accessBtn" onclick="accessDashboard()">
+        Access My Dashboard
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATE 2: NOT FOUND ===== -->
+<div id="stateNotFound" class="state">
+  <div class="notfound-wrap">
+    <div class="notfound-card">
+      <div class="notfound-icon">🔍</div>
+      <h2>No account found</h2>
+      <p>We don't have an account with that email yet. Take the free assessment to get started, or view our membership options.</p>
+      <div class="notfound-actions">
+        <a href="/" class="btn btn-gold btn-block">Take the Assessment</a>
+        <a href="/pricing" class="btn btn-ghost btn-block">View Pricing</a>
+      </div>
+      <a class="try-again-link" onclick="backToEntry()">← Try a different email</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATE 3: LOADING ===== -->
+<div id="stateLoading" class="state">
+  <div class="entry-wrap">
+    <div class="spinner-wrap">
+      <div class="spinner"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATE 4: DASHBOARD ===== -->
+<div id="stateDashboard" class="state">
+  <div class="page-wrap">
+
+    <!-- 3a. HEADER -->
+    <div class="dash-header">
+      <div>
+        <h1>Welcome back, <span id="dashFirstName">friend</span></h1>
+        <div id="dashTierBadge" class="tier-badge badge-free mt-sm">Free</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="signOut()">Sign Out</button>
+    </div>
+
+    <!-- 3b. MEMBERSHIP CARD -->
+    <div class="section">
+      <p class="section-title">Membership</p>
+      <div id="membershipCard" class="membership-card">
+        <div class="flex-between" style="margin-bottom:1rem">
+          <div>
+            <div id="mcTierName" class="tier-name">Free</div>
+            <div id="mcTierPrice" class="tier-price">$0 <span>/ month</span></div>
+          </div>
+          <div id="mcStatus" class="status-pill status-free">Free Forever</div>
+        </div>
+        <div id="mcActions"></div>
+      </div>
+    </div>
+
+    <!-- 3c. ASSESSMENT HISTORY -->
+    <div class="section">
+      <p class="section-title">Assessment History</p>
+      <div id="assessmentHistory"></div>
+    </div>
+
+    <!-- 3d. QUICK LINKS -->
+    <div class="section">
+      <p class="section-title">Your Tools</p>
+      <div id="quickLinksGrid" class="links-grid"></div>
+    </div>
+
+    <!-- 3e. TEAM ADMIN -->
+    <div class="section" id="teamSection">
+      <p class="section-title">Team Assessment</p>
+      <div id="teamContent"></div>
+    </div>
+
+    <!-- 3f. PARTNER / AFFILIATE -->
+    <div class="section">
+      <p class="section-title">Partner Program</p>
+      <div id="partnerContent"></div>
+    </div>
+
+    <!-- 3g. BOTTOM PILLS -->
+    <div class="bottom-pills">
+      <a href="/free-book" style="display:flex;align-items:center;gap:8px;background:#18181b;border:1px solid #27272a;border-radius:99px;padding:8px 16px;color:#fff;text-decoration:none;font-size:13px">
+        <span>📗</span><span><strong style="color:#22c55e">Free</strong> Running From Miracles</span>
+      </a>
+      <a href="https://buy.stripe.com/aEUcNY44k3TS6l5dYl" target="_blank" style="display:flex;align-items:center;gap:8px;background:#18181b;border:1px solid #27272a;border-radius:99px;padding:8px 16px;color:#fff;text-decoration:none;font-size:13px">
+        <span>📖</span><span><strong style="color:#D4A847">$17.77</strong> The Lost Art of Value</span>
+      </a>
+    </div>
+
+  </div><!-- /page-wrap -->
+</div><!-- /stateDashboard -->
+
+<!-- ===== CREATE TEAM MODAL ===== -->
+<div class="modal-overlay" id="createTeamModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Create a Team</h3>
+      <button class="modal-close" onclick="closeCreateTeam()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="field-label" for="newTeamName">Team / Organization Name</label>
+        <input type="text" id="newTeamName" placeholder="e.g. Acme Corp Leadership Team" />
+      </div>
+      <div class="form-field">
+        <label class="field-label" for="newTeamDomain">Company Domain (optional)</label>
+        <input type="text" id="newTeamDomain" placeholder="e.g. acme.com" />
+      </div>
+      <div class="form-field">
+        <label class="field-label" for="newTeamCma">CMA Contact Email</label>
+        <input type="email" id="newTeamCma" placeholder="cma@company.com" />
+        <div class="code-hint">Reports and notifications are sent to this address</div>
+      </div>
+      <div id="createTeamError" class="error-msg hidden"></div>
+      <button class="btn btn-gold btn-block" id="createTeamBtn" onclick="submitCreateTeam()">
+        Create Team
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let currentEmail = '';
+  let memberData = null;
+  let teamsData = [];
+  let affiliateData = null;
+  let activeTeamIdx = 0;
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('vtv_member_email');
+    if (saved) {
+      document.getElementById('memberEmail').value = saved;
+    }
+  });
+
+  // ── Show State ─────────────────────────────────────────────────────────────
+  function showState(id) {
+    document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // ── Back to entry ──────────────────────────────────────────────────────────
+  function backToEntry() {
+    showState('stateEntry');
+  }
+
+  // ── Sign out ───────────────────────────────────────────────────────────────
+  function signOut() {
+    localStorage.removeItem('vtv_member_email');
+    currentEmail = '';
+    memberData = null;
+    teamsData = [];
+    affiliateData = null;
+    document.getElementById('memberEmail').value = '';
+    showState('stateEntry');
+  }
+
+  // ── Access Dashboard ───────────────────────────────────────────────────────
+  async function accessDashboard() {
+    const input = document.getElementById('memberEmail');
+    const errEl = document.getElementById('emailError');
+    const btn = document.getElementById('accessBtn');
+    const email = input.value.trim().toLowerCase();
+
+    errEl.classList.add('hidden');
+
+    if (!email || !email.includes('@')) {
+      errEl.textContent = 'Please enter a valid email address.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    currentEmail = email;
+    btn.disabled = true;
+    btn.textContent = 'Loading…';
+    showState('stateLoading');
+
+    try {
+      const res = await fetch('/api/member?email=' + encodeURIComponent(email));
+      const data = await res.json();
+
+      if (!res.ok || !data || (!data.contact && !data.email && !data.id)) {
+        showState('stateNotFound');
+        btn.disabled = false;
+        btn.textContent = 'Access My Dashboard';
+        return;
+      }
+
+      localStorage.setItem('vtv_member_email', email);
+      memberData = data;
+
+      // Fetch teams and affiliate in parallel
+      const contactId = data.contact?.id || data.id || '';
+      await Promise.all([
+        loadTeams(contactId),
+        loadAffiliate(email)
+      ]);
+
+      renderDashboard();
+      showState('stateDashboard');
+    } catch (err) {
+      console.error('Member fetch error:', err);
+      showState('stateNotFound');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Access My Dashboard';
+    }
+  }
+
+  // ── Load Teams ─────────────────────────────────────────────────────────────
+  async function loadTeams(contactId) {
+    try {
+      const param = contactId ? '?createdBy=' + encodeURIComponent(contactId) : '';
+      const res = await fetch('/api/teams' + param);
+      if (res.ok) {
+        const data = await res.json();
+        teamsData = Array.isArray(data) ? data : (data.teams || []);
+      }
+    } catch (e) { teamsData = []; }
+  }
+
+  // ── Load Affiliate ─────────────────────────────────────────────────────────
+  async function loadAffiliate(email) {
+    try {
+      const checkRes = await fetch('/api/affiliate/check?email=' + encodeURIComponent(email));
+      if (checkRes.ok) {
+        const check = await checkRes.json();
+        if (check.is_partner) {
+          const dashRes = await fetch('/api/affiliate/dashboard?email=' + encodeURIComponent(email));
+          if (dashRes.ok) {
+            affiliateData = await dashRes.json();
+            affiliateData.referral_code = affiliateData.referral_code || check.referral_code;
+          } else {
+            affiliateData = { is_partner: true, referral_code: check.referral_code };
+          }
+        } else {
+          affiliateData = { is_partner: false };
+        }
+      }
+    } catch (e) { affiliateData = { is_partner: false }; }
+  }
+
+  // ── Tier Helpers ───────────────────────────────────────────────────────────
+  function normalizeTier(raw) {
+    if (!raw) return 'free';
+    const r = raw.toLowerCase();
+    if (r === 'vip' || r === 'premium') return 'vip';
+    if (r === 'builder' || r === 'couple' || r === 'value builder') return 'builder';
+    if (r === 'victorypath' || r === 'individual' || r === 'victory path') return 'victorypath';
+    return 'free';
+  }
+
+  function tierDisplay(t) {
+    const map = { free: 'Free', victorypath: 'VictoryPath', builder: 'Value Builder', vip: 'Victory VIP' };
+    return map[t] || 'Free';
+  }
+
+  function tierPrice(t) {
+    const map = { free: '$0 <span>/ forever</span>', victorypath: '$29 <span>/ mo</span>', builder: '$47 <span>/ mo</span>', vip: '$497 <span>/ mo</span>' };
+    return map[t] || '$0';
+  }
+
+  function tierBadgeClass(t) {
+    return { free: 'badge-free', victorypath: 'badge-victorypath', builder: 'badge-builder', vip: 'badge-vip' }[t] || 'badge-free';
+  }
+
+  function tierBadgeLabel(t) {
+    if (t === 'vip') return '★★★ Victory VIP';
+    if (t === 'builder') return '★ Value Builder';
+    if (t === 'victorypath') return 'VictoryPath';
+    return 'Free';
+  }
+
+  function tierLevel(t) {
+    return { free: 0, victorypath: 1, builder: 2, vip: 3 }[t] || 0;
+  }
+
+  // ── Score helpers ──────────────────────────────────────────────────────────
+  function scoreClass(s) {
+    if (s >= 80) return 'score-gold';
+    if (s >= 60) return 'score-high';
+    if (s >= 40) return 'score-med';
+    return 'score-low';
+  }
+  function scoreRange(s) {
+    if (s >= 80) return ['Excellent', 'range-excellent'];
+    if (s >= 60) return ['Strong', 'range-high'];
+    if (s >= 40) return ['Developing', 'range-med'];
+    return ['Needs Work', 'range-low'];
+  }
+
+  // ── Render Dashboard ────────────────────────────────────────────────────────
+  function renderDashboard() {
+    const d = memberData;
+    const contact = d.contact || d;
+    const firstName = contact.first_name || contact.firstName || (contact.name || '').split(' ')[0] || 'friend';
+    const rawTier = (d.membership?.tier || d.tier || d.membership_tier || 'free');
+    const tier = normalizeTier(rawTier);
+    const isActive = d.membership?.active === true || d.membership?.status === 'active' || tier !== 'free';
+
+    // Header
+    document.getElementById('dashFirstName').textContent = firstName;
+    const badge = document.getElementById('dashTierBadge');
+    badge.className = 'tier-badge ' + tierBadgeClass(tier) + ' mt-sm';
+    badge.textContent = tierBadgeLabel(tier);
+
+    // Membership card
+    renderMembershipCard(tier, isActive, d);
+
+    // Assessments
+    renderAssessments(d.assessments || []);
+
+    // Quick links
+    renderQuickLinks(tier);
+
+    // Teams
+    renderTeamSection();
+
+    // Affiliate
+    renderPartnerSection();
+  }
+
+  // ── Membership Card ─────────────────────────────────────────────────────────
+  function renderMembershipCard(tier, isActive, d) {
+    const card = document.getElementById('membershipCard');
+    card.className = 'membership-card';
+    if (tier === 'vip') card.classList.add('vip-sub');
+    else if (isActive && tier !== 'free') card.classList.add('active-sub');
+
+    document.getElementById('mcTierName').textContent = tierDisplay(tier);
+    document.getElementById('mcTierPrice').innerHTML = tierPrice(tier);
+
+    const statusEl = document.getElementById('mcStatus');
+    if (tier === 'free') {
+      statusEl.className = 'status-pill status-free';
+      statusEl.textContent = 'Free Forever';
+    } else if (isActive) {
+      statusEl.className = 'status-pill status-active';
+      statusEl.innerHTML = '● Active';
+    } else {
+      statusEl.className = 'status-pill status-inactive';
+      statusEl.innerHTML = '● Inactive';
+    }
+
+    const actionsEl = document.getElementById('mcActions');
+    if (tier === 'free') {
+      actionsEl.innerHTML = '<a href="/pricing" class="btn btn-gold">Upgrade Membership</a>';
+    } else {
+      actionsEl.innerHTML = '<button class="btn btn-ghost" id="manageSubBtn" onclick="manageSubscription()">Manage Subscription</button>';
+    }
+  }
+
+  // ── Manage Subscription ─────────────────────────────────────────────────────
+  async function manageSubscription() {
+    const btn = document.getElementById('manageSubBtn');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.textContent = 'Opening portal…';
+    try {
+      const res = await fetch('/api/member/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentEmail })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.open(data.url, '_blank');
+      } else {
+        toast('Unable to open billing portal. Try again.', 'error');
+      }
+    } catch {
+      toast('Unable to open billing portal. Try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Manage Subscription';
+    }
+  }
+
+  // ── Assessment History ──────────────────────────────────────────────────────
+  function renderAssessments(assessments) {
+    const el = document.getElementById('assessmentHistory');
+    if (!assessments || assessments.length === 0) {
+      el.innerHTML = `
+        <div class="card" style="text-align:center;padding:2rem">
+          <div style="font-size:2rem;margin-bottom:0.75rem">📊</div>
+          <p class="muted" style="margin-bottom:1rem">You haven't completed an assessment yet.</p>
+          <a href="/" class="btn btn-gold">Take Your First Assessment</a>
+        </div>`;
+      return;
+    }
+
+    const items = assessments.map((a, i) => {
+      const score = Math.round(a.score || a.total_score || 0);
+      const sc = scoreClass(score);
+      const [rangeLabel, rangeClass] = scoreRange(score);
+      const dateStr = a.created_at || a.completedAt || a.date || '';
+      const date = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) : 'Unknown date';
+      const id = a.id || a.assessment_id || '';
+      return `
+        <div class="assessment-item">
+          <div class="score-circle ${sc}">${score}</div>
+          <div class="assessment-meta">
+            <div class="fw-bold" style="font-size:0.9rem">Assessment #${assessments.length - i}</div>
+            <div class="assessment-date">${date}</div>
+            <div class="assessment-range ${rangeClass}">${rangeLabel}</div>
+          </div>
+          ${id ? `<a href="/report/${id}" class="btn btn-ghost btn-sm">View Report</a>` : ''}
+        </div>`;
+    });
+
+    el.innerHTML = `<div class="assessment-list">${items.join('')}</div>`;
+  }
+
+  // ── Quick Links ─────────────────────────────────────────────────────────────
+  function renderQuickLinks(tier) {
+    const lvl = tierLevel(tier);
+    const links = [
+      { icon:'⚡', name:'Challenges', desc:'Daily growth challenges', href:'/challenge', minLevel:1 },
+      { icon:'💑', name:'Couple Tools', desc:'Relationship assessment', href:'/relationship-hub', minLevel:2 },
+      { icon:'👥', name:'Team Report', desc:'Aggregate team insights', href:'/team-report', minLevel:1 },
+      { icon:'🗺️', name:'Action Plan', desc:'Personalized roadmap', href:'/action-plan', minLevel:1 },
+      { icon:'💬', name:'Love Language', desc:'Communication profile', href:'/love-language', minLevel:2 },
+      { icon:'🎯', name:'Coaching', desc:'1-on-1 sessions', href:'/coaching', minLevel:0 }
+    ];
+
+    const el = document.getElementById('quickLinksGrid');
+    el.innerHTML = links.map(l => {
+      const locked = lvl < l.minLevel;
+      return `
+        <${locked ? 'div' : `a href="${l.href}"`} class="quick-link${locked ? ' locked' : ''}">
+          <div class="quick-link-icon">${l.icon}</div>
+          <div class="quick-link-name">${l.name}</div>
+          <div class="quick-link-desc">${locked ? 'Upgrade to unlock' : l.desc}</div>
+          ${locked ? '<span class="lock-badge">🔒</span>' : ''}
+        </${locked ? 'div' : 'a'}>`;
+    }).join('');
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ── TEAM ADMIN SECTION
+  // ─────────────────────────────────────────────────────────────────────────────
+  function renderTeamSection() {
+    const el = document.getElementById('teamContent');
+
+    if (!teamsData || teamsData.length === 0) {
+      el.innerHTML = `
+        <div class="card" style="text-align:center;padding:2rem">
+          <div style="font-size:2.5rem;margin-bottom:0.75rem">👥</div>
+          <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:0.5rem">Team Assessment</h3>
+          <p class="muted text-sm" style="margin-bottom:1.5rem;max-width:360px;margin-left:auto;margin-right:auto">
+            Invite your team to take the Value Engine assessment. Get anonymized aggregate insights, pillar scores, and actionable recommendations for your organization.
+          </p>
+          <button class="btn btn-gold" onclick="openCreateTeam()">Create a Team</button>
+        </div>`;
+      return;
+    }
+
+    // Team tabs
+    const tabButtons = teamsData.map((t, i) =>
+      `<button class="team-tab${i===0?' active':''}" onclick="switchTeam(${i})">${t.name || 'Team ' + (i+1)}</button>`
+    ).join('');
+
+    const tabPanels = teamsData.map((t, i) =>
+      `<div class="team-panel${i===0?' active':''}" id="teamPanel${i}">${renderTeamPanel(t, i)}</div>`
+    ).join('');
+
+    el.innerHTML = `
+      <div style="margin-bottom:0.75rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.875rem">
+          <div class="team-tabs" style="margin-bottom:0">${tabButtons}</div>
+          <button class="btn btn-ghost btn-sm" onclick="openCreateTeam()">+ New Team</button>
+        </div>
+      </div>
+      ${tabPanels}`;
+
+    // Load member results for first team
+    loadTeamResults(0);
+  }
+
+  function switchTeam(idx) {
+    activeTeamIdx = idx;
+    document.querySelectorAll('.team-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+    document.querySelectorAll('.team-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+    loadTeamResults(idx);
+  }
+
+  function renderTeamPanel(team, idx) {
+    const id = team.id || '';
+    const memberCount = team.member_count || 0;
+    const completionRate = team.completion_rate || 0;
+    const domain = team.domain || team.company_domain || '—';
+    const cmaEmail = team.cma_email || team.contact_email || '—';
+    const inviteCode = team.invite_code || team.code || '—';
+    const inviteUrl = inviteCode !== '—'
+      ? `assessment.valuetovictory.com/?team=${inviteCode}`
+      : '—';
+
+    return `
+      <!-- Sub-tabs -->
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="switchSubTab(${idx}, 'info', this)">Info</button>
+        <button class="sub-tab" onclick="switchSubTab(${idx}, 'invite', this)">Invite</button>
+        <button class="sub-tab" onclick="switchSubTab(${idx}, 'members', this)">Members</button>
+        <button class="sub-tab" onclick="switchSubTab(${idx}, 'import', this)">Bulk Import</button>
+        <button class="sub-tab" onclick="switchSubTab(${idx}, 'report', this)">Report</button>
+        <button class="sub-tab" onclick="switchSubTab(${idx}, 'settings', this)">Settings</button>
+      </div>
+
+      <!-- INFO -->
+      <div class="sub-panel active" id="subInfo${idx}">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Team Name</div>
+            <div class="info-value">${team.name || '—'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Domain</div>
+            <div class="info-value">${domain}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">CMA Email</div>
+            <div class="info-value" style="font-size:0.82rem">${cmaEmail}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Members</div>
+            <div class="info-value">${memberCount}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Completion Rate</div>
+            <div class="info-value">${completionRate}%</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Status</div>
+            <div class="info-value"><span class="status-pill status-active">Active</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVITE -->
+      <div class="sub-panel" id="subInvite${idx}">
+        <div class="invite-code-box">
+          <div class="invite-code-label">Team Invite Code</div>
+          <div class="invite-code" id="inviteCode${idx}">${inviteCode}</div>
+          <div class="invite-url" id="inviteUrl${idx}">${inviteUrl}</div>
+        </div>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="copyInviteCode(${idx})">📋 Copy Code</button>
+          <button class="btn btn-ghost btn-sm" onclick="copyInviteUrl(${idx})">🔗 Copy Link</button>
+        </div>
+        <div class="mt-md" style="background:#0a0a0a;border:1px solid #27272a;border-radius:0.5rem;padding:1rem">
+          <p class="text-xs muted">Share this code or link with your team members. They'll enter it when taking the assessment to join your team. Their individual identities remain private — you'll only see anonymized aggregate data.</p>
+        </div>
+      </div>
+
+      <!-- MEMBERS -->
+      <div class="sub-panel" id="subMembers${idx}">
+        <div class="privacy-notice">
+          <span class="privacy-notice-icon">🔒</span>
+          <span>Individual identities are protected. Members are identified by number only.</span>
+        </div>
+        <div id="membersTableWrap${idx}">
+          <div class="spinner-wrap"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- BULK IMPORT -->
+      <div class="sub-panel" id="subImport${idx}">
+        <p class="text-sm muted mb-md">Import multiple team members via CSV. One entry per line.</p>
+        <div class="form-field" style="margin-bottom:1rem">
+          <label class="field-label">CSV Data</label>
+          <textarea id="importCsv${idx}" rows="6" placeholder="email,department,role,goals&#10;john@co.com,Sales,Manager,Improve communication&#10;jane@co.com,Ops,Analyst,Build leadership skills"></textarea>
+          <div class="code-hint">Format: email, department, role, goals (goals optional)</div>
+        </div>
+        <div id="importResult${idx}" class="error-msg hidden"></div>
+        <button class="btn btn-primary" id="importBtn${idx}" onclick="bulkImport(${idx}, '${id}')">
+          Import Members
+        </button>
+      </div>
+
+      <!-- REPORT -->
+      <div class="sub-panel" id="subReport${idx}">
+        <p class="text-sm muted mb-md">Generate an aggregate report showing pillar averages, score distribution, and recommendations for your team.</p>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem">
+          <button class="btn btn-primary" id="genReportBtn${idx}" onclick="generateReport(${idx}, '${id}')">
+            Generate Report
+          </button>
+          <button class="btn btn-ghost" id="sendReportBtn${idx}" onclick="sendReport(${idx}, '${id}')">
+            📧 Send Report to CMA
+          </button>
+        </div>
+        <div id="reportOutput${idx}"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="sub-panel" id="subSettings${idx}">
+        <div class="settings-grid">
+          <div class="settings-row">
+            <div class="form-field">
+              <label class="field-label" for="setCma${idx}">CMA Email</label>
+              <input type="email" id="setCma${idx}" value="${cmaEmail !== '—' ? cmaEmail : ''}" placeholder="cma@company.com" />
+            </div>
+            <div class="form-field">
+              <label class="field-label" for="setBilling${idx}">Billing Email</label>
+              <input type="email" id="setBilling${idx}" value="" placeholder="billing@company.com" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="field-label" for="setWebhook${idx}">Webhook URL (optional)</label>
+            <input type="text" id="setWebhook${idx}" value="${team.webhook_url || ''}" placeholder="https://your-system.com/webhook" />
+          </div>
+          <div class="form-field">
+            <label class="field-label" for="setFreq${idx}">Report Frequency</label>
+            <select id="setFreq${idx}">
+              <option value="never"${(team.report_frequency||'monthly')==='never'?' selected':''}>Never</option>
+              <option value="weekly"${(team.report_frequency||'')==='weekly'?' selected':''}>Weekly</option>
+              <option value="monthly"${(team.report_frequency||'monthly')==='monthly'?' selected':''}>Monthly</option>
+              <option value="quarterly"${(team.report_frequency||'')==='quarterly'?' selected':''}>Quarterly</option>
+            </select>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Auto-Send Reports</div>
+              <div class="toggle-sub">Automatically email reports on schedule</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="setAutoReport${idx}" ${team.auto_report ? 'checked' : ''} />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div id="settingsMsg${idx}" class="error-msg hidden" style="margin-top:0.75rem"></div>
+        <button class="btn btn-primary mt-md" onclick="saveSettings(${idx}, '${id}')">Save Settings</button>
+      </div>
+    `;
+  }
+
+  function switchSubTab(teamIdx, panelName, btn) {
+    const panelPrefix = 'sub' + panelName.charAt(0).toUpperCase() + panelName.slice(1);
+    // Hide all sub-panels for this team
+    const panels = ['Info','Invite','Members','Import','Report','Settings'];
+    panels.forEach(p => {
+      const el = document.getElementById('sub' + p + teamIdx);
+      if (el) el.classList.remove('active');
+    });
+    // Deactivate all sub-tabs in this team panel
+    const teamPanel = document.getElementById('teamPanel' + teamIdx);
+    if (teamPanel) teamPanel.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+    // Activate selected
+    const target = document.getElementById(panelPrefix + teamIdx);
+    if (target) target.classList.add('active');
+    if (btn) btn.classList.add('active');
+  }
+
+  // ── Load Team Results ───────────────────────────────────────────────────────
+  async function loadTeamResults(idx) {
+    const team = teamsData[idx];
+    if (!team) return;
+    const wrapId = 'membersTableWrap' + idx;
+    const el = document.getElementById(wrapId);
+    if (!el) return;
+
+    try {
+      const res = await fetch('/api/teams/' + team.id + '/results');
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const members = Array.isArray(data) ? data : (data.members || data.results || []);
+      renderMembersTable(idx, members);
+    } catch {
+      el.innerHTML = '<p class="muted text-sm">No member data available yet.</p>';
+    }
+  }
+
+  function renderMembersTable(idx, members) {
+    const el = document.getElementById('membersTableWrap' + idx);
+    if (!el) return;
+
+    if (!members || members.length === 0) {
+      el.innerHTML = `
+        <div style="text-align:center;padding:1.5rem">
+          <p class="muted text-sm">No members have joined this team yet.</p>
+          <p class="muted text-xs mt-sm">Share the invite code for members to join.</p>
+        </div>`;
+      return;
+    }
+
+    const rows = members.map((m, i) => {
+      const score = m.score || m.total_score || '—';
+      const dept = m.department || m.dept || '—';
+      const role = m.role || '—';
+      const status = m.status || (m.completed_at ? 'Complete' : 'Pending');
+      const statusClass = status === 'Complete' || status === 'complete' ? 'complete-dot' : 'pending-dot';
+      return `
+        <tr>
+          <td>Member #${i + 1}</td>
+          <td>${dept}</td>
+          <td>${role}</td>
+          <td style="font-weight:700">${score !== '—' ? score : '—'}</td>
+          <td><span class="${statusClass}">● </span>${status}</td>
+        </tr>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="members-table-wrap">
+        <table class="members-table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Department</th>
+              <th>Role</th>
+              <th>Score</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  // ── Bulk Import ─────────────────────────────────────────────────────────────
+  async function bulkImport(idx, teamId) {
+    const csvEl = document.getElementById('importCsv' + idx);
+    const msgEl = document.getElementById('importResult' + idx);
+    const btn = document.getElementById('importBtn' + idx);
+    const csv = csvEl.value.trim();
+
+    msgEl.classList.add('hidden');
+    if (!csv) {
+      msgEl.textContent = 'Please paste CSV data first.';
+      msgEl.style.color = '#ef4444';
+      msgEl.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Importing…';
+
+    try {
+      const res = await fetch('/api/teams/' + teamId + '/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ csv })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msgEl.textContent = '✓ Import successful: ' + (data.imported || data.count || 'members added');
+        msgEl.style.color = '#22c55e';
+        msgEl.classList.remove('hidden');
+        csvEl.value = '';
+        await loadTeamResults(idx);
+        toast('Members imported successfully!', 'success');
+      } else {
+        msgEl.textContent = data.error || 'Import failed. Check CSV format.';
+        msgEl.style.color = '#ef4444';
+        msgEl.classList.remove('hidden');
+      }
+    } catch {
+      msgEl.textContent = 'Import failed. Please try again.';
+      msgEl.style.color = '#ef4444';
+      msgEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Import Members';
+    }
+  }
+
+  // ── Generate Report ─────────────────────────────────────────────────────────
+  async function generateReport(idx, teamId) {
+    const btn = document.getElementById('genReportBtn' + idx);
+    const outEl = document.getElementById('reportOutput' + idx);
+
+    btn.disabled = true;
+    btn.textContent = 'Generating…';
+    outEl.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+
+    try {
+      const res = await fetch('/api/teams/' + teamId + '/report');
+      const data = await res.json();
+      if (res.ok) {
+        renderReportOutput(idx, data);
+      } else {
+        outEl.innerHTML = '<p class="muted text-sm">Could not generate report at this time.</p>';
+      }
+    } catch {
+      outEl.innerHTML = '<p class="muted text-sm">Report unavailable.</p>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Generate Report';
+    }
+  }
+
+  function renderReportOutput(idx, data) {
+    const el = document.getElementById('reportOutput' + idx);
+    const pillars = data.pillar_averages || data.pillars || {};
+    const dist = data.score_distribution || {};
+    const recs = data.recommendations || [];
+
+    let pillarHtml = '';
+    if (Object.keys(pillars).length > 0) {
+      pillarHtml = Object.entries(pillars).map(([name, val]) => {
+        const pct = Math.min(100, Math.round(val));
+        return `
+          <div class="pillar-bar-wrap">
+            <div class="pillar-name"><span>${name}</span><span>${pct}</span></div>
+            <div class="pillar-bar"><div class="pillar-fill" style="width:${pct}%"></div></div>
+          </div>`;
+      }).join('');
+    }
+
+    const recHtml = recs.length > 0
+      ? `<div class="mt-md"><p class="section-title" style="margin-bottom:0.5rem">Recommendations</p>${recs.map(r => `<p class="text-sm muted" style="margin-bottom:0.35rem">• ${r}</p>`).join('')}</div>`
+      : '';
+
+    el.innerHTML = `
+      <div class="card">
+        <p class="section-title" style="margin-bottom:0.75rem">Team Report</p>
+        ${data.team_average ? `<p class="text-sm" style="margin-bottom:0.75rem">Team Average Score: <strong class="gold">${data.team_average}</strong></p>` : ''}
+        ${pillarHtml ? `<p class="section-title" style="margin:0.75rem 0 0.5rem">Pillar Averages</p>${pillarHtml}` : ''}
+        ${recHtml}
+      </div>`;
+  }
+
+  // ── Send Report ─────────────────────────────────────────────────────────────
+  async function sendReport(idx, teamId) {
+    const btn = document.getElementById('sendReportBtn' + idx);
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    try {
+      const res = await fetch('/api/teams/' + teamId + '/send-report', { method: 'POST' });
+      if (res.ok) {
+        toast('Report sent to CMA email!', 'success');
+      } else {
+        toast('Failed to send report. Try again.', 'error');
+      }
+    } catch {
+      toast('Failed to send report. Try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '📧 Send Report to CMA';
+    }
+  }
+
+  // ── Save Settings ───────────────────────────────────────────────────────────
+  async function saveSettings(idx, teamId) {
+    const cma = document.getElementById('setCma' + idx)?.value || '';
+    const billing = document.getElementById('setBilling' + idx)?.value || '';
+    const webhook = document.getElementById('setWebhook' + idx)?.value || '';
+    const freq = document.getElementById('setFreq' + idx)?.value || 'monthly';
+    const autoReport = document.getElementById('setAutoReport' + idx)?.checked || false;
+    const msgEl = document.getElementById('settingsMsg' + idx);
+
+    msgEl.classList.add('hidden');
+
+    try {
+      const res = await fetch('/api/teams/' + teamId + '/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cma_email: cma, billing_email: billing, webhook_url: webhook, report_frequency: freq, auto_report: autoReport })
+      });
+      if (res.ok) {
+        toast('Settings saved!', 'success');
+      } else {
+        msgEl.textContent = 'Failed to save settings.';
+        msgEl.style.color = '#ef4444';
+        msgEl.classList.remove('hidden');
+      }
+    } catch {
+      msgEl.textContent = 'Failed to save settings.';
+      msgEl.style.color = '#ef4444';
+      msgEl.classList.remove('hidden');
+    }
+  }
+
+  // ── Copy Invite Code / URL ──────────────────────────────────────────────────
+  function copyInviteCode(idx) {
+    const code = document.getElementById('inviteCode' + idx)?.textContent || '';
+    navigator.clipboard.writeText(code).then(() => toast('Invite code copied!', 'success'));
+  }
+  function copyInviteUrl(idx) {
+    const url = document.getElementById('inviteUrl' + idx)?.textContent || '';
+    navigator.clipboard.writeText('https://' + url).then(() => toast('Invite link copied!', 'success'));
+  }
+
+  // ── Create Team ─────────────────────────────────────────────────────────────
+  function openCreateTeam() {
+    document.getElementById('createTeamModal').classList.add('open');
+  }
+  function closeCreateTeam() {
+    document.getElementById('createTeamModal').classList.remove('open');
+    document.getElementById('createTeamError').classList.add('hidden');
+  }
+
+  async function submitCreateTeam() {
+    const name = document.getElementById('newTeamName').value.trim();
+    const domain = document.getElementById('newTeamDomain').value.trim();
+    const cma = document.getElementById('newTeamCma').value.trim();
+    const errEl = document.getElementById('createTeamError');
+    const btn = document.getElementById('createTeamBtn');
+
+    errEl.classList.add('hidden');
+
+    if (!name) {
+      errEl.textContent = 'Team name is required.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Creating…';
+
+    try {
+      const contactId = memberData?.contact?.id || memberData?.id || '';
+      const res = await fetch('/api/teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, domain, cma_email: cma, created_by: contactId, email: currentEmail })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        closeCreateTeam();
+        document.getElementById('newTeamName').value = '';
+        document.getElementById('newTeamDomain').value = '';
+        document.getElementById('newTeamCma').value = '';
+        toast('Team created!', 'success');
+        // Refresh teams
+        await loadTeams(contactId);
+        renderTeamSection();
+      } else {
+        errEl.textContent = data.error || 'Failed to create team.';
+        errEl.classList.remove('hidden');
+      }
+    } catch {
+      errEl.textContent = 'Failed to create team. Please try again.';
+      errEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create Team';
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ── PARTNER / AFFILIATE SECTION
+  // ─────────────────────────────────────────────────────────────────────────────
+  function renderPartnerSection() {
+    const el = document.getElementById('partnerContent');
+    if (!affiliateData || !affiliateData.is_partner) {
+      renderEarnWithUs(el);
+    } else {
+      renderAffiliateDashboard(el, affiliateData);
+    }
+  }
+
+  function renderEarnWithUs(el) {
+    el.innerHTML = `
+      <div class="earn-card">
+        <div class="earn-icon">💸</div>
+        <h3>Earn With Us</h3>
+        <p>Join the Victory Partner Program and earn recurring commissions by referring others to the Value Engine platform. It's free to join and starts earning immediately.</p>
+        <div class="earn-features">
+          <span class="earn-feature">$5/mo per referral</span>
+          <span class="earn-feature">$17.50/mo for VIP referrals</span>
+          <span class="earn-feature">Royalty bonuses at scale</span>
+          <span class="earn-feature">No cap on earnings</span>
+        </div>
+        <button class="btn btn-green" id="partnerApplyBtn" onclick="applyAsPartner()">
+          Become a Partner — It's Free
+        </button>
+        <p id="partnerApplyMsg" class="text-xs muted hidden" style="margin-top:0.75rem"></p>
+      </div>`;
+  }
+
+  async function applyAsPartner() {
+    const btn = document.getElementById('partnerApplyBtn');
+    const msg = document.getElementById('partnerApplyMsg');
+    btn.disabled = true;
+    btn.textContent = 'Applying…';
+
+    const contact = memberData?.contact || memberData || {};
+    const name = [contact.first_name || contact.firstName, contact.last_name || contact.lastName].filter(Boolean).join(' ') || contact.name || '';
+
+    try {
+      const res = await fetch('/api/affiliate/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentEmail, name })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        affiliateData = { is_partner: true, referral_code: data.referral_code, referral_link: data.referral_link };
+        toast('Welcome to the Victory Partner Program!', 'success');
+        renderPartnerSection();
+      } else {
+        msg.textContent = data.error || 'Application failed. Please try again.';
+        msg.style.color = '#ef4444';
+        msg.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Become a Partner — It\'s Free';
+      }
+    } catch {
+      msg.textContent = 'Application failed. Please try again.';
+      msg.style.color = '#ef4444';
+      msg.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'Become a Partner — It\'s Free';
+    }
+  }
+
+  function renderAffiliateDashboard(el, data) {
+    const refCode = data.referral_code || data.partner?.referral_code || '—';
+    const refLink = data.referral_link || (refCode !== '—' ? 'assessment.valuetovictory.com/?ref=' + refCode : '—');
+    const stats = data.stats || data.summary || {};
+    const totalReferrals = stats.total_referrals || data.total_referrals || 0;
+    const activeReferrals = stats.active_referrals || data.active_referrals || 0;
+    const totalEarned = stats.total_earned || data.total_earnings_cents
+      ? formatCents(stats.total_earned_cents || data.total_earnings_cents || 0) : '$0.00';
+    const pendingEarned = formatCents(stats.pending_cents || data.pending_cents || 0);
+    const paidOut = formatCents(stats.paid_cents || data.paid_cents || 0);
+    const lifetime = formatCents(stats.total_earned_cents || data.total_earnings_cents || 0);
+    const royaltyTier = data.royalty_tier || data.partner?.royalty_tier || 'none';
+    const referrals = data.referrals || [];
+    const royaltyProgress = getRoyaltyProgress(activeReferrals, royaltyTier);
+
+    el.innerHTML = `
+      <!-- Referral Link -->
+      <div class="card mb-md">
+        <p class="section-title" style="margin-bottom:0.75rem">Your Referral Link</p>
+        <div class="ref-link-box">
+          <div class="ref-link-url" id="affRefLink">${refLink}</div>
+          <button class="btn btn-ghost btn-sm" onclick="copyRefLink()">📋 Copy</button>
+        </div>
+        <p class="text-xs muted">Share this link to earn commissions when referrals subscribe.</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid mb-md">
+        <div class="stat-card">
+          <div class="stat-num">${totalReferrals}</div>
+          <div class="stat-lbl">Total Referrals</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">${activeReferrals}</div>
+          <div class="stat-lbl">Active</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">${lifetime}</div>
+          <div class="stat-lbl">Total Earned</div>
+        </div>
+      </div>
+
+      <!-- Earnings Breakdown -->
+      <div class="card mb-md">
+        <p class="section-title" style="margin-bottom:0.75rem">Earnings Breakdown</p>
+        <div class="earnings-grid">
+          <div class="earning-item">
+            <div class="earning-amt" style="color:#f97316">${pendingEarned}</div>
+            <div class="earning-label">Pending</div>
+          </div>
+          <div class="earning-item">
+            <div class="earning-amt">${paidOut}</div>
+            <div class="earning-label">Paid Out</div>
+          </div>
+          <div class="earning-item">
+            <div class="earning-amt">${lifetime}</div>
+            <div class="earning-label">Lifetime</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Royalty Progress -->
+      <div class="card mb-md">
+        <div class="royalty-header">
+          <span class="royalty-label">Royalty Tier — <span class="gold" style="text-transform:capitalize">${royaltyTier === 'none' ? 'No Tier' : royaltyTier}</span></span>
+          <span class="royalty-count">${activeReferrals} active referrals</span>
+        </div>
+        <div class="royalty-bar">
+          <div class="royalty-fill" style="width:${royaltyProgress.pct}%"></div>
+        </div>
+        <div class="royalty-tiers">
+          <span class="${royaltyProgress.tier === 'none' ? 'active-tier' : ''}">0</span>
+          <span class="${royaltyProgress.tier === 'bronze' ? 'active-tier' : ''}">Bronze (25)</span>
+          <span class="${royaltyProgress.tier === 'silver' ? 'active-tier' : ''}">Silver (50)</span>
+          <span class="${royaltyProgress.tier === 'gold' ? 'active-tier' : ''}">Gold (100)</span>
+          <span class="${royaltyProgress.tier === 'platinum' ? 'active-tier' : ''}">Platinum (250)</span>
+        </div>
+        ${royaltyProgress.next ? `<p class="text-xs muted mt-sm">${royaltyProgress.needed} more active referrals to reach <strong>${royaltyProgress.next}</strong></p>` : '<p class="text-xs gold mt-sm">🏆 Maximum royalty tier reached!</p>'}
+      </div>
+
+      <!-- Commission Rates -->
+      <div class="comm-rates-card">
+        <div class="comm-rates-title">Commission Rates</div>
+        <div class="rate-row">
+          <span class="rate-tier-name">VictoryPath referral</span>
+          <span class="rate-amount">$5.00/mo</span>
+        </div>
+        <div class="rate-row">
+          <span class="rate-tier-name">Value Builder referral</span>
+          <span class="rate-amount">$5.00/mo</span>
+        </div>
+        <div class="rate-row">
+          <span class="rate-tier-name">Victory VIP referral</span>
+          <span class="rate-amount">$17.50/mo</span>
+        </div>
+        <hr class="divider" style="margin:0.5rem 0">
+        <div class="rate-row">
+          <span class="rate-tier-name">Upgrade → Value Builder bonus</span>
+          <span class="rate-amount">+$10</span>
+        </div>
+        <div class="rate-row">
+          <span class="rate-tier-name">Upgrade → Victory VIP bonus</span>
+          <span class="rate-amount">+$50</span>
+        </div>
+        <hr class="divider" style="margin:0.5rem 0">
+        <div class="rate-row">
+          <span class="rate-tier-name">Bronze royalty (25+ members)</span>
+          <span class="rate-amount">+$1.00/member/mo</span>
+        </div>
+        <div class="rate-row">
+          <span class="rate-tier-name">Silver royalty (50+ members)</span>
+          <span class="rate-amount">+$2.00/member/mo</span>
+        </div>
+        <div class="rate-row">
+          <span class="rate-tier-name">Gold royalty (100+ members)</span>
+          <span class="rate-amount">+$3.00/member/mo</span>
+        </div>
+        <div class="rate-row">
+          <span class="rate-tier-name">Platinum royalty (250+ members)</span>
+          <span class="rate-amount">+$5.00/member/mo</span>
+        </div>
+      </div>
+
+      <!-- Recent Referrals -->
+      ${referrals.length > 0 ? `
+      <div class="card">
+        <p class="section-title" style="margin-bottom:0.75rem">Recent Referrals</p>
+        <div class="referrals-list">
+          ${referrals.slice(0, 10).map((r, i) => {
+            const refTier = normalizeTier(r.tier || r.membership_tier || 'free');
+            const status = r.status || 'active';
+            const statClass = status === 'active' || status === 'upgraded' ? 'ref-active' : (status === 'pending' ? 'ref-pending' : 'ref-inactive');
+            const earned = r.commission_cents ? formatCents(r.commission_cents) : '—';
+            return `
+              <div class="referral-item">
+                <div>
+                  <div class="referral-id">Referral #${i + 1} · ${r.id ? r.id.slice(-6) : '------'}</div>
+                </div>
+                <span class="referral-tier ${statClass}">${tierDisplay(refTier)}</span>
+                <span class="rate-amount">${earned}</span>
+                <span class="referral-tier ${statClass}">${status}</span>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>` : ''}
+    `;
+  }
+
+  // ── Copy Ref Link ───────────────────────────────────────────────────────────
+  function copyRefLink() {
+    const url = document.getElementById('affRefLink')?.textContent || '';
+    const full = url.startsWith('http') ? url : 'https://' + url;
+    navigator.clipboard.writeText(full).then(() => toast('Referral link copied!', 'success'));
+  }
+
+  // ── Royalty Progress Calc ───────────────────────────────────────────────────
+  function getRoyaltyProgress(active, tier) {
+    const thresholds = [
+      { name: 'none', min: 0, next: 'Bronze', nextAt: 25 },
+      { name: 'bronze', min: 25, next: 'Silver', nextAt: 50 },
+      { name: 'silver', min: 50, next: 'Gold', nextAt: 100 },
+      { name: 'gold', min: 100, next: 'Platinum', nextAt: 250 },
+      { name: 'platinum', min: 250, next: null, nextAt: null }
+    ];
+    const current = thresholds.find(t => t.name === tier) || thresholds[0];
+    const next = current.nextAt;
+    let pct = 0;
+    if (tier === 'platinum') {
+      pct = 100;
+    } else {
+      pct = Math.min(100, Math.round((active / next) * 100));
+    }
+    return { tier: current.name, next: current.next, nextAt: current.nextAt, needed: Math.max(0, (next || 0) - active), pct };
+  }
+
+  // ── Format Cents ───────────────────────────────────────────────────────────
+  function formatCents(cents) {
+    return '$' + (cents / 100).toFixed(2);
+  }
+
+  // ── Toast ───────────────────────────────────────────────────────────────────
+  function toast(msg, type = 'success') {
+    const c = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = msg;
+    c.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // ── Close modal on outside click ────────────────────────────────────────────
+  document.getElementById('createTeamModal').addEventListener('click', function(e) {
+    if (e.target === this) closeCreateTeam();
+  });
+</script>
+
+</body>
+</html>
