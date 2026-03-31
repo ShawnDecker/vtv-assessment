@@ -19,7 +19,5 @@ module.exports = async function handler(req, res) {
     timestamp,
     db: dbStatus,
     version,
-    adminKeySet: !!process.env.ADMIN_API_KEY,
-    adminKeyLength: (process.env.ADMIN_API_KEY || '').length,
   });
 };
