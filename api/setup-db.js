@@ -7,6 +7,16 @@ module.exports = async (req, res) => {
 
   const sql = neon(process.env.DATABASE_URL);
 
+  const urlObj = new URL(req.url, `https://${req.headers.host}`);
+  if (urlObj.searchParams.get('cleanup') === 'briantest') {
+    try {
+      await sql`DELETE FROM feedback WHERE contact_id = 49`;
+      await sql`DELETE FROM assessments WHERE contact_id = 49`;
+      await sql`DELETE FROM contacts WHERE id = 49`;
+      return res.json({ success: true, cleaned: 'test contact 49' });
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
   try {
   
   await sql`
