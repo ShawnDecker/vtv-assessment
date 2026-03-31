@@ -1259,7 +1259,7 @@
       const res = await fetch('/api/member?email=' + encodeURIComponent(email));
       const data = await res.json();
 
-      if (!res.ok || !data || (!data.contact && !data.email && !data.id)) {
+      if (!res.ok || !data || data.found === false) {
         showState('stateNotFound');
         btn.disabled = false;
         btn.textContent = 'Access My Dashboard';
