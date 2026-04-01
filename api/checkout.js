@@ -155,26 +155,9 @@ module.exports = async (req, res) => {
 
       const config = TIER_CONFIG[tier];
 
-      // Resolve price ID: try env var first, then hardcoded active price
-      let priceId;
-      const envKeys = { individual: 'STRIPE_PRICE_INDIVIDUAL', couple: 'STRIPE_PRICE_COUPLE', premium: 'STRIPE_PRICE_PREMIUM' };
-      const envPriceId = process.env[envKeys[config.priceKey]];
-
-      if (envPriceId) {
-        // Verify the env price is active before using it
-        try {
-          const priceObj = await stripe.prices.retrieve(envPriceId);
-          if (priceObj.active) {
-            priceId = envPriceId;
-          }
-        } catch (e) { /* env price invalid, fall through */ }
-      }
-
-      // Fallback to known-good hardcoded active prices
-      if (!priceId) {
-        priceId = ACTIVE_PRICES[config.priceKey];
-        console.log(`[Checkout] Using hardcoded price ${priceId} for ${config.name}`);
-      }
+      // Use hardcoded active prices directly -- env vars were stale/inactive
+      const priceId = ACTIVE_PRICES[config.priceKey];
+      console.log(`[Checkout] Using price ${priceId} for ${config.name} (${config.dbTier})`);
 
       const sessionParams = {
         mode: 'subscription',
