@@ -73,20 +73,44 @@
       "dest": "/report.html"
     },
     {
+      "src": "/action-plan",
+      "dest": "/action-plan.html"
+    },
+    {
       "src": "/action-plan/(.*)",
       "dest": "/action-plan.html"
+    },
+    {
+      "src": "/counselor-report",
+      "dest": "/counselor-report.html"
     },
     {
       "src": "/counselor-report/(.*)",
       "dest": "/counselor-report.html"
     },
     {
+      "src": "/team-report",
+      "dest": "/team-report.html"
+    },
+    {
       "src": "/team-report/(.*)",
       "dest": "/team-report.html"
     },
     {
+      "src": "/premium",
+      "dest": "/premium.html"
+    },
+    {
       "src": "/premium/(.*)",
       "dest": "/premium.html"
+    },
+    {
+      "src": "/partner-invite",
+      "dest": "/partner-invite.html"
+    },
+    {
+      "src": "/couple-report",
+      "dest": "/couple-report.html"
     },
     {
       "src": "/challenge",

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-TT6PYLPP31');
+</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>You've Been Invited — P.I.N.K. Relationship Assessment</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Satoshi', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.25rem;
+    }
+
+    .container {
+      max-width: 520px;
+      width: 100%;
+    }
+
+    /* Loading state */
+    .loading-state {
+      text-align: center;
+      padding: 4rem 0;
+    }
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #27272a;
+      border-top-color: #D4A847;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-state p { color: #71717a; font-size: 0.95rem; }
+
+    /* Error state */
+    .error-state {
+      text-align: center;
+      padding: 4rem 0;
+      display: none;
+    }
+    .error-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    .error-state h2 { color: #ef4444; margin-bottom: 0.75rem; font-size: 1.25rem; }
+    .error-state p { color: #71717a; font-size: 0.9rem; }
+    .error-state a { color: #D4A847; text-decoration: none; }
+
+    /* Invite card */
+    .invite-card {
+      display: none;
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .brand-eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #D4A847;
+      margin-bottom: 0.5rem;
+    }
+    .brand-title {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.5rem;
+      font-style: italic;
+      color: #d4d4d8;
+    }
+
+    .card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 1rem;
+      padding: 2.5rem 2rem;
+      text-align: center;
+    }
+
+    .invite-ring {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(212,168,71,0.15), rgba(212,168,71,0.05));
+      border: 2px solid rgba(212,168,71,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+    }
+    .invite-ring svg {
+      width: 36px;
+      height: 36px;
+    }
+
+    .invite-headline {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 0.75rem;
+      color: #fff;
+    }
+    .invite-headline .inviter-name {
+      color: #D4A847;
+    }
+
+    .invite-sub {
+      font-size: 0.95rem;
+      color: #a1a1aa;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .pillars-row {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .pillar-chip {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.75rem;
+      border-radius: 2rem;
+      border: 1px solid;
+    }
+    .pc-time { color: #D4A847; border-color: rgba(212,168,71,0.35); background: rgba(212,168,71,0.08); }
+    .pc-people { color: #f472b6; border-color: rgba(244,114,182,0.35); background: rgba(244,114,182,0.08); }
+    .pc-influence { color: #2dd4bf; border-color: rgba(45,212,191,0.35); background: rgba(45,212,191,0.08); }
+    .pc-numbers { color: #60a5fa; border-color: rgba(96,165,250,0.35); background: rgba(96,165,250,0.08); }
+    .pc-knowledge { color: #a78bfa; border-color: rgba(167,139,250,0.35); background: rgba(167,139,250,0.08); }
+
+    .cta-btn {
+      display: block;
+      width: 100%;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #0a0a0a;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 0.625rem;
+      transition: opacity 0.2s, transform 0.15s;
+      cursor: pointer;
+      border: none;
+      letter-spacing: 0.01em;
+    }
+    .cta-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .cta-note {
+      font-size: 0.8rem;
+      color: #52525b;
+      margin-top: 1rem;
+      line-height: 1.5;
+    }
+
+    .divider {
+      height: 1px;
+      background: #27272a;
+      margin: 1.75rem 0;
+    }
+
+    .what-to-expect {
+      text-align: left;
+    }
+    .expect-title {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #52525b;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .expect-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.625rem;
+    }
+    .expect-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      font-size: 0.875rem;
+      color: #a1a1aa;
+      line-height: 1.5;
+    }
+    .expect-check {
+      color: #D4A847;
+      flex-shrink: 0;
+      margin-top: 1px;
+      font-size: 0.85rem;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      color: #3f3f46;
+    }
+
+    /* Already completed banner */
+    .completed-banner {
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.2);
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: #22c55e;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Loading -->
+    <div class="loading-state" id="loading">
+      <div class="loading-spinner"></div>
+      <p>Loading your invitation...</p>
+    </div>
+
+    <!-- Error -->
+    <div class="error-state" id="errorState">
+      <div class="error-icon">&#x26A0;</div>
+      <h2>Invitation Not Found</h2>
+      <p>This invitation link may have expired or is invalid.<br>Ask your partner to send a new invite.</p>
+      <p style="margin-top:1.25rem;"><a href="/">Take the Assessment on your own &rarr;</a></p>
+    </div>
+
+    <!-- Invite Card -->
+    <div class="invite-card" id="inviteCard">
+      <div class="brand-header">
+        <div class="brand-eyebrow">Value to Victory</div>
+        <div class="brand-title">P.I.N.K. Relationship Assessment</div>
+      </div>
+
+      <div class="card">
+        <div class="invite-ring">
+          <!-- Heart/couple icon -->
+          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 28s-12-7.5-12-15a6 6 0 0112 0 6 6 0 0112 0c0 7.5-12 15-12 15z" fill="none" stroke="#D4A847" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <div class="completed-banner" id="completedBanner">
+          &#10003; Your partner has already completed their assessment.
+        </div>
+
+        <h1 class="invite-headline">
+          <span class="inviter-name" id="inviterName">Your partner</span> invited you to take the assessment together
+        </h1>
+
+        <p class="invite-sub">
+          The P.I.N.K. Assessment measures five value pillars and creates a combined report showing where you align, where you differ, and specific steps to grow together.
+        </p>
+
+        <div class="pillars-row">
+          <span class="pillar-chip pc-people">People</span>
+          <span class="pillar-chip pc-influence">Influence</span>
+          <span class="pillar-chip pc-numbers">Numbers</span>
+          <span class="pillar-chip pc-knowledge">Knowledge</span>
+          <span class="pillar-chip pc-time">Time</span>
+        </div>
+
+        <a class="cta-btn" id="startBtn" href="#">Start My Assessment</a>
+        <p class="cta-note">Takes about 10 minutes &nbsp;&middot;&nbsp; Results are private &nbsp;&middot;&nbsp; No credit card required</p>
+
+        <div class="divider"></div>
+
+        <div class="what-to-expect">
+          <div class="expect-title">What you'll get</div>
+          <ul class="expect-list">
+            <li><span class="expect-check">&#10003;</span> Your personal P.I.N.K. score across all five pillars</li>
+            <li><span class="expect-check">&#10003;</span> A side-by-side comparison with <span id="inviterNameInline" style="color:#d4d4d8;font-weight:600;">your partner</span></li>
+            <li><span class="expect-check">&#10003;</span> A gap analysis showing where you're aligned vs. misaligned</li>
+            <li><span class="expect-check">&#10003;</span> Specific actions to close the gaps and build together</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="footer-note">&copy; 2026 Value to Victory — Shawn E. Decker</p>
+    </div>
+
+  </div>
+
+  <script>
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var code = params.get('code');
+
+      function showError() {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+      }
+
+      function showInvite(data) {
+        document.getElementById('loading').style.display = 'none';
+        var card = document.getElementById('inviteCard');
+        card.style.display = 'block';
+
+        var inviterName = data.initiatorName || 'Your partner';
+        document.getElementById('inviterName').textContent = inviterName;
+        document.getElementById('inviterNameInline').textContent = inviterName;
+
+        if (data.status === 'completed') {
+          document.getElementById('completedBanner').style.display = 'block';
+        }
+
+        // Set the assessment link with couple code
+        var startLink = '/?mode=relationship&couple=' + encodeURIComponent(code) + '#/mode-select';
+        document.getElementById('startBtn').href = startLink;
+      }
+
+      if (!code) {
+        showError();
+        return;
+      }
+
+      fetch('/api/couples/invite/' + code)
+        .then(function(r) {
+          if (!r.ok) throw new Error('not found');
+          return r.json();
+        })
+        .then(function(data) {
+          showInvite(data);
+        })
+        .catch(function() {
+          showError();
+        });
+    })();
+  </script>
+</body>
+</html>
