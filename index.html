@@ -558,5 +558,24 @@
       });
     }
     </script>
+  
+    <!-- Member Login Button -->
+    <div id="member-login-btn" style="position:fixed;top:12px;right:16px;z-index:9998;">
+      <a href="/member" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(10,10,10,0.8);backdrop-filter:blur(8px);border:1px solid #27272a;border-radius:8px;color:#D4A847;font-family:'Satoshi',sans-serif;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.2s;" onmouseenter="this.style.borderColor='#D4A847';this.style.background='rgba(212,168,71,0.1)'" onmouseleave="this.style.borderColor='#27272a';this.style.background='rgba(10,10,10,0.8)'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A847" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Member Login
+      </a>
+    </div>
+    <script>
+    // Hide login button on member/returning pages (already logged in context)
+    (function(){
+      var path = window.location.pathname;
+      if(path.indexOf('/member') !== -1 || path.indexOf('/returning') !== -1 || path.indexOf('/report') !== -1 || path.indexOf('/action-plan') !== -1) {
+        var btn = document.getElementById('member-login-btn');
+        if(btn) btn.style.display = 'none';
+      }
+    })();
+    </script>
+
   </body>
 </html>
