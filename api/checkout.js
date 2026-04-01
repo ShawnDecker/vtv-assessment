@@ -1,13 +1,21 @@
 const Stripe = require('stripe');
 const { neon } = require('@neondatabase/serverless');
 
+// Hardcoded active price IDs — fallback if env vars are stale/inactive
+const ACTIVE_PRICES = {
+  individual: 'price_1TEh6fCaTyuNk1McwUYBJ1kj',  // VictoryPath $29/mo
+  couple:     'price_1TFLFyCaTyuNk1MctRmr8cim',  // Value Builder $47/mo
+  premium:    'price_1TEhZ8CaTyuNk1McPoAJBpYW'   // Victory VIP $497/mo
+};
+
+// Map all URL slugs to DB-safe tier values
 const TIER_CONFIG = {
-  victorypath: { amount: 2900, name: 'VictoryPath Membership', tier: 'victorypath', envKey: 'STRIPE_PRICE_INDIVIDUAL' },
-  individual: { amount: 2900, name: 'VictoryPath Membership', tier: 'victorypath', envKey: 'STRIPE_PRICE_INDIVIDUAL' },
-  builder: { amount: 4700, name: 'Value Builder', tier: 'builder', envKey: 'STRIPE_PRICE_COUPLE' },
-  couple: { amount: 4700, name: 'Value Builder', tier: 'builder', envKey: 'STRIPE_PRICE_COUPLE' },
-  vip: { amount: 49700, name: 'Victory VIP', tier: 'vip', envKey: 'STRIPE_PRICE_PREMIUM' },
-  premium: { amount: 49700, name: 'Victory VIP', tier: 'vip', envKey: 'STRIPE_PRICE_PREMIUM' }
+  victorypath: { amount: 2900, name: 'VictoryPath Membership', dbTier: 'individual', priceKey: 'individual' },
+  individual:  { amount: 2900, name: 'VictoryPath Membership', dbTier: 'individual', priceKey: 'individual' },
+  builder:     { amount: 4700, name: 'Value Builder',          dbTier: 'couple',     priceKey: 'couple' },
+  couple:      { amount: 4700, name: 'Value Builder',          dbTier: 'couple',     priceKey: 'couple' },
+  vip:         { amount: 49700, name: 'Victory VIP',           dbTier: 'premium',    priceKey: 'premium' },
+  premium:     { amount: 49700, name: 'Victory VIP',           dbTier: 'premium',    priceKey: 'premium' }
 };
 
 const BASE_URL = 'https://assessment.valuetovictory.com';
@@ -46,7 +54,10 @@ module.exports = async (req, res) => {
         const email = session.customer_email || session.customer_details?.email;
         const customerId = session.customer;
         const subscriptionId = session.subscription;
-        const tier = session.metadata?.tier;
+        const rawTier = session.metadata?.tier;
+        // Map to DB-safe tier value
+        const tierMap = { victorypath: 'individual', individual: 'individual', builder: 'couple', couple: 'couple', vip: 'premium', premium: 'premium' };
+        const tier = tierMap[rawTier] || rawTier;
 
         if (email && tier) {
           // Find contact by email
@@ -144,30 +155,33 @@ module.exports = async (req, res) => {
 
       const config = TIER_CONFIG[tier];
 
-      // Resolve price ID: use env var if set, otherwise create price dynamically
+      // Resolve price ID: try env var first, then hardcoded active price
       let priceId;
-      const envPriceKey = config.envKey || `STRIPE_PRICE_${tier.toUpperCase()}`;
-      const envPriceId = process.env[envPriceKey];
+      const envKeys = { individual: 'STRIPE_PRICE_INDIVIDUAL', couple: 'STRIPE_PRICE_COUPLE', premium: 'STRIPE_PRICE_PREMIUM' };
+      const envPriceId = process.env[envKeys[config.priceKey]];
 
       if (envPriceId) {
-        priceId = envPriceId;
-      } else {
-        // Create a price dynamically
-        const price = await stripe.prices.create({
-          unit_amount: config.amount,
-          currency: 'usd',
-          recurring: { interval: 'month' },
-          product_data: { name: `Value Engine — ${config.name}` }
-        });
-        priceId = price.id;
+        // Verify the env price is active before using it
+        try {
+          const priceObj = await stripe.prices.retrieve(envPriceId);
+          if (priceObj.active) {
+            priceId = envPriceId;
+          }
+        } catch (e) { /* env price invalid, fall through */ }
+      }
+
+      // Fallback to known-good hardcoded active prices
+      if (!priceId) {
+        priceId = ACTIVE_PRICES[config.priceKey];
+        console.log(`[Checkout] Using hardcoded price ${priceId} for ${config.name}`);
       }
 
       const sessionParams = {
         mode: 'subscription',
         line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${BASE_URL}/onboarding?tier=${tier}&session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${BASE_URL}/onboarding?tier=${config.dbTier}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${BASE_URL}/pricing`,
-        metadata: { tier },
+        metadata: { tier: config.dbTier },
         allow_promotion_codes: true
       };
 
