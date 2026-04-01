@@ -46,10 +46,6 @@
       "dest": "/api/migrate-depth.js"
     },
     {
-      "src": "/api/commissions-calc",
-      "dest": "/api/commissions-calc.js"
-    },
-    {
       "src": "/api/health",
       "dest": "/api/health.js"
     },
