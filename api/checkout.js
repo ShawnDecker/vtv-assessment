@@ -3,7 +3,7 @@ const { neon } = require('@neondatabase/serverless');
 
 // Hardcoded active price IDs — fallback if env vars are stale/inactive
 const ACTIVE_PRICES = {
-  individual: 'price_1THTjtCaTyuNk1McH1Dg7f4C',  // VictoryPath $29/mo (fresh price, legacy product, Apr 1 2026)
+  individual: 'price_1THTlxCaTyuNk1McUWDRZOzz',  // VictoryPath $29/mo (new active product+price, Apr 1 2026)
   couple:     'price_1THT4tCaTyuNk1Mc1xzlrxu9',  // Value Builder $47/mo (created Apr 1 2026)
   premium:    'price_1TEhZ8CaTyuNk1McPoAJBpYW'   // Victory VIP $497/mo
 };
