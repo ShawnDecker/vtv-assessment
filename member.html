@@ -1693,10 +1693,10 @@
     }
 
     const items = assessments.map((a, i) => {
-      const score = Math.round(a.score || a.total_score || 0);
+      const score = Math.round(a.masterScore || a.master_score || a.score || a.total_score || 0);
       const sc = scoreClass(score);
       const [rangeLabel, rangeClass] = scoreRange(score);
-      const dateStr = a.created_at || a.completedAt || a.date || '';
+      const dateStr = a.completedAt || a.created_at || a.date || '';
       const date = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) : 'Unknown date';
       const id = a.id || a.assessment_id || '';
       return `
@@ -1987,7 +1987,7 @@
     }
 
     const rows = members.map((m, i) => {
-      const score = m.score || m.total_score || '—';
+      const score = m.masterScore || m.master_score || m.score || m.total_score || '—';
       const dept = m.department || m.dept || '—';
       const role = m.role || '—';
       const status = m.status || (m.completed_at ? 'Complete' : 'Pending');
