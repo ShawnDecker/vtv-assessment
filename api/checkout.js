@@ -1,6 +1,19 @@
 const Stripe = require('stripe');
 const { neon } = require('@neondatabase/serverless');
 
+// Disable Vercel body parsing for webhook signature verification
+module.exports.config = { api: { bodyParser: false } };
+
+// Helper: read raw body from request stream
+function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('error', reject);
+  });
+}
+
 // Hardcoded active price IDs — fallback if env vars are stale/inactive
 const ACTIVE_PRICES = {
   individual: 'price_1THTlxCaTyuNk1McUWDRZOzz',  // VictoryPath $29/mo (new active product+price, Apr 1 2026)
@@ -38,8 +51,7 @@ module.exports = async (req, res) => {
       let event;
 
       try {
-        // For Vercel, the raw body is available as a buffer
-        const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+        const rawBody = await getRawBody(req);
         event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
       } catch (err) {
         console.error('Webhook signature verification failed:', err.message);
