@@ -1384,8 +1384,14 @@
       btn.textContent = 'Access My Dashboard';
     } catch (err) {
       console.error('PIN check error:', err);
-      document.getElementById('debugError').textContent = 'Error: ' + err.message;
-      showState('stateNotFound');
+      // Network errors should show retry — not "No account found"
+      const errEl = document.getElementById('emailError');
+      if (err.message === 'Failed to fetch' || err.message.includes('Network') || err.message.includes('network')) {
+        errEl.textContent = 'Connection error. Please check your internet and try again.';
+      } else {
+        errEl.textContent = 'Something went wrong. Please try again in a moment.';
+      }
+      errEl.classList.remove('hidden');
       btn.disabled = false;
       btn.textContent = 'Access My Dashboard';
     }
