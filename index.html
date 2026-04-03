@@ -218,6 +218,27 @@
         }
       }
 
+      // --- Hide non-assessment content during assessment ---
+      function updateSectionVisibility() {
+        var hash = window.location.hash;
+        var isAssessment = hash.indexOf('#/assessment') === 0;
+        var isCapture = hash.indexOf('#/capture') === 0;
+        var fb = document.getElementById('free-book-section');
+        var faq = document.getElementById('faq-objections-section');
+        if (isAssessment) {
+          if (fb) fb.style.display = 'none';
+          if (faq) faq.style.display = 'none';
+        } else if (!isCapture) {
+          // Show on non-assessment, non-capture routes (landing, results, etc.)
+          // Only show if it was originally meant to be visible
+          if (fb && hash === '#/' || hash === '' || hash === '#') fb.style.display = '';
+        }
+      }
+      window.addEventListener('hashchange', updateSectionVisibility);
+      updateSectionVisibility();
+      // Also re-check on DOM changes in case React re-renders
+      new MutationObserver(updateSectionVisibility).observe(document.body, { childList: true, subtree: true });
+
       // --- Watch for mode selection clicks to show depth selector ---
       var lastHash = '';
       var modeSelectObserver = null;
