@@ -579,3 +579,58 @@
 
   </body>
 </html>
+<!-- Deselect / Clear Answer Button -->
+<script>
+(function() {
+  // Add a "Clear Answer" button when a radio option is selected
+  var observer = new MutationObserver(function() {
+    // Find all radio groups (assessment question containers)
+    var groups = document.querySelectorAll('[role="radiogroup"]');
+    groups.forEach(function(group) {
+      // Check if any item is checked
+      var checked = group.querySelector('[data-state="checked"]');
+      var existingBtn = group.parentElement && group.parentElement.querySelector('.ve-clear-btn');
+      
+      if (checked && !existingBtn) {
+        // Add clear button after the radio group
+        var btn = document.createElement('button');
+        btn.className = 've-clear-btn';
+        btn.textContent = 'Clear Selection';
+        btn.style.cssText = 'display:block;margin:0.75rem auto 0;padding:0.4rem 1rem;background:transparent;border:1px solid #3f3f46;color:#71717a;border-radius:0.375rem;font-size:0.8rem;cursor:pointer;font-family:inherit;transition:all 0.2s;';
+        btn.onmouseenter = function() { btn.style.borderColor = '#D4A847'; btn.style.color = '#D4A847'; };
+        btn.onmouseleave = function() { btn.style.borderColor = '#3f3f46'; btn.style.color = '#71717a'; };
+        btn.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          // Click the checked item to deselect (Radix RadioGroup toggle behavior)
+          // Since Radix doesn't support deselect natively, simulate by dispatching events
+          var checkedItem = group.querySelector('[data-state="checked"]');
+          if (checkedItem) {
+            // Force React state update by dispatching a custom event
+            // The simplest approach: click the checked item twice rapidly
+            checkedItem.click();
+            // If still checked, try removing data-state
+            setTimeout(function() {
+              var stillChecked = group.querySelector('[data-state="checked"]');
+              if (stillChecked) {
+                // Dispatch a keyboard event (Escape) to try to clear
+                stillChecked.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+              }
+              // Remove the button since we attempted clear
+              btn.remove();
+            }, 50);
+          }
+        };
+        group.parentElement.insertBefore(btn, group.nextSibling);
+      } else if (!checked && existingBtn) {
+        existingBtn.remove();
+      }
+    });
+  });
+  
+  // Start observing after React mounts
+  setTimeout(function() {
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-state'] });
+  }, 2000);
+})();
+</script>

@@ -255,7 +255,7 @@
       document.getElementById('currentScore').textContent = current.masterScore || '—';
 
       if (baseline.masterScore && current.masterScore) {
-        var delta = current.masterScore - baseline.masterScore;
+        var delta = Math.round((current.masterScore - baseline.masterScore) * 10) / 10;
         var deltaEl = document.getElementById('scoreDelta');
         if (delta > 0) {
           deltaEl.innerHTML = '<span class="compare-delta delta-up">+' + delta + ' points</span>';
@@ -273,7 +273,7 @@
       pillarKeys.forEach(function(key, i) {
         var bv = baseline[key] || 0;
         var cv = current[key] || 0;
-        var d = cv - bv;
+        var d = Math.round((cv - bv) * 10) / 10;
         var cls = d > 0 ? 'delta-up' : (d < 0 ? 'delta-down' : 'delta-same');
         var sign = d > 0 ? '+' : '';
         pcHtml += '<div class="stat-row"><span class="stat-label">' + pillarNames[i] + '</span><span class="stat-value">' + bv + ' &rarr; ' + cv + ' <span class="' + cls + '" style="font-size:0.75rem;">(' + sign + d + ')</span></span></div>';
@@ -323,17 +323,48 @@
     }
   </script>
 
-<!-- Value to Victory Upsell -->
-<div style="max-width:720px;margin:2rem auto;padding:2rem;background:linear-gradient(135deg,#1a1a2e 0%,#18181b 100%);border:1px solid #D4A847;border-radius:0.75rem;text-align:center;font-family:'Satoshi',sans-serif;">
-  <div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:0.5rem;">Take the Next Step</div>
-  <h3 style="font-size:1.25rem;color:#fff;margin:0 0 0.5rem;">Ready to Transform Your Results?</h3>
-  <p style="color:#a1a1aa;font-size:0.9rem;margin-bottom:1.25rem;line-height:1.6;">Join VictoryPath for personalized action plans, challenges, and the full P.I.N.K. toolkit &mdash; all based on your assessment.</p>
-  <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;margin-bottom:1rem;">
-    <a href="https://buy.stripe.com/fZufZgeIYgGEfVL6c46oo07" target="_blank" rel="noopener" style="display:inline-block;padding:0.75rem 1.75rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Join VictoryPath &mdash; $29/mo</a>
-    <a href="https://calendly.com/valuetovictory/30min" target="_blank" rel="noopener" style="display:inline-block;padding:0.75rem 1.75rem;background:transparent;border:1px solid #D4A847;color:#D4A847;font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Book a Call with Shawn</a>
+<!-- Value to Victory Upsell — tier-aware -->
+<div id="upsellSection" style="max-width:720px;margin:2rem auto;padding:2rem;background:linear-gradient(135deg,#1a1a2e 0%,#18181b 100%);border:1px solid #D4A847;border-radius:0.75rem;text-align:center;font-family:'Satoshi',sans-serif;">
+  <!-- Default: free tier upsell -->
+  <div id="upsellFree">
+    <div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:0.5rem;">Take the Next Step</div>
+    <h3 style="font-size:1.25rem;color:#fff;margin:0 0 0.5rem;">Ready to Transform Your Results?</h3>
+    <p style="color:#a1a1aa;font-size:0.9rem;margin-bottom:1.25rem;line-height:1.6;">Join VictoryPath for personalized action plans, challenges, and the full P.I.N.K. toolkit &mdash; all based on your assessment.</p>
+    <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;margin-bottom:1rem;">
+      <a href="/checkout?tier=victorypath" style="display:inline-block;padding:0.75rem 1.75rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Join VictoryPath &mdash; $29/mo</a>
+      <a href="https://calendly.com/valuetovictory/30min" target="_blank" rel="noopener" style="display:inline-block;padding:0.75rem 1.75rem;background:transparent;border:1px solid #D4A847;color:#D4A847;font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Book a Call with Shawn</a>
+    </div>
+    <p style="font-size:0.75rem;color:#71717a;margin:0;">Cancel anytime &middot; First 100 members get free Value Builder upgrade &middot; Founders rate locks in before 2027</p>
   </div>
-  <p style="font-size:0.75rem;color:#71717a;margin:0;">Cancel anytime &middot; First-time coaching clients get 20% off</p>
+  <!-- Paid member: no tier upsell, just coaching -->
+  <div id="upsellPaid" style="display:none;">
+    <div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:#22c55e;font-weight:700;margin-bottom:0.5rem;">You're Already In</div>
+    <h3 style="font-size:1.25rem;color:#fff;margin:0 0 0.5rem;">Keep the Momentum Going</h3>
+    <p style="color:#a1a1aa;font-size:0.9rem;margin-bottom:1.25rem;line-height:1.6;">Your membership is active. Use the 90-day challenge to track your growth and prove the system works.</p>
+    <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;margin-bottom:1rem;">
+      <a href="/member" style="display:inline-block;padding:0.75rem 1.75rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Go to Dashboard</a>
+      <a href="https://calendly.com/valuetovictory/30min" target="_blank" rel="noopener" style="display:inline-block;padding:0.75rem 1.75rem;background:transparent;border:1px solid #D4A847;color:#D4A847;font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Book 1:1 Coaching</a>
+    </div>
+    <p style="font-size:0.75rem;color:#71717a;margin:0;">First-time coaching clients get 20% off ($240 instead of $300)</p>
+  </div>
 </div>
+<script>
+// Tier-aware upsell: hide VictoryPath CTA for paid members
+(function() {
+  var email = localStorage.getItem('vtv_email');
+  if (!email) return;
+  fetch('/api/contacts?email=' + encodeURIComponent(email))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var tier = (data.profile && data.profile.membership_tier) || 'free';
+      if (tier === 'individual' || tier === 'couple' || tier === 'premium') {
+        document.getElementById('upsellFree').style.display = 'none';
+        document.getElementById('upsellPaid').style.display = 'block';
+      }
+    })
+    .catch(function() { /* default to free upsell */ });
+})();
+</script>
 
 <!-- Book Pills with Real Covers -->
 <div style="max-width:720px;margin:1rem auto 2rem;display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;font-family:'Satoshi',sans-serif;">
