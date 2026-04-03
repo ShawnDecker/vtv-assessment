@@ -1216,6 +1216,12 @@
       <div id="quickLinksGrid" class="links-grid"></div>
     </div>
 
+    <!-- 3d.5. RFM AUDIOBOOK -->
+    <div class="section" id="audiobookSection">
+      <p class="section-title">Audiobook</p>
+      <div id="audiobookCard"></div>
+    </div>
+
     <!-- 3e. TEAM ADMIN -->
     <div class="section" id="teamSection">
       <p class="section-title">Team Assessment</p>
@@ -1622,6 +1628,9 @@
     // Quick links
     renderQuickLinks(tier);
 
+    // Audiobook
+    renderAudiobookCard(currentEmail);
+
     // Teams
     renderTeamSection();
 
@@ -1729,7 +1738,8 @@
       { icon:'👥', name:'Team Report', desc:'Aggregate team insights', href:'/team-report', minLevel:1 },
       { icon:'🗺️', name:'Action Plan', desc:'Personalized roadmap', href:'/action-plan', minLevel:1 },
       { icon:'💬', name:'Love Language', desc:'Communication profile', href:'/love-language', minLevel:2 },
-      { icon:'🎯', name:'Coaching', desc:'1-on-1 sessions', href:'/coaching', minLevel:0 }
+      { icon:'🎯', name:'Coaching', desc:'1-on-1 sessions', href:'/coaching', minLevel:0 },
+      { icon:'🎧', name:'Audiobook', desc:'Running From Miracles', href:'/audiobook?email=' + encodeURIComponent(currentEmail), minLevel:0 }
     ];
 
     const el = document.getElementById('quickLinksGrid');
@@ -1743,6 +1753,63 @@
           ${locked ? '<span class="lock-badge">🔒</span>' : ''}
         </${locked ? 'div' : 'a'}>`;
     }).join('');
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ── AUDIOBOOK SECTION
+  // ─────────────────────────────────────────────────────────────────────────────
+  function renderAudiobookCard(email) {
+    const el = document.getElementById('audiobookCard');
+    if (!el) return;
+    const audiobookUrl = '/audiobook?email=' + encodeURIComponent(email);
+    const paymentUrl = 'https://buy.stripe.com/9B69ASfN28a8eRHgQI6oo0j?prefilled_email=' + encodeURIComponent(email);
+
+    // Render the base card immediately with a loading state
+    el.innerHTML = `
+      <div id="audiobookCardInner" style="background:linear-gradient(135deg, var(--vip-grad-1) 0%, var(--vip-grad-2) 50%, var(--vip-grad-3) 100%);border:1px solid rgba(212,168,71,0.3);border-radius:0.75rem;padding:1.5rem;display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap">
+        <div style="width:80px;height:80px;background:linear-gradient(135deg,#1c1917,#292007);border:2px solid var(--gold);border-radius:0.5rem;display:flex;align-items:center;justify-content:center;font-size:2.5rem;flex-shrink:0">📗</div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:1.1rem;font-weight:800;margin-bottom:0.25rem">Running From Miracles</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">by Shawn E. Decker</div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+            <span style="font-size:0.7rem;background:var(--bar-bg);padding:0.15rem 0.5rem;border-radius:2rem;color:var(--text-muted)">🎧 6h 10m</span>
+            <span style="font-size:0.7rem;background:var(--bar-bg);padding:0.15rem 0.5rem;border-radius:2rem;color:var(--text-muted)">65 chapters</span>
+          </div>
+        </div>
+        <div id="audiobookCta" style="opacity:0.4;pointer-events:none">
+          <span style="font-size:0.85rem;color:var(--text-muted)">Checking access…</span>
+        </div>
+      </div>`;
+
+    // Fetch entitlement and update the CTA
+    fetch('/api/entitlements?email=' + encodeURIComponent(email))
+      .then(r => r.json())
+      .then(data => {
+        const ctaEl = document.getElementById('audiobookCta');
+        if (!ctaEl) return;
+        ctaEl.style.opacity = '1';
+        ctaEl.style.pointerEvents = 'auto';
+        const audiobook = data.products && data.products['rfm-audiobook'];
+        if (audiobook && audiobook.entitled) {
+          // Entitled — show Listen Now
+          ctaEl.innerHTML = `<a href="${audiobookUrl}" style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--gold);color:#0a0a0a;font-weight:700;font-size:0.85rem;padding:0.625rem 1.25rem;border-radius:0.5rem;text-decoration:none;white-space:nowrap;transition:opacity 0.2s" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">🎧 Listen Now</a>`;
+        } else {
+          // Not entitled — show purchase CTA
+          ctaEl.innerHTML = `
+            <div style="text-align:center">
+              <a href="${paymentUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:0.5rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;font-size:0.85rem;padding:0.625rem 1.25rem;border-radius:0.5rem;text-decoration:none;white-space:nowrap;transition:opacity 0.2s" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Get Audiobook — $9.97</a>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.5rem">Victory VIP members get all digital products free</div>
+            </div>`;
+        }
+      })
+      .catch(() => {
+        // On error fall back to Listen Now so users aren't blocked
+        const ctaEl = document.getElementById('audiobookCta');
+        if (!ctaEl) return;
+        ctaEl.style.opacity = '1';
+        ctaEl.style.pointerEvents = 'auto';
+        ctaEl.innerHTML = `<a href="${audiobookUrl}" style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--gold);color:#0a0a0a;font-weight:700;font-size:0.85rem;padding:0.625rem 1.25rem;border-radius:0.5rem;text-decoration:none;white-space:nowrap;transition:opacity 0.2s" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">🎧 Listen Now</a>`;
+      });
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
   "name": "vtv-assessment",
   "private": true,
   "dependencies": {
-    "@neondatabase/serverless": "^0.10.0",
+    "@neondatabase/serverless": "^0.10.4",
     "dotenv": "^17.3.1",
     "nodemailer": "^6.9.0",
     "stripe": "^14.0.0"

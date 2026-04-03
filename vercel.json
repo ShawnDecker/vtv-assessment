@@ -30,6 +30,14 @@
       "dest": "/api/health.js"
     },
     {
+      "src": "/api/entitlements",
+      "dest": "/api/entitlements.js"
+    },
+    {
+      "src": "/api/migrate-digital-purchases",
+      "dest": "/api/migrate-digital-purchases.js"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     },
@@ -143,6 +151,10 @@
     {
       "src": "/realestate",
       "dest": "/realestate.html"
+    },
+    {
+      "src": "/audiobook",
+      "dest": "/audiobook.html"
     },
     {
       "src": "/(.*)",

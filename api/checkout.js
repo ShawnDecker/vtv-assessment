@@ -66,12 +66,52 @@ module.exports = async (req, res) => {
         const email = session.customer_email || session.customer_details?.email;
         const customerId = session.customer;
         const subscriptionId = session.subscription;
+        const paymentIntentId = session.payment_intent;
         const rawTier = session.metadata?.tier;
         // Map to DB-safe tier value
         const tierMap = { victorypath: 'individual', individual: 'individual', builder: 'couple', couple: 'couple', vip: 'premium', premium: 'premium' };
         const tier = tierMap[rawTier] || rawTier;
 
-        if (email && tier) {
+        // ── Check if this is an audiobook purchase (one-time product)
+        const AUDIOBOOK_PRODUCT_ID = 'prod_UGkRRCOAvVYkSC';
+        const AUDIOBOOK_PRICE_ID   = 'price_1TICwNCaTyuNk1McXI7thCPo';
+        let isAudiobookPurchase = false;
+
+        // Detect via line items if available, or via metadata, or price/product match
+        if (session.metadata?.product_id === 'rfm-audiobook') {
+          isAudiobookPurchase = true;
+        } else {
+          // Check line items for the audiobook price
+          try {
+            const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 });
+            for (const item of (lineItems.data || [])) {
+              if (
+                item.price?.id === AUDIOBOOK_PRICE_ID ||
+                item.price?.product === AUDIOBOOK_PRODUCT_ID
+              ) {
+                isAudiobookPurchase = true;
+                break;
+              }
+            }
+          } catch (liErr) {
+            console.warn('[checkout] Could not fetch line items:', liErr.message);
+          }
+        }
+
+        if (isAudiobookPurchase && email) {
+          // Record audiobook entitlement
+          try {
+            await sql`
+              INSERT INTO digital_purchases (email, product_id, stripe_product_id, stripe_payment_intent, granted_by)
+              VALUES (${email.toLowerCase()}, 'rfm-audiobook', ${AUDIOBOOK_PRODUCT_ID}, ${paymentIntentId || null}, 'purchase')
+              ON CONFLICT (email, product_id) DO NOTHING
+            `;
+            console.log('[checkout] Audiobook purchase recorded for:', email);
+          } catch (dpErr) {
+            console.error('[checkout] Failed to record audiobook purchase:', dpErr.message);
+          }
+        } else if (email && tier) {
+          // Membership subscription purchase — upsert user_profiles
           // Find contact by email
           const contacts = await sql`SELECT id FROM contacts WHERE email = ${email} LIMIT 1`;
           if (contacts.length > 0) {
