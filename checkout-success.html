@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thank You | Value to Victory</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Satoshi', system-ui, -apple-system, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .container {
+      max-width: 560px;
+      width: 100%;
+      text-align: center;
+    }
+    .check-circle {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+      animation: scaleIn 0.5s ease-out;
+    }
+    @keyframes scaleIn {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .check-circle svg { width: 40px; height: 40px; }
+    h1 {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .subtitle {
+      font-size: 17px;
+      color: #a1a1aa;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+    .order-details {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 28px;
+      text-align: left;
+    }
+    .order-details h3 {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #D4A847;
+      margin-bottom: 16px;
+    }
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #27272a;
+      font-size: 15px;
+    }
+    .order-item:last-child { border-bottom: none; }
+    .order-item .name { color: #fff; }
+    .order-item .price { color: #D4A847; font-weight: 600; }
+    .order-total {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 12px;
+      margin-top: 4px;
+      border-top: 2px solid #D4A847;
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .loading-details {
+      color: #71717a;
+      font-size: 14px;
+      padding: 16px 0;
+    }
+    .next-steps {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 28px;
+      text-align: left;
+    }
+    .next-steps h3 {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #22c55e;
+      margin-bottom: 16px;
+    }
+    .step {
+      display: flex;
+      gap: 12px;
+      padding: 8px 0;
+      font-size: 14px;
+      color: #d4d4d8;
+      line-height: 1.5;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: #27272a;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      color: #D4A847;
+    }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .btn-primary {
+      display: block;
+      padding: 16px;
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #000;
+      text-align: center;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 16px;
+      text-decoration: none;
+      transition: transform 0.15s;
+    }
+    .btn-primary:hover { transform: translateY(-1px); }
+    .btn-secondary {
+      display: block;
+      padding: 14px;
+      border: 1px solid #27272a;
+      color: #d4d4d8;
+      text-align: center;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+      transition: border-color 0.15s;
+    }
+    .btn-secondary:hover { border-color: #D4A847; color: #fff; }
+    .footer {
+      margin-top: 32px;
+      font-size: 12px;
+      color: #52525b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="check-circle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+
+    <h1>You're In.</h1>
+    <p class="subtitle">Your purchase is confirmed. Welcome to the Value to Victory community.</p>
+
+    <div class="order-details" id="orderDetails">
+      <h3>Order Summary</h3>
+      <div class="loading-details" id="loadingDetails">Loading your order details...</div>
+    </div>
+
+    <div class="next-steps">
+      <h3>What Happens Next</h3>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>Check your email for a receipt and any download links.</div>
+      </div>
+      <div class="step" id="stepMember" style="display:none;">
+        <div class="step-num">2</div>
+        <div>Access your Member Portal to see your dashboard, assessment history, and exclusive content.</div>
+      </div>
+      <div class="step" id="stepAssessment">
+        <div class="step-num">2</div>
+        <div>Take the P.I.N.K. Assessment to discover your unique value score and get your personalized report.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>Questions? Email <a href="mailto:valuetovictory@gmail.com" style="color:#D4A847;">valuetovictory@gmail.com</a></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a href="https://assessment.valuetovictory.com" class="btn-primary" id="ctaButton">Take the Assessment</a>
+      <a href="https://valuetovictory.com" class="btn-secondary">Back to Value to Victory</a>
+    </div>
+
+    <div class="footer">
+      <p>Powered by Value to Victory &bull; Secure payment by Stripe</p>
+    </div>
+  </div>
+
+  <script>
+    // Fetch session details from Stripe via our API
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var sessionId = params.get('session_id');
+      if (!sessionId) return;
+
+      fetch('/api/checkout/session?id=' + encodeURIComponent(sessionId))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data || !data.line_items) return;
+          var container = document.getElementById('orderDetails');
+          var html = '<h3>Order Summary</h3>';
+          var hasSub = false;
+
+          data.line_items.forEach(function(item) {
+            var name = item.description || item.name || 'Item';
+            var amount = (item.amount_total / 100).toFixed(2);
+            var recurring = item.price && item.price.recurring;
+            var suffix = recurring ? '/' + recurring.interval : '';
+            if (recurring) hasSub = true;
+            html += '<div class="order-item"><span class="name">' + name + '</span><span class="price">$' + amount + suffix + '</span></div>';
+          });
+
+          var total = (data.amount_total / 100).toFixed(2);
+          html += '<div class="order-total"><span>Total</span><span>$' + total + '</span></div>';
+          container.innerHTML = html;
+
+          // Show member portal step if subscription
+          if (hasSub) {
+            document.getElementById('stepMember').style.display = 'flex';
+            document.getElementById('ctaButton').href = '/member';
+            document.getElementById('ctaButton').textContent = 'Go to Member Portal';
+          }
+        })
+        .catch(function() {
+          document.getElementById('loadingDetails').textContent = 'Your payment was processed successfully.';
+        });
+    })();
+  </script>
+</body>
+</html>

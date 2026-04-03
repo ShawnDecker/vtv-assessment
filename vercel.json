@@ -2,20 +2,12 @@
   "version": 2,
   "routes": [
     {
-      "src": "/api/setup-db",
-      "dest": "/api/setup-db.js"
-    },
-    {
-      "src": "/api/migrate-question-system",
-      "dest": "/api/migrate-question-system.js"
-    },
-    {
-      "src": "/api/migrate-relationships",
-      "dest": "/api/migrate-relationships.js"
-    },
-    {
       "src": "/api/r/(.*)",
       "dest": "/api/relationships.js"
+    },
+    {
+      "src": "/api/cart-checkout",
+      "dest": "/api/cart-checkout.js"
     },
     {
       "src": "/api/checkout/webhook",
@@ -34,18 +26,6 @@
       "dest": "/api/verify-email.js"
     },
     {
-      "src": "/api/setup-free-book-db",
-      "dest": "/api/setup-free-book-db.js"
-    },
-    {
-      "src": "/api/migrate-coaching",
-      "dest": "/api/migrate-coaching.js"
-    },
-    {
-      "src": "/api/migrate-depth",
-      "dest": "/api/migrate-depth.js"
-    },
-    {
       "src": "/api/health",
       "dest": "/api/health.js"
     },
@@ -55,6 +35,10 @@
     },
     {
       "handle": "filesystem"
+    },
+    {
+      "src": "/checkout/success",
+      "dest": "/checkout-success.html"
     },
     {
       "src": "/member",
