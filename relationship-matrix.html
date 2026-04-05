@@ -99,7 +99,7 @@
   <div class="container hidden" id="mainView">
     <div class="brand">THE VALUE ENGINE</div>
     <h1>Relationship Contribution Matrix</h1>
-    <p class="subtitle">20 questions across 5 domains. Score what you give and what you receive.</p>
+    <p class="subtitle">20 questions across 5 domains. Rate what you give and what you receive — side by side.</p>
 
     <!-- Assessment View -->
     <div id="assessmentView">
@@ -160,86 +160,77 @@
     var currentDomain = 0;
     var scores = {};
 
-    // 20 questions: 4 per domain (2 give + 2 receive), gender-aware
-    var QUESTIONS = [
-      // Domain 1: Practical Support (4 questions)
-      { domain: 'practical', type: 'give', key: 'practicalGive1', name: 'Practical Support',
-        male: "How often do you take the lead on chores, repairs, or errands without being asked?",
-        female: "How often do you handle daily tasks and household responsibilities so your partner doesn't have to?" },
-      { domain: 'practical', type: 'give', key: 'practicalGive2', name: 'Practical Support',
-        male: "How often do you step in to handle something your partner is stressed about — before she asks?",
-        female: "How often do you anticipate what needs to be done and handle it before it becomes a problem?" },
-      { domain: 'practical', type: 'receive', key: 'practicalReceive1', name: 'Practical Support',
-        male: "How often does your partner take care of practical things that make your life easier?",
-        female: "How often does your partner handle tasks or fix things without you having to ask?" },
-      { domain: 'practical', type: 'receive', key: 'practicalReceive2', name: 'Practical Support',
-        male: "How supported do you feel in the day-to-day logistics of life together?",
-        female: "How much does your partner share the invisible load of keeping things running?" },
+    // 20 screens: 4 per domain, each with give + receive stacked = 40 data points
+    var SCREENS = [
+      // Domain 1: Practical Support (4 screens)
+      { domain: 'practical', name: 'Practical Support', giveKey: 'practicalGive1', receiveKey: 'practicalReceive1',
+        male: "Taking the lead on chores, repairs, and errands without being asked",
+        female: "Handling daily tasks and responsibilities so your partner doesn't have to" },
+      { domain: 'practical', name: 'Practical Support', giveKey: 'practicalGive2', receiveKey: 'practicalReceive2',
+        male: "Stepping in to handle something your partner is stressed about — before she asks",
+        female: "Anticipating what needs to be done and handling it before it becomes a problem" },
+      { domain: 'practical', name: 'Practical Support', giveKey: 'practicalGive3', receiveKey: 'practicalReceive3',
+        male: "Keeping shared spaces clean and organized without being reminded",
+        female: "Managing the logistics of the household — meals, groceries, scheduling" },
+      { domain: 'practical', name: 'Practical Support', giveKey: 'practicalGive4', receiveKey: 'practicalReceive4',
+        male: "Handling car maintenance, home repairs, or tech issues proactively",
+        female: "Taking on tasks that your partner finds draining or overwhelming" },
 
-      // Domain 2: Mental Load & Emotional Labor (4 questions)
-      { domain: 'mentalLoad', type: 'give', key: 'mentalLoadGive1', name: 'Emotional Labor',
-        male: "How often do you notice your partner's stress and check in without being prompted?",
-        female: "How often do you carry the mental list — remembering dates, appointments, and details for both of you?" },
-      { domain: 'mentalLoad', type: 'give', key: 'mentalLoadGive2', name: 'Emotional Labor',
-        male: "How often do you initiate conversations about feelings or the state of the relationship?",
-        female: "How often are you the one managing the emotional temperature of the relationship?" },
-      { domain: 'mentalLoad', type: 'receive', key: 'mentalLoadReceive1', name: 'Emotional Labor',
-        male: "How often does your partner check on your emotional state without you having to bring it up?",
-        female: "How often does your partner take things off your mental plate without being told?" },
-      { domain: 'mentalLoad', type: 'receive', key: 'mentalLoadReceive2', name: 'Emotional Labor',
-        male: "How emotionally safe do you feel being honest about what you're going through?",
-        female: "How often does your partner notice when you're overwhelmed and step up?" },
+      // Domain 2: Emotional Labor (4 screens)
+      { domain: 'mentalLoad', name: 'Emotional Labor', giveKey: 'mentalLoadGive1', receiveKey: 'mentalLoadReceive1',
+        male: "Noticing your partner's stress and checking in without being prompted",
+        female: "Carrying the mental list — dates, appointments, and details for both of you" },
+      { domain: 'mentalLoad', name: 'Emotional Labor', giveKey: 'mentalLoadGive2', receiveKey: 'mentalLoadReceive2',
+        male: "Initiating conversations about feelings or the state of the relationship",
+        female: "Managing the emotional temperature of the relationship" },
+      { domain: 'mentalLoad', name: 'Emotional Labor', giveKey: 'mentalLoadGive3', receiveKey: 'mentalLoadReceive3',
+        male: "Being emotionally present — not just physically there but actually engaged",
+        female: "Holding space for your partner's emotions without trying to fix everything" },
+      { domain: 'mentalLoad', name: 'Emotional Labor', giveKey: 'mentalLoadGive4', receiveKey: 'mentalLoadReceive4',
+        male: "Remembering what matters to your partner — their concerns, hopes, fears",
+        female: "Tracking the emotional needs of the relationship without being asked" },
 
-      // Domain 3: Financial (4 questions)
-      { domain: 'financial', type: 'give', key: 'financialGive1', name: 'Financial Stewardship',
-        male: "How much do you actively carry or share the financial weight for the two of you?",
-        female: "How much do you actively contribute to or manage the money side — income, bills, or budgeting?" },
-      { domain: 'financial', type: 'give', key: 'financialGive2', name: 'Financial Stewardship',
-        male: "How often do you initiate honest conversations about money, debt, or financial goals?",
-        female: "How often do you bring up financial planning, savings, or spending habits?" },
-      { domain: 'financial', type: 'receive', key: 'financialReceive1', name: 'Financial Stewardship',
-        male: "How much does your partner contribute to financial stability or planning?",
-        female: "How much financial security or planning does your partner provide?" },
-      { domain: 'financial', type: 'receive', key: 'financialReceive2', name: 'Financial Stewardship',
-        male: "How aligned do you feel about how money is managed in the relationship?",
-        female: "How transparent and honest is your partner about finances?" },
+      // Domain 3: Financial Stewardship (4 screens)
+      { domain: 'financial', name: 'Financial Stewardship', giveKey: 'financialGive1', receiveKey: 'financialReceive1',
+        male: "Actively carrying or sharing the financial weight for the two of you",
+        female: "Actively contributing to or managing the money side — income, bills, or budgeting" },
+      { domain: 'financial', name: 'Financial Stewardship', giveKey: 'financialGive2', receiveKey: 'financialReceive2',
+        male: "Initiating honest conversations about money, debt, or financial goals",
+        female: "Bringing up financial planning, savings, or spending habits" },
+      { domain: 'financial', name: 'Financial Stewardship', giveKey: 'financialGive3', receiveKey: 'financialReceive3',
+        male: "Being generous with your resources — giving without keeping score",
+        female: "Being transparent about spending and financial decisions" },
+      { domain: 'financial', name: 'Financial Stewardship', giveKey: 'financialGive4', receiveKey: 'financialReceive4',
+        male: "Planning for the future — savings, investments, or emergency funds",
+        female: "Working together on financial goals instead of making decisions alone" },
 
-      // Domain 4: Relational Maintenance (4 questions)
-      { domain: 'relational', type: 'give', key: 'relationalGive1', name: 'Relational Investment',
-        male: "How often do you plan time together, apologize first, or intentionally invest in the relationship?",
-        female: "How often do you initiate quality time, emotional talks, or work to repair things between you?" },
-      { domain: 'relational', type: 'give', key: 'relationalGive2', name: 'Relational Investment',
-        male: "How often do you express appreciation or affirmation — not just when prompted?",
-        female: "How often do you verbally affirm, thank, or encourage your partner?" },
-      { domain: 'relational', type: 'receive', key: 'relationalReceive1', name: 'Relational Investment',
-        male: "How often does your partner show appreciation or initiate connection?",
-        female: "How often does your partner plan something, apologize, or invest in you?" },
-      { domain: 'relational', type: 'receive', key: 'relationalReceive2', name: 'Relational Investment',
-        male: "How valued and respected do you feel in the relationship on a daily basis?",
-        female: "How prioritized do you feel compared to your partner's other commitments?" },
+      // Domain 4: Relational Investment (4 screens)
+      { domain: 'relational', name: 'Relational Investment', giveKey: 'relationalGive1', receiveKey: 'relationalReceive1',
+        male: "Planning time together, apologizing first, or intentionally investing in the relationship",
+        female: "Initiating quality time, emotional talks, or working to repair things" },
+      { domain: 'relational', name: 'Relational Investment', giveKey: 'relationalGive2', receiveKey: 'relationalReceive2',
+        male: "Expressing appreciation or affirmation — not just when prompted",
+        female: "Verbally affirming, thanking, or encouraging your partner" },
+      { domain: 'relational', name: 'Relational Investment', giveKey: 'relationalGive3', receiveKey: 'relationalReceive3',
+        male: "Protecting your relationship from outside distractions — phone, friends, work",
+        female: "Making your partner feel like a priority, not an afterthought" },
+      { domain: 'relational', name: 'Relational Investment', giveKey: 'relationalGive4', receiveKey: 'relationalReceive4',
+        male: "Listening to understand, not to respond or fix",
+        female: "Being fully present during conversations — not multitasking or checking out" },
 
-      // Domain 5: Growth & Sacrifice (4 questions)
-      { domain: 'growth', type: 'give', key: 'growthGive1', name: 'Growth & Sacrifice',
-        male: "How often do you adjust your schedule, comfort zone, or lifestyle to support your partner's goals?",
-        female: "How often do you put your own needs, time, or comfort on hold to support your partner?" },
-      { domain: 'growth', type: 'give', key: 'growthGive2', name: 'Growth & Sacrifice',
-        male: "How willing are you to change a habit or pattern when your partner says it matters?",
-        female: "How often do you challenge yourself to grow in an area your partner has identified?" },
-      { domain: 'growth', type: 'receive', key: 'growthReceive1', name: 'Growth & Sacrifice',
-        male: "How often does your partner make sacrifices for your goals or well-being?",
-        female: "How often does your partner adjust their life to support your growth?" },
-      { domain: 'growth', type: 'receive', key: 'growthReceive2', name: 'Growth & Sacrifice',
-        male: "How much does your partner actively invest in their own personal growth?",
-        female: "How committed is your partner to becoming better — for themselves and for you?" }
-    ];
-
-    // Legacy DOMAINS array for API compatibility (aggregated from 20 questions)
-    var DOMAINS = [
-      { key: 'practical', name: 'Practical Support & Household Labor' },
-      { key: 'mentalLoad', name: 'Mental Load & Emotional Labor' },
-      { key: 'financial', name: 'Financial Contribution & Stress Buffering' },
-      { key: 'relational', name: 'Relational Maintenance & Appreciation' },
-      { key: 'growth', name: 'Growth, Sacrifice & Flexibility' }
+      // Domain 5: Growth & Sacrifice (4 screens)
+      { domain: 'growth', name: 'Growth & Sacrifice', giveKey: 'growthGive1', receiveKey: 'growthReceive1',
+        male: "Adjusting your schedule, comfort zone, or lifestyle to support your partner's goals",
+        female: "Putting your own needs, time, or comfort on hold to support your partner" },
+      { domain: 'growth', name: 'Growth & Sacrifice', giveKey: 'growthGive2', receiveKey: 'growthReceive2',
+        male: "Being willing to change a habit or pattern when your partner says it matters",
+        female: "Challenging yourself to grow in an area your partner has identified" },
+      { domain: 'growth', name: 'Growth & Sacrifice', giveKey: 'growthGive3', receiveKey: 'growthReceive3',
+        male: "Investing in your own personal growth — reading, learning, getting better",
+        female: "Working on yourself so you can show up better in the relationship" },
+      { domain: 'growth', name: 'Growth & Sacrifice', giveKey: 'growthGive4', receiveKey: 'growthReceive4',
+        male: "Choosing the relationship over being right in moments of conflict",
+        female: "Forgiving without keeping a record — letting things go when it matters" }
     ];
 
     async function init() {
@@ -257,12 +248,13 @@
         if (!profile.contact_id) { window.location.href = '/onboarding'; return; }
         if (!profile.gender) { profile.gender = 'male'; } // default if not set
 
-        // Init scores for all 20 questions
-        QUESTIONS.forEach(function(q) {
-          scores[q.key] = 5;
+        // Init scores for all 40 data points (20 give + 20 receive)
+        SCREENS.forEach(function(s) {
+          scores[s.giveKey] = 5;
+          scores[s.receiveKey] = 5;
         });
 
-        renderQuestion(0);
+        renderScreen(0);
         document.getElementById('loadingView').classList.add('hidden');
         document.getElementById('mainView').classList.remove('hidden');
       } catch(e) {
@@ -270,26 +262,32 @@
       }
     }
 
-    function renderQuestion(idx) {
-      var q = QUESTIONS[idx];
+    function renderScreen(idx) {
+      var s = SCREENS[idx];
       var gender = profile.gender || 'male';
-      var question = gender === 'female' ? q.female : q.male;
-      var typeLabel = q.type === 'give' ? 'What I Give' : 'What I Receive';
+      var question = gender === 'female' ? s.female : s.male;
 
       var html = '<div class="step-counter">Question ' + (idx + 1) + ' of 20</div>';
-      html += '<div class="domain-title">' + q.name + '</div>';
-      html += '<div style="font-size:.7rem;color:' + (q.type === 'give' ? '#D4A847' : '#3b82f6') + ';text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:.5rem">' + typeLabel + '</div>';
+      html += '<div class="domain-title">' + s.name + '</div>';
       html += '<div class="domain-question">' + question + '</div>';
 
+      // Give slider
       html += '<div class="slider-group">';
-      html += '<div class="slider-label"><span class="slider-label-text">' + typeLabel + '</span><span class="slider-value" id="scoreVal">' + scores[q.key] + '</span></div>';
-      html += '<input type="range" min="0" max="10" step="1" value="' + scores[q.key] + '" id="scoreSlider" oninput="updateScore()" />';
+      html += '<div class="slider-label"><span class="slider-label-text" style="color:#D4A847">What I Give</span><span class="slider-value" id="giveVal">' + scores[s.giveKey] + '</span></div>';
+      html += '<input type="range" min="0" max="10" step="1" value="' + scores[s.giveKey] + '" id="giveSlider" oninput="updateSlider(\'give\')" />';
+      html += '<div class="slider-scale"><span>0 — Never</span><span>5 — Sometimes</span><span>10 — Always</span></div>';
+      html += '</div>';
+
+      // Receive slider
+      html += '<div class="slider-group">';
+      html += '<div class="slider-label"><span class="slider-label-text" style="color:#3b82f6">What I Receive</span><span class="slider-value" id="receiveVal">' + scores[s.receiveKey] + '</span></div>';
+      html += '<input type="range" min="0" max="10" step="1" value="' + scores[s.receiveKey] + '" id="receiveSlider" oninput="updateSlider(\'receive\')" />';
       html += '<div class="slider-scale"><span>0 — Never</span><span>5 — Sometimes</span><span>10 — Always</span></div>';
       html += '</div>';
 
       document.getElementById('domainContainer').innerHTML = html;
 
-      // Update progress bar — 5 segments, each covers 4 questions
+      // Update progress bar — 5 segments, each covers 4 screens
       var segments = document.querySelectorAll('.progress-segment');
       var domainIdx = Math.floor(idx / 4);
       segments.forEach(function(seg, i) {
@@ -298,22 +296,27 @@
         if (i === domainIdx) seg.classList.add('active');
       });
 
-      // Show/hide buttons
       document.getElementById('prevBtn').style.display = idx === 0 ? 'none' : 'block';
-      document.getElementById('nextBtn').textContent = idx === QUESTIONS.length - 1 ? 'Submit' : 'Next';
+      document.getElementById('nextBtn').textContent = idx === SCREENS.length - 1 ? 'Submit' : 'Next';
     }
 
-    function updateScore() {
-      var q = QUESTIONS[currentDomain];
-      var val = document.getElementById('scoreSlider').value;
-      document.getElementById('scoreVal').textContent = val;
-      scores[q.key] = parseInt(val);
+    function updateSlider(type) {
+      var s = SCREENS[currentDomain];
+      if (type === 'give') {
+        var val = document.getElementById('giveSlider').value;
+        document.getElementById('giveVal').textContent = val;
+        scores[s.giveKey] = parseInt(val);
+      } else {
+        var val = document.getElementById('receiveSlider').value;
+        document.getElementById('receiveVal').textContent = val;
+        scores[s.receiveKey] = parseInt(val);
+      }
     }
 
     function nextDomain() {
-      if (currentDomain < QUESTIONS.length - 1) {
+      if (currentDomain < SCREENS.length - 1) {
         currentDomain++;
-        renderQuestion(currentDomain);
+        renderScreen(currentDomain);
       } else {
         submitMatrix();
       }
@@ -322,7 +325,7 @@
     function prevDomain() {
       if (currentDomain > 0) {
         currentDomain--;
-        renderQuestion(currentDomain);
+        renderScreen(currentDomain);
       }
     }
 
@@ -331,8 +334,8 @@
       btn.disabled = true;
       btn.textContent = 'Submitting...';
 
-      // Aggregate 20 individual scores into 5 domain give/receive averages
-      function avg(key1, key2) { return Math.round((scores[key1] + scores[key2]) / 2); }
+      // Aggregate 40 data points into 5 domain give/receive averages (4 questions each)
+      function avg4(k1, k2, k3, k4) { return Math.round((scores[k1] + scores[k2] + scores[k3] + scores[k4]) / 4); }
 
       try {
         var resp = await fetch('/api/r/matrix', {
@@ -341,16 +344,16 @@
           body: JSON.stringify({
             contactId: profile.contact_id,
             gender: profile.gender,
-            practicalGive: avg('practicalGive1', 'practicalGive2'),
-            practicalReceive: avg('practicalReceive1', 'practicalReceive2'),
-            mentalLoadGive: avg('mentalLoadGive1', 'mentalLoadGive2'),
-            mentalLoadReceive: avg('mentalLoadReceive1', 'mentalLoadReceive2'),
-            financialGive: avg('financialGive1', 'financialGive2'),
-            financialReceive: avg('financialReceive1', 'financialReceive2'),
-            relationalGive: avg('relationalGive1', 'relationalGive2'),
-            relationalReceive: avg('relationalReceive1', 'relationalReceive2'),
-            growthGive: avg('growthGive1', 'growthGive2'),
-            growthReceive: avg('growthReceive1', 'growthReceive2'),
+            practicalGive: avg4('practicalGive1', 'practicalGive2', 'practicalGive3', 'practicalGive4'),
+            practicalReceive: avg4('practicalReceive1', 'practicalReceive2', 'practicalReceive3', 'practicalReceive4'),
+            mentalLoadGive: avg4('mentalLoadGive1', 'mentalLoadGive2', 'mentalLoadGive3', 'mentalLoadGive4'),
+            mentalLoadReceive: avg4('mentalLoadReceive1', 'mentalLoadReceive2', 'mentalLoadReceive3', 'mentalLoadReceive4'),
+            financialGive: avg4('financialGive1', 'financialGive2', 'financialGive3', 'financialGive4'),
+            financialReceive: avg4('financialReceive1', 'financialReceive2', 'financialReceive3', 'financialReceive4'),
+            relationalGive: avg4('relationalGive1', 'relationalGive2', 'relationalGive3', 'relationalGive4'),
+            relationalReceive: avg4('relationalReceive1', 'relationalReceive2', 'relationalReceive3', 'relationalReceive4'),
+            growthGive: avg4('growthGive1', 'growthGive2', 'growthGive3', 'growthGive4'),
+            growthReceive: avg4('growthReceive1', 'growthReceive2', 'growthReceive3', 'growthReceive4'),
             detailedScores: scores
           })
         });
