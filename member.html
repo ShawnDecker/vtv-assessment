@@ -1706,6 +1706,7 @@
       return;
     }
 
+    const showInitial = 3;
     const items = assessments.map((a, i) => {
       const score = Math.round(a.masterScore || a.master_score || a.score || a.total_score || 0);
       const sc = scoreClass(score);
@@ -1713,8 +1714,9 @@
       const dateStr = a.completedAt || a.created_at || a.date || '';
       const date = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) : 'Unknown date';
       const id = a.id || a.assessment_id || '';
+      const hidden = i >= showInitial ? ' style="display:none" data-extra-assessment' : '';
       return `
-        <div class="assessment-item">
+        <div class="assessment-item"${hidden}>
           <div class="score-circle ${sc}">${score}</div>
           <div class="assessment-meta">
             <div class="fw-bold" style="font-size:0.9rem">Assessment #${assessments.length - i}</div>
@@ -1725,7 +1727,16 @@
         </div>`;
     });
 
-    el.innerHTML = `<div class="assessment-list">${items.join('')}</div>`;
+    const showMoreBtn = assessments.length > showInitial
+      ? `<button class="btn btn-ghost btn-block btn-sm" style="margin-top:0.75rem" onclick="showAllAssessments(this)">View ${assessments.length - showInitial} older assessments</button>`
+      : '';
+
+    el.innerHTML = `<div class="assessment-list">${items.join('')}</div>${showMoreBtn}`;
+  }
+
+  function showAllAssessments(btn) {
+    document.querySelectorAll('[data-extra-assessment]').forEach(el => el.style.display = '');
+    btn.remove();
   }
 
   // ── Quick Links ─────────────────────────────────────────────────────────────
