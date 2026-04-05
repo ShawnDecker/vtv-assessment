@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+  <title>FAQ — The Value Engine</title>
+  <meta name="description" content="Frequently asked questions about the P.I.N.K. assessment, membership tiers, coaching, and the Value Engine platform." />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-TT6PYLPP31');gtag('config','G-MJ1SXZJ399');</script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+    .container{max-width:640px;margin:0 auto;padding:2rem 1.5rem 4rem}
+    .brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    h1{font-size:1.75rem;font-weight:700;margin-bottom:.25rem}
+    .sub{color:#a1a1aa;margin-bottom:1.5rem;font-size:.95rem}
+    .search-wrap{margin-bottom:2rem}
+    .search-wrap input{width:100%;padding:.75rem 1rem;background:#18181b;border:1px solid #27272a;border-radius:.5rem;color:#fff;font-size:.9rem;font-family:inherit;outline:none}
+    .search-wrap input:focus{border-color:#D4A847}
+    .section-label{font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:#D4A847;font-weight:700;margin:1.5rem 0 .75rem}
+    .faq-item{border-bottom:1px solid #27272a;overflow:hidden}
+    .faq-q{display:flex;justify-content:space-between;align-items:center;padding:.875rem 0;cursor:pointer;font-size:.9rem;font-weight:600;color:#d4d4d8;gap:.75rem}
+    .faq-q:hover{color:#fff}
+    .faq-arrow{color:#71717a;font-size:.8rem;flex-shrink:0;transition:transform .2s}
+    .faq-item.open .faq-arrow{transform:rotate(180deg)}
+    .faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;font-size:.85rem;color:#a1a1aa;line-height:1.6}
+    .faq-item.open .faq-a{max-height:300px}
+    .faq-a-inner{padding:0 0 1rem}
+    .contact-card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.5rem;text-align:center;margin-top:2rem}
+    .contact-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem}
+    .contact-card p{color:#a1a1aa;font-size:.85rem;margin-bottom:1rem}
+    .contact-links{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+    .contact-links a{padding:.5rem 1.25rem;border:1px solid #27272a;border-radius:2rem;color:#d4d4d8;text-decoration:none;font-size:.8rem;font-weight:600;transition:border-color .2s}
+    .contact-links a:hover{border-color:#D4A847;color:#D4A847}
+    .footer{text-align:center;padding:2rem 0;border-top:1px solid #27272a;font-size:.75rem;color:#71717a;margin-top:2rem}
+    .footer a{color:#D4A847;text-decoration:none}
+    @media(max-width:480px){.container{padding:1.5rem 1rem 3rem}h1{font-size:1.5rem}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">The Value Engine</div>
+    <h1>Help & FAQ</h1>
+    <p class="sub">Quick answers to common questions.</p>
+
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Search questions..." oninput="filterFAQ(this.value)" />
+    </div>
+
+    <div id="faqList">
+      <div class="section-label">Assessment</div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">What is the P.I.N.K. assessment?<span class="faq-arrow">&#9660;</span></div>
+        <div class="faq-a"><div class="faq-a-inner">A 25-question assessment measuring five pillars of your life: People, Influence, Numbers, Knowledge, and Time. Takes about 5 minutes. Your results show where you are strong and where you need to grow.</div></div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Is it free?<span class="faq-arrow">&#9660;</span></div>
+        <div class="faq-a"><div class="faq-a-inner">Yes. The assessment and your diagnostic report are always free. Premium reports, challenges, and coaching tools are available through membership.</div></div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Can I retake it?<span class="faq-arrow">&#9660;</span></div>
+        <div class="faq-a"><div class="faq-a-inner">Yes. Take it as many times as you want. Your progress page tracks every score so you can see how you grow over time.</div></div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Is this a clinical or diagnostic tool?<span class="faq-arrow">&#9660;</span></div>
+        <div class="faq-a"><div class="faq-a-inner">No. The Value Engine is a personal development and stewardship tool built on biblical principles. It is not a replacement for professional counseling, therapy, or medical advice.</div></div>
+      </div>
+
+      <div class="section-label">Membership</div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">What are the membership tiers?<span class="faq-arrow">&#9660;</span></div>
+        <div class="faq-a"><div class="faq-a-inner">VictoryPath ($29/mo) — individual tools, challenges, and action plans. Value Builder ($47/mo) — adds couple tools for both partners. Victory VIP ($497/mo) — includes coaching, VIP events, and all digital products.</div></div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Can I cancel anytime?<span class="faq-arrow">&#9660;</span></div>
+        <div class="faq-a"><div class="faq-a-inner">Yes. Cancel from your member dashboard or email valuetovictory@gmail.com. No contracts, no penalties.</div></div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">How do I manage my subscription?<span class="faq-arrow">&#9660;</span></div>
+        <div class="faq-a"><div class="faq-a-inner">Log into your member dashboard and click "Manage Subscription." This opens the Stripe billing portal where you can update payment, change plans, or cancel.</div></div>
+      </div>
+
+      <div class="section-label">Couples</div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">How do couples use the platform?<span class="faq-arrow">&#9660;</span></div>
+        <div class="faq-a"><div class="faq-a-inner">On the Value Builder or Victory VIP plan, both partners create profiles and link accounts. You'll see shared reports, the relationship matrix, and can start the 30-Day Couple Challenge together.</div></div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Can I see my partner's individual scores?<span class="faq-arrow">&#9660;</span></div>
+        <div class="faq-a"><div class="faq-a-inner">Yes. Full transparency is the foundation of the couples program. Both partners consent to shared visibility upon enrollment. All scores, pillar maps, and growth tracking are fully visible to both.</div></div>
+      </div>
+
+      <div class="section-label">Account</div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">I forgot my PIN<span class="faq-arrow">&#9660;</span></div>
+        <div class="faq-a"><div class="faq-a-inner">Email valuetovictory@gmail.com with the email address on your account. We'll help you reset it.</div></div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">How do I delete my account?<span class="faq-arrow">&#9660;</span></div>
+        <div class="faq-a"><div class="faq-a-inner">Email valuetovictory@gmail.com with "Delete my account" and your registered email. We'll process it within 48 hours.</div></div>
+      </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="contact-card">
+      <h3>Still have questions?</h3>
+      <p>Reach out directly. No bots, no runaround.</p>
+      <div class="contact-links">
+        <a href="mailto:valuetovictory@gmail.com">Email Us</a>
+        <a href="https://calendly.com/valuetovictory/30min" target="_blank" rel="noopener">Book a Call</a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>"Don't guess. Run the tool."</div>
+      <div style="margin-top:.5rem">&copy; 2026 <a href="https://valuetovictory.com">Value to Victory</a> &mdash; Shawn E. Decker</div>
+    </div>
+  </div>
+
+  <script>
+    function filterFAQ(query) {
+      var q = query.toLowerCase();
+      document.querySelectorAll('.faq-item').forEach(function(item) {
+        var text = item.textContent.toLowerCase();
+        item.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

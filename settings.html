@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+  <title>Settings — The Value Engine</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-TT6PYLPP31');gtag('config','G-MJ1SXZJ399');</script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+    .container{max-width:520px;margin:0 auto;padding:2rem 1.5rem 4rem}
+    .brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    h1{font-size:1.75rem;font-weight:700;margin-bottom:.25rem}
+    .sub{color:#a1a1aa;margin-bottom:2rem;font-size:.95rem}
+    .hidden{display:none !important}
+    .card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.5rem;margin-bottom:1.25rem}
+    .section-label{font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.75rem}
+    label{display:block;font-size:.8rem;font-weight:600;color:#a1a1aa;margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.08em}
+    input[type="email"],input[type="password"]{width:100%;padding:.75rem 1rem;background:#0a0a0a;border:1px solid #27272a;border-radius:.5rem;color:#fff;font-size:.95rem;font-family:inherit;outline:none;margin-bottom:.75rem}
+    input:focus{border-color:#D4A847}
+    .btn{width:100%;padding:.75rem;border:none;border-radius:.5rem;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn-gold{background:#D4A847;color:#0a0a0a}
+    .btn-ghost{background:transparent;border:1px solid #27272a;color:#d4d4d8}
+    .btn-danger{background:#7f1d1d;color:#fca5a5}
+    .error{color:#ef4444;font-size:.8rem;margin-top:.35rem}
+    .success{color:#22c55e;font-size:.8rem;margin-top:.35rem}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 0;border-bottom:1px solid #27272a}
+    .toggle-row:last-child{border-bottom:none}
+    .toggle-text{font-size:.85rem;color:#d4d4d8}
+    .toggle-sub{font-size:.72rem;color:#71717a;margin-top:.1rem}
+    .toggle{position:relative;width:42px;height:24px;flex-shrink:0}
+    .toggle input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;inset:0;background:#27272a;border-radius:2rem;cursor:pointer;transition:.3s}
+    .toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+    .toggle input:checked+.toggle-slider{background:#D4A847}
+    .toggle input:checked+.toggle-slider::before{transform:translateX(18px)}
+    .link{color:#3b82f6;text-decoration:none;font-size:.85rem}
+    .link:hover{text-decoration:underline}
+    .footer{text-align:center;padding:2rem 0;border-top:1px solid #27272a;font-size:.75rem;color:#71717a;margin-top:2rem}
+    .footer a{color:#D4A847;text-decoration:none}
+    @media(max-width:480px){.container{padding:1.5rem 1rem 3rem}h1{font-size:1.5rem}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">The Value Engine</div>
+    <h1>Settings</h1>
+    <p class="sub">Manage your account and preferences.</p>
+
+    <!-- Auth gate -->
+    <div id="authView">
+      <div class="card">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')document.getElementById('pin').focus()" />
+        <label for="pin">PIN</label>
+        <input type="password" id="pin" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="Enter PIN" style="text-align:center;font-size:1.25rem;letter-spacing:.3rem" onkeydown="if(event.key==='Enter')authenticate()" />
+        <div id="authError" class="error hidden"></div>
+        <button class="btn btn-gold" onclick="authenticate()" style="margin-top:.5rem">Access Settings</button>
+      </div>
+      <a href="/member" class="link">Back to Dashboard</a>
+    </div>
+
+    <!-- Settings (after auth) -->
+    <div id="settingsView" class="hidden">
+
+      <!-- Change PIN -->
+      <div class="card">
+        <div class="section-label">Change PIN</div>
+        <label>Current PIN</label>
+        <input type="password" id="currentPin" maxlength="6" inputmode="numeric" placeholder="Current PIN" style="text-align:center;letter-spacing:.3rem" />
+        <label>New PIN</label>
+        <input type="password" id="newPin" maxlength="6" inputmode="numeric" placeholder="New 4-6 digit PIN" style="text-align:center;letter-spacing:.3rem" />
+        <label>Confirm New PIN</label>
+        <input type="password" id="confirmNewPin" maxlength="6" inputmode="numeric" placeholder="Confirm new PIN" style="text-align:center;letter-spacing:.3rem" />
+        <div id="pinMsg" class="hidden"></div>
+        <button class="btn btn-ghost" onclick="changePin()">Update PIN</button>
+      </div>
+
+      <!-- Preferences -->
+      <div class="card">
+        <div class="section-label">Preferences</div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-text">Coaching Emails</div>
+            <div class="toggle-sub">Daily coaching prompts based on your assessment</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="coachingEmails" checked onchange="savePref('coaching_emails', this.checked)" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-text">Progress Reminders</div>
+            <div class="toggle-sub">Monthly reminder to retake the assessment</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="progressReminders" checked onchange="savePref('progress_reminders', this.checked)" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-text">Dark Mode</div>
+            <div class="toggle-sub">Theme preference for the platform</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="darkMode" onchange="toggleDarkMode(this.checked)" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Account -->
+      <div class="card">
+        <div class="section-label">Account</div>
+        <p style="font-size:.85rem;color:#d4d4d8;margin-bottom:.5rem" id="accountEmail"></p>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem">
+          <a href="/privacy" class="link">Privacy Policy</a>
+          <a href="/terms" class="link">Terms of Service</a>
+        </div>
+        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #27272a">
+          <button class="btn btn-danger" onclick="requestDelete()">Request Account Deletion</button>
+          <p style="font-size:.72rem;color:#71717a;margin-top:.5rem;text-align:center">This sends a deletion request to our team. Your data will be removed within 48 hours.</p>
+        </div>
+        <div id="deleteMsg" class="hidden" style="margin-top:.5rem;text-align:center"></div>
+      </div>
+
+      <a href="/member" class="link">Back to Dashboard</a>
+    </div>
+
+    <div class="footer">
+      <div>"Don't guess. Run the tool."</div>
+      <div style="margin-top:.5rem">&copy; 2026 <a href="https://valuetovictory.com">Value to Victory</a> &mdash; Shawn E. Decker</div>
+    </div>
+  </div>
+
+  <script>
+    var currentEmail = '';
+    try { var saved = localStorage.getItem('vtv_member_email'); if (saved) document.getElementById('email').value = saved; } catch(e) {}
+    document.getElementById('darkMode').checked = (localStorage.getItem('vtv_theme') || 'light') === 'dark';
+
+    async function authenticate() {
+      var email = document.getElementById('email').value.trim().toLowerCase();
+      var pin = document.getElementById('pin').value.trim();
+      var errEl = document.getElementById('authError');
+      errEl.classList.add('hidden');
+      if (!email || !pin) { errEl.textContent = 'Enter your email and PIN.'; errEl.classList.remove('hidden'); return; }
+
+      try {
+        var resp = await fetch('/api/member/verify-pin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:email, pin:pin}) });
+        var data = await resp.json();
+        if (data.verified) {
+          currentEmail = email;
+          document.getElementById('accountEmail').textContent = email;
+          document.getElementById('authView').classList.add('hidden');
+          document.getElementById('settingsView').classList.remove('hidden');
+        } else {
+          errEl.textContent = data.error || 'Incorrect PIN.'; errEl.classList.remove('hidden');
+        }
+      } catch(e) { errEl.textContent = 'Connection error. Try again.'; errEl.classList.remove('hidden'); }
+    }
+
+    async function changePin() {
+      var current = document.getElementById('currentPin').value.trim();
+      var newP = document.getElementById('newPin').value.trim();
+      var confirm = document.getElementById('confirmNewPin').value.trim();
+      var msgEl = document.getElementById('pinMsg');
+      msgEl.classList.add('hidden');
+
+      if (!current || !newP) { msgEl.textContent = 'Fill in all PIN fields.'; msgEl.className = 'error'; msgEl.classList.remove('hidden'); return; }
+      if (newP.length < 4 || !/^\d+$/.test(newP)) { msgEl.textContent = 'New PIN must be 4-6 digits.'; msgEl.className = 'error'; msgEl.classList.remove('hidden'); return; }
+      if (newP !== confirm) { msgEl.textContent = 'PINs do not match.'; msgEl.className = 'error'; msgEl.classList.remove('hidden'); return; }
+
+      // Verify current PIN first
+      try {
+        var verifyResp = await fetch('/api/member/verify-pin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:currentEmail, pin:current}) });
+        var verifyData = await verifyResp.json();
+        if (!verifyData.verified) { msgEl.textContent = 'Current PIN is incorrect.'; msgEl.className = 'error'; msgEl.classList.remove('hidden'); return; }
+
+        var setResp = await fetch('/api/member/set-pin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:currentEmail, pin:newP}) });
+        var setData = await setResp.json();
+        if (setData.success) {
+          msgEl.textContent = 'PIN updated.'; msgEl.className = 'success'; msgEl.classList.remove('hidden');
+          document.getElementById('currentPin').value = '';
+          document.getElementById('newPin').value = '';
+          document.getElementById('confirmNewPin').value = '';
+        } else { msgEl.textContent = setData.error || 'Failed to update PIN.'; msgEl.className = 'error'; msgEl.classList.remove('hidden'); }
+      } catch(e) { msgEl.textContent = 'Connection error. Try again.'; msgEl.className = 'error'; msgEl.classList.remove('hidden'); }
+    }
+
+    function savePref(key, value) {
+      localStorage.setItem('vtv_pref_' + key, value ? '1' : '0');
+      // Future: POST to /api/member/preferences
+    }
+
+    function toggleDarkMode(on) {
+      localStorage.setItem('vtv_theme', on ? 'dark' : 'light');
+    }
+
+    function requestDelete() {
+      var msgEl = document.getElementById('deleteMsg');
+      if (!confirm('Are you sure? This will permanently delete your account and all assessment data.')) return;
+      msgEl.textContent = 'Deletion request sent. You will receive a confirmation email within 48 hours.';
+      msgEl.className = 'success';
+      msgEl.classList.remove('hidden');
+      // Future: POST to /api/member/delete-request
+    }
+  </script>
+</body>
+</html>

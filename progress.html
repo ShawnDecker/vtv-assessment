@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+  <title>My Progress — The Value Engine</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-TT6PYLPP31');gtag('config','G-MJ1SXZJ399');</script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+    .container{max-width:640px;margin:0 auto;padding:2rem 1.5rem 4rem}
+    .brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    h1{font-size:1.75rem;font-weight:700;margin-bottom:.25rem}
+    .sub{color:#a1a1aa;margin-bottom:2rem;font-size:.95rem}
+    .hidden{display:none !important}
+    .card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.5rem;margin-bottom:1.25rem}
+    .section-label{font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.75rem}
+    label{display:block;font-size:.875rem;font-weight:500;margin-bottom:.5rem;color:#d4d4d8}
+    input[type="email"]{width:100%;padding:.75rem 1rem;background:#18181b;border:1px solid #27272a;border-radius:.5rem;color:#fff;font-size:1rem;font-family:inherit;outline:none}
+    input:focus{border-color:#D4A847}
+    .btn{width:100%;padding:.875rem;background:#D4A847;color:#0a0a0a;border:none;border-radius:.5rem;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .error{color:#ef4444;font-size:.875rem;margin-top:.5rem}
+    .link{color:#3b82f6;text-decoration:none;font-size:.875rem;display:inline-block;margin-top:1rem}
+    .stat-row{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #27272a;font-size:.875rem}
+    .stat-row:last-child{border-bottom:none}
+    .stat-label{color:#a1a1aa}
+    .stat-value{font-weight:600}
+    .score-timeline{display:flex;align-items:flex-end;gap:4px;height:120px;margin-bottom:1rem;padding:0 .25rem}
+    .score-bar{flex:1;min-width:20px;max-width:60px;background:linear-gradient(180deg,#D4A847,#92400e);border-radius:4px 4px 0 0;position:relative;cursor:pointer;transition:opacity .2s}
+    .score-bar:hover{opacity:.8}
+    .score-bar-label{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.65rem;font-weight:700;color:#D4A847;white-space:nowrap}
+    .score-bar-date{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:.55rem;color:#71717a;white-space:nowrap}
+    .pbar{margin-bottom:.5rem}
+    .pbar-row{display:flex;justify-content:space-between;font-size:.75rem;color:#a1a1aa;margin-bottom:.2rem}
+    .pbar-track{height:6px;background:#27272a;border-radius:3px;overflow:hidden}
+    .pbar-fill{height:100%;border-radius:3px;transition:width .8s ease}
+    .trend-up{color:#22c55e}.trend-down{color:#ef4444}.trend-same{color:#71717a}
+    .footer{text-align:center;padding:2rem 0;border-top:1px solid #27272a;font-size:.75rem;color:#71717a;margin-top:2rem}
+    .footer a{color:#D4A847;text-decoration:none}
+    @media(max-width:480px){.container{padding:1.5rem 1rem 3rem}h1{font-size:1.5rem}.score-timeline{height:80px}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">The Value Engine</div>
+    <h1>My Progress</h1>
+    <p class="sub">Track your growth over time.</p>
+
+    <div id="lookupView">
+      <div style="margin-bottom:1.5rem">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')loadProgress()" />
+        <div id="emailError" class="error hidden"></div>
+      </div>
+      <button class="btn" onclick="loadProgress()">View My Progress</button>
+      <a href="/member" class="link">Back to Dashboard</a>
+    </div>
+
+    <div id="progressView" class="hidden">
+      <!-- Summary -->
+      <div class="card">
+        <div class="section-label">Current Score</div>
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
+          <div style="font-size:3rem;font-weight:900;color:#D4A847" id="currentScore">—</div>
+          <div>
+            <div style="font-size:.85rem;font-weight:700" id="scoreRange">—</div>
+            <div style="font-size:.75rem;color:#71717a" id="lastDate">—</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Assessments Taken</span>
+          <span class="stat-value" id="totalCount">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Days Since Last</span>
+          <span class="stat-value" id="daysSince">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">All-Time Change</span>
+          <span class="stat-value" id="allTimeChange">—</span>
+        </div>
+      </div>
+
+      <!-- Score Timeline -->
+      <div class="card">
+        <div class="section-label">Score History</div>
+        <div class="score-timeline" id="timeline"></div>
+        <div style="height:20px"></div>
+      </div>
+
+      <!-- Pillar Trends -->
+      <div class="card">
+        <div class="section-label">Pillar Breakdown (Latest)</div>
+        <div id="pillarBars"></div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.5rem">
+        <a href="/" style="flex:1;text-align:center;padding:.75rem;background:#D4A847;color:#0a0a0a;font-weight:700;border-radius:.5rem;text-decoration:none;font-size:.9rem">Retake Assessment</a>
+        <a href="/member" style="flex:1;text-align:center;padding:.75rem;background:transparent;border:1px solid #27272a;color:#d4d4d8;font-weight:600;border-radius:.5rem;text-decoration:none;font-size:.9rem">Dashboard</a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>"Don't guess. Run the tool."</div>
+      <div style="margin-top:.5rem">&copy; 2026 <a href="https://valuetovictory.com">Value to Victory</a> &mdash; Shawn E. Decker</div>
+    </div>
+  </div>
+
+  <script>
+    try { var saved = localStorage.getItem('ve_email'); if (saved) document.getElementById('email').value = saved; } catch(e) {}
+
+    async function loadProgress() {
+      var email = document.getElementById('email').value.trim().toLowerCase();
+      var errEl = document.getElementById('emailError');
+      errEl.classList.add('hidden');
+      if (!email || !email.includes('@')) { errEl.textContent = 'Enter a valid email.'; errEl.classList.remove('hidden'); return; }
+
+      try {
+        var resp = await fetch('/api/user/history?email=' + encodeURIComponent(email));
+        var data = await resp.json();
+        if (data.isNewUser || !data.assessments || data.assessments.length === 0) {
+          errEl.textContent = 'No assessments found. Take one first.'; errEl.classList.remove('hidden'); return;
+        }
+        renderProgress(data.assessments);
+        document.getElementById('lookupView').classList.add('hidden');
+        document.getElementById('progressView').classList.remove('hidden');
+      } catch(e) {
+        errEl.textContent = 'Could not load your data. Try again.'; errEl.classList.remove('hidden');
+      }
+    }
+
+    function renderProgress(assessments) {
+      var latest = assessments[0];
+      var oldest = assessments[assessments.length - 1];
+      var score = Math.round(latest.masterScore || latest.master_score || 0);
+      var range = score >= 80 ? 'Excellent' : score >= 60 ? 'Strong' : score >= 40 ? 'Developing' : 'Needs Work';
+
+      document.getElementById('currentScore').textContent = score;
+      document.getElementById('scoreRange').textContent = range;
+      document.getElementById('totalCount').textContent = assessments.length;
+
+      var lastDate = new Date(latest.completedAt || latest.created_at);
+      document.getElementById('lastDate').textContent = lastDate.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+      var daysSince = Math.floor((Date.now() - lastDate.getTime()) / 86400000);
+      document.getElementById('daysSince').textContent = daysSince === 0 ? 'Today' : daysSince + ' days';
+
+      if (assessments.length > 1) {
+        var oldScore = Math.round(oldest.masterScore || oldest.master_score || 0);
+        var change = score - oldScore;
+        var el = document.getElementById('allTimeChange');
+        el.textContent = (change >= 0 ? '+' : '') + change + ' points';
+        el.className = 'stat-value ' + (change > 0 ? 'trend-up' : change < 0 ? 'trend-down' : 'trend-same');
+      } else {
+        document.getElementById('allTimeChange').textContent = 'Take another to compare';
+        document.getElementById('allTimeChange').style.color = '#71717a';
+      }
+
+      // Timeline bars (newest on right)
+      var reversed = assessments.slice().reverse();
+      var maxScore = 100;
+      var timelineEl = document.getElementById('timeline');
+      timelineEl.innerHTML = reversed.map(function(a) {
+        var s = Math.round(a.masterScore || a.master_score || 0);
+        var pct = Math.max(5, (s / maxScore) * 100);
+        var d = new Date(a.completedAt || a.created_at);
+        var dateStr = (d.getMonth()+1) + '/' + d.getDate();
+        return '<div class="score-bar" style="height:' + pct + '%"><span class="score-bar-label">' + s + '</span><span class="score-bar-date">' + dateStr + '</span></div>';
+      }).join('');
+
+      // Pillar bars
+      var pillars = [
+        { name:'People', key:'people', color:'#3b82f6' },
+        { name:'Influence', key:'influence', color:'#8b5cf6' },
+        { name:'Numbers', key:'numbers', color:'#22c55e' },
+        { name:'Knowledge', key:'knowledge', color:'#f97316' },
+        { name:'Time', key:'time', color:'#D4A847' }
+      ];
+      var barsEl = document.getElementById('pillarBars');
+      barsEl.innerHTML = pillars.map(function(p) {
+        var val = Math.round(latest[p.key] || latest[p.key + 'Score'] || 0);
+        var trend = '';
+        if (assessments.length > 1) {
+          var prev = Math.round(oldest[p.key] || oldest[p.key + 'Score'] || 0);
+          var diff = val - prev;
+          if (diff > 0) trend = '<span class="trend-up"> +' + diff + '</span>';
+          else if (diff < 0) trend = '<span class="trend-down"> ' + diff + '</span>';
+        }
+        return '<div class="pbar"><div class="pbar-row"><span>' + p.name + trend + '</span><span>' + val + '</span></div><div class="pbar-track"><div class="pbar-fill" style="width:' + val + '%;background:' + p.color + '"></div></div></div>';
+      }).join('');
+    }
+  </script>
+</body>
+</html>

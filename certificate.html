@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Certificate — The Value Engine</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-TT6PYLPP31');gtag('config','G-MJ1SXZJ399');</script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+    .container{max-width:600px;margin:0 auto;padding:2rem 1.5rem 4rem}
+    .brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    h1{font-size:1.75rem;font-weight:700;margin-bottom:.25rem}
+    .sub{color:#a1a1aa;margin-bottom:2rem;font-size:.95rem}
+    .hidden{display:none !important}
+    label{display:block;font-size:.875rem;font-weight:500;margin-bottom:.5rem;color:#d4d4d8}
+    input[type="email"]{width:100%;padding:.75rem 1rem;background:#18181b;border:1px solid #27272a;border-radius:.5rem;color:#fff;font-size:1rem;font-family:inherit;outline:none}
+    input:focus{border-color:#D4A847}
+    .btn{width:100%;padding:.875rem;background:#D4A847;color:#0a0a0a;border:none;border-radius:.5rem;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .error{color:#ef4444;font-size:.875rem;margin-top:.5rem}
+    .link{color:#3b82f6;text-decoration:none;font-size:.875rem;display:inline-block;margin-top:1rem}
+
+    /* Certificate card */
+    .cert{background:linear-gradient(135deg,#1c1917 0%,#18181b 50%,#1a1710 100%);border:2px solid #D4A847;border-radius:1rem;padding:2.5rem 2rem;text-align:center;margin-bottom:1.5rem;position:relative;overflow:hidden}
+    .cert::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(212,168,71,.05) 0%,transparent 60%);pointer-events:none}
+    .cert-badge{font-size:3rem;margin-bottom:1rem}
+    .cert-title{font-family:'Instrument Serif',serif;font-size:1.5rem;font-style:italic;color:#D4A847;margin-bottom:.25rem}
+    .cert-subtitle{font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:#71717a;margin-bottom:1.5rem}
+    .cert-name{font-size:1.75rem;font-weight:900;margin-bottom:.5rem}
+    .cert-challenge{font-size:.9rem;color:#d4d4d8;margin-bottom:1rem}
+    .cert-dates{font-size:.8rem;color:#71717a;margin-bottom:1.25rem}
+    .cert-scores{display:flex;justify-content:center;gap:2rem;margin-bottom:1rem}
+    .cert-score{text-align:center}
+    .cert-score-num{font-size:1.5rem;font-weight:900}
+    .cert-score-label{font-size:.65rem;color:#71717a;text-transform:uppercase;letter-spacing:.1em}
+    .cert-change{font-size:1rem;font-weight:800;margin-bottom:1rem}
+    .change-up{color:#22c55e}.change-down{color:#ef4444}.change-same{color:#71717a}
+    .cert-footer{font-size:.7rem;color:#71717a;border-top:1px solid rgba(212,168,71,.3);padding-top:1rem;margin-top:1rem}
+    .cert-footer strong{color:#D4A847}
+
+    .share-row{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.5rem}
+    .share-btn{padding:.5rem 1rem;border:1px solid #27272a;border-radius:2rem;color:#d4d4d8;font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;transition:all .2s}
+    .share-btn:hover{border-color:#D4A847;color:#D4A847}
+    .footer{text-align:center;padding:2rem 0;border-top:1px solid #27272a;font-size:.75rem;color:#71717a;margin-top:2rem}
+    .footer a{color:#D4A847;text-decoration:none}
+    @media(max-width:480px){.container{padding:1.5rem 1rem 3rem}h1{font-size:1.5rem}.cert{padding:1.5rem 1.25rem}.cert-name{font-size:1.35rem}.cert-scores{gap:1rem}}
+    @media print{body{background:#fff;color:#000}.container{padding:0}.cert{border-color:#333;print-color-adjust:exact;-webkit-print-color-adjust:exact}.share-row,.footer,#lookupView,.link{display:none}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">The Value Engine</div>
+    <h1>Certificate</h1>
+    <p class="sub">Your challenge completion certificate.</p>
+
+    <div id="lookupView">
+      <div style="margin-bottom:1.5rem">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')loadCertificate()" />
+        <div id="emailError" class="error hidden"></div>
+      </div>
+      <button class="btn" onclick="loadCertificate()">View Certificate</button>
+      <a href="/member" class="link">Back to Dashboard</a>
+    </div>
+
+    <div id="certView" class="hidden">
+      <div class="cert" id="certCard">
+        <div class="cert-badge">🏆</div>
+        <div class="cert-title">Certificate of Completion</div>
+        <div class="cert-subtitle">The Value Engine Challenge</div>
+        <div class="cert-name" id="certName">—</div>
+        <div class="cert-challenge" id="certChallenge">—</div>
+        <div class="cert-dates" id="certDates">—</div>
+        <div class="cert-scores">
+          <div class="cert-score"><div class="cert-score-num" id="certStart">—</div><div class="cert-score-label">Starting Score</div></div>
+          <div class="cert-score"><div class="cert-score-num" id="certEnd">—</div><div class="cert-score-label">Ending Score</div></div>
+        </div>
+        <div class="cert-change" id="certChange">—</div>
+        <div class="cert-footer">Issued by <strong>Value to Victory</strong> &mdash; Shawn E. Decker<br>P.I.N.K. Framework &middot; assessment.valuetovictory.com</div>
+      </div>
+
+      <div class="share-row">
+        <button class="share-btn" onclick="window.print()">Print</button>
+        <button class="share-btn" onclick="shareText()">Share</button>
+      </div>
+      <div id="shareMsg" class="hidden" style="text-align:center;font-size:.8rem;color:#22c55e;margin-bottom:1rem"></div>
+
+      <a href="/member" class="link">Back to Dashboard</a>
+    </div>
+
+    <div class="footer">
+      <div>"Don't guess. Run the tool."</div>
+      <div style="margin-top:.5rem">&copy; 2026 <a href="https://valuetovictory.com">Value to Victory</a> &mdash; Shawn E. Decker</div>
+    </div>
+  </div>
+
+  <script>
+    try { var saved = localStorage.getItem('ve_email'); if (saved) document.getElementById('email').value = saved; } catch(e) {}
+
+    async function loadCertificate() {
+      var email = document.getElementById('email').value.trim().toLowerCase();
+      var errEl = document.getElementById('emailError');
+      errEl.classList.add('hidden');
+      if (!email || !email.includes('@')) { errEl.textContent = 'Enter a valid email.'; errEl.classList.remove('hidden'); return; }
+
+      try {
+        // Get user history for name and scores
+        var histResp = await fetch('/api/user/history?email=' + encodeURIComponent(email));
+        var histData = await histResp.json();
+
+        // Get challenge status
+        var chalResp = await fetch('/api/challenge/status?email=' + encodeURIComponent(email));
+        var chalData = await chalResp.json();
+
+        if (!chalData.enrolled) {
+          errEl.textContent = 'No completed challenge found. Complete a 90-day or 30-day challenge first.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+
+        var name = histData.contact?.first_name || email.split('@')[0];
+        name = name.charAt(0).toUpperCase() + name.slice(1);
+
+        var isExpired = chalData.isExpired || chalData.daysRemaining === 0;
+        var challengeType = chalData.durationDays === 90 ? '90-Day Challenge' : '30-Day Challenge';
+
+        var baseline = chalData.baseline || {};
+        var current = chalData.current || {};
+        var startScore = Math.round(baseline.masterScore || 0);
+        var endScore = Math.round(current.masterScore || 0);
+        var change = endScore - startScore;
+
+        document.getElementById('certName').textContent = name;
+        document.getElementById('certChallenge').textContent = 'Completed the ' + challengeType;
+        document.getElementById('certStart').textContent = startScore || '—';
+        document.getElementById('certEnd').textContent = endScore || '—';
+
+        if (chalData.enrolledAt && chalData.day90Date) {
+          var start = new Date(chalData.enrolledAt).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+          var end = new Date(chalData.day90Date).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+          document.getElementById('certDates').textContent = start + ' — ' + end;
+        }
+
+        if (startScore && endScore) {
+          var cls = change > 0 ? 'change-up' : change < 0 ? 'change-down' : 'change-same';
+          document.getElementById('certChange').className = 'cert-change ' + cls;
+          document.getElementById('certChange').textContent = (change >= 0 ? '+' : '') + change + ' points growth';
+        } else {
+          document.getElementById('certChange').textContent = '';
+        }
+
+        document.getElementById('lookupView').classList.add('hidden');
+        document.getElementById('certView').classList.remove('hidden');
+      } catch(e) {
+        errEl.textContent = 'Could not load certificate. Try again.';
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function shareText() {
+      var name = document.getElementById('certName').textContent;
+      var change = document.getElementById('certChange').textContent;
+      var text = name + ' completed the Value Engine Challenge! ' + change + '. Take yours: https://assessment.valuetovictory.com';
+      if (navigator.share) { navigator.share({title:'Value Engine Certificate', text:text}); }
+      else {
+        navigator.clipboard.writeText(text).then(function() {
+          var msg = document.getElementById('shareMsg');
+          msg.textContent = 'Copied to clipboard!'; msg.classList.remove('hidden');
+          setTimeout(function() { msg.classList.add('hidden'); }, 2000);
+        });
+      }
+    }
+  </script>
+</body>
+</html>

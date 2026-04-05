@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+  <title>Refer & Earn — The Value Engine</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-TT6PYLPP31');gtag('config','G-MJ1SXZJ399');</script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+    .container{max-width:600px;margin:0 auto;padding:2rem 1.5rem 4rem}
+    .brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    h1{font-size:1.75rem;font-weight:700;margin-bottom:.25rem}
+    .sub{color:#a1a1aa;margin-bottom:2rem;font-size:.95rem}
+    .hidden{display:none !important}
+    .card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.5rem;margin-bottom:1.25rem}
+    .section-label{font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.75rem}
+    label{display:block;font-size:.875rem;font-weight:500;margin-bottom:.5rem;color:#d4d4d8}
+    input[type="email"]{width:100%;padding:.75rem 1rem;background:#18181b;border:1px solid #27272a;border-radius:.5rem;color:#fff;font-size:1rem;font-family:inherit;outline:none}
+    input:focus{border-color:#D4A847}
+    .btn{width:100%;padding:.875rem;background:#D4A847;color:#0a0a0a;border:none;border-radius:.5rem;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn-green{background:#166534;color:#86efac}
+    .error{color:#ef4444;font-size:.875rem;margin-top:.5rem}
+    .link{color:#3b82f6;text-decoration:none;font-size:.875rem;display:inline-block;margin-top:1rem}
+    .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1rem}
+    .stat-card{background:#0a0a0a;border:1px solid #27272a;border-radius:.5rem;padding:.875rem;text-align:center}
+    .stat-num{font-size:1.25rem;font-weight:900}
+    .stat-lbl{font-size:.65rem;color:#71717a;text-transform:uppercase;letter-spacing:.08em;margin-top:.15rem}
+    .ref-link-box{background:#0a0a0a;border:1px solid #27272a;border-radius:.5rem;padding:.875rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+    .ref-url{flex:1;font-size:.8rem;color:#D4A847;word-break:break-all;font-weight:600}
+    .copy-btn{padding:.4rem .875rem;background:transparent;border:1px solid #27272a;border-radius:2rem;color:#d4d4d8;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+    .copy-btn:hover{border-color:#D4A847;color:#D4A847}
+    .earn-pitch{background:linear-gradient(135deg,#0f1f0f,#18181b);border:1px solid rgba(34,197,94,.3);border-radius:.75rem;padding:2rem;text-align:center}
+    .earn-pitch h3{font-size:1.15rem;font-weight:800;margin-bottom:.5rem}
+    .earn-pitch p{color:#a1a1aa;font-size:.9rem;margin-bottom:1.25rem}
+    .earn-features{display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem;margin-bottom:1.25rem}
+    .earn-tag{background:#1a2a1a;border:1px solid rgba(34,197,94,.2);border-radius:2rem;padding:.25rem .75rem;font-size:.75rem;color:#86efac}
+    .share-row{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+    .share-btn{padding:.5rem 1rem;border:1px solid #27272a;border-radius:2rem;color:#d4d4d8;font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;transition:all .2s}
+    .share-btn:hover{border-color:#D4A847;color:#D4A847}
+    .footer{text-align:center;padding:2rem 0;border-top:1px solid #27272a;font-size:.75rem;color:#71717a;margin-top:2rem}
+    .footer a{color:#D4A847;text-decoration:none}
+    @media(max-width:480px){.container{padding:1.5rem 1rem 3rem}h1{font-size:1.5rem}.stat-grid{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">The Value Engine</div>
+    <h1>Refer & Earn</h1>
+    <p class="sub">Share the Value Engine and earn recurring commissions.</p>
+
+    <!-- Lookup -->
+    <div id="lookupView">
+      <div style="margin-bottom:1.5rem">
+        <label for="email">Your Email</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')loadReferral()" />
+        <div id="emailError" class="error hidden"></div>
+      </div>
+      <button class="btn" onclick="loadReferral()">View My Referrals</button>
+      <a href="/member" class="link">Back to Dashboard</a>
+    </div>
+
+    <!-- Not a partner yet -->
+    <div id="pitchView" class="hidden">
+      <div class="earn-pitch">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">💰</div>
+        <h3>Earn With Us</h3>
+        <p>Join the Victory Partner Program. Earn recurring commissions every month for every member you refer. No cap. No cost to join.</p>
+        <div class="earn-features">
+          <span class="earn-tag">$5/mo per referral</span>
+          <span class="earn-tag">$17.50/mo for VIP</span>
+          <span class="earn-tag">Royalty bonuses</span>
+          <span class="earn-tag">Free to join</span>
+        </div>
+        <button class="btn btn-green" id="applyBtn" onclick="applyPartner()">Become a Partner</button>
+        <div id="applyMsg" class="hidden" style="font-size:.8rem;margin-top:.75rem"></div>
+      </div>
+      <a href="/member" class="link">Back to Dashboard</a>
+    </div>
+
+    <!-- Partner dashboard -->
+    <div id="partnerView" class="hidden">
+      <!-- Referral link -->
+      <div class="card">
+        <div class="section-label">Your Referral Link</div>
+        <div class="ref-link-box">
+          <div class="ref-url" id="refLink">—</div>
+          <button class="copy-btn" onclick="copyLink()">Copy</button>
+        </div>
+        <div class="share-row">
+          <button class="share-btn" onclick="shareLink()">Share</button>
+          <button class="share-btn" onclick="copyLink()">Copy Link</button>
+        </div>
+        <div id="copyMsg" class="hidden" style="font-size:.8rem;color:#22c55e;text-align:center;margin-top:.5rem"></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-lbl">Total</div></div>
+        <div class="stat-card"><div class="stat-num" id="statActive">0</div><div class="stat-lbl">Active</div></div>
+        <div class="stat-card"><div class="stat-num" id="statEarned" style="color:#22c55e">$0</div><div class="stat-lbl">Earned</div></div>
+      </div>
+
+      <!-- Commission rates -->
+      <div class="card">
+        <div class="section-label">Commission Rates</div>
+        <div style="font-size:.82rem;color:#a1a1aa;line-height:1.8">
+          VictoryPath referral: <strong style="color:#22c55e">$5.00/mo</strong><br>
+          Value Builder referral: <strong style="color:#22c55e">$5.00/mo</strong><br>
+          Victory VIP referral: <strong style="color:#22c55e">$17.50/mo</strong><br>
+          Upgrade bonus (VIP): <strong style="color:#22c55e">+$50 one-time</strong>
+        </div>
+      </div>
+
+      <a href="/member" class="link">Back to Dashboard</a>
+    </div>
+
+    <div class="footer">
+      <div>"Don't guess. Run the tool."</div>
+      <div style="margin-top:.5rem">&copy; 2026 <a href="https://valuetovictory.com">Value to Victory</a> &mdash; Shawn E. Decker</div>
+    </div>
+  </div>
+
+  <script>
+    var currentEmail = '';
+    try { var saved = localStorage.getItem('ve_email'); if (saved) document.getElementById('email').value = saved; } catch(e) {}
+
+    async function loadReferral() {
+      var email = document.getElementById('email').value.trim().toLowerCase();
+      var errEl = document.getElementById('emailError');
+      errEl.classList.add('hidden');
+      if (!email || !email.includes('@')) { errEl.textContent = 'Enter a valid email.'; errEl.classList.remove('hidden'); return; }
+      currentEmail = email;
+
+      try {
+        var resp = await fetch('/api/affiliate/check?email=' + encodeURIComponent(email));
+        var data = await resp.json();
+        if (data.is_partner) {
+          // Load dashboard
+          var dashResp = await fetch('/api/affiliate/dashboard?email=' + encodeURIComponent(email));
+          var dashData = dashResp.ok ? await dashResp.json() : {};
+          showPartnerDashboard(dashData, data.referral_code);
+        } else {
+          document.getElementById('lookupView').classList.add('hidden');
+          document.getElementById('pitchView').classList.remove('hidden');
+        }
+      } catch(e) { errEl.textContent = 'Could not load. Try again.'; errEl.classList.remove('hidden'); }
+    }
+
+    function showPartnerDashboard(data, code) {
+      var refCode = data.referral_code || code || '';
+      var refLink = refCode ? 'assessment.valuetovictory.com/?ref=' + refCode : '—';
+      document.getElementById('refLink').textContent = refLink;
+      document.getElementById('statTotal').textContent = data.total_referrals || data.stats?.total_referrals || 0;
+      document.getElementById('statActive').textContent = data.active_referrals || data.stats?.active_referrals || 0;
+      var earned = (data.total_earnings_cents || data.stats?.total_earned_cents || 0) / 100;
+      document.getElementById('statEarned').textContent = '$' + earned.toFixed(2);
+
+      document.getElementById('lookupView').classList.add('hidden');
+      document.getElementById('partnerView').classList.remove('hidden');
+    }
+
+    async function applyPartner() {
+      var btn = document.getElementById('applyBtn');
+      var msg = document.getElementById('applyMsg');
+      btn.disabled = true; btn.textContent = 'Applying...';
+      try {
+        var resp = await fetch('/api/affiliate/apply', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:currentEmail, name:''}) });
+        var data = await resp.json();
+        if (resp.ok) {
+          msg.textContent = 'Welcome to the program!'; msg.style.color = '#22c55e'; msg.classList.remove('hidden');
+          setTimeout(function() { loadReferral(); }, 800);
+        } else { msg.textContent = data.error || 'Could not apply.'; msg.style.color = '#ef4444'; msg.classList.remove('hidden'); btn.disabled = false; btn.textContent = 'Become a Partner'; }
+      } catch(e) { msg.textContent = 'Error. Try again.'; msg.style.color = '#ef4444'; msg.classList.remove('hidden'); btn.disabled = false; btn.textContent = 'Become a Partner'; }
+    }
+
+    function copyLink() {
+      var url = document.getElementById('refLink').textContent;
+      var full = url.startsWith('http') ? url : 'https://' + url;
+      navigator.clipboard.writeText(full).then(function() {
+        var msg = document.getElementById('copyMsg');
+        msg.textContent = 'Copied!'; msg.classList.remove('hidden');
+        setTimeout(function() { msg.classList.add('hidden'); }, 2000);
+      });
+    }
+
+    function shareLink() {
+      var url = 'https://' + document.getElementById('refLink').textContent;
+      var text = 'Know your value before someone else defines it. Take the free P.I.N.K. assessment: ' + url;
+      if (navigator.share) { navigator.share({title:'The Value Engine', text:text, url:url}); }
+      else { copyLink(); }
+    }
+  </script>
+</body>
+</html>

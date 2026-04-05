@@ -57,6 +57,42 @@
       "dest": "/dating.html"
     },
     {
+      "src": "/about-pink",
+      "dest": "/about-pink.html"
+    },
+    {
+      "src": "/progress",
+      "dest": "/progress.html"
+    },
+    {
+      "src": "/settings",
+      "dest": "/settings.html"
+    },
+    {
+      "src": "/refer",
+      "dest": "/refer.html"
+    },
+    {
+      "src": "/help",
+      "dest": "/faq.html"
+    },
+    {
+      "src": "/faq",
+      "dest": "/faq.html"
+    },
+    {
+      "src": "/testimonials",
+      "dest": "/testimonials.html"
+    },
+    {
+      "src": "/coaching-history",
+      "dest": "/coaching-history.html"
+    },
+    {
+      "src": "/certificate",
+      "dest": "/certificate.html"
+    },
+    {
       "src": "/member",
       "dest": "/member.html"
     },
