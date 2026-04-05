@@ -6,6 +6,8 @@
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
   <title>Coaching Call — The Value Engine</title>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-TT6PYLPP31');gtag('config','G-MJ1SXZJ399');</script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
@@ -177,6 +179,7 @@
     <div id="errorMessage" class="form-message error">
       <h3 style="color:#ef4444;">Something went wrong</h3>
       <p id="errorText">Please try again.</p>
+      <button onclick="document.getElementById('errorMessage').style.display='none';document.getElementById('formWrapper').style.display='block';" style="margin-top:1rem;padding:0.625rem 1.25rem;background:#D4A847;color:#0a0a0a;border:none;border-radius:0.5rem;font-weight:700;cursor:pointer;font-family:inherit;">Try Again</button>
     </div>
 
     <!-- Intake Form -->
