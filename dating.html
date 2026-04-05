@@ -6,9 +6,9 @@
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
   <title>Would You Date Me? — The Value Engine</title>
-  <meta name="description" content="Know your value before you date. Take the P.I.N.K. assessment, get your score, share it with someone you're interested in, and see if you're compatible." />
+  <meta name="description" content="Know your worth before you date. Take the P.I.N.K. assessment — built on faith-based values — get your score, and share it with someone who matters." />
   <meta property="og:title" content="Would You Date Me? — The Value Engine" />
-  <meta property="og:description" content="Know your value before you date. Take the P.I.N.K. assessment and share your score." />
+  <meta property="og:description" content="Know your worth before you date. A faith-based values assessment you can share." />
   <meta property="og:image" content="/og-image.png" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -104,7 +104,7 @@
     <div class="hero">
       <div class="hero-tagline">The Value Engine</div>
       <h1><em>Would you date me?</em></h1>
-      <p class="sub">Know your value before you date. Take the P.I.N.K. assessment, get your score, and share it with someone you're interested in. See how you compare — no games, just honesty.</p>
+      <p class="sub">Know your worth before you date. The P.I.N.K. assessment measures how you steward your time, relationships, influence, resources, and growth — the things that actually matter. Share your score with someone worth knowing.</p>
     </div>
 
     <!-- P.I.N.K. PILLARS -->
@@ -120,19 +120,19 @@
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <div class="step-text"><strong>Take the assessment.</strong> 25 questions, 5 minutes. You get a score across 5 pillars that measure how you show up in life and relationships.</div>
+        <div class="step-text"><strong>Take the assessment.</strong> 25 questions, 5 minutes. Built on biblical principles of stewardship — how you manage your time, people, influence, finances, and growth.</div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <div class="step-text"><strong>Get your score card.</strong> A shareable link with your P.I.N.K. scores. Send it to someone you're interested in — or post it. Your call.</div>
+        <div class="step-text"><strong>Get your score card.</strong> A shareable link with your P.I.N.K. scores. Send it to someone you're getting to know — let your values speak first.</div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <div class="step-text"><strong>They take theirs.</strong> When they complete the assessment, you both see how your scores compare — strengths, gaps, and where you complement each other.</div>
+        <div class="step-text"><strong>They take theirs.</strong> When they complete the assessment, unlock a side-by-side comparison to see where you align and where you can grow together. <span style="color:#D4A847;font-size:0.8rem;">(VictoryPath members)</span></div>
       </div>
       <div class="step">
         <div class="step-num">4</div>
-        <div class="step-text"><strong>Start the 30-day challenge.</strong> Optional: 30 days of daily prompts designed to build real connection — not small talk.</div>
+        <div class="step-text"><strong>Start the 30-day challenge.</strong> 30 days of intentional, faith-grounded prompts designed to build real connection — not small talk, not games. <span style="color:#D4A847;font-size:0.8rem;">(VictoryPath members)</span></div>
       </div>
     </div>
 
@@ -152,14 +152,25 @@
       <div id="existingResult" class="share-result hidden"></div>
     </div>
 
-    <!-- COMPARE WITH SOMEONE -->
-    <div class="compare-section">
-      <h3>Compare with someone</h3>
-      <p>Both taken the assessment? Enter both emails to see your compatibility.</p>
+    <!-- COMPARE WITH SOMEONE (gated) -->
+    <div class="compare-section" id="compareLocked">
+      <h3>See How You Align</h3>
+      <p>Both taken the assessment? Compare your values side by side — see where you complement each other and where you might need to grow together.</p>
+      <div style="background:rgba(212,168,71,0.1);border:1px solid rgba(212,168,71,0.3);border-radius:0.5rem;padding:1rem;margin-bottom:1rem;">
+        <p style="color:#D4A847;font-size:0.85rem;font-weight:600;margin-bottom:0.25rem;">VictoryPath Members Only</p>
+        <p style="color:#a1a1aa;font-size:0.8rem;">The Comparison View and 30-Day Dating Challenge are available to VictoryPath members ($29/mo). Your score card and assessment are always free.</p>
+      </div>
+      <a href="https://buy.stripe.com/3cIfZgeIY9ecdND7g86oo0h" target="_blank" rel="noopener" style="display:inline-block;padding:0.75rem 1.75rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Join VictoryPath — $29/mo</a>
+      <p style="font-size:0.75rem;color:#71717a;margin-top:0.5rem;">Cancel anytime. 3-day free trial.</p>
+    </div>
+
+    <div class="compare-section hidden" id="compareUnlocked">
+      <h3>See How You Align</h3>
+      <p>Both taken the assessment? Enter both emails to see your values side by side.</p>
       <div style="display:flex;flex-direction:column;gap:0.5rem;max-width:360px;margin:0 auto;">
         <input type="email" id="compareEmailA" placeholder="Your email" style="padding:0.625rem 1rem;background:#0a0a0a;border:1px solid #27272a;border-radius:0.5rem;color:#fff;font-size:0.9rem;font-family:inherit;outline:none;" />
         <input type="email" id="compareEmailB" placeholder="Their email" style="padding:0.625rem 1rem;background:#0a0a0a;border:1px solid #27272a;border-radius:0.5rem;color:#fff;font-size:0.9rem;font-family:inherit;outline:none;" />
-        <button onclick="compareScores()" style="padding:0.75rem;background:#3b82f6;color:#fff;border:none;border-radius:0.5rem;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:inherit;">Compare Us</button>
+        <button onclick="compareScores()" style="padding:0.75rem;background:#3b82f6;color:#fff;border:none;border-radius:0.5rem;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:inherit;">Compare Our Values</button>
       </div>
       <div id="compareResult" class="hidden" style="margin-top:1rem;"></div>
     </div>
@@ -175,6 +186,13 @@
         <button class="share-btn" onclick="shareText()">💬 Share</button>
       </div>
       <div id="shareMsg" class="hidden" style="font-size:0.8rem;margin-top:0.5rem;color:#22c55e;"></div>
+    </div>
+
+    <!-- VALUES NOTE -->
+    <div style="background:#18181b;border:1px solid #27272a;border-radius:0.75rem;padding:1.5rem;margin-bottom:2rem;text-align:center;">
+      <p style="font-family:'Instrument Serif',serif;font-size:1.1rem;font-style:italic;color:#d4d4d8;margin-bottom:0.75rem;">"The heart of the wise teaches his mouth, and adds learning to his lips."</p>
+      <p style="font-size:0.75rem;color:#71717a;">Proverbs 16:23</p>
+      <p style="font-size:0.8rem;color:#a1a1aa;margin-top:0.75rem;line-height:1.5;">The P.I.N.K. framework is built on the principle that your value isn't determined by appearance, income, or status — it's measured by how you steward what you've been given. This isn't a matchmaking tool. It's a mirror.</p>
     </div>
 
     <div class="footer">
@@ -264,7 +282,7 @@
     function shareText() {
       var score = document.getElementById('cardScore').textContent;
       var link = window.location.origin + '/dating?compare=' + encodeURIComponent(scoreData.email);
-      var text = 'I scored ' + score + ' on the P.I.N.K. Value Engine. Would you date me? Take yours and let\'s compare: ' + link;
+      var text = 'I took a faith-based values assessment and scored ' + score + '. Would you date me? Take yours and see how we align: ' + link;
 
       if (navigator.share) {
         navigator.share({ title: 'Would you date me?', text: text, url: link });
@@ -341,7 +359,7 @@
         compHtml += '<div style="font-size:1rem;font-weight:800;color:' + compatColor + ';">' + compat + '</div>';
         compHtml += '</div></div>';
 
-        var challengeHtml = '<div style="text-align:center;margin-top:1rem;"><a href="/couple-challenge-hub" style="display:inline-block;padding:0.75rem 1.5rem;background:#D4A847;color:#0a0a0a;font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Start the 30-Day Challenge Together</a></div>';
+        var challengeHtml = '<div style="text-align:center;margin-top:1rem;"><a href="/couple-challenge-hub" style="display:inline-block;padding:0.75rem 1.5rem;background:#D4A847;color:#0a0a0a;font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Start the 30-Day Dating Challenge</a><p style="font-size:0.75rem;color:#71717a;margin-top:0.5rem;">30 days of intentional, faith-grounded prompts to build real connection.</p></div>';
 
         resultEl.innerHTML = compHtml + challengeHtml;
       } catch(e) {
@@ -349,16 +367,39 @@
       }
     }
 
+    // Check membership tier — unlock compare for paid members
+    (function() {
+      var email = localStorage.getItem('ve_email');
+      if (!email) return;
+
+      fetch('/api/entitlements?email=' + encodeURIComponent(email))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var tier = data.tier || 'free';
+          if (tier !== 'free') {
+            // Paid member — unlock compare section
+            document.getElementById('compareLocked').classList.add('hidden');
+            document.getElementById('compareUnlocked').classList.remove('hidden');
+          }
+        })
+        .catch(function() { /* default to locked */ });
+
+      // Pre-fill existing email
+      document.getElementById('existingEmail').value = email;
+    })();
+
     // Check if someone was invited to compare
     (function() {
       var params = new URLSearchParams(window.location.search);
       var compareEmail = params.get('compare');
       if (compareEmail) {
-        document.getElementById('compareEmailA').value = compareEmail;
-        // Scroll to compare section
+        var emailA = document.getElementById('compareEmailA');
+        if (emailA) emailA.value = compareEmail;
         setTimeout(function() {
-          document.querySelector('.compare-section').scrollIntoView({ behavior: 'smooth' });
-        }, 500);
+          var unlocked = document.getElementById('compareUnlocked');
+          var target = unlocked && !unlocked.classList.contains('hidden') ? unlocked : document.getElementById('compareLocked');
+          target.scrollIntoView({ behavior: 'smooth' });
+        }, 600);
       }
     })();
   </script>
