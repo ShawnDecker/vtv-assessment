@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
-  <title>The Value Engine — Love Language Assessment</title>
+  <title>The Value Engine — P.I.N.K.'s Loves Assessment</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
@@ -13,7 +13,7 @@
     .brand { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
     h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
     .subtitle { color: #a1a1aa; margin-bottom: 2rem; font-size: 0.95rem; }
-    .hidden { display: none; }
+    .hidden { display: none !important; }
     .loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; color: #a1a1aa; font-size: 1.125rem; }
     .error { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; }
     .btn { width: 100%; padding: 0.875rem; background: #3b82f6; color: #fff; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
@@ -97,8 +97,8 @@
 
   <div class="container hidden" id="mainView">
     <div class="brand">THE VALUE ENGINE</div>
-    <h1>Love Language Assessment</h1>
-    <p class="subtitle">Discover how you give and receive love.</p>
+    <h1>P.I.N.K.'s Loves Assessment</h1>
+    <p class="subtitle">Discover how you give and receive love — 20 questions, 5 love languages.</p>
 
     <!-- Assessment View -->
     <div id="assessmentView">
@@ -153,21 +153,75 @@
     var answers = {};
 
     var LANGUAGES = [
-      { key: 'wordsOfAffirmation', name: 'Words of Affirmation', icon: '&#128172;',
+      // Words of Affirmation (4 screens)
+      { key: 'wordsOfAffirmation', name: 'Words of Affirmation', icon: '&#128172;', q: 1,
         give: "I enjoy telling my partner specifically what I appreciate about them.",
         receive: "I love when my partner tells me specifically what they appreciate about me." },
-      { key: 'qualityTime', name: 'Quality Time', icon: '&#9203;',
-        give: "I enjoy setting aside time where my partner gets my full attention.",
+      { key: 'wordsOfAffirmation', name: 'Words of Affirmation', icon: '&#128172;', q: 2,
+        give: "I naturally encourage my partner with words when they are going through something hard.",
+        receive: "Hearing 'I'm proud of you' or 'You matter to me' fills me up more than almost anything." },
+      { key: 'wordsOfAffirmation', name: 'Words of Affirmation', icon: '&#128172;', q: 3,
+        give: "I express love by writing notes, sending texts, or verbally affirming my partner.",
+        receive: "A heartfelt letter or message from my partner means more to me than a gift." },
+      { key: 'wordsOfAffirmation', name: 'Words of Affirmation', icon: '&#128172;', q: 4,
+        give: "I make a point to speak life into my partner — building them up, not tearing them down.",
+        receive: "Harsh or careless words from my partner wound me more deeply than most things." },
+
+      // Quality Time (4 screens)
+      { key: 'qualityTime', name: 'Quality Time', icon: '&#9203;', q: 1,
+        give: "I enjoy setting aside time where my partner gets my full, undivided attention.",
         receive: "I love when my partner sets aside time where I get their full attention." },
-      { key: 'actsOfService', name: 'Acts of Service', icon: '&#128736;',
+      { key: 'qualityTime', name: 'Quality Time', icon: '&#9203;', q: 2,
+        give: "I show love by planning intentional moments — walks, meals, conversations with no phones.",
+        receive: "I feel most connected when we are together with no distractions." },
+      { key: 'qualityTime', name: 'Quality Time', icon: '&#9203;', q: 3,
+        give: "I prioritize being present with my partner over being productive.",
+        receive: "When my partner is distracted or checked out during our time together, it hurts." },
+      { key: 'qualityTime', name: 'Quality Time', icon: '&#9203;', q: 4,
+        give: "I make an effort to be fully engaged — eye contact, listening, not multitasking.",
+        receive: "Shared experiences together (even simple ones) are how I feel most loved." },
+
+      // Acts of Service (4 screens)
+      { key: 'actsOfService', name: 'Acts of Service', icon: '&#128736;', q: 1,
         give: "I enjoy doing small things that make my partner's day easier.",
         receive: "I love when my partner does small things that make my day easier." },
-      { key: 'gifts', name: 'Giving & Receiving Gifts', icon: '&#127873;',
-        give: "I enjoy picking out or creating little gifts that show I've been thinking about my partner.",
-        receive: "I love when my partner picks out or creates little gifts that show they've been thinking about me." },
-      { key: 'physicalTouch', name: 'Physical Touch', icon: '&#129309;',
-        give: "I enjoy being physically close to my partner (hugs, holding hands, sitting near them).",
-        receive: "I love when my partner is physically close to me (hugs, holding hands, sitting near me)." }
+      { key: 'actsOfService', name: 'Acts of Service', icon: '&#128736;', q: 2,
+        give: "I show love by taking tasks off my partner's plate without being asked.",
+        receive: "When my partner handles something I was dreading, I feel deeply cared for." },
+      { key: 'actsOfService', name: 'Acts of Service', icon: '&#128736;', q: 3,
+        give: "I look for practical ways to serve my partner — cooking, cleaning, running errands.",
+        receive: "Actions speak louder than words to me. What you do matters more than what you say." },
+      { key: 'actsOfService', name: 'Acts of Service', icon: '&#128736;', q: 4,
+        give: "I feel good when I can lighten my partner's load, even in small ways.",
+        receive: "When my partner sees what needs to be done and just does it — that is love to me." },
+
+      // Gifts (4 screens)
+      { key: 'gifts', name: 'Giving & Receiving Gifts', icon: '&#127873;', q: 1,
+        give: "I enjoy picking out gifts that show I have been thinking about my partner.",
+        receive: "I love when my partner gives me something that shows they were thinking about me." },
+      { key: 'gifts', name: 'Giving & Receiving Gifts', icon: '&#127873;', q: 2,
+        give: "I notice things my partner would love and surprise them with it later.",
+        receive: "A thoughtful gift — even a small one — makes me feel seen and valued." },
+      { key: 'gifts', name: 'Giving & Receiving Gifts', icon: '&#127873;', q: 3,
+        give: "I put thought into celebrations — birthdays, anniversaries, milestones.",
+        receive: "When my partner forgets a meaningful date or occasion, it stings." },
+      { key: 'gifts', name: 'Giving & Receiving Gifts', icon: '&#127873;', q: 4,
+        give: "The price does not matter to me — it is the thoughtfulness behind the gift.",
+        receive: "A random 'I saw this and thought of you' gift means the world to me." },
+
+      // Physical Touch (4 screens)
+      { key: 'physicalTouch', name: 'Physical Touch', icon: '&#129309;', q: 1,
+        give: "I enjoy being physically close to my partner — hugs, holding hands, sitting together.",
+        receive: "I love when my partner is physically close to me — hugs, holding hands, closeness." },
+      { key: 'physicalTouch', name: 'Physical Touch', icon: '&#129309;', q: 2,
+        give: "I naturally reach for my partner — a hand on the shoulder, an arm around them.",
+        receive: "A hug or a touch on the arm can turn my entire day around." },
+      { key: 'physicalTouch', name: 'Physical Touch', icon: '&#129309;', q: 3,
+        give: "I show love through physical presence — being close, not distant.",
+        receive: "Physical distance or withholding affection makes me feel unloved." },
+      { key: 'physicalTouch', name: 'Physical Touch', icon: '&#129309;', q: 4,
+        give: "I am comfortable initiating physical affection and closeness.",
+        receive: "I feel most secure when my partner initiates physical closeness with me." }
     ];
 
     var LIKERT_LABELS = ['Rarely', 'Sometimes', 'Often', 'Very Often', 'Almost Always'];
@@ -183,9 +237,9 @@
         var data = await resp.json();
         profile = data.profile;
 
-        LANGUAGES.forEach(function(l) {
-          answers[l.key + 'Give'] = 0;
-          answers[l.key + 'Receive'] = 0;
+        LANGUAGES.forEach(function(l, i) {
+          answers['give_' + i] = 0;
+          answers['receive_' + i] = 0;
         });
 
         renderLanguage(0);
@@ -198,16 +252,16 @@
 
     function renderLanguage(idx) {
       var l = LANGUAGES[idx];
-      var giveKey = l.key + 'Give';
-      var receiveKey = l.key + 'Receive';
+      var giveKey = 'give_' + idx;
+      var receiveKey = 'receive_' + idx;
 
-      var html = '<div class="step-counter">Language ' + (idx + 1) + ' of 5</div>';
+      var html = '<div class="step-counter">Question ' + (idx + 1) + ' of 20</div>';
       html += '<div class="lang-icon">' + l.icon + '</div>';
       html += '<div class="lang-title">' + l.name + '</div>';
 
       // Give question
       html += '<div class="q-block">';
-      html += '<div class="q-direction">Giving</div>';
+      html += '<div class="q-direction">How I Give</div>';
       html += '<div class="q-text">' + l.give + '</div>';
       html += '<div class="likert">';
       for (var i = 1; i <= 5; i++) {
@@ -219,7 +273,7 @@
 
       // Receive question
       html += '<div class="q-block">';
-      html += '<div class="q-direction receive">Receiving</div>';
+      html += '<div class="q-direction receive">How I Receive</div>';
       html += '<div class="q-text">' + l.receive + '</div>';
       html += '<div class="likert">';
       for (var i = 1; i <= 5; i++) {
@@ -231,12 +285,13 @@
 
       document.getElementById('langContainer').innerHTML = html;
 
-      // Update progress
+      // Update progress — 5 segments, each covers 4 questions
       var segments = document.querySelectorAll('.progress-segment');
+      var domainIdx = Math.floor(idx / 4);
       segments.forEach(function(seg, i) {
         seg.className = 'progress-segment';
-        if (i < idx) seg.classList.add('done');
-        if (i === idx) seg.classList.add('active');
+        if (i < domainIdx) seg.classList.add('done');
+        if (i === domainIdx) seg.classList.add('active');
       });
 
       document.getElementById('prevBtn').style.display = idx === 0 ? 'none' : 'block';
@@ -248,8 +303,9 @@
     }
 
     function nextLang() {
-      var l = LANGUAGES[currentLang];
-      if (!answers[l.key + 'Give'] || !answers[l.key + 'Receive']) {
+      var giveKey = 'give_' + currentLang;
+      var receiveKey = 'receive_' + currentLang;
+      if (!answers[giveKey] || !answers[receiveKey]) {
         document.getElementById('assessError').textContent = 'Please answer both questions before continuing.';
         document.getElementById('assessError').classList.remove('hidden');
         return;
@@ -276,22 +332,31 @@
       btn.disabled = true;
       btn.textContent = 'Submitting...';
 
+      // Aggregate 4 answers per language into averages
+      // LANGUAGES array: indices 0-3 = wordsOfAffirmation, 4-7 = qualityTime, 8-11 = actsOfService, 12-15 = gifts, 16-19 = physicalTouch
+      function avgLang(startIdx, type) {
+        var sum = 0;
+        for (var i = startIdx; i < startIdx + 4; i++) sum += (answers[type + '_' + i] || 3);
+        return Math.round(sum / 4);
+      }
+
       try {
         var resp = await fetch('/api/r/love-language', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contactId: profile.contact_id,
-            wordsOfAffirmationGive: answers.wordsOfAffirmationGive,
-            wordsOfAffirmationReceive: answers.wordsOfAffirmationReceive,
-            qualityTimeGive: answers.qualityTimeGive,
-            qualityTimeReceive: answers.qualityTimeReceive,
-            actsOfServiceGive: answers.actsOfServiceGive,
-            actsOfServiceReceive: answers.actsOfServiceReceive,
-            giftsGive: answers.giftsGive,
-            giftsReceive: answers.giftsReceive,
-            physicalTouchGive: answers.physicalTouchGive,
-            physicalTouchReceive: answers.physicalTouchReceive
+            wordsOfAffirmationGive: avgLang(0, 'give'),
+            wordsOfAffirmationReceive: avgLang(0, 'receive'),
+            qualityTimeGive: avgLang(4, 'give'),
+            qualityTimeReceive: avgLang(4, 'receive'),
+            actsOfServiceGive: avgLang(8, 'give'),
+            actsOfServiceReceive: avgLang(8, 'receive'),
+            giftsGive: avgLang(12, 'give'),
+            giftsReceive: avgLang(12, 'receive'),
+            physicalTouchGive: avgLang(16, 'give'),
+            physicalTouchReceive: avgLang(16, 'receive'),
+            detailedAnswers: answers
           })
         });
 
