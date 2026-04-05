@@ -627,10 +627,12 @@ module.exports = async (req, res) => {
 
       const profile = await sql`SELECT * FROM user_profiles WHERE contact_id = ${contactId} LIMIT 1`;
       if (profile.length === 0) return res.status(404).json({ error: 'Profile not found' });
-      if (!profile[0].partner_id) return res.status(400).json({ error: 'No partner linked. Both partners must be linked to start a challenge.' });
 
-      const partnerProfile = await sql`SELECT * FROM user_profiles WHERE id = ${profile[0].partner_id} LIMIT 1`;
-      if (partnerProfile.length === 0) return res.status(404).json({ error: 'Partner profile not found' });
+      // Partner is optional — allow starting solo, partner can join later
+      let partnerProfile = [];
+      if (profile[0].partner_id) {
+        partnerProfile = await sql`SELECT * FROM user_profiles WHERE id = ${profile[0].partner_id} LIMIT 1`;
+      }
 
       // Check for active challenge
       const activeChallenge = await sql`
@@ -652,10 +654,16 @@ module.exports = async (req, res) => {
         SELECT id FROM relationship_matrix WHERE contact_id = ${contactId}
         ORDER BY completed_at DESC LIMIT 1
       `;
-      const baselineB = await sql`
-        SELECT id FROM relationship_matrix WHERE contact_id = ${partnerProfile[0].contact_id}
-        ORDER BY completed_at DESC LIMIT 1
-      `;
+      let baselineB = [];
+      const partnerContactId = partnerProfile.length > 0 ? partnerProfile[0].contact_id : null;
+      if (partnerContactId) {
+        baselineB = await sql`
+          SELECT id FROM relationship_matrix WHERE contact_id = ${partnerContactId}
+          ORDER BY completed_at DESC LIMIT 1
+        `;
+      }
+
+      const partnerProfileId = partnerProfile.length > 0 ? partnerProfile[0].id : null;
 
       const rows = await sql`
         INSERT INTO couple_challenges (
@@ -663,7 +671,7 @@ module.exports = async (req, res) => {
           start_date, end_date,
           baseline_matrix_a, baseline_matrix_b
         ) VALUES (
-          ${profile[0].id}, ${partnerProfile[0].id},
+          ${profile[0].id}, ${partnerProfileId},
           ${startDate}, ${endDate},
           ${baselineA.length > 0 ? baselineA[0].id : null},
           ${baselineB.length > 0 ? baselineB[0].id : null}
