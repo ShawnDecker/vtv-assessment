@@ -201,6 +201,14 @@
       "dest": "/audiobook.html"
     },
     {
+      "src": "/daily-word",
+      "dest": "/daily-word.html"
+    },
+    {
+      "src": "/api/devotional-today",
+      "dest": "/api/devotional-today.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
