@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Would You Date Me? — The Value Engine</title>
+  <meta name="description" content="Know your value before you date. Take the P.I.N.K. assessment, get your score, share it with someone you're interested in, and see if you're compatible." />
+  <meta property="og:title" content="Would You Date Me? — The Value Engine" />
+  <meta property="og:description" content="Know your value before you date. Take the P.I.N.K. assessment and share your score." />
+  <meta property="og:image" content="/og-image.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-TT6PYLPP31');
+    gtag('config', 'G-MJ1SXZJ399');
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
+    .container { max-width: 600px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .hidden { display: none !important; }
+
+    /* Hero */
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero-tagline { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; font-weight: 700; margin-bottom: 0.75rem; }
+    .hero h1 { font-family: 'Instrument Serif', serif; font-size: 2.5rem; font-weight: 400; margin-bottom: 0.75rem; line-height: 1.2; }
+    .hero h1 em { font-style: italic; color: #D4A847; }
+    .hero .sub { color: #a1a1aa; font-size: 1.05rem; line-height: 1.6; margin-bottom: 2rem; max-width: 480px; margin-left: auto; margin-right: auto; }
+
+    /* Pillar cards */
+    .pillars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-bottom: 2rem; }
+    .pillar-card { background: #18181b; border: 1px solid #27272a; border-radius: 0.5rem; padding: 0.75rem 0.5rem; text-align: center; }
+    .pillar-letter { font-size: 1.5rem; font-weight: 900; color: #D4A847; }
+    .pillar-name { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: #71717a; margin-top: 0.25rem; }
+
+    /* How it works */
+    .steps { margin-bottom: 2.5rem; }
+    .step { display: flex; gap: 1rem; margin-bottom: 1.25rem; align-items: flex-start; }
+    .step-num { width: 32px; height: 32px; background: #D4A847; color: #0a0a0a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.85rem; flex-shrink: 0; }
+    .step-text { font-size: 0.9rem; color: #d4d4d8; line-height: 1.5; }
+    .step-text strong { color: #fff; }
+
+    /* CTA */
+    .cta-section { text-align: center; margin-bottom: 2rem; }
+    .btn-big { display: inline-block; padding: 1rem 2.5rem; background: linear-gradient(135deg, #D4A847, #b8942e); color: #0a0a0a; font-weight: 800; font-size: 1.1rem; border-radius: 0.625rem; text-decoration: none; border: none; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
+    .btn-big:hover { opacity: 0.9; }
+    .cta-sub { font-size: 0.8rem; color: #71717a; margin-top: 0.75rem; }
+
+    /* Already have a score */
+    .existing { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 2rem; }
+    .existing h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .existing-form { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .existing-form input { flex: 1; min-width: 200px; padding: 0.75rem 1rem; background: #0a0a0a; border: 1px solid #27272a; border-radius: 0.5rem; color: #fff; font-size: 0.9rem; font-family: inherit; outline: none; }
+    .existing-form input:focus { border-color: #D4A847; }
+    .existing-form button { padding: 0.75rem 1.25rem; background: #D4A847; color: #0a0a0a; border: none; border-radius: 0.5rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .share-result { margin-top: 0.75rem; font-size: 0.85rem; }
+
+    /* Compare invite */
+    .compare-section { background: linear-gradient(135deg, #1a1a2e 0%, #18181b 100%); border: 1px solid rgba(59,130,246,0.3); border-radius: 0.75rem; padding: 1.5rem; text-align: center; margin-bottom: 2rem; }
+    .compare-section h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .compare-section p { color: #a1a1aa; font-size: 0.9rem; margin-bottom: 1rem; }
+
+    /* Score card preview */
+    .score-preview { background: linear-gradient(135deg, #1c1917 0%, #18181b 100%); border: 1px solid rgba(212,168,71,0.3); border-radius: 0.75rem; padding: 2rem; text-align: center; margin-bottom: 2rem; }
+    .score-preview .score-big { font-size: 4rem; font-weight: 900; color: #D4A847; line-height: 1; }
+    .score-preview .score-label { font-size: 0.8rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.25rem; }
+    .score-preview .score-name { font-size: 1.25rem; font-weight: 700; margin-top: 1rem; }
+    .pillar-bars { max-width: 300px; margin: 1.25rem auto 0; }
+    .pbar { margin-bottom: 0.5rem; }
+    .pbar-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: #a1a1aa; margin-bottom: 0.2rem; }
+    .pbar-track { height: 6px; background: #27272a; border-radius: 3px; overflow: hidden; }
+    .pbar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #D4A847); border-radius: 3px; transition: width 0.8s ease; }
+
+    /* Share buttons */
+    .share-row { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 1.25rem; }
+    .share-btn { padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; border: 1px solid #27272a; background: #18181b; color: #d4d4d8; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
+    .share-btn:hover { border-color: #D4A847; color: #D4A847; }
+
+    .footer { text-align: center; padding: 2rem 0; border-top: 1px solid #27272a; font-size: 0.75rem; color: #71717a; margin-top: 2rem; }
+    .footer a { color: #D4A847; text-decoration: none; }
+
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 1.75rem; }
+      .pillars { grid-template-columns: repeat(5, 1fr); gap: 0.35rem; }
+      .pillar-card { padding: 0.5rem 0.25rem; }
+      .pillar-letter { font-size: 1.1rem; }
+      .btn-big { padding: 0.875rem 2rem; font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-tagline">The Value Engine</div>
+      <h1><em>Would you date me?</em></h1>
+      <p class="sub">Know your value before you date. Take the P.I.N.K. assessment, get your score, and share it with someone you're interested in. See how you compare — no games, just honesty.</p>
+    </div>
+
+    <!-- P.I.N.K. PILLARS -->
+    <div class="pillars">
+      <div class="pillar-card"><div class="pillar-letter">P</div><div class="pillar-name">People</div></div>
+      <div class="pillar-card"><div class="pillar-letter">I</div><div class="pillar-name">Influence</div></div>
+      <div class="pillar-card"><div class="pillar-letter">N</div><div class="pillar-name">Numbers</div></div>
+      <div class="pillar-card"><div class="pillar-letter">K</div><div class="pillar-name">Knowledge</div></div>
+      <div class="pillar-card"><div class="pillar-letter">T</div><div class="pillar-name">Time</div></div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text"><strong>Take the assessment.</strong> 25 questions, 5 minutes. You get a score across 5 pillars that measure how you show up in life and relationships.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text"><strong>Get your score card.</strong> A shareable link with your P.I.N.K. scores. Send it to someone you're interested in — or post it. Your call.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text"><strong>They take theirs.</strong> When they complete the assessment, you both see how your scores compare — strengths, gaps, and where you complement each other.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text"><strong>Start the 30-day challenge.</strong> Optional: 30 days of daily prompts designed to build real connection — not small talk.</div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+      <a href="/?mode=dating" class="btn-big">Take the Assessment</a>
+      <div class="cta-sub">Free. 5 minutes. No account required.</div>
+    </div>
+
+    <!-- ALREADY HAVE A SCORE -->
+    <div class="existing">
+      <h3>Already have a score?</h3>
+      <div class="existing-form">
+        <input type="email" id="existingEmail" placeholder="Enter your email" />
+        <button onclick="getMyCard()">Get My Card</button>
+      </div>
+      <div id="existingResult" class="share-result hidden"></div>
+    </div>
+
+    <!-- COMPARE WITH SOMEONE -->
+    <div class="compare-section">
+      <h3>Compare with someone</h3>
+      <p>Both taken the assessment? Enter both emails to see your compatibility.</p>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;max-width:360px;margin:0 auto;">
+        <input type="email" id="compareEmailA" placeholder="Your email" style="padding:0.625rem 1rem;background:#0a0a0a;border:1px solid #27272a;border-radius:0.5rem;color:#fff;font-size:0.9rem;font-family:inherit;outline:none;" />
+        <input type="email" id="compareEmailB" placeholder="Their email" style="padding:0.625rem 1rem;background:#0a0a0a;border:1px solid #27272a;border-radius:0.5rem;color:#fff;font-size:0.9rem;font-family:inherit;outline:none;" />
+        <button onclick="compareScores()" style="padding:0.75rem;background:#3b82f6;color:#fff;border:none;border-radius:0.5rem;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:inherit;">Compare Us</button>
+      </div>
+      <div id="compareResult" class="hidden" style="margin-top:1rem;"></div>
+    </div>
+
+    <!-- SCORE CARD (shown after lookup) -->
+    <div id="scoreCard" class="score-preview hidden">
+      <div class="score-big" id="cardScore">—</div>
+      <div class="score-label">P.I.N.K. Score</div>
+      <div class="score-name" id="cardName">—</div>
+      <div class="pillar-bars" id="cardPillars"></div>
+      <div class="share-row">
+        <button class="share-btn" onclick="copyShareLink()">📋 Copy Link</button>
+        <button class="share-btn" onclick="shareText()">💬 Share</button>
+      </div>
+      <div id="shareMsg" class="hidden" style="font-size:0.8rem;margin-top:0.5rem;color:#22c55e;"></div>
+    </div>
+
+    <div class="footer">
+      <div>"Don't guess. Run the tool."</div>
+      <div style="margin-top:0.5rem;">&copy; 2026 <a href="https://valuetovictory.com">Value to Victory</a> &mdash; Shawn E. Decker</div>
+    </div>
+  </div>
+
+  <script>
+    var scoreData = null;
+
+    async function getMyCard() {
+      var email = document.getElementById('existingEmail').value.trim().toLowerCase();
+      var resultEl = document.getElementById('existingResult');
+      if (!email || !email.includes('@')) {
+        resultEl.textContent = 'Enter a valid email.';
+        resultEl.style.color = '#ef4444';
+        resultEl.classList.remove('hidden');
+        return;
+      }
+
+      resultEl.textContent = 'Looking up...';
+      resultEl.style.color = '#a1a1aa';
+      resultEl.classList.remove('hidden');
+
+      try {
+        var resp = await fetch('/api/user/history?email=' + encodeURIComponent(email));
+        var data = await resp.json();
+
+        if (data.isNewUser || !data.assessments || data.assessments.length === 0) {
+          resultEl.innerHTML = 'No assessment found. <a href="/?mode=dating" style="color:#D4A847;">Take one now</a>';
+          resultEl.style.color = '#ef4444';
+          return;
+        }
+
+        var latest = data.assessments[0];
+        scoreData = latest;
+        scoreData.email = email;
+        scoreData.name = data.contact?.first_name || email.split('@')[0];
+
+        showScoreCard(latest, scoreData.name);
+        resultEl.classList.add('hidden');
+      } catch(e) {
+        resultEl.textContent = 'Something went wrong. Try again.';
+        resultEl.style.color = '#ef4444';
+      }
+    }
+
+    function showScoreCard(assessment, name) {
+      var card = document.getElementById('scoreCard');
+      var score = Math.round(assessment.masterScore || assessment.master_score || 0);
+      document.getElementById('cardScore').textContent = score;
+      document.getElementById('cardName').textContent = name;
+
+      var pillars = [
+        { name: 'People', key: 'people' },
+        { name: 'Influence', key: 'influence' },
+        { name: 'Numbers', key: 'numbers' },
+        { name: 'Knowledge', key: 'knowledge' },
+        { name: 'Time', key: 'time' }
+      ];
+
+      var barsHtml = '';
+      pillars.forEach(function(p) {
+        var val = Math.round(assessment[p.key] || assessment[p.key + 'Score'] || 0);
+        barsHtml += '<div class="pbar">';
+        barsHtml += '<div class="pbar-label"><span>' + p.name + '</span><span>' + val + '</span></div>';
+        barsHtml += '<div class="pbar-track"><div class="pbar-fill" style="width:' + val + '%"></div></div>';
+        barsHtml += '</div>';
+      });
+
+      document.getElementById('cardPillars').innerHTML = barsHtml;
+      card.classList.remove('hidden');
+      card.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function copyShareLink() {
+      var link = window.location.origin + '/dating?compare=' + encodeURIComponent(scoreData.email);
+      navigator.clipboard.writeText(link).then(function() {
+        var msg = document.getElementById('shareMsg');
+        msg.textContent = 'Link copied! Send it to someone.';
+        msg.classList.remove('hidden');
+        setTimeout(function() { msg.classList.add('hidden'); }, 3000);
+      });
+    }
+
+    function shareText() {
+      var score = document.getElementById('cardScore').textContent;
+      var link = window.location.origin + '/dating?compare=' + encodeURIComponent(scoreData.email);
+      var text = 'I scored ' + score + ' on the P.I.N.K. Value Engine. Would you date me? Take yours and let\'s compare: ' + link;
+
+      if (navigator.share) {
+        navigator.share({ title: 'Would you date me?', text: text, url: link });
+      } else {
+        navigator.clipboard.writeText(text).then(function() {
+          var msg = document.getElementById('shareMsg');
+          msg.textContent = 'Copied to clipboard!';
+          msg.classList.remove('hidden');
+          setTimeout(function() { msg.classList.add('hidden'); }, 3000);
+        });
+      }
+    }
+
+    async function compareScores() {
+      var emailA = document.getElementById('compareEmailA').value.trim().toLowerCase();
+      var emailB = document.getElementById('compareEmailB').value.trim().toLowerCase();
+      var resultEl = document.getElementById('compareResult');
+
+      if (!emailA || !emailB || !emailA.includes('@') || !emailB.includes('@')) {
+        resultEl.innerHTML = '<p style="color:#ef4444;">Enter both email addresses.</p>';
+        resultEl.classList.remove('hidden');
+        return;
+      }
+
+      resultEl.innerHTML = '<p style="color:#a1a1aa;">Comparing...</p>';
+      resultEl.classList.remove('hidden');
+
+      try {
+        var [respA, respB] = await Promise.all([
+          fetch('/api/user/history?email=' + encodeURIComponent(emailA)),
+          fetch('/api/user/history?email=' + encodeURIComponent(emailB))
+        ]);
+        var dataA = await respA.json();
+        var dataB = await respB.json();
+
+        if (!dataA.assessments?.length || !dataB.assessments?.length) {
+          resultEl.innerHTML = '<p style="color:#ef4444;">Both people need to complete an assessment first.</p>';
+          return;
+        }
+
+        var a = dataA.assessments[0];
+        var b = dataB.assessments[0];
+        var nameA = dataA.contact?.first_name || emailA.split('@')[0];
+        var nameB = dataB.contact?.first_name || emailB.split('@')[0];
+        var scoreA = Math.round(a.masterScore || a.master_score || 0);
+        var scoreB = Math.round(b.masterScore || b.master_score || 0);
+
+        var pillars = ['People', 'Influence', 'Numbers', 'Knowledge', 'Time'];
+        var keys = ['people', 'influence', 'numbers', 'knowledge', 'time'];
+
+        var compHtml = '<div style="background:#18181b;border:1px solid #27272a;border-radius:0.75rem;padding:1.25rem;text-align:left;">';
+        compHtml += '<div style="display:flex;justify-content:space-around;text-align:center;margin-bottom:1rem;">';
+        compHtml += '<div><div style="font-size:2rem;font-weight:900;color:#D4A847;">' + scoreA + '</div><div style="font-size:0.75rem;color:#a1a1aa;">' + nameA + '</div></div>';
+        compHtml += '<div style="color:#71717a;font-size:1.5rem;align-self:center;">vs</div>';
+        compHtml += '<div><div style="font-size:2rem;font-weight:900;color:#3b82f6;">' + scoreB + '</div><div style="font-size:0.75rem;color:#a1a1aa;">' + nameB + '</div></div>';
+        compHtml += '</div>';
+
+        keys.forEach(function(key, i) {
+          var va = Math.round(a[key] || a[key + 'Score'] || 0);
+          var vb = Math.round(b[key] || b[key + 'Score'] || 0);
+          compHtml += '<div style="margin-bottom:0.5rem;">';
+          compHtml += '<div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.2rem;"><span>' + va + '</span><span>' + pillars[i] + '</span><span>' + vb + '</span></div>';
+          compHtml += '<div style="display:flex;gap:2px;height:6px;">';
+          compHtml += '<div style="flex:1;background:#27272a;border-radius:3px 0 0 3px;overflow:hidden;direction:rtl;"><div style="height:100%;width:' + va + '%;background:#D4A847;border-radius:3px;"></div></div>';
+          compHtml += '<div style="flex:1;background:#27272a;border-radius:0 3px 3px 0;overflow:hidden;"><div style="height:100%;width:' + vb + '%;background:#3b82f6;border-radius:3px;"></div></div>';
+          compHtml += '</div></div>';
+        });
+
+        var diff = Math.abs(scoreA - scoreB);
+        var compat = diff <= 10 ? 'Strong alignment' : diff <= 20 ? 'Complementary' : 'Different strengths';
+        var compatColor = diff <= 10 ? '#22c55e' : diff <= 20 ? '#D4A847' : '#f97316';
+        compHtml += '<div style="text-align:center;margin-top:1rem;padding-top:0.75rem;border-top:1px solid #27272a;">';
+        compHtml += '<div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:#71717a;margin-bottom:0.25rem;">Compatibility</div>';
+        compHtml += '<div style="font-size:1rem;font-weight:800;color:' + compatColor + ';">' + compat + '</div>';
+        compHtml += '</div></div>';
+
+        var challengeHtml = '<div style="text-align:center;margin-top:1rem;"><a href="/couple-challenge-hub" style="display:inline-block;padding:0.75rem 1.5rem;background:#D4A847;color:#0a0a0a;font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Start the 30-Day Challenge Together</a></div>';
+
+        resultEl.innerHTML = compHtml + challengeHtml;
+      } catch(e) {
+        resultEl.innerHTML = '<p style="color:#ef4444;">Something went wrong. Try again.</p>';
+      }
+    }
+
+    // Check if someone was invited to compare
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var compareEmail = params.get('compare');
+      if (compareEmail) {
+        document.getElementById('compareEmailA').value = compareEmail;
+        // Scroll to compare section
+        setTimeout(function() {
+          document.querySelector('.compare-section').scrollIntoView({ behavior: 'smooth' });
+        }, 500);
+      }
+    })();
+  </script>
+</body>
+</html>

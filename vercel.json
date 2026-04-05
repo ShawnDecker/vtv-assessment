@@ -53,6 +53,10 @@
       "dest": "/checkout-success.html"
     },
     {
+      "src": "/dating",
+      "dest": "/dating.html"
+    },
+    {
       "src": "/member",
       "dest": "/member.html"
     },
