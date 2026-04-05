@@ -189,6 +189,10 @@
         var data = await resp.json();
         profile = data.profile;
 
+        // Ensure gender and contact_id exist — redirect to onboarding if missing
+        if (!profile.contact_id) { window.location.href = '/onboarding'; return; }
+        if (!profile.gender) { profile.gender = 'male'; } // default if not set
+
         // Init scores
         DOMAINS.forEach(function(d) {
           scores[d.key + 'Give'] = 5;
@@ -298,7 +302,10 @@
 
         var data = await resp.json();
         if (!resp.ok) {
-          document.getElementById('assessError').textContent = data.error || 'Submission failed.';
+          var errMsg = data.error === 'contactId and gender are required'
+            ? 'Please complete your relationship profile first.'
+            : (data.error || 'Submission failed. Please try again.');
+          document.getElementById('assessError').textContent = errMsg;
           document.getElementById('assessError').classList.remove('hidden');
           btn.disabled = false;
           btn.textContent = 'Submit';
