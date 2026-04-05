@@ -1,5 +1,39 @@
 const { neon } = require('@neondatabase/serverless');
 
+// 30 daily dating challenge prompts — lighter, curiosity-driven, fun
+const DATING_CHALLENGE_PROMPTS = [
+  "What's one thing about yourself most people don't get to see right away?",
+  "Describe your perfect low-key evening — what would we be doing?",
+  "What's something you're genuinely proud of that has nothing to do with work?",
+  "What's a belief you've changed your mind about in the last few years?",
+  "If you could master one skill overnight, what would it be and why?",
+  "What does 'showing up for someone' actually look like to you?",
+  "What's a question you wish people would ask you more often?",
+  "Weekly check-in: What surprised you most about our conversations this week? / What do you want to know more about? / One thing that made you smile this week: / What would make next week even better?",
+  "What's your biggest dealbreaker in a relationship — and why?",
+  "Describe a moment where you felt completely yourself around someone. What made it safe?",
+  "What's something you're working on right now — personally, not professionally?",
+  "When you picture a great relationship, what does a random Tuesday night look like?",
+  "What's the most thoughtful thing someone has done for you?",
+  "What's one thing you wish you were better at when it comes to communication?",
+  "Weekly check-in: What have you noticed about how we communicate? / Something I want to be more honest about: / What I appreciate about you so far: / One thing I'd like us to try this week:",
+  "What's your love language — and do you think it's different from what you give vs. what you need?",
+  "If we had zero obligations this weekend, what would you want to do together?",
+  "What's a hard lesson a past relationship taught you — without the bitterness?",
+  "What does trust look like to you? How do you build it?",
+  "Tell me about someone you admire. What is it about them?",
+  "What's something you're afraid to want — because wanting it feels vulnerable?",
+  "Weekly check-in: The best conversation we had this week was about... / Something I want to share but haven't yet: / How I feel about where this is going: / What I'd like more of:",
+  "What role does faith, spirituality, or values play in how you live day to day?",
+  "What would your closest friend say is your best quality? Your worst habit?",
+  "How do you handle conflict? Run, fight, freeze, or talk it out?",
+  "What does loyalty mean to you — and where do you draw the line?",
+  "What's one thing you want your future partner to always know about you?",
+  "What's the difference between someone you date and someone you build with?",
+  "Weekly check-in: What I know about you now that I didn't 30 days ago: / The conversation that mattered most: / Where I see this going: / What I want you to know:",
+  "30 days in — what do you think? Be honest. No pressure. Just real."
+];
+
 // 30 daily couple challenge prompts
 const COUPLE_CHALLENGE_PROMPTS = [
   "Today, I'm grateful for this specific thing about my partner:",
@@ -621,7 +655,8 @@ module.exports = async (req, res) => {
     // ============================================================
     if (req.method === 'POST' && url === '/couple-challenge/start') {
       const b = req.body || {};
-      const { contactId, durationDays } = b;
+      const { contactId, durationDays, challengeMode } = b;
+      const mode = challengeMode === 'dating' ? 'dating' : 'couple';
 
       if (!contactId) return res.status(400).json({ error: 'contactId is required' });
 
