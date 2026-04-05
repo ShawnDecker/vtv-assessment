@@ -238,8 +238,8 @@
         profile = data.profile;
 
         LANGUAGES.forEach(function(l, i) {
-          answers['give_' + i] = 0;
-          answers['receive_' + i] = 0;
+          answers['give_' + i] = 5;
+          answers['receive_' + i] = 5;
         });
 
         renderLanguage(0);
@@ -259,29 +259,23 @@
       html += '<div class="lang-icon">' + l.icon + '</div>';
       html += '<div class="lang-title">' + l.name + '</div>';
 
-      // Give question
+      // Give slider
       html += '<div class="q-block">';
       html += '<div class="q-direction">How I Give</div>';
       html += '<div class="q-text">' + l.give + '</div>';
-      html += '<div class="likert">';
-      for (var i = 1; i <= 5; i++) {
-        var checked = answers[giveKey] === i ? 'checked' : '';
-        html += '<label class="likert-option"><input type="radio" name="give" value="' + i + '" ' + checked + ' onchange="setAnswer(\'' + giveKey + '\',' + i + ')" />';
-        html += '<span class="likert-btn"><span class="likert-num">' + i + '</span>' + LIKERT_LABELS[i-1] + '</span></label>';
-      }
-      html += '</div></div>';
+      html += '<div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:.2rem"><span style="color:#D4A847;font-weight:700">What I Give</span><span style="font-weight:700;color:#D4A847" id="giveVal">' + (answers[giveKey] || 5) + '</span></div>';
+      html += '<input type="range" min="0" max="10" step="1" value="' + (answers[giveKey] || 5) + '" id="giveSlider" oninput="setSlider(\'' + giveKey + '\',\'give\')" style="width:100%;accent-color:#D4A847" />';
+      html += '<div style="display:flex;justify-content:space-between;font-size:.65rem;color:#71717a"><span>0 — Never</span><span>5 — Sometimes</span><span>10 — Always</span></div>';
+      html += '</div>';
 
-      // Receive question
+      // Receive slider
       html += '<div class="q-block">';
       html += '<div class="q-direction receive">How I Receive</div>';
       html += '<div class="q-text">' + l.receive + '</div>';
-      html += '<div class="likert">';
-      for (var i = 1; i <= 5; i++) {
-        var checked = answers[receiveKey] === i ? 'checked' : '';
-        html += '<label class="likert-option"><input type="radio" name="receive" value="' + i + '" ' + checked + ' onchange="setAnswer(\'' + receiveKey + '\',' + i + ')" />';
-        html += '<span class="likert-btn"><span class="likert-num">' + i + '</span>' + LIKERT_LABELS[i-1] + '</span></label>';
-      }
-      html += '</div></div>';
+      html += '<div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:.2rem"><span style="color:#3b82f6;font-weight:700">What I Receive</span><span style="font-weight:700;color:#3b82f6" id="receiveVal">' + (answers[receiveKey] || 5) + '</span></div>';
+      html += '<input type="range" min="0" max="10" step="1" value="' + (answers[receiveKey] || 5) + '" id="receiveSlider" oninput="setSlider(\'' + receiveKey + '\',\'receive\')" style="width:100%;accent-color:#3b82f6" />';
+      html += '<div style="display:flex;justify-content:space-between;font-size:.65rem;color:#71717a"><span>0 — Never</span><span>5 — Sometimes</span><span>10 — Always</span></div>';
+      html += '</div>';
 
       document.getElementById('langContainer').innerHTML = html;
 
@@ -302,14 +296,15 @@
       answers[key] = value;
     }
 
+    function setSlider(key, type) {
+      var slider = document.getElementById(type + 'Slider');
+      var valEl = document.getElementById(type + 'Val');
+      var val = parseInt(slider.value);
+      valEl.textContent = val;
+      answers[key] = val;
+    }
+
     function nextLang() {
-      var giveKey = 'give_' + currentLang;
-      var receiveKey = 'receive_' + currentLang;
-      if (!answers[giveKey] || !answers[receiveKey]) {
-        document.getElementById('assessError').textContent = 'Please answer both questions before continuing.';
-        document.getElementById('assessError').classList.remove('hidden');
-        return;
-      }
       document.getElementById('assessError').classList.add('hidden');
 
       if (currentLang < LANGUAGES.length - 1) {
@@ -334,10 +329,12 @@
 
       // Aggregate 4 answers per language into averages
       // LANGUAGES array: indices 0-3 = wordsOfAffirmation, 4-7 = qualityTime, 8-11 = actsOfService, 12-15 = gifts, 16-19 = physicalTouch
+      // Average 4 slider values (0-10 scale) per language, then scale to 1-5 for API
       function avgLang(startIdx, type) {
         var sum = 0;
-        for (var i = startIdx; i < startIdx + 4; i++) sum += (answers[type + '_' + i] || 3);
-        return Math.round(sum / 4);
+        for (var i = startIdx; i < startIdx + 4; i++) sum += (answers[type + '_' + i] || 5);
+        var avg10 = sum / 4; // 0-10 scale average
+        return Math.round(avg10 / 2); // scale to 0-5, API expects 1-5
       }
 
       try {
