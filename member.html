@@ -1119,16 +1119,16 @@
       <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.5rem">
         Welcome, <strong id="setPinEmail"></strong>. Set a 4-6 digit PIN to secure your Member Portal.
       </p>
-      <div class="form-group">
-        <label class="form-label">NEW PIN</label>
+      <div style="margin-bottom:1rem">
+        <label class="field-label">New PIN</label>
         <input type="password" id="newPin" maxlength="6" inputmode="numeric" pattern="[0-9]*"
-               placeholder="Enter 4-6 digits" style="text-align:center;font-size:1.5rem;letter-spacing:0.5rem"
+               placeholder="Enter 4-6 digits" style="text-align:center;font-size:1.75rem;letter-spacing:0.5rem;padding:1rem"
                onkeydown="if(event.key==='Enter') document.getElementById('confirmPin').focus()" />
       </div>
-      <div class="form-group">
-        <label class="form-label">CONFIRM PIN</label>
+      <div style="margin-bottom:1.25rem">
+        <label class="field-label">Confirm PIN</label>
         <input type="password" id="confirmPin" maxlength="6" inputmode="numeric" pattern="[0-9]*"
-               placeholder="Confirm PIN" style="text-align:center;font-size:1.5rem;letter-spacing:0.5rem"
+               placeholder="Confirm PIN" style="text-align:center;font-size:1.75rem;letter-spacing:0.5rem;padding:1rem"
                onkeydown="if(event.key==='Enter') submitSetPin()" />
       </div>
       <div id="setPinError" class="error-msg hidden"></div>
@@ -1149,13 +1149,14 @@
       <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.5rem">
         <span id="enterPinEmail"></span>
       </p>
-      <div class="form-group">
+      <div style="margin-bottom:1.25rem">
+        <label class="field-label" for="loginPin">Your PIN</label>
         <input type="password" id="loginPin" maxlength="6" inputmode="numeric" pattern="[0-9]*"
-               placeholder="Enter PIN" style="text-align:center;font-size:1.5rem;letter-spacing:0.5rem"
+               placeholder="Enter PIN" style="text-align:center;font-size:1.75rem;letter-spacing:0.5rem;padding:1rem"
                onkeydown="if(event.key==='Enter') submitVerifyPin()" />
       </div>
       <div id="verifyPinError" class="error-msg hidden"></div>
-      <button class="btn btn-gold btn-block" id="verifyPinBtn" onclick="submitVerifyPin()">
+      <button class="btn btn-gold btn-block" id="verifyPinBtn" onclick="submitVerifyPin()" style="margin-top:0.5rem">
         Unlock Dashboard
       </button>
       <div style="display:flex;justify-content:space-between;margin-top:1rem">
