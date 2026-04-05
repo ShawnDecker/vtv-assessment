@@ -4026,6 +4026,121 @@ This link expires in 24 hours.
       }
     }
 
+    // GET /api/accountability/send — evening accountability + platform updates email
+    if (req.method === 'GET' && url === '/accountability/send') {
+      try {
+        await ensureCoachingTable(sql);
+
+        const members = await sql`
+          SELECT cs.email, cs.current_day, c.first_name
+          FROM coaching_sequences cs
+          JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
+          WHERE cs.unsubscribed = FALSE AND cs.current_day <= 8
+          ORDER BY cs.id
+        `;
+
+        if (members.length === 0) {
+          return res.json({ sent: 0, message: 'No active members to email.' });
+        }
+
+        let transporter = null;
+        if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+          transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+          });
+        }
+        if (!transporter) return res.status(500).json({ error: 'Email credentials not configured' });
+
+        const platformUpdates = [
+          'Tier-aware upsell system \u2014 paid members now see relevant next steps instead of generic CTAs',
+          'RFM Audiobook page with 65-chapter player, mini player, and chapter search',
+          'Cart checkout supporting mixed subscriptions + one-time products',
+          'Couple Challenge Hub and Relationship Matrix for partners',
+          'Member dashboard with audiobook access card and quick links',
+          'Mobile responsive overhaul across the entire member portal',
+        ];
+        const bugFixes = [
+          'Fixed all 7 Stripe payment links \u2014 every tier verified working',
+          'Fixed member login error handling and dashboard score display',
+          'Restored free-book section visibility during assessment',
+          'Fixed Stripe webhook signature verification',
+          'Resolved 40+ UI bugs across 8 new pages',
+        ];
+
+        let sentCount = 0;
+        const results = [];
+
+        for (const member of members) {
+          try {
+            const firstName = member.first_name || 'Friend';
+            const unsubToken = Buffer.from(member.email).toString('base64');
+            const unsubUrl = `https://assessment.valuetovictory.com/api/coaching/unsubscribe?email=${encodeURIComponent(member.email)}&token=${unsubToken}`;
+
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;"><tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+<tr><td style="text-align:center;padding-bottom:24px;">
+  <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;margin-bottom:8px;">VALUE TO VICTORY</div>
+  <div style="font-family:Georgia,serif;font-size:26px;font-style:italic;color:#ffffff;">Evening Check-In</div>
+</td></tr>
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:40px 32px;">
+  <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 20px;">${firstName},</p>
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 8px;">Before you close out today &mdash; take 60 seconds and answer this honestly:</p>
+  <div style="background:#111118;border-left:3px solid #D4A847;padding:16px 20px;margin:16px 0 24px;border-radius:0 8px 8px 0;">
+    <p style="color:#D4A847;font-size:15px;font-weight:bold;margin:0 0 8px;">What did you actually accomplish today?</p>
+    <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">Not what you planned. Not what you wanted to do. What did you <em>do</em>? Write it down. Say it out loud. Own it &mdash; good or bad. That's where growth starts.</p>
+  </div>
+  <hr style="border:none;border-top:1px solid #27272a;margin:28px 0;"/>
+  <p style="color:#e4e4e7;font-size:15px;font-weight:bold;margin:0 0 12px;">What's New on the Platform</p>
+  <p style="color:#a1a1aa;font-size:14px;line-height:1.5;margin:0 0 12px;">We've been building while you've been growing:</p>
+  <ul style="color:#a1a1aa;font-size:14px;line-height:1.8;margin:0 0 8px;padding-left:20px;">
+    ${platformUpdates.map(u => '<li>' + u + '</li>').join('')}
+  </ul>
+  <p style="color:#e4e4e7;font-size:15px;font-weight:bold;margin:20px 0 12px;">Bugs Squashed</p>
+  <ul style="color:#a1a1aa;font-size:14px;line-height:1.8;margin:0 0 8px;padding-left:20px;">
+    ${bugFixes.map(f => '<li>' + f + '</li>').join('')}
+  </ul>
+  <hr style="border:none;border-top:1px solid #27272a;margin:28px 0;"/>
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 16px;">Thank you for being so supportive and understanding during this launch. We're getting so much closer &mdash; and I'm genuinely looking forward to the great things we're going to be able to do together and all the people we're going to be able to help.</p>
+  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px 24px;margin:20px 0 0;">
+    <p style="color:#D4A847;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;">A Note from Shawn</p>
+    <p style="color:#e4e4e7;font-size:15px;line-height:1.7;margin:0 0 12px;font-style:italic;">Every single one of you taking this assessment and showing up every day &mdash; that matters. You're not just checking a box. You're choosing to look at yourself honestly, and that takes guts. I built this because I needed it first. Now I get to watch it help you too. That's the whole point.</p>
+    <p style="color:#a1a1aa;font-size:14px;margin:0;">&mdash; Shawn Decker</p>
+  </div>
+</td></tr>
+<tr><td style="text-align:center;padding-top:24px;">
+  <a href="https://assessment.valuetovictory.com/member" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Open Your Dashboard</a>
+</td></tr>
+<tr><td style="text-align:center;padding-top:24px;">
+  <p style="color:#52525b;font-size:12px;margin:0;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p>
+  <p style="color:#3f3f46;font-size:11px;margin:8px 0 0;"><a href="${unsubUrl}" style="color:#3f3f46;text-decoration:underline;">Unsubscribe from evening emails</a></p>
+</td></tr>
+</table></td></tr></table></body></html>`;
+
+            await transporter.sendMail({
+              from: `"Shawn @ Value Engine" <${process.env.GMAIL_USER}>`,
+              to: member.email,
+              subject: `${firstName}, what did you actually accomplish today?`,
+              html,
+            });
+
+            results.push({ email: member.email, status: 'sent' });
+            sentCount++;
+          } catch (sendErr) {
+            console.error(`Accountability email error for ${member.email}:`, sendErr.message);
+            results.push({ email: member.email, status: 'error', error: sendErr.message });
+          }
+        }
+
+        return res.json({ sent: sentCount, total: members.length, results });
+      } catch (acctErr) {
+        console.error('[accountability/send] Error:', acctErr);
+        return res.status(500).json({ error: 'Accountability send failed', details: acctErr.message });
+      }
+    }
+
     return res.status(404).json({ error: 'Not found' });
   } catch (err) {
     console.error('API Error:', err);
