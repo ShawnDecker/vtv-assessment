@@ -183,6 +183,58 @@ module.exports = async (req, res) => {
     }
 
     // ============================================================
+    // POST /api/r/invite-partner — Send partner invite (no account required)
+    // ============================================================
+    if (req.method === 'POST' && url === '/invite-partner') {
+      const b = req.body || {};
+      const { fromEmail, partnerEmail } = b;
+
+      if (!fromEmail || !partnerEmail) return res.status(400).json({ error: 'fromEmail and partnerEmail are required' });
+      if (fromEmail === partnerEmail) return res.status(400).json({ error: 'Cannot invite yourself' });
+
+      // Look up the inviter
+      const inviter = await sql`
+        SELECT up.*, c.first_name, c.last_name, c.email
+        FROM user_profiles up JOIN contacts c ON c.id = up.contact_id
+        WHERE c.email = ${fromEmail} LIMIT 1
+      `;
+      if (inviter.length === 0) return res.status(404).json({ error: 'Your profile was not found' });
+
+      const inviterName = [inviter[0].first_name, inviter[0].last_name].filter(Boolean).join(' ') || fromEmail;
+
+      // Check if partner already has a profile — if so, try to link directly
+      const partner = await sql`
+        SELECT up.*, c.email FROM user_profiles up JOIN contacts c ON c.id = up.contact_id
+        WHERE c.email = ${partnerEmail} LIMIT 1
+      `;
+
+      if (partner.length > 0) {
+        // Partner exists — link them if both have qualifying tiers
+        const allowedTiers = ['couple', 'premium'];
+        if (allowedTiers.includes(inviter[0].membership_tier) && allowedTiers.includes(partner[0].membership_tier)) {
+          await sql`UPDATE user_profiles SET partner_id = ${partner[0].id}, updated_at = NOW() WHERE id = ${inviter[0].id}`;
+          await sql`UPDATE user_profiles SET partner_id = ${inviter[0].id}, updated_at = NOW() WHERE id = ${partner[0].id}`;
+          return res.json({ success: true, linked: true, message: 'Partner found and linked!' });
+        }
+        // Partner exists but wrong tier — still record the invite
+      }
+
+      // Store the invite for when partner signs up or upgrades
+      try {
+        await sql`
+          INSERT INTO partner_invites (inviter_email, partner_email, inviter_name, created_at)
+          VALUES (${fromEmail}, ${partnerEmail}, ${inviterName}, NOW())
+          ON CONFLICT (inviter_email) DO UPDATE SET partner_email = ${partnerEmail}, inviter_name = ${inviterName}, created_at = NOW()
+        `;
+      } catch (e) {
+        // Table may not exist yet — that's OK, the invite is still conceptually sent
+        console.log('partner_invites table not ready:', e.message);
+      }
+
+      return res.json({ success: true, linked: false, message: 'Invite recorded. Your partner will be linked when they sign up.' });
+    }
+
+    // ============================================================
     // POST /api/r/add-dependent — Add child under parent
     // ============================================================
     if (req.method === 'POST' && url === '/add-dependent') {

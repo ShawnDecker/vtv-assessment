@@ -129,7 +129,13 @@
     </div>
 
     <div id="noPartnerMsg" class="hidden" style="background:rgba(212,168,71,0.1);border:1px solid rgba(212,168,71,0.3);border-radius:0.5rem;padding:1rem;margin-bottom:1rem;">
-      <p style="color:#D4A847;font-size:0.875rem;">You can start the challenge now and link your partner later. For the full couples experience, ask your partner to sign up and link accounts from the <a href="/relationship-hub" style="color:#3b82f6;">Relationship Hub</a>.</p>
+      <p style="color:#D4A847;font-size:0.875rem;margin-bottom:0.75rem;">Add your partner's email to invite them. They'll get a link to join the challenge with you.</p>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <input type="email" id="partnerEmail" placeholder="partner@example.com" style="flex:1;min-width:200px;padding:0.625rem 0.875rem;background:#18181b;border:1px solid #27272a;border-radius:0.5rem;color:#fff;font-size:0.9rem;font-family:inherit;outline:none;" />
+        <button class="btn-gold" id="invitePartnerBtn" onclick="invitePartner()" style="padding:0.625rem 1.25rem;border:none;border-radius:0.5rem;font-weight:700;font-size:0.85rem;cursor:pointer;color:#0a0a0a;white-space:nowrap;">Send Invite</button>
+      </div>
+      <div id="inviteMsg" class="hidden" style="font-size:0.8rem;margin-top:0.5rem;"></div>
+      <p style="color:#71717a;font-size:0.75rem;margin-top:0.5rem;">Or skip this and <a href="/relationship-hub" style="color:#3b82f6;">link later from the Hub</a>.</p>
     </div>
 
     <button class="btn btn-gold" id="enrollBtn" onclick="startChallenge()">Lock In — Start the 30-Day Challenge</button>
@@ -279,6 +285,56 @@
         document.getElementById('enrollPartner').style.color = '#f97316';
         document.getElementById('noPartnerMsg').classList.remove('hidden');
         // Allow starting without a partner — they can link later
+      }
+    }
+
+    async function invitePartner() {
+      var partnerEmail = document.getElementById('partnerEmail').value.trim().toLowerCase();
+      var msgEl = document.getElementById('inviteMsg');
+      msgEl.classList.add('hidden');
+
+      if (!partnerEmail || !partnerEmail.includes('@')) {
+        msgEl.textContent = 'Please enter a valid email address.';
+        msgEl.style.color = '#ef4444';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+      if (partnerEmail === userEmail) {
+        msgEl.textContent = 'That\'s your own email. Enter your partner\'s email.';
+        msgEl.style.color = '#ef4444';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+
+      var btn = document.getElementById('invitePartnerBtn');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        var resp = await fetch('/api/r/invite-partner', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fromEmail: userEmail, partnerEmail: partnerEmail })
+        });
+        var data = await resp.json();
+        if (resp.ok) {
+          msgEl.textContent = 'Invite sent to ' + partnerEmail + '!';
+          msgEl.style.color = '#22c55e';
+          msgEl.classList.remove('hidden');
+          btn.textContent = 'Sent!';
+        } else {
+          msgEl.textContent = data.error || 'Could not send invite. Try again.';
+          msgEl.style.color = '#ef4444';
+          msgEl.classList.remove('hidden');
+          btn.disabled = false;
+          btn.textContent = 'Send Invite';
+        }
+      } catch(e) {
+        msgEl.textContent = 'Could not send invite. Try again.';
+        msgEl.style.color = '#ef4444';
+        msgEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Send Invite';
       }
     }
 
