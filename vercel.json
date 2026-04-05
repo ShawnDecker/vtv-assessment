@@ -38,6 +38,10 @@
       "dest": "/api/migrate-digital-purchases.js"
     },
     {
+      "src": "/api/send-email",
+      "dest": "/api/send-email.js"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     },
