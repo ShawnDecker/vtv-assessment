@@ -210,7 +210,10 @@
     (function() {
       var params = new URLSearchParams(window.location.search);
       var sessionId = params.get('session_id');
-      if (!sessionId) return;
+      if (!sessionId) {
+        document.getElementById('loadingText').textContent = 'Thank you for your purchase! Your order has been confirmed.';
+        return;
+      }
 
       fetch('/api/checkout/session?id=' + encodeURIComponent(sessionId))
         .then(function(r) { return r.json(); })

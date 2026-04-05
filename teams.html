@@ -1279,7 +1279,7 @@ document.addEventListener('keydown', e => {
 </div>
 <script>
 (function() {
-  var email = localStorage.getItem('vtv_email');
+  var email = localStorage.getItem('ve_email');
   if (!email) return;
   fetch('/api/contacts?email=' + encodeURIComponent(email))
     .then(function(r) { return r.json(); })

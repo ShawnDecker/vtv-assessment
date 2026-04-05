@@ -162,7 +162,7 @@
     </div>
 
     <!-- Membership Upsell -->
-    <div class="upsell" id="upsellSection">
+    <div class="upsell" id="upsellInline">
       <h3>Get Unlimited Access to All Premium Reports</h3>
       <p>VictoryPath membership ($29/mo) includes all 3 premium reports, plus tools, community, and monthly progress tracking.</p>
       <a href="https://valuetovictory.com">Learn More at ValueToVictory.com &rarr;</a>
@@ -226,6 +226,7 @@
         teamHtml = teamId
           ? '<a class="card-btn btn-teal" href="/team-report/' + teamId + '" onclick="emailReport(\'team\')">View Team Report</a>'
           : '<span style="color:#71717a;font-size:0.8rem;">Requires a team assessment</span>';
+        document.getElementById('upsellInline').style.display = 'none';
         document.getElementById('upsellSection').style.display = 'none';
       } else if (isPromo) {
         actionHtml = '<a class="card-btn btn-free" href="/action-plan/' + assessmentId + '">Get This Report — FREE</a>';
@@ -339,7 +340,7 @@
 </div>
 <script>
 (function() {
-  var email = localStorage.getItem('vtv_email');
+  var email = localStorage.getItem('ve_email');
   if (!email) return;
   fetch('/api/contacts?email=' + encodeURIComponent(email))
     .then(function(r) { return r.json(); })

@@ -67,7 +67,7 @@ h1{font-size:1.75rem;font-weight:900;margin-bottom:.25rem}.subtitle{color:#a1a1a
 </div>
 <script>
 (function() {
-  var email = localStorage.getItem('vtv_email');
+  var email = localStorage.getItem('ve_email');
   if (!email) return;
   fetch('/api/contacts?email=' + encodeURIComponent(email))
     .then(function(r) { return r.json(); })

@@ -8,8 +8,9 @@
   <title>The Value Engine — 90-Day Challenge</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .container { max-width: 520px; width: 100%; padding: 2rem; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
+    .container { max-width: 520px; width: 100%; padding: 2rem; margin: 0 auto; }
+    .page-outer { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
     .brand { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
     .subtitle { color: #a1a1aa; margin-bottom: 2rem; font-size: 0.95rem; }
@@ -67,6 +68,7 @@
   </style>
 </head>
 <body>
+<div class="page-outer">
   <div class="container">
     <div class="brand">THE VALUE ENGINE</div>
     <h1>90-Day Challenge</h1>
@@ -165,6 +167,7 @@
       <a href="https://assessment.valuetovictory.com/returning" class="btn btn-outline" style="display:block;text-align:center;text-decoration:none;">Take a New Assessment</a>
     </div>
   </div>
+</div><!-- /page-outer -->
 
   <script>
     var userEmail = '';
@@ -351,7 +354,7 @@
 <script>
 // Tier-aware upsell: hide VictoryPath CTA for paid members
 (function() {
-  var email = localStorage.getItem('vtv_email');
+  var email = localStorage.getItem('ve_email');
   if (!email) return;
   fetch('/api/contacts?email=' + encodeURIComponent(email))
     .then(function(r) { return r.json(); })
