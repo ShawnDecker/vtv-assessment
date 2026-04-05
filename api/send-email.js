@@ -10,10 +10,11 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Verify API key
+  // Verify API key — accepts SEND_EMAIL_API_KEY or GMAIL_APP_PASSWORD
   const authHeader = req.headers['authorization'] || '';
   const apiKey = authHeader.replace('Bearer ', '');
-  if (!process.env.SEND_EMAIL_API_KEY || apiKey !== process.env.SEND_EMAIL_API_KEY) {
+  const validKeys = [process.env.SEND_EMAIL_API_KEY, process.env.GMAIL_APP_PASSWORD].filter(Boolean);
+  if (validKeys.length === 0 || !validKeys.includes(apiKey)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
