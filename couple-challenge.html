@@ -128,8 +128,8 @@
       </div>
     </div>
 
-    <div id="noPartnerMsg" class="hidden" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:0.5rem;padding:1rem;margin-bottom:1rem;">
-      <p style="color:#ef4444;font-size:0.875rem;">You need a linked partner to start the challenge. Ask your partner to sign up and link accounts from the Relationship Hub.</p>
+    <div id="noPartnerMsg" class="hidden" style="background:rgba(212,168,71,0.1);border:1px solid rgba(212,168,71,0.3);border-radius:0.5rem;padding:1rem;margin-bottom:1rem;">
+      <p style="color:#D4A847;font-size:0.875rem;">You can start the challenge now and link your partner later. For the full couples experience, ask your partner to sign up and link accounts from the <a href="/relationship-hub" style="color:#3b82f6;">Relationship Hub</a>.</p>
     </div>
 
     <button class="btn btn-gold" id="enrollBtn" onclick="startChallenge()">Lock In — Start the 30-Day Challenge</button>
@@ -276,10 +276,9 @@
         document.getElementById('enrollPartner').style.color = '#22c55e';
       } else {
         document.getElementById('enrollPartner').textContent = 'Not linked';
-        document.getElementById('enrollPartner').style.color = '#ef4444';
+        document.getElementById('enrollPartner').style.color = '#f97316';
         document.getElementById('noPartnerMsg').classList.remove('hidden');
-        document.getElementById('enrollBtn').disabled = true;
-        document.getElementById('enrollBtn').style.opacity = '0.5';
+        // Allow starting without a partner — they can link later
       }
     }
 
