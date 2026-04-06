@@ -929,6 +929,148 @@ module.exports = async (req, res) => {
       // Track login event
       try { await sql`INSERT INTO analytics_events (event_type, contact_id, metadata) VALUES ('login', ${contactId}, ${JSON.stringify({ tier })}::jsonb)`; } catch (e) { /* non-fatal */ }
 
+      // === SIGN-IN EMAIL: Send assessment summary on new login (fire-and-forget) ===
+      if (email && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        (async () => {
+          try {
+            const firstName = rows[0].first_name || 'there';
+            // Fetch latest assessments for this contact
+            const assessments = await sql`
+              SELECT id, completed_at, master_score, score_range, weakest_pillar, depth,
+                     time_total, people_total, influence_total, numbers_total, knowledge_total
+              FROM assessments WHERE contact_id = ${contactId}
+              ORDER BY completed_at DESC LIMIT 5
+            `;
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+            // Build assessment rows for email
+            let assessmentRows = '';
+            if (assessments.length > 0) {
+              const latest = assessments[0];
+              const pillarMax = latest.depth === 'quick' ? 25 : 50;
+              const scoreColors = { Crisis: '#ef4444', Survival: '#f97316', Growth: '#eab308', Momentum: '#22c55e', Mastery: '#D4A847' };
+              const scoreColor = scoreColors[latest.score_range] || '#D4A847';
+
+              assessmentRows = `
+              <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:24px;margin:20px 0;">
+                <p style="color:#D4A847;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 16px;">Latest Assessment</p>
+                <div style="text-align:center;margin-bottom:20px;">
+                  <div style="font-size:42px;font-weight:bold;color:${scoreColor};margin-bottom:4px;">${latest.master_score}</div>
+                  <div style="font-size:14px;color:${scoreColor};font-weight:bold;text-transform:uppercase;letter-spacing:2px;">${latest.score_range}</div>
+                  <div style="font-size:12px;color:#71717a;margin-top:4px;">${new Date(latest.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                </div>
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+                  <tr>
+                    <td style="color:#a1a1aa;font-size:13px;padding:6px 0;">Time</td>
+                    <td style="text-align:right;color:#e4e4e7;font-size:13px;font-weight:bold;padding:6px 0;">${latest.time_total}/${pillarMax}</td>
+                  </tr>
+                  <tr><td colspan="2" style="border-bottom:1px solid #27272a;"></td></tr>
+                  <tr>
+                    <td style="color:#a1a1aa;font-size:13px;padding:6px 0;">People</td>
+                    <td style="text-align:right;color:#e4e4e7;font-size:13px;font-weight:bold;padding:6px 0;">${latest.people_total}/${pillarMax}</td>
+                  </tr>
+                  <tr><td colspan="2" style="border-bottom:1px solid #27272a;"></td></tr>
+                  <tr>
+                    <td style="color:#a1a1aa;font-size:13px;padding:6px 0;">Influence</td>
+                    <td style="text-align:right;color:#e4e4e7;font-size:13px;font-weight:bold;padding:6px 0;">${latest.influence_total}/${pillarMax}</td>
+                  </tr>
+                  <tr><td colspan="2" style="border-bottom:1px solid #27272a;"></td></tr>
+                  <tr>
+                    <td style="color:#a1a1aa;font-size:13px;padding:6px 0;">Numbers</td>
+                    <td style="text-align:right;color:#e4e4e7;font-size:13px;font-weight:bold;padding:6px 0;">${latest.numbers_total}/${pillarMax}</td>
+                  </tr>
+                  <tr><td colspan="2" style="border-bottom:1px solid #27272a;"></td></tr>
+                  <tr>
+                    <td style="color:#a1a1aa;font-size:13px;padding:6px 0;">Knowledge</td>
+                    <td style="text-align:right;color:#e4e4e7;font-size:13px;font-weight:bold;padding:6px 0;">${latest.knowledge_total}/${pillarMax}</td>
+                  </tr>
+                </table>
+                <p style="color:#71717a;font-size:12px;margin:8px 0 0;">Weakest pillar: <span style="color:#ef4444;">${latest.weakest_pillar}</span></p>
+                <div style="text-align:center;margin-top:16px;">
+                  <a href="https://assessment.valuetovictory.com/report/${latest.id}" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:6px;">View Full Report</a>
+                </div>
+              </div>`;
+
+              // If multiple assessments, show history summary
+              if (assessments.length > 1) {
+                let historyRows = '';
+                for (let i = 1; i < assessments.length; i++) {
+                  const a = assessments[i];
+                  const aColor = scoreColors[a.score_range] || '#D4A847';
+                  historyRows += `<tr>
+                    <td style="color:#a1a1aa;font-size:12px;padding:5px 0;">${new Date(a.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
+                    <td style="color:#e4e4e7;font-size:12px;font-weight:bold;text-align:center;padding:5px 0;">${a.master_score}</td>
+                    <td style="color:${aColor};font-size:12px;text-align:right;padding:5px 0;">${a.score_range}</td>
+                  </tr>`;
+                }
+                assessmentRows += `
+                <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:16px 20px;margin:0 0 20px;">
+                  <p style="color:#71717a;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;">Previous Assessments</p>
+                  <table width="100%" cellpadding="0" cellspacing="0">${historyRows}</table>
+                </div>`;
+              }
+            } else {
+              assessmentRows = `
+              <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:24px;margin:20px 0;text-align:center;">
+                <p style="color:#a1a1aa;font-size:14px;margin:0 0 12px;">You haven't taken an assessment yet.</p>
+                <a href="https://assessment.valuetovictory.com/" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:6px;">Take Your First Assessment</a>
+              </div>`;
+            }
+
+            const signInHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;"><tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+<tr><td style="text-align:center;padding-bottom:24px;">
+  <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;margin-bottom:8px;">VALUE TO VICTORY</div>
+  <div style="font-family:Georgia,serif;font-size:26px;font-style:italic;color:#ffffff;">New Sign-In Detected</div>
+</td></tr>
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:40px 32px;">
+  <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 20px;">Hi ${firstName},</p>
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 16px;">We noticed a new sign-in to your Value Engine member portal.</p>
+  <div style="background:#111118;border-left:3px solid #D4A847;padding:14px 18px;margin:0 0 24px;border-radius:0 8px 8px 0;">
+    <table cellpadding="0" cellspacing="0" style="width:100%;">
+      <tr><td style="color:#71717a;font-size:12px;padding:3px 0;">Date</td><td style="color:#e4e4e7;font-size:13px;text-align:right;padding:3px 0;">${dateStr}</td></tr>
+      <tr><td style="color:#71717a;font-size:12px;padding:3px 0;">Time</td><td style="color:#e4e4e7;font-size:13px;text-align:right;padding:3px 0;">${timeStr}</td></tr>
+      <tr><td style="color:#71717a;font-size:12px;padding:3px 0;">Account</td><td style="color:#e4e4e7;font-size:13px;text-align:right;padding:3px 0;">${email}</td></tr>
+    </table>
+  </div>
+  <p style="color:#a1a1aa;font-size:13px;line-height:1.6;margin:0 0 20px;">If this wasn't you, please reset your PIN immediately from the member portal.</p>
+  <hr style="border:none;border-top:1px solid #27272a;margin:24px 0;"/>
+  <p style="color:#e4e4e7;font-size:15px;font-weight:bold;margin:0 0 4px;">Your Assessment Snapshot</p>
+  <p style="color:#71717a;font-size:13px;margin:0 0 8px;">Here's where you stand in the Value Engine.</p>
+  ${assessmentRows}
+</td></tr>
+<tr><td style="text-align:center;padding-top:24px;">
+  <a href="https://assessment.valuetovictory.com/member" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Open Your Dashboard</a>
+</td></tr>
+<tr><td style="text-align:center;padding-top:24px;">
+  <p style="color:#52525b;font-size:12px;margin:0;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p>
+  <p style="color:#3f3f46;font-size:11px;margin:8px 0 0;">This email was sent because your account was accessed. You cannot unsubscribe from security notifications.</p>
+</td></tr>
+</table></td></tr></table></body></html>`;
+
+            const signInTransporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+            });
+            await signInTransporter.sendMail({
+              from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
+              to: email,
+              subject: `New sign-in to your Value Engine account — ${dateStr}`,
+              html: signInHtml,
+            });
+            console.log(`Sign-in email sent to ${email} for contact ${contactId}`);
+          } catch (signInEmailErr) {
+            console.error('Sign-in email error (non-fatal):', signInEmailErr.message);
+          }
+        })();
+      }
+      // === END SIGN-IN EMAIL ===
+
       return res.json({ verified: true, token, contactId, firstName: rows[0].first_name, tier });
     }
 
