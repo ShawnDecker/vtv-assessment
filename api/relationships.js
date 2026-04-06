@@ -202,12 +202,11 @@ module.exports = async (req, res) => {
       const pA = profileA[0];
       const pB = profileB[0];
 
+      // At least ONE partner must have couple or premium tier (the paying member covers both)
       const allowedTiers = ['couple', 'premium'];
-      if (!allowedTiers.includes(pA.membership_tier)) {
-        return res.status(403).json({ error: 'Partner A must have couple or premium membership tier' });
-      }
-      if (!allowedTiers.includes(pB.membership_tier)) {
-        return res.status(403).json({ error: 'Partner B must have couple or premium membership tier' });
+      const eitherQualifies = allowedTiers.includes(pA.membership_tier) || allowedTiers.includes(pB.membership_tier);
+      if (!eitherQualifies) {
+        return res.status(403).json({ error: 'At least one partner must have a Value Builder or Victory VIP membership to link accounts.' });
       }
 
       await sql`UPDATE user_profiles SET partner_id = ${pB.id}, updated_at = NOW() WHERE id = ${pA.id}`;
@@ -243,14 +242,15 @@ module.exports = async (req, res) => {
       `;
 
       if (partner.length > 0) {
-        // Partner exists — link them if both have qualifying tiers
+        // Partner exists — link if EITHER has a qualifying tier (paying member covers both)
         const allowedTiers = ['couple', 'premium'];
-        if (allowedTiers.includes(inviter[0].membership_tier) && allowedTiers.includes(partner[0].membership_tier)) {
+        const eitherQualifies = allowedTiers.includes(inviter[0].membership_tier) || allowedTiers.includes(partner[0].membership_tier);
+        if (eitherQualifies) {
           await sql`UPDATE user_profiles SET partner_id = ${partner[0].id}, updated_at = NOW() WHERE id = ${inviter[0].id}`;
           await sql`UPDATE user_profiles SET partner_id = ${inviter[0].id}, updated_at = NOW() WHERE id = ${partner[0].id}`;
           return res.json({ success: true, linked: true, message: 'Partner found and linked!' });
         }
-        // Partner exists but wrong tier — still record the invite
+        // Neither has qualifying tier — still record the invite
       }
 
       // Store the invite for when partner signs up or upgrades
