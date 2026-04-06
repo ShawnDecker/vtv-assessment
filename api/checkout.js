@@ -34,9 +34,14 @@ const TIER_CONFIG = {
 const BASE_URL = 'https://assessment.valuetovictory.com';
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS — allow specific origins only
+  const ALLOWED = ['https://valuetovictory.com','https://www.valuetovictory.com','https://assessment.valuetovictory.com','https://shawnedecker.com','http://localhost:3000','http://localhost:5173'];
+  const origin = req.headers.origin || '';
+  const corsOrigin = ALLOWED.includes(origin) ? origin : (origin.endsWith('.vercel.app') ? origin : ALLOWED[0]);
+  res.setHeader('Access-Control-Allow-Origin', corsOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
@@ -190,6 +195,17 @@ module.exports = async (req, res) => {
         }
       }
 
+      // Track subscription events in analytics
+      try {
+        const eventType = event.type === 'checkout.session.completed' ? 'subscription_created'
+          : event.type === 'customer.subscription.deleted' ? 'subscription_cancelled'
+          : event.type === 'customer.subscription.updated' ? 'subscription_updated'
+          : null;
+        if (eventType) {
+          await sql`INSERT INTO analytics_events (event_type, metadata) VALUES (${eventType}, ${JSON.stringify({ stripe_event: event.type, stripe_event_id: event.id })}::jsonb)`;
+        }
+      } catch (e) { /* analytics table may not exist yet — non-fatal */ }
+
       return res.json({ received: true });
     }
 
@@ -221,7 +237,19 @@ module.exports = async (req, res) => {
       };
 
       if (email) {
-        sessionParams.customer_email = email;
+        // Find existing Stripe customer to prevent duplicates
+        try {
+          const existingCustomers = await stripe.customers.list({ email: email.toLowerCase(), limit: 1 });
+          if (existingCustomers.data.length > 0) {
+            sessionParams.customer = existingCustomers.data[0].id;
+            console.log(`[Checkout] Found existing customer ${existingCustomers.data[0].id} for ${email}`);
+          } else {
+            sessionParams.customer_email = email;
+          }
+        } catch (lookupErr) {
+          console.warn('[Checkout] Customer lookup failed, using email:', lookupErr.message);
+          sessionParams.customer_email = email;
+        }
       }
 
       const session = await stripe.checkout.sessions.create(sessionParams);

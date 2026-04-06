@@ -1,5 +1,83 @@
 const { neon } = require('@neondatabase/serverless');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+
+// ========== SECURITY: Rate Limiting ==========
+const rateLimitStore = new Map();
+const RATE_LIMITS = {
+  default: { max: 60, windowMs: 60000 },    // 60 req/min general
+  auth: { max: 10, windowMs: 60000 },        // 10 req/min for PIN attempts
+  assessment: { max: 5, windowMs: 60000 },   // 5 submissions/min
+  admin: { max: 30, windowMs: 60000 },       // 30 req/min for admin
+};
+
+function checkRateLimit(ip, category = 'default') {
+  const limit = RATE_LIMITS[category] || RATE_LIMITS.default;
+  const key = `${ip}:${category}`;
+  const now = Date.now();
+  let record = rateLimitStore.get(key);
+  if (!record || (now - record.start) > limit.windowMs) {
+    record = { count: 0, start: now };
+  }
+  record.count++;
+  rateLimitStore.set(key, record);
+  // Cleanup old entries every 1000 requests
+  if (rateLimitStore.size > 5000) {
+    for (const [k, v] of rateLimitStore) {
+      if (now - v.start > limit.windowMs * 2) rateLimitStore.delete(k);
+    }
+  }
+  return { allowed: record.count <= limit.max, remaining: Math.max(0, limit.max - record.count) };
+}
+
+// ========== SECURITY: JWT Token Generation & Verification ==========
+const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_API_KEY || 'vtv-fallback-change-me';
+const JWT_EXPIRY = 7 * 24 * 60 * 60; // 7 days in seconds
+
+function createJWT(payload) {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const now = Math.floor(Date.now() / 1000);
+  const body = Buffer.from(JSON.stringify({ ...payload, iat: now, exp: now + JWT_EXPIRY })).toString('base64url');
+  const signature = crypto.createHmac('sha256', JWT_SECRET).update(`${header}.${body}`).digest('base64url');
+  return `${header}.${body}.${signature}`;
+}
+
+function verifyJWT(token) {
+  try {
+    const [header, body, signature] = token.split('.');
+    const expectedSig = crypto.createHmac('sha256', JWT_SECRET).update(`${header}.${body}`).digest('base64url');
+    if (signature !== expectedSig) return null;
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString());
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch { return null; }
+}
+
+function extractToken(req) {
+  const auth = req.headers['authorization'] || '';
+  if (auth.startsWith('Bearer ')) return auth.slice(7);
+  return null;
+}
+
+// ========== SECURITY: CORS Allowed Origins ==========
+const ALLOWED_ORIGINS = [
+  'https://valuetovictory.com',
+  'https://www.valuetovictory.com',
+  'https://assessment.valuetovictory.com',
+  'https://shawnedecker.com',
+  'https://www.shawnedecker.com',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:4173',
+];
+
+function getCorsOrigin(req) {
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGINS.includes(origin)) return origin;
+  // Allow Vercel preview deployments
+  if (origin.endsWith('.vercel.app')) return origin;
+  return ALLOWED_ORIGINS[0]; // Default to main domain
+}
 
 // Cross-Pillar Impact Matrix — 20 directional relationships (5 pillars × 4 targets each)
 const CROSS_PILLAR_IMPACT_MATRIX = {
@@ -624,13 +702,28 @@ async function ensureCoachingTable(sql) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const corsOrigin = getCorsOrigin(req);
+  res.setHeader('Access-Control-Allow-Origin', corsOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key');
+  res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  // Rate limiting
+  const clientIP = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
   const sql = neon(process.env.DATABASE_URL);
   const url = req.url.replace(/^\/api/, '');
+
+  // Determine rate limit category
+  const rateCategory = url.startsWith('/admin') ? 'admin'
+    : (url.includes('/verify-pin') || url.includes('/set-pin')) ? 'auth'
+    : url === '/assessment' ? 'assessment'
+    : 'default';
+  const rateCheck = checkRateLimit(clientIP, rateCategory);
+  res.setHeader('X-RateLimit-Remaining', rateCheck.remaining);
+  if (!rateCheck.allowed) {
+    return res.status(429).json({ error: 'Too many requests. Please try again later.', retryAfter: 60 });
+  }
 
   try {
     // GET /api/questions?email=xxx&mode=individual|relationship|leadership&depth=quick|extensive|pillar&pillar=time|people|influence|numbers|knowledge
@@ -798,8 +891,7 @@ module.exports = async (req, res) => {
       if (!email || !pin) return res.status(400).json({ error: 'Email and PIN required' });
       if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) return res.status(400).json({ error: 'PIN must be 4-6 digits' });
 
-      const crypto = require('crypto');
-      const pinHash = crypto.createHash('sha256').update(pin + '_vtv_salt_2026').digest('hex');
+      const pinHash = crypto.createHash('sha256').update(pin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
 
       const rows = await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE LOWER(email) = ${email} RETURNING id, first_name`;
       if (rows.length === 0) return res.status(404).json({ error: 'No account with that email' });
@@ -813,14 +905,31 @@ module.exports = async (req, res) => {
       const pin = (b.pin || '').trim();
       if (!email || !pin) return res.status(400).json({ error: 'Email and PIN required' });
 
-      const crypto = require('crypto');
-      const pinHash = crypto.createHash('sha256').update(pin + '_vtv_salt_2026').digest('hex');
+      const pinHash = crypto.createHash('sha256').update(pin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
 
       const rows = await sql`SELECT id, first_name, pin_hash FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
       if (rows.length === 0) return res.json({ verified: false, error: 'No account found' });
       if (!rows[0].pin_hash) return res.json({ verified: false, needsPin: true, message: 'No PIN set yet' });
       if (rows[0].pin_hash !== pinHash) return res.json({ verified: false, error: 'Incorrect PIN' });
-      return res.json({ verified: true });
+
+      // Generate JWT token for authenticated sessions
+      const contactId = rows[0].id;
+      // Look up membership tier and team IDs
+      let tier = 'free';
+      let teamIds = [];
+      try {
+        const profileRows = await sql`SELECT membership_tier FROM user_profiles WHERE contact_id = ${contactId} LIMIT 1`;
+        if (profileRows.length > 0) tier = profileRows[0].membership_tier || 'free';
+        const teamRows = await sql`SELECT team_id FROM team_members WHERE contact_id = ${contactId}`;
+        teamIds = teamRows.map(t => t.team_id);
+      } catch (e) { /* tables may not exist yet */ }
+
+      const token = createJWT({ contactId, email, tier, teamIds, firstName: rows[0].first_name });
+
+      // Track login event
+      try { await sql`INSERT INTO analytics_events (event_type, contact_id, metadata) VALUES ('login', ${contactId}, ${JSON.stringify({ tier })}::jsonb)`; } catch (e) { /* non-fatal */ }
+
+      return res.json({ verified: true, token, contactId, firstName: rows[0].first_name, tier });
     }
 
     // GET /api/member/has-pin?email=xxx — Check if member has a PIN set
@@ -1355,6 +1464,13 @@ Don't guess. Run the system.
         console.error('Coaching enroll error (non-fatal):', coachErr.message);
       }
 
+      // Track assessment completion in analytics
+      try {
+        const ipHash = crypto.createHash('sha256').update(clientIP).digest('hex').substring(0, 16);
+        await sql`INSERT INTO analytics_events (event_type, contact_id, metadata, ip_hash)
+          VALUES ('assessment_completed', ${contact.id}, ${JSON.stringify({ assessmentId: assessment.id, mode: d.mode, depth: assessmentDepth, scoreRange, masterScore, weakestPillar: prescription.weakestPillar, emailSent })}::jsonb, ${ipHash})`;
+      } catch (e) { /* analytics table may not exist yet — non-fatal */ }
+
       return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name }, emailSent, emailError: !emailSent ? 'Your results are saved but the email delivery encountered an issue. You can view your report at the link below.' : null, depth: assessmentDepth, focusPillar: assessmentFocusPillar });
     }
 
@@ -1864,6 +1980,93 @@ Don't guess. Run the system.
       return res.json(rows[0]);
     }
 
+    // ========== ANALYTICS TRACKING ==========
+    // POST /api/track — Log an analytics event
+    if (req.method === 'POST' && url === '/track') {
+      const b = req.body || {};
+      const eventType = b.eventType || b.event_type;
+      if (!eventType) return res.status(400).json({ error: 'eventType required' });
+
+      const ipHash = crypto.createHash('sha256').update(clientIP).digest('hex').substring(0, 16);
+      try {
+        await sql`INSERT INTO analytics_events (event_type, contact_id, session_id, metadata, ip_hash, user_agent, referrer)
+          VALUES (${eventType}, ${b.contactId || null}, ${b.sessionId || null}, ${JSON.stringify(b.metadata || {})}::jsonb, ${ipHash}, ${(req.headers['user-agent'] || '').substring(0, 255)}, ${(req.headers.referer || '').substring(0, 500)})`;
+      } catch (e) { /* analytics table may not exist yet — non-fatal */ }
+      return res.json({ tracked: true });
+    }
+
+    // GET /api/analytics/funnel — Funnel conversion data (last 90 days)
+    if (req.method === 'GET' && url === '/analytics/funnel') {
+      // Requires admin key or JWT with admin role
+      const apiKey = req.headers['x-api-key'] || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!validKey || apiKey !== validKey) {
+        return res.status(401).json({ error: 'Admin API key required' });
+      }
+      try {
+        const funnel = await sql`SELECT * FROM funnel_summary ORDER BY event_date DESC LIMIT 500`;
+        const totals = await sql`
+          SELECT event_type, COUNT(*) as total, COUNT(DISTINCT contact_id) as unique_contacts
+          FROM analytics_events WHERE created_at > NOW() - INTERVAL '90 days'
+          GROUP BY event_type ORDER BY total DESC
+        `;
+        return res.json({ funnel, totals });
+      } catch (e) {
+        return res.json({ error: 'Analytics not initialized. Run /api/migrate-analytics first.', details: e.message });
+      }
+    }
+
+    // ========== PRIVACY PREFERENCES ==========
+    // GET /api/privacy?email=xxx&teamId=xxx — Get privacy prefs for a team
+    if (req.method === 'GET' && url.startsWith('/privacy')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = (params.get('email') || '').toLowerCase().trim();
+      const teamId = params.get('teamId');
+      if (!email) return res.status(400).json({ error: 'email required' });
+
+      const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (contactRows.length === 0) return res.status(404).json({ error: 'Contact not found' });
+      const contactId = contactRows[0].id;
+
+      try {
+        const prefs = teamId
+          ? await sql`SELECT * FROM privacy_preferences WHERE contact_id = ${contactId} AND team_id = ${teamId} LIMIT 1`
+          : await sql`SELECT * FROM privacy_preferences WHERE contact_id = ${contactId}`;
+        return res.json({ preferences: prefs.length > 0 ? prefs : [{ share_time: true, share_people: false, share_influence: true, share_numbers: false, share_knowledge: true, share_sub_categories: false, share_prescriptions: false }] });
+      } catch (e) {
+        return res.json({ preferences: [{ share_time: true, share_people: false, share_influence: true, share_numbers: false, share_knowledge: true }], error: 'Privacy table not initialized. Run /api/migrate-analytics.' });
+      }
+    }
+
+    // POST /api/privacy — Set privacy preferences
+    if (req.method === 'POST' && url === '/privacy') {
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      const teamId = b.teamId;
+      if (!email || !teamId) return res.status(400).json({ error: 'email and teamId required' });
+
+      const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (contactRows.length === 0) return res.status(404).json({ error: 'Contact not found' });
+      const contactId = contactRows[0].id;
+
+      try {
+        await sql`INSERT INTO privacy_preferences (contact_id, team_id, share_time, share_people, share_influence, share_numbers, share_knowledge, share_sub_categories, share_prescriptions, updated_at)
+          VALUES (${contactId}, ${teamId}, ${b.share_time !== false}, ${b.share_people === true}, ${b.share_influence !== false}, ${b.share_numbers === true}, ${b.share_knowledge !== false}, ${b.share_sub_categories === true}, ${b.share_prescriptions === true}, NOW())
+          ON CONFLICT (contact_id, team_id) DO UPDATE SET
+            share_time = EXCLUDED.share_time, share_people = EXCLUDED.share_people, share_influence = EXCLUDED.share_influence,
+            share_numbers = EXCLUDED.share_numbers, share_knowledge = EXCLUDED.share_knowledge,
+            share_sub_categories = EXCLUDED.share_sub_categories, share_prescriptions = EXCLUDED.share_prescriptions,
+            updated_at = NOW()`;
+
+        // Update consent flag on team_members
+        await sql`UPDATE team_members SET visibility_consent = true, consent_given_at = NOW() WHERE contact_id = ${contactId} AND team_id = ${teamId}`;
+
+        return res.json({ success: true, message: 'Privacy preferences saved' });
+      } catch (e) {
+        return res.status(500).json({ error: 'Failed to save preferences. Run /api/migrate-analytics first.', details: e.message });
+      }
+    }
+
     // ========== ADMIN ENDPOINTS — REQUIRE API KEY ==========
     // All /admin/* routes require x-api-key header matching ADMIN_API_KEY env var
     if (url.startsWith('/admin')) {
@@ -1936,9 +2139,97 @@ Don't guess. Run the system.
       return res.send(csv);
     }
 
-    // POST /api/admin/hubspot-sync (placeholder)
+    // POST /api/admin/hubspot-sync — Sync contacts + assessment data to HubSpot CRM
     if (req.method === 'POST' && url === '/admin/hubspot-sync') {
-      return res.json({ synced: 0, failed: 0, total: 0, message: "HubSpot sync coming soon" });
+      const hubspotKey = process.env.HUBSPOT_ACCESS_TOKEN || process.env.HUBSPOT_API_KEY;
+      if (!hubspotKey) {
+        return res.status(500).json({ error: 'HUBSPOT_ACCESS_TOKEN not configured. Set it in Vercel environment variables.' });
+      }
+
+      const b = req.body || {};
+      const syncAll = b.syncAll || false;
+      const limit = b.limit || 50;
+
+      // Get contacts that need syncing (hubspot_synced = 0 or NULL)
+      const contacts = syncAll
+        ? await sql`SELECT c.*, up.membership_tier, up.stripe_customer_id,
+            (SELECT a.master_score FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as latest_score,
+            (SELECT a.score_range FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as latest_tier,
+            (SELECT a.weakest_pillar FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as weakest_pillar,
+            (SELECT a.completed_at FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as last_assessment_date,
+            (SELECT COUNT(*) FROM assessments a WHERE a.contact_id = c.id) as assessment_count
+          FROM contacts c LEFT JOIN user_profiles up ON up.contact_id = c.id
+          ORDER BY c.created_at DESC LIMIT ${limit}`
+        : await sql`SELECT c.*, up.membership_tier, up.stripe_customer_id,
+            (SELECT a.master_score FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as latest_score,
+            (SELECT a.score_range FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as latest_tier,
+            (SELECT a.weakest_pillar FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as weakest_pillar,
+            (SELECT a.completed_at FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as last_assessment_date,
+            (SELECT COUNT(*) FROM assessments a WHERE a.contact_id = c.id) as assessment_count
+          FROM contacts c LEFT JOIN user_profiles up ON up.contact_id = c.id
+          WHERE c.hubspot_synced IS NULL OR c.hubspot_synced = 0
+          ORDER BY c.created_at DESC LIMIT ${limit}`;
+
+      let synced = 0, failed = 0;
+      const errors = [];
+
+      for (const contact of contacts) {
+        try {
+          // Search HubSpot for existing contact by email
+          const searchRes = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${hubspotKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              filterGroups: [{ filters: [{ propertyName: 'email', operator: 'EQ', value: contact.email }] }]
+            })
+          });
+          const searchData = await searchRes.json();
+
+          const properties = {
+            email: contact.email,
+            firstname: contact.first_name || '',
+            lastname: contact.last_name || '',
+            phone: contact.phone || '',
+            vtv_master_score: contact.latest_score ? String(contact.latest_score) : '',
+            vtv_score_tier: contact.latest_tier || '',
+            vtv_weakest_pillar: contact.weakest_pillar || '',
+            vtv_membership_tier: contact.membership_tier || 'free',
+            vtv_assessment_count: String(contact.assessment_count || 0),
+            vtv_last_assessment: contact.last_assessment_date || '',
+          };
+
+          if (searchData.total > 0) {
+            // Update existing contact
+            const hubspotId = searchData.results[0].id;
+            await fetch(`https://api.hubapi.com/crm/v3/objects/contacts/${hubspotId}`, {
+              method: 'PATCH',
+              headers: { 'Authorization': `Bearer ${hubspotKey}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ properties })
+            });
+          } else {
+            // Create new contact
+            await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${hubspotKey}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ properties })
+            });
+          }
+
+          // Mark as synced
+          await sql`UPDATE contacts SET hubspot_synced = 1 WHERE id = ${contact.id}`;
+          synced++;
+        } catch (err) {
+          failed++;
+          errors.push({ email: contact.email, error: err.message });
+        }
+      }
+
+      // Log sync event to analytics
+      try {
+        await sql`INSERT INTO analytics_events (event_type, metadata) VALUES ('hubspot_sync', ${JSON.stringify({ synced, failed, total: contacts.length })}::jsonb)`;
+      } catch (e) { /* analytics table may not exist yet */ }
+
+      return res.json({ synced, failed, total: contacts.length, errors: errors.slice(0, 10) });
     }
 
     // GET /api/admin/question-bank
@@ -3606,6 +3897,9 @@ This link expires in 24 hours.
           return res.json({ submitted: true, emailSent: false, warning: 'Request saved but verification email could not be sent. Please contact us.' });
         }
       }
+
+      // Track coaching request
+      try { await sql`INSERT INTO analytics_events (event_type, contact_id, metadata) VALUES ('coaching_requested', ${contactId}, ${JSON.stringify({ track, assessment_id })}::jsonb)`; } catch (e) { /* non-fatal */ }
 
       return res.json({ submitted: true, emailSent: true });
     }

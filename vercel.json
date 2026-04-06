@@ -42,6 +42,10 @@
       "dest": "/api/send-email.js"
     },
     {
+      "src": "/api/migrate-analytics",
+      "dest": "/api/migrate-analytics.js"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     },
