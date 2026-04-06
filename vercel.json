@@ -65,6 +65,26 @@
       "dest": "/about-pink.html"
     },
     {
+      "src": "/framework/time",
+      "dest": "/framework-time.html"
+    },
+    {
+      "src": "/framework/people",
+      "dest": "/framework-people.html"
+    },
+    {
+      "src": "/framework/influence",
+      "dest": "/framework-influence.html"
+    },
+    {
+      "src": "/framework/numbers",
+      "dest": "/framework-numbers.html"
+    },
+    {
+      "src": "/framework/knowledge",
+      "dest": "/framework-knowledge.html"
+    },
+    {
       "src": "/progress",
       "dest": "/progress.html"
     },
