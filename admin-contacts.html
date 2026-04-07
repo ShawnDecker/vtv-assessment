@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VTV — Email Sign-Up Clients</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0a0a0a; color:#e4e4e7; font-family:Arial,Helvetica,sans-serif; min-height:100vh; }
+  .header { text-align:center; padding:32px 16px 20px; }
+  .header .brand { font-size:11px; letter-spacing:3px; text-transform:uppercase; color:#D4A847; margin-bottom:6px; }
+  .header h1 { font-family:Georgia,serif; font-size:22px; font-style:italic; color:#fff; }
+  .auth-screen { max-width:400px; margin:60px auto; padding:0 20px; text-align:center; }
+  .auth-screen input { width:100%; padding:14px 16px; background:#18181b; border:1px solid #27272a; border-radius:8px; color:#e4e4e7; font-size:16px; margin-bottom:12px; outline:none; }
+  .auth-screen input:focus { border-color:#D4A847; }
+  .auth-screen button { width:100%; padding:14px; background:linear-gradient(135deg,#D4A847,#b8942e); color:#0a0a0a; font-size:15px; font-weight:bold; border:none; border-radius:8px; cursor:pointer; }
+  .auth-screen .error { color:#ef4444; font-size:13px; margin-top:8px; }
+  .container { max-width:700px; margin:0 auto; padding:0 16px 40px; }
+  .summary { background:#18181b; border:1px solid #27272a; border-radius:10px; padding:20px; margin-bottom:20px; text-align:center; }
+  .summary .count { font-size:40px; font-weight:bold; color:#D4A847; }
+  .summary .label { font-size:13px; color:#71717a; margin-top:4px; }
+  .search { width:100%; padding:12px 16px; background:#18181b; border:1px solid #27272a; border-radius:8px; color:#e4e4e7; font-size:15px; margin-bottom:16px; outline:none; }
+  .search:focus { border-color:#D4A847; }
+  .contact-card { background:#18181b; border:1px solid #27272a; border-radius:10px; padding:16px; margin-bottom:10px; }
+  .contact-card .name { font-size:15px; font-weight:bold; color:#e4e4e7; margin-bottom:4px; }
+  .contact-card .email { font-size:13px; color:#D4A847; word-break:break-all; }
+  .contact-card .meta { display:flex; justify-content:space-between; margin-top:8px; font-size:12px; color:#71717a; }
+  .contact-card .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; }
+  .badge-crisis { background:#3b1114; color:#ef4444; }
+  .badge-survival { background:#3b2506; color:#f97316; }
+  .badge-growth { background:#3b3506; color:#eab308; }
+  .badge-momentum { background:#0a3b1a; color:#22c55e; }
+  .badge-mastery { background:#3b3006; color:#D4A847; }
+  .badge-none { background:#27272a; color:#71717a; }
+  .loading { text-align:center; padding:60px 20px; color:#71717a; }
+  .loading .spinner { display:inline-block; width:32px; height:32px; border:3px solid #27272a; border-top-color:#D4A847; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:12px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">VALUE TO VICTORY</div>
+    <h1>Email Sign-Up Clients</h1>
+  </div>
+
+  <div id="auth" class="auth-screen">
+    <input type="password" id="apiKey" placeholder="Enter admin API key" autocomplete="off"/>
+    <button onclick="authenticate()">View Contacts</button>
+    <div id="authError" class="error" style="display:none;"></div>
+  </div>
+
+  <div id="main" style="display:none;" class="container">
+    <div class="summary">
+      <div class="count" id="totalCount">—</div>
+      <div class="label">Total Email Sign-Up Clients</div>
+    </div>
+    <input type="text" class="search" id="searchBox" placeholder="Search by name or email..." oninput="filterContacts()"/>
+    <div id="contactList"></div>
+  </div>
+
+  <div id="loadingScreen" style="display:none;" class="loading">
+    <div class="spinner"></div>
+    <div>Loading contacts...</div>
+  </div>
+
+<script>
+let allContacts = [];
+
+function authenticate() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key) return;
+  document.getElementById('auth').style.display = 'none';
+  document.getElementById('loadingScreen').style.display = 'block';
+  fetch('/api/admin/contacts', { headers: { 'x-api-key': key } })
+    .then(r => {
+      if (!r.ok) throw new Error('Invalid API key');
+      return r.json();
+    })
+    .then(data => {
+      allContacts = data;
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('main').style.display = 'block';
+      document.getElementById('totalCount').textContent = data.length;
+      renderContacts(data);
+    })
+    .catch(err => {
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('auth').style.display = 'block';
+      const errEl = document.getElementById('authError');
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    });
+}
+
+// Allow Enter key to submit
+document.getElementById('apiKey').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') authenticate();
+});
+
+function filterContacts() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const filtered = allContacts.filter(c =>
+    (c.firstName || '').toLowerCase().includes(q) ||
+    (c.lastName || '').toLowerCase().includes(q) ||
+    (c.email || '').toLowerCase().includes(q)
+  );
+  renderContacts(filtered);
+}
+
+function renderContacts(contacts) {
+  const list = document.getElementById('contactList');
+  if (contacts.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:#71717a;padding:20px;">No contacts found.</div>';
+    return;
+  }
+  list.innerHTML = contacts.map((c, i) => {
+    const name = [c.firstName, c.lastName].filter(Boolean).join(' ') || 'No Name';
+    const date = c.created_at ? new Date(c.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+    const score = c.latestAssessment ? c.latestAssessment.masterScore : null;
+    const range = c.latestAssessment ? c.latestAssessment.scoreRange : null;
+    const assessments = c.assessmentCount || 0;
+    const badgeClass = range ? 'badge-' + range.toLowerCase() : 'badge-none';
+    const badgeText = range || 'No Assessment';
+    return `<div class="contact-card">
+      <div class="name">${i + 1}. ${esc(name)}</div>
+      <div class="email">${esc(c.email || '—')}</div>
+      <div class="meta">
+        <span>Joined ${date}</span>
+        <span>${assessments} assessment${assessments !== 1 ? 's' : ''}</span>
+      </div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+        <span class="badge ${badgeClass}">${badgeText}</span>
+        ${score !== null ? '<span style="color:#e4e4e7;font-size:13px;font-weight:bold;">Score: ' + score + '</span>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+</script>
+</body>
+</html>
