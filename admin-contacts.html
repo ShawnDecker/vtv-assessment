@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VTV Admin — Command Center</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0a0a0a; color:#e4e4e7; font-family:Arial,Helvetica,sans-serif; min-height:100vh; }
+  a { color:#D4A847; text-decoration:none; }
+  a:hover { text-decoration:underline; }
+
+  /* Header */
+  .header { text-align:center; padding:28px 16px 12px; position:sticky; top:0; background:#0a0a0a; z-index:100; border-bottom:1px solid #1a1a1a; }
+  .header .brand { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:#D4A847; margin-bottom:4px; }
+  .header h1 { font-family:Georgia,serif; font-size:20px; font-style:italic; color:#fff; }
+
+  /* Auth */
+  .auth-screen { max-width:400px; margin:80px auto; padding:0 20px; text-align:center; }
+  .auth-screen input { width:100%; padding:14px 16px; background:#18181b; border:1px solid #27272a; border-radius:8px; color:#e4e4e7; font-size:16px; margin-bottom:12px; outline:none; }
+  .auth-screen input:focus { border-color:#D4A847; }
+  .auth-screen button { width:100%; padding:14px; background:linear-gradient(135deg,#D4A847,#b8942e); color:#0a0a0a; font-size:15px; font-weight:bold; border:none; border-radius:8px; cursor:pointer; }
+  .auth-screen .error { color:#ef4444; font-size:13px; margin-top:8px; }
+
+  /* Tabs */
+  .tabs { display:flex; overflow-x:auto; gap:2px; padding:8px 12px; background:#0a0a0a; position:sticky; top:75px; z-index:99; border-bottom:1px solid #1a1a1a; -webkit-overflow-scrolling:touch; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab { padding:8px 14px; font-size:12px; font-weight:bold; color:#71717a; background:#18181b; border:1px solid #27272a; border-radius:6px; cursor:pointer; white-space:nowrap; transition:all 0.2s; }
+  .tab.active { color:#0a0a0a; background:linear-gradient(135deg,#D4A847,#b8942e); border-color:#D4A847; }
+
+  /* Container */
+  .container { max-width:750px; margin:0 auto; padding:12px 12px 60px; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  /* Cards */
+  .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+  .stat-card { background:#18181b; border:1px solid #27272a; border-radius:10px; padding:16px; text-align:center; }
+  .stat-card .num { font-size:28px; font-weight:bold; color:#D4A847; }
+  .stat-card .label { font-size:11px; color:#71717a; margin-top:2px; text-transform:uppercase; letter-spacing:0.5px; }
+
+  .card { background:#18181b; border:1px solid #27272a; border-radius:10px; padding:14px; margin-bottom:8px; }
+  .card .name { font-size:14px; font-weight:bold; color:#e4e4e7; margin-bottom:3px; }
+  .card .email { font-size:12px; color:#D4A847; word-break:break-all; }
+  .card .meta { display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px; margin-top:6px; font-size:11px; color:#71717a; }
+  .card .row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #1f1f23; font-size:13px; }
+  .card .row:last-child { border-bottom:none; }
+  .card .row .lbl { color:#a1a1aa; }
+  .card .row .val { color:#e4e4e7; font-weight:bold; }
+
+  .badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:10px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; }
+  .b-crisis { background:#3b1114; color:#ef4444; }
+  .b-survival { background:#3b2506; color:#f97316; }
+  .b-growth { background:#3b3506; color:#eab308; }
+  .b-momentum { background:#0a3b1a; color:#22c55e; }
+  .b-mastery { background:#3b3006; color:#D4A847; }
+  .b-none { background:#27272a; color:#71717a; }
+
+  .search { width:100%; padding:10px 14px; background:#111118; border:1px solid #27272a; border-radius:8px; color:#e4e4e7; font-size:14px; margin-bottom:12px; outline:none; }
+  .search:focus { border-color:#D4A847; }
+
+  .btn { display:inline-block; padding:10px 20px; background:linear-gradient(135deg,#D4A847,#b8942e); color:#0a0a0a; font-size:13px; font-weight:bold; border:none; border-radius:6px; cursor:pointer; text-decoration:none; }
+  .btn-sm { padding:6px 12px; font-size:11px; }
+  .btn-outline { background:transparent; border:1px solid #D4A847; color:#D4A847; }
+  .btn-outline:hover { background:#D4A847; color:#0a0a0a; }
+
+  .section-title { font-size:13px; font-weight:bold; color:#D4A847; letter-spacing:1px; text-transform:uppercase; margin:20px 0 10px; }
+  .empty { text-align:center; color:#52525b; padding:30px; font-size:13px; }
+
+  /* Pillar bar */
+  .pillar-bar { display:flex; align-items:center; gap:8px; margin:4px 0; }
+  .pillar-bar .plbl { width:80px; font-size:11px; color:#a1a1aa; text-align:right; }
+  .pillar-bar .track { flex:1; height:8px; background:#27272a; border-radius:4px; overflow:hidden; }
+  .pillar-bar .fill { height:100%; border-radius:4px; background:linear-gradient(90deg,#D4A847,#b8942e); transition:width 0.5s; }
+  .pillar-bar .pval { width:32px; font-size:11px; color:#e4e4e7; font-weight:bold; }
+
+  /* Loading */
+  .loading { text-align:center; padding:40px; color:#71717a; }
+  .spinner { display:inline-block; width:24px; height:24px; border:3px solid #27272a; border-top-color:#D4A847; border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Detail modal overlay */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:200; overflow-y:auto; padding:20px; }
+  .overlay.show { display:block; }
+  .overlay-content { max-width:650px; margin:0 auto; }
+  .overlay .close-btn { position:sticky; top:0; text-align:right; padding:8px 0; }
+  .overlay .close-btn span { cursor:pointer; color:#D4A847; font-size:14px; font-weight:bold; background:#18181b; padding:6px 14px; border-radius:6px; border:1px solid #27272a; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">VALUE TO VICTORY</div>
+  <h1>Admin Command Center</h1>
+</div>
+
+<!-- Auth Screen -->
+<div id="auth" class="auth-screen">
+  <p style="color:#71717a;font-size:13px;margin-bottom:20px;">Enter your admin API key to access all data.</p>
+  <input type="password" id="apiKey" placeholder="Admin API Key" autocomplete="off"/>
+  <button onclick="authenticate()">Unlock Dashboard</button>
+  <div id="authError" class="error" style="display:none;"></div>
+</div>
+
+<!-- Main Dashboard -->
+<div id="dashboard" style="display:none;">
+  <div class="tabs" id="tabBar">
+    <div class="tab active" data-tab="overview">Overview</div>
+    <div class="tab" data-tab="clients">Clients</div>
+    <div class="tab" data-tab="assessments">Assessments</div>
+    <div class="tab" data-tab="coaching">Coaching</div>
+    <div class="tab" data-tab="feedback">Feedback</div>
+    <div class="tab" data-tab="questions">Questions</div>
+    <div class="tab" data-tab="tools">Tools</div>
+  </div>
+
+  <div class="container">
+
+    <!-- OVERVIEW PANEL -->
+    <div class="panel active" id="panel-overview">
+      <div class="stat-grid" id="overviewStats"></div>
+      <div class="section-title">Platform Averages</div>
+      <div class="card" id="overviewPillars"></div>
+      <div class="section-title">Score Distribution</div>
+      <div class="card" id="overviewDist"></div>
+      <div class="section-title">Recent Assessments</div>
+      <div id="overviewRecent"></div>
+    </div>
+
+    <!-- CLIENTS PANEL -->
+    <div class="panel" id="panel-clients">
+      <input type="text" class="search" id="clientSearch" placeholder="Search by name or email..." oninput="filterClients()"/>
+      <div id="clientCount" style="font-size:12px;color:#71717a;margin-bottom:10px;"></div>
+      <div id="clientList"></div>
+    </div>
+
+    <!-- ASSESSMENTS PANEL -->
+    <div class="panel" id="panel-assessments">
+      <input type="text" class="search" id="assessmentSearch" placeholder="Search assessments..." oninput="filterAssessments()"/>
+      <div id="assessmentList"></div>
+    </div>
+
+    <!-- COACHING PANEL -->
+    <div class="panel" id="panel-coaching">
+      <div class="stat-grid" id="coachingStats"></div>
+      <div class="section-title">Active Coaching Sequences</div>
+      <div id="coachingList"></div>
+    </div>
+
+    <!-- FEEDBACK PANEL -->
+    <div class="panel" id="panel-feedback">
+      <div class="stat-grid" id="feedbackStats"></div>
+      <div class="section-title">Weakest Pillar Distribution</div>
+      <div class="card" id="feedbackPillars"></div>
+      <div class="section-title">Top 10 Weakest Sub-Categories</div>
+      <div id="feedbackSubs"></div>
+    </div>
+
+    <!-- QUESTIONS PANEL -->
+    <div class="panel" id="panel-questions">
+      <input type="text" class="search" id="questionSearch" placeholder="Search questions by pillar, category, or text..." oninput="filterQuestions()"/>
+      <div id="questionCount" style="font-size:12px;color:#71717a;margin-bottom:10px;"></div>
+      <div id="questionList"></div>
+    </div>
+
+    <!-- TOOLS PANEL -->
+    <div class="panel" id="panel-tools">
+      <div class="section-title">Export & Actions</div>
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <a class="btn" id="csvExportLink" target="_blank">Download Full CSV Export</a>
+        <button class="btn btn-outline" onclick="triggerHubspotSync()">Sync to HubSpot CRM</button>
+        <button class="btn btn-outline" onclick="sendCoachingEmails()">Send Coaching Emails (Cron)</button>
+        <button class="btn btn-outline" onclick="sendAccountabilityEmails()">Send Accountability Emails</button>
+      </div>
+      <div class="section-title">Quick Links</div>
+      <div class="card" style="display:flex;flex-direction:column;gap:8px;">
+        <a href="https://assessment.valuetovictory.com/" target="_blank">Assessment Home</a>
+        <a href="https://assessment.valuetovictory.com/member" target="_blank">Member Portal</a>
+        <a href="https://assessment.valuetovictory.com/pricing" target="_blank">Pricing Page</a>
+        <a href="https://assessment.valuetovictory.com/coaching" target="_blank">Coaching Intake</a>
+        <a href="https://assessment.valuetovictory.com/teams" target="_blank">Teams</a>
+        <a href="https://assessment.valuetovictory.com/relationship-hub" target="_blank">Relationship Hub</a>
+        <a href="https://assessment.valuetovictory.com/audiobook" target="_blank">Audiobook</a>
+        <a href="https://console.neon.tech" target="_blank">Neon Database Console</a>
+        <a href="https://vercel.com/dashboard" target="_blank">Vercel Dashboard</a>
+        <a href="https://github.com/ShawnDecker/vtv-assessment" target="_blank">GitHub Repository</a>
+      </div>
+      <div id="toolResult" style="margin-top:12px;"></div>
+    </div>
+
+  </div><!-- container -->
+</div><!-- dashboard -->
+
+<!-- Detail Overlay -->
+<div class="overlay" id="detailOverlay">
+  <div class="overlay-content">
+    <div class="close-btn"><span onclick="closeDetail()">Close</span></div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<script>
+const BASE = '/api';
+let API_KEY = '';
+let DATA = { contacts:[], analytics:null, feedback:null, questions:[], coaching:[] };
+
+// ===== AUTH =====
+function authenticate() {
+  API_KEY = document.getElementById('apiKey').value.trim();
+  if (!API_KEY) return;
+  document.getElementById('auth').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  // Store key for session
+  try { sessionStorage.setItem('vtv_admin_key', API_KEY); } catch(e){}
+  loadAll();
+}
+// Auto-restore session
+(function() {
+  try {
+    const k = sessionStorage.getItem('vtv_admin_key');
+    if (k) { API_KEY = k; document.getElementById('auth').style.display='none'; document.getElementById('dashboard').style.display='block'; loadAll(); }
+  } catch(e){}
+})();
+document.getElementById('apiKey').addEventListener('keydown', e => { if(e.key==='Enter') authenticate(); });
+
+// ===== API HELPERS =====
+function api(path, opts={}) {
+  return fetch(BASE + path, { headers: { 'x-api-key': API_KEY, ...opts.headers }, ...opts })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+}
+
+function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+function badgeFor(range) {
+  const cls = range ? 'b-'+range.toLowerCase() : 'b-none';
+  return `<span class="badge ${cls}">${range||'None'}</span>`;
+}
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'; }
+
+// ===== LOAD ALL DATA =====
+function loadAll() {
+  // Set CSV export link
+  document.getElementById('csvExportLink').href = BASE+'/admin/export';
+
+  // Load all endpoints in parallel
+  Promise.all([
+    api('/admin/contacts').catch(()=>[]),
+    api('/admin/analytics').catch(()=>null),
+    api('/admin/feedback-summary').catch(()=>null),
+    api('/admin/question-bank').catch(()=>[]),
+    api('/admin/coaching').catch(()=>({sequences:[],requests:[]})),
+  ]).then(([contacts, analytics, feedback, questions, coaching]) => {
+    DATA.contacts = Array.isArray(contacts) ? contacts : [];
+    DATA.analytics = analytics;
+    DATA.feedback = feedback && !feedback.error ? feedback : null;
+    DATA.questions = Array.isArray(questions) ? questions : [];
+    DATA.coaching = coaching || {sequences:[],requests:[]};
+    renderOverview();
+    renderClients(DATA.contacts);
+    renderAssessments();
+    renderCoaching();
+    renderFeedback();
+    renderQuestions(DATA.questions);
+  }).catch(err => {
+    document.getElementById('panel-overview').innerHTML = `<div class="empty">Failed to load data. Check your API key.<br><small>${esc(err.message)}</small></div>`;
+  });
+}
+
+// ===== TABS =====
+document.getElementById('tabBar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+});
+
+// ===== OVERVIEW =====
+function renderOverview() {
+  const a = DATA.analytics;
+  if (!a) { document.getElementById('overviewStats').innerHTML='<div class="empty" style="grid-column:1/-1;">Loading analytics...</div>'; return; }
+  document.getElementById('overviewStats').innerHTML = `
+    <div class="stat-card"><div class="num">${a.totalContacts}</div><div class="label">Total Clients</div></div>
+    <div class="stat-card"><div class="num">${a.totalAssessments}</div><div class="label">Total Assessments</div></div>
+  `;
+
+  // Pillar averages
+  const maxAvg = Math.max(...(a.averages||[]).map(p=>p.avg), 1);
+  document.getElementById('overviewPillars').innerHTML = (a.averages||[]).map(p =>
+    `<div class="pillar-bar">
+      <div class="plbl">${p.pillar}</div>
+      <div class="track"><div class="fill" style="width:${(p.avg/50*100).toFixed(0)}%"></div></div>
+      <div class="pval">${p.avg}</div>
+    </div>`
+  ).join('');
+
+  // Distribution
+  const colors = {Crisis:'#ef4444',Survival:'#f97316',Growth:'#eab308',Momentum:'#22c55e',Mastery:'#D4A847'};
+  const totalDist = (a.distribution||[]).reduce((s,d)=>s+d.count,0)||1;
+  document.getElementById('overviewDist').innerHTML = (a.distribution||[]).map(d =>
+    `<div class="pillar-bar">
+      <div class="plbl">${d.range||'?'}</div>
+      <div class="track"><div class="fill" style="width:${(d.count/totalDist*100).toFixed(0)}%;background:${colors[d.range]||'#D4A847'}"></div></div>
+      <div class="pval">${d.count}</div>
+    </div>`
+  ).join('');
+
+  // Recent
+  document.getElementById('overviewRecent').innerHTML = (a.recent||[]).map(r =>
+    `<div class="card" style="cursor:pointer;" onclick="openContactByEmail('${esc(r.contact?.email||'')}')">
+      <div class="name">${esc((r.contact?.firstName||'')+' '+(r.contact?.lastName||''))}</div>
+      <div class="email">${esc(r.contact?.email||'')}</div>
+      <div class="meta"><span>${fmtDate(r.completedAt)}</span><span>Score: <b>${r.masterScore}</b></span>${badgeFor(r.scoreRange)}</div>
+    </div>`
+  ).join('') || '<div class="empty">No recent assessments</div>';
+}
+
+// ===== CLIENTS =====
+function renderClients(list) {
+  document.getElementById('clientCount').textContent = list.length + ' client' + (list.length!==1?'s':'');
+  document.getElementById('clientList').innerHTML = list.map((c,i) => {
+    const name = [c.firstName,c.lastName].filter(Boolean).join(' ')||'No Name';
+    const range = c.latestAssessment?.scoreRange;
+    const score = c.latestAssessment?.masterScore;
+    return `<div class="card" style="cursor:pointer;" onclick="openContact(${c.id})">
+      <div class="name">${i+1}. ${esc(name)}</div>
+      <div class="email">${esc(c.email||'')}</div>
+      <div class="meta">
+        <span>Joined ${fmtDate(c.created_at)}</span>
+        <span>${c.assessmentCount||0} assessment${(c.assessmentCount||0)!==1?'s':''}</span>
+      </div>
+      <div style="margin-top:6px;display:flex;align-items:center;gap:8px;">
+        ${badgeFor(range)}
+        ${score!=null?'<span style="font-size:12px;font-weight:bold;">'+score+'</span>':''}
+      </div>
+    </div>`;
+  }).join('') || '<div class="empty">No clients found</div>';
+}
+function filterClients() {
+  const q = document.getElementById('clientSearch').value.toLowerCase();
+  renderClients(DATA.contacts.filter(c =>
+    (c.firstName||'').toLowerCase().includes(q) ||
+    (c.lastName||'').toLowerCase().includes(q) ||
+    (c.email||'').toLowerCase().includes(q)
+  ));
+}
+
+// ===== CLIENT DETAIL =====
+function openContact(id) {
+  const c = DATA.contacts.find(x=>x.id===id);
+  if (!c) return;
+  const overlay = document.getElementById('detailOverlay');
+  const body = document.getElementById('detailBody');
+  const name = [c.firstName,c.lastName].filter(Boolean).join(' ')||'No Name';
+
+  // Fetch full detail
+  api('/admin/contacts/'+id).then(data => {
+    const assessments = data.assessments || [];
+    body.innerHTML = `
+      <div class="card" style="margin-bottom:12px;">
+        <div style="font-size:18px;font-weight:bold;color:#fff;margin-bottom:4px;">${esc(name)}</div>
+        <div style="color:#D4A847;font-size:13px;margin-bottom:8px;">${esc(c.email)}</div>
+        <div class="row"><span class="lbl">Phone</span><span class="val">${esc(c.phone||'—')}</span></div>
+        <div class="row"><span class="lbl">Joined</span><span class="val">${fmtDate(c.created_at)}</span></div>
+        <div class="row"><span class="lbl">Assessments</span><span class="val">${assessments.length}</span></div>
+      </div>
+      ${assessments.length ? '<div class="section-title">Assessment History</div>' : ''}
+      ${assessments.map((a,i) => {
+        const pillarMax = a.depth==='quick'?25:50;
+        return `<div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:13px;font-weight:bold;">#${assessments.length-i}</span>
+            ${badgeFor(a.scoreRange)}
+          </div>
+          <div style="text-align:center;margin-bottom:12px;">
+            <div style="font-size:32px;font-weight:bold;color:#D4A847;">${a.masterScore}</div>
+            <div style="font-size:11px;color:#71717a;">${fmtDate(a.completedAt)} &middot; ${a.depth||'extensive'} &middot; ${a.mode||'individual'}</div>
+          </div>
+          <div class="pillar-bar"><div class="plbl">Time</div><div class="track"><div class="fill" style="width:${((a.timeTotal||0)/pillarMax*100)}%"></div></div><div class="pval">${a.timeTotal||0}</div></div>
+          <div class="pillar-bar"><div class="plbl">People</div><div class="track"><div class="fill" style="width:${((a.peopleTotal||0)/pillarMax*100)}%"></div></div><div class="pval">${a.peopleTotal||0}</div></div>
+          <div class="pillar-bar"><div class="plbl">Influence</div><div class="track"><div class="fill" style="width:${((a.influenceTotal||0)/pillarMax*100)}%"></div></div><div class="pval">${a.influenceTotal||0}</div></div>
+          <div class="pillar-bar"><div class="plbl">Numbers</div><div class="track"><div class="fill" style="width:${((a.numbersTotal||0)/pillarMax*100)}%"></div></div><div class="pval">${a.numbersTotal||0}</div></div>
+          <div class="pillar-bar"><div class="plbl">Knowledge</div><div class="track"><div class="fill" style="width:${((a.knowledgeTotal||0)/pillarMax*100)}%"></div></div><div class="pval">${a.knowledgeTotal||0}</div></div>
+          <div style="margin-top:8px;font-size:11px;color:#71717a;">Weakest: <span style="color:#ef4444;">${a.weakestPillar||'—'}</span></div>
+          <div style="margin-top:8px;text-align:center;">
+            <a href="https://assessment.valuetovictory.com/report/${a.id}" target="_blank" class="btn btn-sm">View Full Report</a>
+          </div>
+        </div>`;
+      }).join('')}
+      ${assessments.length===0?'<div class="empty">No assessments yet.</div>':''}
+    `;
+  }).catch(()=>{
+    body.innerHTML = `<div class="card"><div class="name">${esc(name)}</div><div class="email">${esc(c.email)}</div><p style="color:#71717a;margin-top:12px;">Could not load full details.</p></div>`;
+  });
+  body.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  overlay.classList.add('show');
+}
+function openContactByEmail(email) {
+  const c = DATA.contacts.find(x=>x.email===email);
+  if (c) openContact(c.id);
+}
+function closeDetail() { document.getElementById('detailOverlay').classList.remove('show'); }
+
+// ===== ASSESSMENTS =====
+function renderAssessments() {
+  const a = DATA.analytics;
+  if (!a || !a.recent) { document.getElementById('assessmentList').innerHTML='<div class="loading"><div class="spinner"></div></div>'; return; }
+  // Build flat list from contacts' latestAssessment data
+  const all = DATA.contacts.filter(c=>c.latestAssessment).map(c=>({
+    ...c.latestAssessment,
+    contactName: [c.firstName,c.lastName].filter(Boolean).join(' ')||'No Name',
+    contactEmail: c.email,
+    contactId: c.id
+  })).sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt));
+  DATA._assessments = all;
+  renderAssessmentList(all);
+}
+function renderAssessmentList(list) {
+  document.getElementById('assessmentList').innerHTML = list.map(a =>
+    `<div class="card" style="cursor:pointer;" onclick="openContact(${a.contactId})">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="name">${esc(a.contactName)}</div>
+        ${badgeFor(a.scoreRange)}
+      </div>
+      <div class="email">${esc(a.contactEmail)}</div>
+      <div class="meta">
+        <span>${fmtDate(a.completedAt)}</span>
+        <span>Score: <b>${a.masterScore}</b></span>
+        <span>Weakest: ${a.weakestPillar||'—'}</span>
+      </div>
+    </div>`
+  ).join('') || '<div class="empty">No assessments found</div>';
+}
+function filterAssessments() {
+  const q = document.getElementById('assessmentSearch').value.toLowerCase();
+  renderAssessmentList((DATA._assessments||[]).filter(a =>
+    a.contactName.toLowerCase().includes(q) ||
+    a.contactEmail.toLowerCase().includes(q) ||
+    (a.scoreRange||'').toLowerCase().includes(q) ||
+    (a.weakestPillar||'').toLowerCase().includes(q)
+  ));
+}
+
+// ===== COACHING =====
+function renderCoaching() {
+  const c = DATA.coaching;
+  const seqs = c.sequences||[];
+  const reqs = c.requests||[];
+  const active = seqs.filter(s=>!s.unsubscribed);
+  const unsub = seqs.filter(s=>s.unsubscribed);
+  document.getElementById('coachingStats').innerHTML = `
+    <div class="stat-card"><div class="num">${active.length}</div><div class="label">Active Sequences</div></div>
+    <div class="stat-card"><div class="num">${reqs.length}</div><div class="label">Coaching Requests</div></div>
+  `;
+  let html = '';
+  if (active.length === 0 && unsub.length === 0) {
+    html = '<div class="empty">No coaching sequences yet.</div>';
+  }
+  for (const s of active) {
+    const name = [s.firstName,s.lastName].filter(Boolean).join(' ')||'—';
+    html += `<div class="card">
+      <div class="name">${esc(name)}</div>
+      <div class="email">${esc(s.email)}</div>
+      <div class="meta">
+        <span>Day ${s.currentDay}/5</span>
+        <span>Started ${fmtDate(s.startedAt)}</span>
+        <span>Last sent ${fmtDate(s.lastSentAt)}</span>
+      </div>
+      <div style="margin-top:6px;"><div class="track" style="height:6px;"><div class="fill" style="width:${Math.min(100,(s.currentDay||0)/5*100)}%"></div></div></div>
+    </div>`;
+  }
+  if (unsub.length > 0) {
+    html += '<div class="section-title">Unsubscribed</div>';
+    for (const s of unsub) {
+      html += `<div class="card" style="opacity:0.5;">
+        <div class="name">${esc([s.firstName,s.lastName].filter(Boolean).join(' ')||'—')}</div>
+        <div class="email">${esc(s.email)}</div>
+        <div class="meta"><span>Day ${s.currentDay}/5</span><span>Unsubscribed</span></div>
+      </div>`;
+    }
+  }
+  if (reqs.length > 0) {
+    html += '<div class="section-title">Coaching Intake Requests</div>';
+    for (const r of reqs) {
+      html += `<div class="card">
+        <div class="name">${esc(r.name||[r.firstName,r.lastName].filter(Boolean).join(' ')||'—')}</div>
+        <div class="email">${esc(r.email)}</div>
+        <div class="meta">
+          <span>Track: <b>${esc(r.track||'—')}</b></span>
+          <span>${r.verified?'Verified':'Pending'}</span>
+          <span>${fmtDate(r.createdAt)}</span>
+        </div>
+        ${r.goals?'<div style="font-size:12px;color:#a1a1aa;margin-top:6px;">Goals: '+esc(r.goals)+'</div>':''}
+        ${r.biggestChallenge?'<div style="font-size:12px;color:#a1a1aa;margin-top:4px;">Challenge: '+esc(r.biggestChallenge)+'</div>':''}
+      </div>`;
+    }
+  }
+  document.getElementById('coachingList').innerHTML = html;
+}
+
+// ===== FEEDBACK =====
+function renderFeedback() {
+  const f = DATA.feedback;
+  if (!f) { document.getElementById('feedbackStats').innerHTML='<div class="stat-card" style="grid-column:1/-1;"><div class="label">Feedback data not available. Run migration first.</div></div>'; return; }
+  document.getElementById('feedbackStats').innerHTML = `
+    <div class="stat-card"><div class="num">${f.totalFeedbackRows}</div><div class="label">Feedback Records</div></div>
+    <div class="stat-card"><div class="num">${(f.weakestPillarDistribution||[])[0]?.pillar||'—'}</div><div class="label">#1 Weakest Pillar</div></div>
+  `;
+  const colors = {Time:'#3b82f6',People:'#22c55e',Influence:'#a855f7',Numbers:'#f59e0b',Knowledge:'#ef4444'};
+  document.getElementById('feedbackPillars').innerHTML = (f.weakestPillarDistribution||[]).map(p =>
+    `<div class="pillar-bar">
+      <div class="plbl">${p.pillar}</div>
+      <div class="track"><div class="fill" style="width:${p.percent}%;background:${colors[p.pillar]||'#D4A847'}"></div></div>
+      <div class="pval">${p.percent}%</div>
+    </div>`
+  ).join('');
+
+  document.getElementById('feedbackSubs').innerHTML = (f.topWeakestSubCategories||[]).map((s,i) =>
+    `<div class="card" style="padding:10px 14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;"><b>${i+1}.</b> ${esc(s.name)}</span>
+        <span style="font-size:12px;color:#D4A847;font-weight:bold;">${s.count} (${s.percent}%)</span>
+      </div>
+    </div>`
+  ).join('') || '<div class="empty">No sub-category data yet</div>';
+}
+
+// ===== QUESTIONS =====
+function renderQuestions(list) {
+  document.getElementById('questionCount').textContent = list.length + ' question' + (list.length!==1?'s':'');
+  const pillars = ['time','people','influence','numbers','knowledge'];
+  const grouped = {};
+  for (const q of list) {
+    const p = q.pillar||'other';
+    if (!grouped[p]) grouped[p]=[];
+    grouped[p].push(q);
+  }
+  const colors = {time:'#3b82f6',people:'#22c55e',influence:'#a855f7',numbers:'#f59e0b',knowledge:'#ef4444'};
+  let html = '';
+  for (const p of [...pillars,'other']) {
+    const qs = grouped[p];
+    if (!qs || !qs.length) continue;
+    html += `<div class="section-title" style="color:${colors[p]||'#D4A847'}">${p.charAt(0).toUpperCase()+p.slice(1)} (${qs.length})</div>`;
+    for (const q of qs) {
+      html += `<div class="card" style="padding:10px 14px;">
+        <div style="font-size:13px;color:#e4e4e7;margin-bottom:4px;">${esc(q.question||q.fieldName)}</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#71717a;">
+          <span>${esc(q.subCategory||'')}</span>
+          <span>${q.answerCount} answers &middot; avg ${q.avgScore}</span>
+        </div>
+      </div>`;
+    }
+  }
+  document.getElementById('questionList').innerHTML = html || '<div class="empty">No questions found</div>';
+}
+function filterQuestions() {
+  const q = document.getElementById('questionSearch').value.toLowerCase();
+  renderQuestions(DATA.questions.filter(x =>
+    (x.pillar||'').toLowerCase().includes(q) ||
+    (x.subCategory||'').toLowerCase().includes(q) ||
+    (x.question||'').toLowerCase().includes(q) ||
+    (x.fieldName||'').toLowerCase().includes(q)
+  ));
+}
+
+// ===== TOOLS =====
+function showToolResult(msg, isErr) {
+  document.getElementById('toolResult').innerHTML = `<div class="card" style="border-color:${isErr?'#ef4444':'#22c55e'};"><p style="font-size:13px;color:${isErr?'#ef4444':'#22c55e'};">${esc(msg)}</p></div>`;
+}
+function triggerHubspotSync() {
+  if (!confirm('Sync all contacts to HubSpot?')) return;
+  fetch(BASE+'/admin/hubspot-sync', { method:'POST', headers:{'x-api-key':API_KEY,'Content-Type':'application/json'}, body:JSON.stringify({syncAll:true,limit:100}) })
+    .then(r=>r.json()).then(d=>showToolResult(`HubSpot sync: ${d.synced||0} synced, ${d.failed||0} failed`))
+    .catch(e=>showToolResult('Sync failed: '+e.message,true));
+}
+function sendCoachingEmails() {
+  if (!confirm('Send daily coaching emails now?')) return;
+  fetch(BASE+'/coaching/send', { headers:{'x-api-key':API_KEY} })
+    .then(r=>r.json()).then(d=>showToolResult(`Coaching: ${d.sent||0} emails sent`))
+    .catch(e=>showToolResult('Failed: '+e.message,true));
+}
+function sendAccountabilityEmails() {
+  if (!confirm('Send accountability emails now?')) return;
+  fetch(BASE+'/accountability/send', { headers:{'x-api-key':API_KEY} })
+    .then(r=>r.json()).then(d=>showToolResult(`Accountability: ${d.sent||0} emails sent`))
+    .catch(e=>showToolResult('Failed: '+e.message,true));
+}
+</script>
+</body>
+</html>

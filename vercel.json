@@ -237,6 +237,10 @@
       "dest": "/api/devotional-today.js"
     },
     {
+      "src": "/admin/contacts",
+      "dest": "/admin-contacts.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
