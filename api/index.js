@@ -3025,6 +3025,45 @@ ${roadmapHtml}
       }
     }
 
+    // GET /api/admin/coaching — list all coaching sequences and requests
+    if (req.method === 'GET' && url === '/admin/coaching') {
+      try {
+        await ensureCoachingTable(sql);
+        const sequences = await sql`
+          SELECT cs.*, c.first_name, c.last_name
+          FROM coaching_sequences cs
+          LEFT JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
+          ORDER BY cs.started_at DESC
+        `;
+        let requests = [];
+        try {
+          requests = await sql`
+            SELECT cr.*, c.first_name, c.last_name
+            FROM coaching_requests cr
+            LEFT JOIN contacts c ON cr.contact_id = c.id
+            ORDER BY cr.created_at DESC
+          `;
+        } catch(e) { /* table may not exist */ }
+        return res.json({
+          sequences: sequences.map(s => ({
+            email: s.email, firstName: s.first_name, lastName: s.last_name,
+            currentDay: s.current_day, lastSentAt: s.last_sent_at,
+            startedAt: s.started_at, unsubscribed: s.unsubscribed,
+            assessmentId: s.assessment_id
+          })),
+          requests: requests.map(r => ({
+            id: r.id, name: r.name, email: r.email, track: r.track,
+            goals: r.goals, biggestChallenge: r.biggest_challenge,
+            verified: r.verified, verifiedAt: r.verified_at,
+            reportSent: r.report_sent, createdAt: r.created_at,
+            firstName: r.first_name, lastName: r.last_name
+          }))
+        });
+      } catch(e) {
+        return res.json({ sequences: [], requests: [], error: e.message });
+      }
+    }
+
     // GET /api/admin/feedback-summary — aggregated feedback data (Feature 4)
     if (req.method === 'GET' && url === '/admin/feedback-summary') {
       try {
