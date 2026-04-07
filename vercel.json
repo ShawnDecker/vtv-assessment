@@ -46,6 +46,10 @@
       "dest": "/api/migrate-analytics.js"
     },
     {
+      "src": "/api/devotional-today",
+      "dest": "/api/devotional-today.js"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     },
@@ -231,10 +235,6 @@
     {
       "src": "/daily-word",
       "dest": "/daily-word.html"
-    },
-    {
-      "src": "/api/devotional-today",
-      "dest": "/api/devotional-today.js"
     },
     {
       "src": "/admin/contacts",
