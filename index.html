@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/>
+<title>Valley Word Church — Roanoke / Salem, VA</title>
+<meta name="description" content="Valley Word Church — A Word of Faith Church connecting people to God and their Destiny in Christ. Led by Drs. Eddie &amp; Debbie Crabtree. Roanoke &amp; Salem, VA."/>
+<meta property="og:title" content="Valley Word Church — Connecting People to God and Their Destiny"/>
+<meta property="og:description" content="Word of Faith Church in Roanoke/Salem VA. Sunday 10AM. Led by Drs. Eddie &amp; Debbie Crabtree. Ministries, Bible College, sermons, and more."/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://vwc.valuetovictory.com"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+<!-- Schema.org structured data for Local SEO -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Church",
+  "name": "Valley Word Church",
+  "alternateName": "VWC",
+  "url": "https://vwconline.org",
+  "telephone": "+1-540-562-1500",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "1928 Loch Haven Drive",
+    "addressLocality": "Roanoke",
+    "addressRegion": "VA",
+    "postalCode": "24019",
+    "addressCountry": "US"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 37.3218,
+    "longitude": -79.9414
+  },
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": "Sunday",
+      "opens": "10:00",
+      "closes": "12:00"
+    }
+  ],
+  "sameAs": [
+    "https://www.facebook.com/valleyword/",
+    "https://www.youtube.com/@valleywordtv",
+    "https://x.com/valleyword",
+    "https://www.linkedin.com/company/valley-word-church"
+  ],
+  "description": "An ethnically diverse Word of Faith Church connecting people to God and their Destiny in Christ. Led by Drs. Eddie & Debbie Crabtree.",
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Church Programs",
+    "itemListElement": [
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Sunday Worship Service"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Word Bible College — Doctor of Ministry in Theology"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Marriage & Family Ministry"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Youth & Children's Ministry"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Books & DVD Ministry"}}
+    ]
+  }
+}
+</script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#e4e4e7;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+:root{
+  --gold:#D4A847;--gold-dark:#b8942e;
+  --blue:#4A7AB5;--blue-light:rgba(74,122,181,.15);
+  --purple:#6B4FA0;--purple-light:rgba(107,79,160,.15);
+  --green:#22c55e;--green-light:rgba(34,197,94,.15);
+  --red:#ef4444;
+  --surface:#18181b;--border:#27272a;--muted:#71717a;--text:#e4e4e7;
+}
+
+.page{max-width:720px;margin:0 auto;padding:0 1rem 4rem}
+
+/* HERO */
+.hero{text-align:center;padding:3.5rem 1rem 2rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:700px;height:700px;background:radial-gradient(circle,rgba(212,168,71,.06) 0%,transparent 65%);pointer-events:none}
+.hero-church{font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:.75rem}
+.hero h1{font-family:'Instrument Serif',Georgia,serif;font-size:2.4rem;font-weight:400;font-style:italic;color:#fff;line-height:1.15;margin-bottom:.6rem}
+.hero .sub{color:#a1a1aa;font-size:.95rem;line-height:1.6;max-width:520px;margin:0 auto .75rem}
+.hero .pastor{font-size:.85rem;color:var(--gold);font-weight:600}
+.hero .loc{font-size:.75rem;color:var(--muted);margin-top:.25rem}
+
+/* SERVICE BANNER */
+.svc-banner{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin:1.5rem 0;padding:1.1rem;background:var(--surface);border:1px solid var(--border);border-radius:.75rem}
+.svc{text-align:center;flex:1;min-width:110px}
+.svc .time{font-size:1.15rem;font-weight:900;color:#fff}
+.svc .label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:.15rem}
+
+/* QUICK NAV */
+.qnav{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin:1.25rem 0}
+.qnav a{display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.85rem .5rem;background:var(--surface);border:1px solid var(--border);border-radius:.65rem;text-decoration:none;color:var(--text);font-size:.75rem;font-weight:600;transition:all .2s;text-align:center}
+.qnav a:hover{border-color:var(--gold);transform:translateY(-2px)}
+.qnav a .qi{font-size:1.3rem}
+
+/* SECTION */
+.section{margin-top:2.5rem}
+.slabel{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:.3rem}
+.stitle{font-family:'Instrument Serif',Georgia,serif;font-size:1.5rem;font-style:italic;color:#fff;margin-bottom:.6rem}
+.sdesc{font-size:.88rem;color:#a1a1aa;line-height:1.6;margin-bottom:1.25rem}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:.75rem;padding:1.25rem;margin-bottom:.65rem;transition:border-color .2s}
+.card:hover{border-color:var(--gold)}
+.card h3{font-size:1rem;font-weight:700;color:#fff;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem}
+.card p{font-size:.84rem;color:#a1a1aa;line-height:1.5;margin-bottom:.65rem}
+.card .tag{display:inline-block;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:.15rem .5rem;border-radius:2rem;font-weight:700;margin-bottom:.5rem}
+.tag-live{background:var(--green-light);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.tag-new{background:var(--blue-light);color:var(--blue);border:1px solid rgba(74,122,181,.25)}
+.tag-college{background:var(--purple-light);color:var(--purple);border:1px solid rgba(107,79,160,.25)}
+
+.cta{display:inline-block;padding:.55rem 1.3rem;background:var(--gold);color:#0a0a0a;font-size:.8rem;font-weight:700;border-radius:.4rem;text-decoration:none;transition:background .2s}
+.cta:hover{background:var(--gold-dark)}
+.cta-outline{display:inline-block;padding:.55rem 1.3rem;background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:.8rem;font-weight:700;border-radius:.4rem;text-decoration:none;transition:all .2s;margin-left:.4rem}
+.cta-outline:hover{background:var(--gold);color:#0a0a0a}
+
+/* MINISTRY GRID */
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+.mcard{background:var(--surface);border:1px solid var(--border);border-radius:.6rem;padding:.9rem;text-align:center}
+.mcard .mi{font-size:1.4rem;margin-bottom:.25rem}
+.mcard .mn{font-size:.82rem;font-weight:700;color:#fff}
+.mcard .md{font-size:.68rem;color:var(--muted);margin-top:.15rem}
+
+/* COLLEGE */
+.college{background:linear-gradient(135deg,rgba(107,79,160,.1) 0%,var(--surface) 100%);border:1px solid rgba(107,79,160,.25);border-radius:.75rem;padding:1.5rem;text-align:center}
+.college .deg{display:inline-block;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);background:var(--purple-light);padding:.2rem .6rem;border-radius:2rem;font-weight:700;margin-bottom:.75rem;border:1px solid rgba(107,79,160,.25)}
+.college h3{font-size:1.15rem;color:#fff;margin-bottom:.5rem}
+.college p{font-size:.85rem;color:#a1a1aa;line-height:1.5;margin-bottom:1rem}
+
+/* SHOP */
+.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.shop-item{background:var(--surface);border:1px solid var(--border);border-radius:.65rem;padding:1.1rem;text-align:center;transition:border-color .2s}
+.shop-item:hover{border-color:var(--gold)}
+.shop-item .si{font-size:2rem;margin-bottom:.4rem}
+.shop-item .sn{font-size:.85rem;font-weight:700;color:#fff;margin-bottom:.2rem}
+.shop-item .sp{font-size:.75rem;color:var(--gold);font-weight:700;margin-bottom:.6rem}
+.shop-item .sd{font-size:.7rem;color:var(--muted);margin-bottom:.65rem;line-height:1.4}
+
+/* SOCIAL LINKS */
+.social{display:grid;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:.45rem}
+.social a{display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:.7rem .4rem;background:var(--surface);border:1px solid var(--border);border-radius:.55rem;text-decoration:none;color:var(--text);font-size:.7rem;font-weight:600;transition:all .2s;text-align:center}
+.social a:hover{border-color:var(--gold);transform:translateY(-2px)}
+.social a .si{font-size:1.2rem}
+.social a .sh{font-size:.58rem;color:var(--muted)}
+
+/* CONTACT */
+.contact{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}
+.cbox{flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border);border-radius:.55rem;padding:.85rem;text-align:center}
+.cbox .cl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.2rem}
+.cbox .cv{font-size:.85rem;font-weight:700;color:#fff}
+.cbox a{color:var(--gold);text-decoration:none}
+
+/* MAP */
+.map-wrap{margin-top:1rem;border-radius:.75rem;overflow:hidden;border:1px solid var(--border)}
+.map-wrap iframe{width:100%;height:250px;border:0;filter:grayscale(.8) invert(.92) contrast(1.1);display:block}
+
+/* GIVE */
+.give-banner{margin-top:1.5rem;padding:1.5rem;background:linear-gradient(135deg,rgba(212,168,71,.08) 0%,var(--surface) 100%);border:1px solid rgba(212,168,71,.25);border-radius:.75rem;text-align:center}
+.give-banner h3{font-size:1.1rem;color:#fff;margin-bottom:.35rem}
+.give-banner p{font-size:.82rem;color:#a1a1aa;margin-bottom:1rem;line-height:1.5}
+
+.footer{text-align:center;margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--border);font-size:.68rem;color:var(--muted);line-height:1.8}
+.footer a{color:var(--gold);text-decoration:none}
+
+@media(max-width:480px){
+  .hero h1{font-size:1.8rem}
+  .mgrid,.shop-grid{grid-template-columns:1fr}
+  .qnav{grid-template-columns:repeat(2,1fr)}
+  .social{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-church">Valley Word Church</div>
+  <h1>Connecting People to God<br>and Their Destiny in Christ</h1>
+  <p class="sub">Empowering believers of all nations and cultures for success in the home, the church, the marketplace, and the world.</p>
+  <p class="pastor">Drs. Eddie &amp; Debbie Crabtree</p>
+  <p class="loc">19-Acre Campus &bull; I-81 Exit 141 &bull; Roanoke / Salem, VA</p>
+</div>
+
+<div class="page">
+
+<!-- ===== SERVICE TIMES ===== -->
+<div class="svc-banner">
+  <div class="svc"><div class="time">10:00 AM</div><div class="label">Sunday Worship</div></div>
+  <div class="svc"><div class="time">6:00 PM</div><div class="label">Sunday UCML</div></div>
+  <div class="svc"><div class="time">By Appt</div><div class="label">Mon &mdash; Thu</div></div>
+</div>
+
+<!-- ===== QUICK NAV ===== -->
+<div class="qnav">
+  <a href="https://vwconline.org/" target="_blank"><span class="qi">&#9962;</span> Visit Website</a>
+  <a href="#watch"><span class="qi">&#9654;</span> Watch Live</a>
+  <a href="#give"><span class="qi">&#10084;</span> Give Online</a>
+  <a href="#college"><span class="qi">&#127891;</span> Bible College</a>
+  <a href="#shop"><span class="qi">&#128218;</span> Shop</a>
+  <a href="#connect"><span class="qi">&#128241;</span> Connect</a>
+</div>
+
+<!-- ===== ABOUT ===== -->
+<div class="section">
+  <div class="slabel">About VWC</div>
+  <div class="stitle">A Word of Faith Church on the Move</div>
+  <p class="sdesc">Valley Word Church is an ethnically diverse, nondenominational Word of Faith Church of approximately 200 members. Situated on a beautiful 19-acre property in Roanoke, Virginia right along the I-81 corridor, VWC is an active and growing body of believers reaching out to impact every nation for Christ.</p>
+
+  <div class="card">
+    <h3>&#128220; Our Beliefs</h3>
+    <p>We believe in the power of God's love, the divinity of Jesus Christ, and the guidance of the Holy Spirit. Through faith and prayer, we can overcome any obstacle and live a life of purpose and meaning.</p>
+    <a class="cta" href="https://vwconline.org/about" target="_blank">Learn More</a>
+  </div>
+</div>
+
+<!-- ===== WATCH / SERMONS ===== -->
+<div class="section" id="watch">
+  <div class="slabel">Watch &amp; Listen</div>
+  <div class="stitle">Sermons &amp; Teaching</div>
+  <p class="sdesc">Stream Sunday worship, catch up on past sermons, and hear the Word from Dr. Eddie Crabtree &mdash; anytime, anywhere.</p>
+
+  <div class="card">
+    <div class="tag tag-live">Live Sundays</div>
+    <h3>&#127909; Sunday Worship Livestream</h3>
+    <p>Join us live every Sunday at 10 AM or watch the replay. Powerful Word of Faith teaching, praise &amp; worship, and fellowship.</p>
+    <a class="cta" href="https://www.youtube.com/@valleywordtv" target="_blank">Watch on YouTube</a>
+    <a class="cta-outline" href="https://www.facebook.com/valleyword/" target="_blank">Watch on Facebook</a>
+  </div>
+
+  <div class="card">
+    <h3>&#127897; Word from God with Dr. Eddie Crabtree</h3>
+    <p>Teaching series, conference messages, and special Word of Faith content from Dr. Crabtree's decades of ministry.</p>
+    <a class="cta" href="https://www.youtube.com/@valleywordtv" target="_blank">Browse Sermons</a>
+  </div>
+</div>
+
+<!-- ===== MINISTRIES ===== -->
+<div class="section">
+  <div class="slabel">Get Involved</div>
+  <div class="stitle">Ministries at VWC</div>
+  <p class="sdesc">From Sunday worship to small groups, outreach to missions &mdash; there's a place for you.</p>
+
+  <div class="mgrid">
+    <div class="mcard"><div class="mi">&#9962;</div><div class="mn">Sunday Worship</div><div class="md">10 AM &amp; 6 PM services</div></div>
+    <div class="mcard"><div class="mi">&#128101;</div><div class="mn">Small Groups</div><div class="md">Weekly community groups</div></div>
+    <div class="mcard"><div class="mi">&#128102;</div><div class="mn">Youth Ministry</div><div class="md">Student growth &amp; discipleship</div></div>
+    <div class="mcard"><div class="mi">&#128118;</div><div class="mn">Children's Ministry</div><div class="md">Kids programming</div></div>
+    <div class="mcard"><div class="mi">&#128104;&#8205;&#128105;&#8205;&#128103;&#8205;&#128102;</div><div class="mn">Men's &amp; Women's</div><div class="md">Gender-specific growth</div></div>
+    <div class="mcard"><div class="mi">&#127758;</div><div class="mn">Outreach &amp; Missions</div><div class="md">Local &amp; international impact</div></div>
+    <div class="mcard"><div class="mi">&#128149;</div><div class="mn">Marriage &amp; Family</div><div class="md">Strengthening homes</div></div>
+    <div class="mcard"><div class="mi">&#129309;</div><div class="mn">Partnerships</div><div class="md">Local &amp; national ministry</div></div>
+  </div>
+</div>
+
+<!-- ===== BIBLE COLLEGE ===== -->
+<div class="section" id="college">
+  <div class="slabel">Biblical Education</div>
+  <div class="stitle">Word Bible College at VWC</div>
+  <p class="sdesc">Advance your calling with accredited theological education &mdash; local classes on our Roanoke campus or fully online from anywhere.</p>
+
+  <div class="college">
+    <div class="deg">Local &amp; Online Classes Available</div>
+    <h3>Earn Up to a Doctor of Ministry in Theology</h3>
+    <p>Learn more about the Word of God and advance your ministry credentials. From certificate level through doctoral studies, Word Bible College at VWC equips believers for their calling and destiny.</p>
+    <a class="cta" href="https://vwconline.org/" target="_blank">Enroll at VWCOnline.org</a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.75rem">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:.5rem;padding:.75rem;text-align:center">
+      <div style="font-size:1.3rem;font-weight:900;color:var(--purple)">4</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:.1rem">Degree Levels</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:.5rem;padding:.75rem;text-align:center">
+      <div style="font-size:1.3rem;font-weight:900;color:var(--purple)">Online</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:.1rem">+ In-Person</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:.5rem;padding:.75rem;text-align:center">
+      <div style="font-size:1.3rem;font-weight:900;color:var(--purple)">D.Min</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:.1rem">Highest Degree</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SHOP / BUY ===== -->
+<div class="section" id="shop">
+  <div class="slabel">Resources</div>
+  <div class="stitle">Books, DVDs &amp; Teaching Materials</div>
+  <p class="sdesc">Get equipped with powerful Word of Faith resources from Dr. Eddie &amp; Dr. Debbie Crabtree. Available for order and shipped to your door.</p>
+
+  <div class="shop-grid">
+    <div class="shop-item">
+      <div class="si">&#128214;</div>
+      <div class="sn">Books by Dr. Crabtree</div>
+      <div class="sd">Word of Faith teaching in print. Study guides, devotionals, and ministry resources.</div>
+      <a class="cta" href="https://vwconline.org/" target="_blank">Browse Books</a>
+    </div>
+    <div class="shop-item">
+      <div class="si">&#128191;</div>
+      <div class="sn">DVD Teaching Series</div>
+      <div class="sd">Conference messages, sermon series, and special teaching events on DVD.</div>
+      <a class="cta" href="https://vwconline.org/" target="_blank">Shop DVDs</a>
+    </div>
+    <div class="shop-item">
+      <div class="si">&#127897;</div>
+      <div class="sn">Audio Messages</div>
+      <div class="sd">Take the Word with you. Audio teachings for your commute, workout, or quiet time.</div>
+      <a class="cta" href="https://www.youtube.com/@valleywordtv" target="_blank">Listen Free</a>
+    </div>
+    <div class="shop-item">
+      <div class="si">&#127891;</div>
+      <div class="sn">College Courses</div>
+      <div class="sd">Invest in your ministry calling. Online and local classes from certificate to doctorate.</div>
+      <a class="cta" href="https://vwconline.org/" target="_blank">Enroll Now</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GIVE ===== -->
+<div class="section" id="give">
+  <div class="give-banner">
+    <div class="slabel" style="margin-bottom:.5rem">Support the Ministry</div>
+    <h3>Give to Valley Word Church</h3>
+    <p>Your tithes and offerings fuel every ministry, mission trip, and outreach program. Give securely online &mdash; one-time or recurring.</p>
+    <a class="cta" href="https://vwconline.org/" target="_blank" style="padding:.7rem 2.5rem;font-size:.9rem">Give Online Now</a>
+  </div>
+</div>
+
+<!-- ===== CONNECT / SOCIAL ===== -->
+<div class="section" id="connect">
+  <div class="slabel">Stay Connected</div>
+  <div class="stitle">Follow Valley Word Church</div>
+
+  <div class="social">
+    <a href="https://vwconline.org/" target="_blank">
+      <span class="si">&#127760;</span> Website
+      <span class="sh">vwconline.org</span>
+    </a>
+    <a href="https://www.facebook.com/valleyword/" target="_blank">
+      <span class="si">&#128101;</span> Facebook
+      <span class="sh">@valleyword</span>
+    </a>
+    <a href="https://www.youtube.com/@valleywordtv" target="_blank">
+      <span class="si">&#9654;</span> YouTube
+      <span class="sh">@valleywordtv</span>
+    </a>
+    <a href="https://x.com/valleyword" target="_blank">
+      <span class="si">&#120143;</span> X / Twitter
+      <span class="sh">@valleyword</span>
+    </a>
+    <a href="https://www.linkedin.com/company/valley-word-church" target="_blank">
+      <span class="si">&#128188;</span> LinkedIn
+      <span class="sh">Valley Word</span>
+    </a>
+    <a href="https://play.google.com/store/apps/details?id=com.app.valleywordchurch" target="_blank">
+      <span class="si">&#128241;</span> Church App
+      <span class="sh">Google Play</span>
+    </a>
+  </div>
+
+  <!-- CONTACT -->
+  <div class="contact">
+    <div class="cbox">
+      <div class="cl">Phone</div>
+      <div class="cv"><a href="tel:5405621500">540-562-1500</a></div>
+    </div>
+    <div class="cbox">
+      <div class="cl">Location</div>
+      <div class="cv">1928 Loch Haven Dr<br>Roanoke, VA 24019</div>
+    </div>
+    <div class="cbox">
+      <div class="cl">Mailing Address</div>
+      <div class="cv">PO Box 846<br>Salem, VA 24153</div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="map-wrap">
+    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3170.5!2d-79.9414!3d37.3218!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzfCsDE5JzE4LjUiTiA3OcKwNTYnMjkuMCJX!5e0!3m2!1sen!2sus!4v1" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
+</div>
+
+<!-- ===== VTV PARTNER BANNER ===== -->
+<div style="margin-top:2.5rem;padding:1.25rem;background:linear-gradient(135deg,rgba(212,168,71,.06) 0%,var(--surface) 100%);border:1px solid rgba(212,168,71,.18);border-radius:.75rem;text-align:center">
+  <div style="font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:.4rem">Partner Network</div>
+  <div style="font-size:.85rem;color:#fff;font-weight:600;margin-bottom:.25rem">Valley Word Church is a <a href="https://valuetovictory.com" target="_blank" style="color:var(--gold);text-decoration:none">Value to Victory</a> Partner</div>
+  <p style="font-size:.75rem;color:var(--muted);line-height:1.5;max-width:440px;margin:0 auto .75rem">VWC members get access to relationship tools, personal growth assessments, coaching, and daily devotionals through our partnership with Value to Victory.</p>
+  <a href="https://valuetovictory.com" target="_blank" style="display:inline-block;padding:.45rem 1.25rem;background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:.75rem;font-weight:700;border-radius:.4rem;text-decoration:none;transition:all .2s">Explore Partner Tools</a>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<div class="footer">
+  Valley Word Church &bull; 1928 Loch Haven Dr, Roanoke, VA 24019 &bull; <a href="tel:5405621500">540-562-1500</a><br>
+  <a href="https://vwconline.org/" target="_blank">vwconline.org</a> &bull; A Word of Faith Church &bull; Led by Drs. Eddie &amp; Debbie Crabtree<br>
+  Site powered by <a href="https://valuetovictory.com" target="_blank">Value to Victory</a><br>
+  &copy; 2026 Valley Word Church. All rights reserved.
+</div>
+
+</div><!-- /.page -->
+</body>
+</html>
