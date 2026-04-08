@@ -163,6 +163,17 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   .nav{grid-template-columns:repeat(2,1fr)}
   .stats{grid-template-columns:repeat(3,1fr)}
 }
+
+/* PHOTOS */
+.photo-hero{width:100%;height:200px;object-fit:cover;border-radius:1rem;border:1px solid var(--border);box-shadow:var(--card-shadow);margin-bottom:1.25rem;background:var(--warm)}
+.pastor-photo{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);box-shadow:0 4px 16px rgba(0,0,0,.12);float:left;margin:0 1rem .5rem 0;background:var(--warm)}
+.church-banner{width:100%;height:180px;object-fit:cover;border-radius:1rem 1rem 0 0;display:block;background:var(--warm)}
+
+/* CUSTOM SVG ICONS */
+.icon{display:inline-block;width:1.4em;height:1.4em;vertical-align:middle}
+.icon-lg{width:2rem;height:2rem}
+.icon-xl{width:2.5rem;height:2.5rem;margin-bottom:.35rem}
+
 </style>
 </head>
 <body>
@@ -187,12 +198,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
 <!-- NAV -->
 <div class="nav">
-  <a href="http://www.galileanhouse.org/" target="_blank"><span class="ni">&#9962;</span> Website</a>
-  <a href="#watch"><span class="ni">&#9654;&#65039;</span> Watch Live</a>
-  <a href="#give"><span class="ni">&#10084;&#65039;</span> Give</a>
-  <a href="#about"><span class="ni">&#128220;</span> About</a>
-  <a href="#ministries"><span class="ni">&#127758;</span> Ministries</a>
-  <a href="#connect"><span class="ni">&#128241;</span> Connect</a>
+  <a href="http://www.galileanhouse.org/" target="_blank"><span class="ni"><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span> Website</a>
+  <a href="#watch"><span class="ni"><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg></span> Watch Live</a>
+  <a href="#give"><span class="ni"><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg></span> Give</a>
+  <a href="#about"><span class="ni"><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span> About</a>
+  <a href="#ministries"><span class="ni"><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Ministries</a>
+  <a href="#connect"><span class="ni"><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span> Connect</a>
 </div>
 
 <!-- MISSION PILLARS -->
@@ -200,9 +211,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   <div class="sec-label">Our Purpose</div>
   <div class="sec-title">Three Pillars of GHOW</div>
   <div class="pillars">
-    <div class="pillar"><div class="pi">&#128218;</div><div class="pn">Teach Truth</div><div class="pd">Grounded in God's Word</div></div>
-    <div class="pillar"><div class="pi">&#129309;</div><div class="pn">Unite Cultures</div><div class="pd">One body, many nations</div></div>
-    <div class="pillar"><div class="pi">&#9889;</div><div class="pn">Empower</div><div class="pd">Believers for the last days</div></div>
+    <div class="pillar"><div class="pi"><svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h4"/></svg></div><div class="pn">Teach Truth</div><div class="pd">Grounded in God's Word</div></div>
+    <div class="pillar"><div class="pi"><svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="pn">Unite Cultures</div><div class="pd">One body, many nations</div></div>
+    <div class="pillar"><div class="pi"><svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><div class="pn">Empower</div><div class="pd">Believers for the last days</div></div>
   </div>
 </div>
 
@@ -210,13 +221,19 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 <div class="sec" id="about">
   <div class="sec-label">About GHOW</div>
   <div class="sec-title">A Church Centered on Christ</div>
+  <!-- Church building photo from Google Maps -->
+  <img class="photo-hero" src="https://maps.googleapis.com/maps/api/streetview?size=800x400&location=5078+AL+Philpott+Hwy,+Martinsville,+VA+24112&fov=90&pitch=5&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8" alt="Galilean House of Worship — 5078 A.L. Philpott Hwy, Martinsville VA" onerror="this.style.display='none'"/>
   <p class="sec-desc">The Galilean House of Worship is a nondenominational church in Martinsville, Virginia — a loving church family that enjoys worshipping and praising Jesus through traditional hymns, praise &amp; worship, and contemporary music.</p>
 
-  <div class="gc">
-    <h3>&#128081; Bishop Michael Penn</h3>
+  <div class="gc" style="overflow:hidden">
+    <img class="pastor-photo" src="https://graph.facebook.com/galilean.house/picture?type=large" alt="Bishop Michael Penn" onerror="this.style.display='none'"/>
+    <h3>Bishop Michael Penn</h3>
     <p>Better known as "Pastor Penn," he is married to Angela Kidd Penn and father of three — Jonathan, Sean, and Candice. In the year 2000, Pastor Penn began his journey of destiny as Senior Pastor of what was then Galilee Missionary Baptist Church, now The Galilean House of Worship.</p>
-    <a class="btn" href="http://www.galileanhouse.org/pastor.html" target="_blank">Full Bio</a>
-    <a class="btn btn-ghost" href="http://michaelpennministries.com/" target="_blank">MPMI</a>
+    <div style="clear:both"></div>
+    <div style="margin-top:.6rem">
+      <a class="btn" href="http://www.galileanhouse.org/pastor.html" target="_blank">Full Bio</a>
+      <a class="btn btn-ghost" href="http://michaelpennministries.com/" target="_blank">MPMI</a>
+    </div>
   </div>
 
   <div class="stats">
@@ -234,14 +251,14 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
   <div class="gc">
     <div class="tag tag-live">&#9679; Live Every Sunday</div>
-    <h3>&#127909; Sunday Morning Livestream</h3>
+    <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> Sunday Morning Livestream</h3>
     <p>Worship service broadcasts live at 10:30 AM on the Galilean House of Worship Facebook page. Powerful praise, worship, and Word-centered teaching from Bishop Penn.</p>
     <a class="btn" href="https://www.facebook.com/galilean.house" target="_blank">Watch on Facebook</a>
   </div>
 
   <div class="gc">
     <div class="tag tag-mid">Midweek</div>
-    <h3>&#128214; Wednesday Bible Study &amp; Prayer</h3>
+    <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> Wednesday Bible Study &amp; Prayer</h3>
     <p>Every Wednesday, 7:00–8:00 PM. Deepen your understanding of God's Word in community. Youth meet simultaneously for their own ministry time.</p>
     <a class="btn" href="http://www.galileanhouse.org/service.html" target="_blank">Service Details</a>
   </div>
@@ -253,14 +270,14 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   <div class="sec-title">Church Ministries</div>
   <p class="sec-desc">From Sunday morning worship to midweek study to youth — there is a place for everyone at GHOW.</p>
   <div class="mgrid">
-    <div class="mc"><div class="mi">&#9962;</div><div class="mn">Sunday Worship</div><div class="md">10:30 AM + Livestream</div></div>
-    <div class="mc"><div class="mi">&#128214;</div><div class="mn">Bible Study</div><div class="md">Wednesday 7 PM</div></div>
-    <div class="mc"><div class="mi">&#128591;</div><div class="mn">Prayer Ministry</div><div class="md">Corporate &amp; personal</div></div>
-    <div class="mc"><div class="mi">&#127926;</div><div class="mn">Music &amp; Choir</div><div class="md">Hymns, praise, contemporary</div></div>
-    <div class="mc"><div class="mi">&#128102;</div><div class="mn">Youth Ministry</div><div class="md">Wednesday nights</div></div>
-    <div class="mc"><div class="mi">&#128118;</div><div class="mn">Children's Ministry</div><div class="md">Nursery + kids program</div></div>
-    <div class="mc"><div class="mi">&#127758;</div><div class="mn">Community Outreach</div><div class="md">Serving Martinsville</div></div>
-    <div class="mc"><div class="mi">&#128220;</div><div class="mn">MPMI</div><div class="md">Michael Penn Ministries Intl</div></div>
+    <div class="mc"><div class="mi"><svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 2H6a2 2 0 0 0-2 2v16l8-4 8 4V4a2 2 0 0 0-2-2z"/></svg></div><div class="mn">Sunday Worship</div><div class="md">10:30 AM + Livestream</div></div>
+    <div class="mc"><div class="mi"><svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div><div class="mn">Bible Study</div><div class="md">Wednesday 7 PM</div></div>
+    <div class="mc"><div class="mi"><svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/><path d="M12 6v6l4 2"/></svg></div><div class="mn">Prayer Ministry</div><div class="md">Corporate &amp; personal</div></div>
+    <div class="mc"><div class="mi"><svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div class="mn">Music &amp; Choir</div><div class="md">Hymns, praise, contemporary</div></div>
+    <div class="mc"><div class="mi"><svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="mn">Youth Ministry</div><div class="md">Wednesday nights</div></div>
+    <div class="mc"><div class="mi"><svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg></div><div class="mn">Children's Ministry</div><div class="md">Nursery + kids program</div></div>
+    <div class="mc"><div class="mi"><svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div class="mn">Community Outreach</div><div class="md">Serving Martinsville</div></div>
+    <div class="mc"><div class="mi"><svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="mn">MPMI</div><div class="md">Michael Penn Ministries Intl</div></div>
   </div>
 </div>
 
@@ -270,7 +287,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   <div class="sec-title">News &amp; Events</div>
   <div class="gc">
     <div class="tag tag-mid">Latest</div>
-    <h3>&#128197; Upcoming at GHOW</h3>
+    <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Upcoming at GHOW</h3>
     <p>Special services, community events, outreach, and fellowship. Stay connected with everything happening at The Galilean House of Worship.</p>
     <a class="btn" href="http://www.galileanhouse.org/" target="_blank">View Events</a>
     <a class="btn btn-ghost" href="https://www.instagram.com/the_ghow/" target="_blank">Instagram</a>
