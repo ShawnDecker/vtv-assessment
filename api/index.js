@@ -3139,6 +3139,40 @@ ${roadmapHtml}
       }
     }
 
+    // POST /api/admin/reset-pin — Reset a user's PIN
+    if (req.method === 'POST' && url === '/admin/reset-pin') {
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      const newPin = (b.pin || '').trim();
+      if (!email || !newPin) return res.status(400).json({ error: 'email and pin required' });
+      if (!/^\d{4,6}$/.test(newPin)) return res.status(400).json({ error: 'PIN must be 4-6 digits' });
+
+      const pinHash = crypto.createHash('sha256').update(newPin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+      const rows = await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE LOWER(email) = ${email} RETURNING id, email, first_name`;
+      if (rows.length === 0) return res.status(404).json({ error: 'No contact found with that email' });
+      return res.json({ success: true, contact: { id: rows[0].id, email: rows[0].email, firstName: rows[0].first_name }, message: `PIN reset to ${newPin} for ${email}` });
+    }
+
+    // GET /api/admin/verify-pin-check — Check what PIN hash is stored vs what you're entering
+    if (req.method === 'GET' && url.startsWith('/admin/verify-pin-check')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = (params.get('email') || '').toLowerCase().trim();
+      const pin = (params.get('pin') || '').trim();
+      if (!email) return res.status(400).json({ error: 'email required' });
+
+      const rows = await sql`SELECT id, first_name, email, pin_hash, pin_set_at FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (rows.length === 0) return res.json({ found: false });
+
+      const result = { found: true, email: rows[0].email, firstName: rows[0].first_name, hasPin: !!rows[0].pin_hash, pinSetAt: rows[0].pin_set_at };
+      if (pin) {
+        const testHash = crypto.createHash('sha256').update(pin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+        result.pinMatches = testHash === rows[0].pin_hash;
+        result.storedHashPrefix = rows[0].pin_hash ? rows[0].pin_hash.substring(0, 8) + '...' : null;
+        result.testHashPrefix = testHash.substring(0, 8) + '...';
+      }
+      return res.json(result);
+    }
+
     // GET /api/admin/email-log/backfill — Populate email_log from existing data
     if (req.method === 'GET' && url === '/admin/email-log/backfill') {
       try {
