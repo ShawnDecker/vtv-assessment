@@ -241,6 +241,10 @@
       "dest": "/admin-contacts.html"
     },
     {
+      "src": "/valley-word-church",
+      "dest": "/valley-word-church.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
