@@ -109,6 +109,7 @@
     <div class="tab" data-tab="clients">Clients</div>
     <div class="tab" data-tab="assessments">Assessments</div>
     <div class="tab" data-tab="coaching">Coaching</div>
+    <div class="tab" data-tab="emails">Emails</div>
     <div class="tab" data-tab="feedback">Feedback</div>
     <div class="tab" data-tab="questions">Questions</div>
     <div class="tab" data-tab="tools">Tools</div>
@@ -145,6 +146,26 @@
       <div class="stat-grid" id="coachingStats"></div>
       <div class="section-title">Active Coaching Sequences</div>
       <div id="coachingList"></div>
+    </div>
+
+    <!-- EMAILS PANEL -->
+    <div class="panel" id="panel-emails">
+      <div class="stat-grid" id="emailStats"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <input type="text" class="search" id="emailSearch" placeholder="Search by email or name..." style="flex:1;min-width:150px;margin-bottom:0;" oninput="filterEmails()"/>
+        <select id="emailTypeFilter" onchange="filterEmails()" style="padding:10px 12px;background:#18181b;border:1px solid #27272a;border-radius:8px;color:#e4e4e7;font-size:14px;">
+          <option value="">All Types</option>
+          <option value="assessment_report">Assessment Report</option>
+          <option value="sign_in">Sign-In</option>
+          <option value="coaching">Coaching</option>
+          <option value="coaching_verify">Coaching Verify</option>
+          <option value="coaching_report">Coaching Report</option>
+          <option value="team_report">Team Report</option>
+          <option value="accountability">Accountability</option>
+        </select>
+      </div>
+      <div id="emailLogCount" style="font-size:12px;color:#71717a;margin-bottom:10px;"></div>
+      <div id="emailLogList"></div>
     </div>
 
     <!-- FEEDBACK PANEL -->
@@ -202,7 +223,7 @@
 <script>
 const BASE = '/api';
 let API_KEY = '';
-let DATA = { contacts:[], analytics:null, feedback:null, questions:[], coaching:[] };
+let DATA = { contacts:[], analytics:null, feedback:null, questions:[], coaching:[], emailLog:null };
 
 // ===== AUTH =====
 function authenticate() {
@@ -273,12 +294,14 @@ function loadAll() {
     api('/admin/feedback-summary').catch(e=>{errors.push(e.message);return null;}),
     api('/admin/question-bank').catch(e=>{errors.push(e.message);return[];}),
     api('/admin/coaching').catch(e=>{errors.push(e.message);return{sequences:[],requests:[]};}),
-  ]).then(([contacts, analytics, feedback, questions, coaching]) => {
+    api('/admin/email-log').catch(e=>{errors.push(e.message);return{logs:[],stats:[]};}),
+  ]).then(([contacts, analytics, feedback, questions, coaching, emailLog]) => {
     DATA.contacts = Array.isArray(contacts) ? contacts : [];
     DATA.analytics = analytics;
     DATA.feedback = feedback && !feedback.error ? feedback : null;
     DATA.questions = Array.isArray(questions) ? questions : [];
     DATA.coaching = coaching || {sequences:[],requests:[]};
+    DATA.emailLog = emailLog || {logs:[],stats:[]};
     if (errors.length > 0) {
       console.error('Admin dashboard API errors:', errors);
       document.getElementById('panel-overview').innerHTML = `<div class="empty" style="color:#ef4444;">API errors detected:<br><small>${errors.map(esc).join('<br>')}</small><br><br><span style="color:#71717a;">Check browser console. Your API key may not match ADMIN_API_KEY in Vercel env vars.</span></div>`;
@@ -290,6 +313,7 @@ function loadAll() {
     renderCoaching();
     renderFeedback();
     renderQuestions(DATA.questions);
+    renderEmailLog(DATA.emailLog);
   }).catch(err => {
     document.getElementById('panel-overview').innerHTML = `<div class="empty" style="color:#ef4444;">Failed to load data.<br><small>${esc(err.message)}</small></div>`;
   });
@@ -591,6 +615,79 @@ function filterQuestions() {
     (x.question||'').toLowerCase().includes(q) ||
     (x.fieldName||'').toLowerCase().includes(q)
   ));
+}
+
+// ===== EMAIL LOG =====
+function renderEmailLog(data) {
+  if (!data) return;
+  // Stats summary
+  const typeLabels = { assessment_report:'Assessment Report', sign_in:'Sign-In', coaching:'Coaching', coaching_verify:'Coaching Verify', coaching_report:'Coaching Report', team_report:'Team Report', accountability:'Accountability' };
+  const typeTotals = {};
+  let totalSent = 0, totalFailed = 0;
+  for (const s of (data.stats||[])) {
+    if (!typeTotals[s.type]) typeTotals[s.type] = { sent:0, failed:0 };
+    if (s.status === 'sent') { typeTotals[s.type].sent += s.count; totalSent += s.count; }
+    else { typeTotals[s.type].failed += s.count; totalFailed += s.count; }
+  }
+  document.getElementById('emailStats').innerHTML = `
+    <div class="stat-card"><div class="num">${totalSent+totalFailed}</div><div class="label">Total Emails</div></div>
+    <div class="stat-card"><div class="num" style="color:#22c55e;">${totalSent}</div><div class="label">Sent</div></div>
+    <div class="stat-card"><div class="num" style="color:#ef4444;">${totalFailed}</div><div class="label">Failed</div></div>
+  ` + Object.entries(typeTotals).map(([type,v]) =>
+    `<div class="stat-card"><div class="num">${v.sent}</div><div class="label">${typeLabels[type]||type}</div></div>`
+  ).join('');
+
+  renderEmailList(data.logs||[]);
+}
+
+function renderEmailList(logs) {
+  const typeLabels = { assessment_report:'Assessment Report', sign_in:'Sign-In', coaching:'Coaching', coaching_verify:'Coaching Verify', coaching_report:'Coaching Report', team_report:'Team Report', accountability:'Accountability' };
+  const typeColors = { assessment_report:'#D4A847', sign_in:'#3b82f6', coaching:'#22c55e', coaching_verify:'#a855f7', coaching_report:'#f97316', team_report:'#06b6d4', accountability:'#ec4899' };
+  document.getElementById('emailLogCount').textContent = logs.length + ' emails';
+  if (logs.length === 0) {
+    document.getElementById('emailLogList').innerHTML = '<div class="empty">No emails logged yet. Emails will appear here as they are sent.</div>';
+    return;
+  }
+  document.getElementById('emailLogList').innerHTML = logs.map(l => {
+    const name = [l.firstName, l.lastName].filter(Boolean).join(' ');
+    const typeColor = typeColors[l.emailType] || '#71717a';
+    const statusIcon = l.status === 'sent' ? '<span style="color:#22c55e;">&#10003;</span>' : '<span style="color:#ef4444;">&#10007;</span>';
+    const meta = l.metadata ? (typeof l.metadata === 'string' ? JSON.parse(l.metadata) : l.metadata) : {};
+    let detail = '';
+    if (meta.day) detail = 'Day ' + meta.day;
+    if (meta.score) detail = 'Score: ' + meta.score + ' (' + (meta.range||'') + ')';
+    if (meta.track) detail = meta.track;
+    if (meta.error) detail = '<span style="color:#ef4444;">' + esc(meta.error).substring(0,60) + '</span>';
+    return `<div class="card" style="margin-bottom:8px;padding:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:bold;color:#e4e4e7;">${statusIcon} ${esc(name||l.recipient)}</div>
+          <div style="font-size:12px;color:#D4A847;word-break:break-all;">${esc(l.recipient)}</div>
+          <div style="font-size:12px;color:#a1a1aa;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(l.subject||'')}</div>
+          ${detail ? '<div style="font-size:11px;color:#71717a;margin-top:2px;">'+detail+'</div>' : ''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:bold;background:${typeColor}22;color:${typeColor};text-transform:uppercase;">${typeLabels[l.emailType]||l.emailType}</span>
+          <div style="font-size:11px;color:#71717a;margin-top:4px;">${fmtDate(l.sentAt)}</div>
+          <div style="font-size:10px;color:#52525b;">${l.sentAt ? new Date(l.sentAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : ''}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterEmails() {
+  const q = (document.getElementById('emailSearch').value||'').toLowerCase();
+  const type = document.getElementById('emailTypeFilter').value;
+  const logs = (DATA.emailLog?.logs||[]).filter(l => {
+    if (type && l.emailType !== type) return false;
+    if (!q) return true;
+    return (l.recipient||'').toLowerCase().includes(q) ||
+      (l.firstName||'').toLowerCase().includes(q) ||
+      (l.lastName||'').toLowerCase().includes(q) ||
+      (l.subject||'').toLowerCase().includes(q);
+  });
+  renderEmailList(logs);
 }
 
 // ===== TOOLS =====

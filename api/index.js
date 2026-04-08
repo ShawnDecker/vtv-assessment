@@ -701,6 +701,37 @@ async function ensureCoachingTable(sql) {
   }
 }
 
+// ========== EMAIL LOG ==========
+let emailLogTableReady = false;
+async function ensureEmailLogTable(sql) {
+  if (emailLogTableReady) return;
+  try {
+    await sql`CREATE TABLE IF NOT EXISTS email_log (
+      id SERIAL PRIMARY KEY,
+      recipient TEXT NOT NULL,
+      email_type TEXT NOT NULL,
+      subject TEXT,
+      contact_id INTEGER,
+      assessment_id INTEGER,
+      status TEXT DEFAULT 'sent',
+      metadata JSONB,
+      sent_at TIMESTAMP DEFAULT NOW()
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_email_log_recipient ON email_log(recipient)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_email_log_type ON email_log(email_type)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_email_log_sent ON email_log(sent_at DESC)`;
+    emailLogTableReady = true;
+  } catch(e) { console.error('ensureEmailLogTable error:', e.message); }
+}
+
+async function logEmail(sql, { recipient, emailType, subject, contactId, assessmentId, status, metadata }) {
+  try {
+    await ensureEmailLogTable(sql);
+    await sql`INSERT INTO email_log (recipient, email_type, subject, contact_id, assessment_id, status, metadata)
+      VALUES (${recipient}, ${emailType}, ${subject || null}, ${contactId || null}, ${assessmentId || null}, ${status || 'sent'}, ${metadata ? JSON.stringify(metadata) : null}::jsonb)`;
+  } catch(e) { console.error('logEmail error (non-fatal):', e.message); }
+}
+
 module.exports = async (req, res) => {
   const corsOrigin = getCorsOrigin(req);
   res.setHeader('Access-Control-Allow-Origin', corsOrigin);
@@ -1064,8 +1095,10 @@ module.exports = async (req, res) => {
               html: signInHtml,
             });
             console.log(`Sign-in email sent to ${email} for contact ${contactId}`);
+            await logEmail(sql, { recipient: email, emailType: 'sign_in', subject: `New sign-in to your Value Engine account — ${dateStr}`, contactId });
           } catch (signInEmailErr) {
             console.error('Sign-in email error (non-fatal):', signInEmailErr.message);
+            await logEmail(sql, { recipient: email, emailType: 'sign_in', contactId, status: 'failed', metadata: { error: signInEmailErr.message } });
           }
         })();
       }
@@ -1562,6 +1595,7 @@ Don't guess. Run the system.
           });
           emailSent = true;
           console.log(`Auto-email sent to ${contactEmail} for assessment ${assessment.id}`);
+          await logEmail(sql, { recipient: contactEmail, emailType: 'assessment_report', subject, contactId: contact.id, assessmentId: assessment.id, metadata: { score: masterScore, range: scoreRange } });
         } catch (emailErr) {
           console.error('Auto-email FAILED for', contactEmail, ':', emailErr.message);
           // Retry once after 2 second delay
@@ -1579,8 +1613,10 @@ Don't guess. Run the system.
             });
             emailSent = true;
             console.log(`Auto-email RETRY succeeded for ${contactEmail}`);
+            await logEmail(sql, { recipient: contactEmail, emailType: 'assessment_report', subject, contactId: contact.id, assessmentId: assessment.id, metadata: { score: masterScore, range: scoreRange, retry: true } });
           } catch (retryErr) {
             console.error('Auto-email RETRY also failed for', contactEmail, ':', retryErr.message);
+            await logEmail(sql, { recipient: contactEmail, emailType: 'assessment_report', contactId: contact.id, assessmentId: assessment.id, status: 'failed', metadata: { error: retryErr.message } });
           }
         }
       } else {
@@ -2107,6 +2143,7 @@ Don't guess. Run the system.
           } catch (e) { /* webhook delivery is best-effort */ }
         }
 
+        await logEmail(sql, { recipient: cmaEmail, emailType: 'team_report', subject: `${teamName} — P.I.N.K. Value Engine Team Report`, metadata: { teamId, teamName } });
         return res.json({ success: true, sentTo: cmaEmail, generatedAt: reportData.generatedAt });
       } catch (e) {
         return res.status(500).json({ error: e.message });
@@ -3061,6 +3098,44 @@ ${roadmapHtml}
         });
       } catch(e) {
         return res.json({ sequences: [], requests: [], error: e.message });
+      }
+    }
+
+    // GET /api/admin/email-log — View all sent emails with filtering
+    if (req.method === 'GET' && url.startsWith('/admin/email-log')) {
+      try {
+        await ensureEmailLogTable(sql);
+        const params = new URL('http://x' + req.url).searchParams;
+        const emailFilter = params.get('email');
+        const typeFilter = params.get('type');
+        const limit = Math.min(parseInt(params.get('limit') || '200'), 500);
+
+        let logs;
+        if (emailFilter && typeFilter) {
+          logs = await sql`SELECT el.*, c.first_name, c.last_name FROM email_log el LEFT JOIN contacts c ON el.contact_id = c.id WHERE LOWER(el.recipient) = ${emailFilter.toLowerCase()} AND el.email_type = ${typeFilter} ORDER BY el.sent_at DESC LIMIT ${limit}`;
+        } else if (emailFilter) {
+          logs = await sql`SELECT el.*, c.first_name, c.last_name FROM email_log el LEFT JOIN contacts c ON el.contact_id = c.id WHERE LOWER(el.recipient) = ${emailFilter.toLowerCase()} ORDER BY el.sent_at DESC LIMIT ${limit}`;
+        } else if (typeFilter) {
+          logs = await sql`SELECT el.*, c.first_name, c.last_name FROM email_log el LEFT JOIN contacts c ON el.contact_id = c.id WHERE el.email_type = ${typeFilter} ORDER BY el.sent_at DESC LIMIT ${limit}`;
+        } else {
+          logs = await sql`SELECT el.*, c.first_name, c.last_name FROM email_log el LEFT JOIN contacts c ON el.contact_id = c.id ORDER BY el.sent_at DESC LIMIT ${limit}`;
+        }
+
+        // Summary stats
+        const stats = await sql`SELECT email_type, status, COUNT(*) as cnt FROM email_log GROUP BY email_type, status ORDER BY email_type`;
+
+        return res.json({
+          logs: logs.map(l => ({
+            id: l.id, recipient: l.recipient, emailType: l.email_type, subject: l.subject,
+            contactId: l.contact_id, firstName: l.first_name, lastName: l.last_name,
+            assessmentId: l.assessment_id, status: l.status,
+            metadata: l.metadata, sentAt: l.sent_at
+          })),
+          stats: stats.map(s => ({ type: s.email_type, status: s.status, count: Number(s.cnt) })),
+          total: logs.length
+        });
+      } catch(e) {
+        return res.json({ logs: [], stats: [], error: e.message });
       }
     }
 
@@ -4073,8 +4148,10 @@ This link expires in 24 hours.
 — The Value Engine
    ValueToVictory.com`,
           });
+          await logEmail(sql, { recipient: email, emailType: 'coaching_verify', subject: `Verify Your Email — ${trackLabel} Coaching Report`, contactId, metadata: { track } });
         } catch (emailErr) {
           console.error('Verification email error:', emailErr.message);
+          await logEmail(sql, { recipient: email, emailType: 'coaching_verify', contactId, status: 'failed', metadata: { error: emailErr.message } });
           return res.json({ submitted: true, emailSent: false, warning: 'Request saved but verification email could not be sent. Please contact us.' });
         }
       }
@@ -4271,6 +4348,7 @@ This link expires in 24 hours.
           });
           reportSent = true;
           await sql`UPDATE coaching_requests SET report_sent = true, report_sent_at = NOW() WHERE id = ${cr.id}`;
+          await logEmail(sql, { recipient: cr.email, emailType: 'coaching_report', subject: reportSubject, contactId: cr.contact_id, metadata: { track: cr.track, requestId: cr.id } });
         }
       } catch (reportErr) {
         console.error('Coaching report generation error:', reportErr.message);
@@ -4424,6 +4502,7 @@ This link expires in 24 hours.
             results.push({ email: seq.email, status: 'sent', day: nextDay });
             sentCount++;
             console.log(`Coaching email Day ${nextDay} sent to ${seq.email}`);
+            await logEmail(sql, { recipient: seq.email, emailType: 'coaching', subject: emailContent.subject, assessmentId: seq.assessment_id, metadata: { day: nextDay } });
 
           } catch (sendErr) {
             console.error(`Coaching email error for ${seq.email}:`, sendErr.message);
@@ -4603,9 +4682,11 @@ This link expires in 24 hours.
 
             results.push({ email: member.email, status: 'sent' });
             sentCount++;
+            await logEmail(sql, { recipient: member.email, emailType: 'accountability', subject: `${firstName}, what did you actually accomplish today?` });
           } catch (sendErr) {
             console.error(`Accountability email error for ${member.email}:`, sendErr.message);
             results.push({ email: member.email, status: 'error', error: sendErr.message });
+            await logEmail(sql, { recipient: member.email, emailType: 'accountability', status: 'failed', metadata: { error: sendErr.message } });
           }
         }
 
