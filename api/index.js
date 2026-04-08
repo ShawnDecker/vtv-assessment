@@ -4616,6 +4616,62 @@ This link expires in 24 hours.
       }
     }
 
+    // ========== STORY LINKS ==========
+    // Ensure story_links table exists
+    async function ensureStoryLinksTable() {
+      try {
+        await sql`CREATE TABLE IF NOT EXISTS story_links (
+          id SERIAL PRIMARY KEY,
+          story_slug TEXT NOT NULL,
+          story_title TEXT,
+          link_url TEXT NOT NULL,
+          link_type TEXT DEFAULT 'article',
+          link_title TEXT,
+          source TEXT,
+          description TEXT,
+          publish_date DATE,
+          created_at TIMESTAMP DEFAULT NOW()
+        )`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_story_links_slug ON story_links(story_slug)`;
+      } catch(e) { console.error('ensureStoryLinksTable error:', e.message); }
+    }
+
+    // GET /api/story-links?slug=xxx — Get all links for a story
+    if (req.method === 'GET' && url.startsWith('/story-links')) {
+      await ensureStoryLinksTable();
+      const params = new URL('http://x' + req.url).searchParams;
+      const slug = params.get('slug');
+      const links = slug
+        ? await sql`SELECT * FROM story_links WHERE story_slug = ${slug} ORDER BY created_at DESC`
+        : await sql`SELECT * FROM story_links ORDER BY created_at DESC`;
+      return res.json(links);
+    }
+
+    // POST /api/story-links — Add a link to a story
+    if (req.method === 'POST' && url === '/story-links') {
+      await ensureStoryLinksTable();
+      const b = req.body || {};
+      if (!b.storySlug || !b.linkUrl) return res.status(400).json({ error: 'storySlug and linkUrl required' });
+      const row = await sql`INSERT INTO story_links (story_slug, story_title, link_url, link_type, link_title, source, description, publish_date)
+        VALUES (${b.storySlug}, ${b.storyTitle || null}, ${b.linkUrl}, ${b.linkType || 'article'}, ${b.linkTitle || null}, ${b.source || null}, ${b.description || null}, ${b.publishDate || null})
+        RETURNING *`;
+      return res.json(row[0]);
+    }
+
+    // GET /api/story-links/seed — One-time seed for house fire story links
+    if (req.method === 'GET' && url === '/story-links/seed') {
+      await ensureStoryLinksTable();
+      const slug = 'house-fire-relief';
+      const existing = await sql`SELECT COUNT(*) as cnt FROM story_links WHERE story_slug = ${slug}`;
+      if (Number(existing[0].cnt) > 0) return res.json({ message: 'Already seeded', count: Number(existing[0].cnt) });
+
+      await sql`INSERT INTO story_links (story_slug, story_title, link_url, link_type, link_title, source, description, publish_date) VALUES
+        (${slug}, ${'House Fire Relief'}, ${'https://www.gofundme.com/f/qej2ht-house-fire-relief'}, ${'fundraiser'}, ${'House Fire Relief — GoFundMe'}, ${'GoFundMe'}, ${'GoFundMe campaign for house fire relief and recovery'}, ${'2024-04-21'}),
+        (${slug}, ${'House Fire Relief'}, ${'https://www.wdbj7.com/2024/04/21/no-injuries-reported-after-bedford-house-fire/'}, ${'news'}, ${'No injuries reported after Bedford house fire'}, ${'WDBJ7'}, ${'WDBJ7 news coverage of the Bedford house fire — includes video report'}, ${'2024-04-21'})
+      `;
+      return res.json({ message: 'Seeded 2 links for house-fire-relief', links: 2 });
+    }
+
     return res.status(404).json({ error: 'Not found' });
   } catch (err) {
     console.error('API Error:', err);
