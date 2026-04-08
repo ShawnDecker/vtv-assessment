@@ -3139,6 +3139,112 @@ ${roadmapHtml}
       }
     }
 
+    // GET /api/admin/email-log/backfill — Populate email_log from existing data
+    if (req.method === 'GET' && url === '/admin/email-log/backfill') {
+      try {
+        await ensureEmailLogTable(sql);
+        const existing = await sql`SELECT COUNT(*) as cnt FROM email_log`;
+        const alreadyHas = Number(existing[0].cnt);
+        let inserted = 0;
+
+        // 1. Assessment report emails — every assessment with a contact email
+        const assessments = await sql`
+          SELECT a.id as assessment_id, a.contact_id, a.completed_at, a.master_score, a.score_range, a.weakest_pillar, c.email, c.first_name
+          FROM assessments a JOIN contacts c ON a.contact_id = c.id
+          WHERE c.email IS NOT NULL AND c.email != ''
+          ORDER BY a.completed_at ASC
+        `;
+        for (const a of assessments) {
+          const dup = await sql`SELECT id FROM email_log WHERE recipient = ${a.email} AND email_type = 'assessment_report' AND assessment_id = ${a.assessment_id} LIMIT 1`;
+          if (dup.length === 0) {
+            await sql`INSERT INTO email_log (recipient, email_type, subject, contact_id, assessment_id, status, metadata, sent_at)
+              VALUES (${a.email}, 'assessment_report', ${`Your Value Engine Score: ${a.master_score} (${a.score_range}) — Personal Report Ready`}, ${a.contact_id}, ${a.assessment_id}, 'sent', ${JSON.stringify({ score: a.master_score, range: a.score_range, backfilled: true })}::jsonb, ${a.completed_at})`;
+            inserted++;
+          }
+        }
+
+        // 2. Coaching sequence emails — each day that was sent
+        try {
+          const sequences = await sql`
+            SELECT cs.email, cs.assessment_id, cs.current_day, cs.started_at, c.id as contact_id
+            FROM coaching_sequences cs
+            LEFT JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
+            WHERE cs.current_day > 0
+          `;
+          for (const s of sequences) {
+            for (let day = 1; day <= s.current_day; day++) {
+              const dup = await sql`SELECT id FROM email_log WHERE recipient = ${s.email} AND email_type = 'coaching' AND metadata->>'day' = ${String(day)} LIMIT 1`;
+              if (dup.length === 0) {
+                const sentDate = new Date(s.started_at);
+                sentDate.setDate(sentDate.getDate() + day);
+                await sql`INSERT INTO email_log (recipient, email_type, subject, contact_id, assessment_id, status, metadata, sent_at)
+                  VALUES (${s.email}, 'coaching', ${`Value Engine Coaching — Day ${day}`}, ${s.contact_id || null}, ${s.assessment_id}, 'sent', ${JSON.stringify({ day, backfilled: true })}::jsonb, ${sentDate.toISOString()})`;
+                inserted++;
+              }
+            }
+          }
+        } catch(e) { /* coaching table may not exist */ }
+
+        // 3. Coaching requests — verification emails
+        try {
+          const requests = await sql`
+            SELECT cr.id, cr.email, cr.contact_id, cr.track, cr.verified, cr.created_at
+            FROM coaching_requests cr
+          `;
+          for (const r of requests) {
+            const trackLabel = r.track === 'real_estate' ? 'Real Estate' : r.track === 'company' ? 'Company' : 'Personal';
+            const dup = await sql`SELECT id FROM email_log WHERE recipient = ${r.email} AND email_type = 'coaching_verify' AND metadata->>'requestId' = ${String(r.id)} LIMIT 1`;
+            if (dup.length === 0) {
+              await sql`INSERT INTO email_log (recipient, email_type, subject, contact_id, status, metadata, sent_at)
+                VALUES (${r.email}, 'coaching_verify', ${`Verify Your Email — ${trackLabel} Coaching Report`}, ${r.contact_id || null}, 'sent', ${JSON.stringify({ track: r.track, requestId: r.id, verified: r.verified, backfilled: true })}::jsonb, ${r.created_at})`;
+              inserted++;
+            }
+            // If verified and report sent, add coaching_report entry
+            if (r.verified) {
+              const dupR = await sql`SELECT id FROM email_log WHERE recipient = ${r.email} AND email_type = 'coaching_report' AND metadata->>'requestId' = ${String(r.id)} LIMIT 1`;
+              if (dupR.length === 0) {
+                await sql`INSERT INTO email_log (recipient, email_type, subject, contact_id, status, metadata, sent_at)
+                  VALUES (${r.email}, 'coaching_report', ${`Your ${trackLabel} Coaching Report — Value to Victory`}, ${r.contact_id || null}, 'sent', ${JSON.stringify({ track: r.track, requestId: r.id, backfilled: true })}::jsonb, ${r.created_at})`;
+                inserted++;
+              }
+            }
+          }
+        } catch(e) { /* coaching_requests table may not exist */ }
+
+        // 4. Free book signups — verification emails
+        try {
+          const signups = await sql`SELECT email, name, verified, created_at FROM free_book_signups`;
+          for (const s of signups) {
+            const dup = await sql`SELECT id FROM email_log WHERE recipient = ${s.email} AND email_type = 'free_book_verify' LIMIT 1`;
+            if (dup.length === 0) {
+              await sql`INSERT INTO email_log (recipient, email_type, subject, status, metadata, sent_at)
+                VALUES (${s.email}, 'free_book_verify', ${'Confirm Your Email — Your Free Copy of Running From Miracles is Waiting'}, 'sent', ${JSON.stringify({ name: s.name, verified: s.verified, backfilled: true })}::jsonb, ${s.created_at})`;
+              inserted++;
+            }
+            // If verified, they also got the PDF delivery email
+            if (s.verified) {
+              const dupD = await sql`SELECT id FROM email_log WHERE recipient = ${s.email} AND email_type = 'free_book_delivery' LIMIT 1`;
+              if (dupD.length === 0) {
+                await sql`INSERT INTO email_log (recipient, email_type, subject, status, metadata, sent_at)
+                  VALUES (${s.email}, 'free_book_delivery', ${'Your Free Copy of Running From Miracles — Download Inside'}, 'sent', ${JSON.stringify({ name: s.name, backfilled: true })}::jsonb, ${s.created_at})`;
+                inserted++;
+              }
+            }
+          }
+        } catch(e) { /* free_book_signups table may not exist */ }
+
+        const afterCount = await sql`SELECT COUNT(*) as cnt FROM email_log`;
+        return res.json({
+          message: `Backfill complete. ${inserted} records added.`,
+          beforeCount: alreadyHas,
+          afterCount: Number(afterCount[0].cnt),
+          inserted
+        });
+      } catch(e) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
     // GET /api/admin/feedback-summary — aggregated feedback data (Feature 4)
     if (req.method === 'GET' && url === '/admin/feedback-summary') {
       try {

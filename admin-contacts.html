@@ -162,6 +162,8 @@
           <option value="coaching_report">Coaching Report</option>
           <option value="team_report">Team Report</option>
           <option value="accountability">Accountability</option>
+          <option value="free_book_verify">Free Book Verify</option>
+          <option value="free_book_delivery">Free Book Delivery</option>
         </select>
       </div>
       <div id="emailLogCount" style="font-size:12px;color:#71717a;margin-bottom:10px;"></div>
@@ -192,6 +194,7 @@
         <button class="btn btn-outline" onclick="triggerHubspotSync()">Sync to HubSpot CRM</button>
         <button class="btn btn-outline" onclick="sendCoachingEmails()">Send Coaching Emails (Cron)</button>
         <button class="btn btn-outline" onclick="sendAccountabilityEmails()">Send Accountability Emails</button>
+        <button class="btn btn-outline" onclick="backfillEmailLog()">Backfill Email Log (One-Time)</button>
       </div>
       <div class="section-title">Quick Links</div>
       <div class="card" style="display:flex;flex-direction:column;gap:8px;">
@@ -621,7 +624,7 @@ function filterQuestions() {
 function renderEmailLog(data) {
   if (!data) return;
   // Stats summary
-  const typeLabels = { assessment_report:'Assessment Report', sign_in:'Sign-In', coaching:'Coaching', coaching_verify:'Coaching Verify', coaching_report:'Coaching Report', team_report:'Team Report', accountability:'Accountability' };
+  const typeLabels = { assessment_report:'Assessment Report', sign_in:'Sign-In', coaching:'Coaching', coaching_verify:'Coaching Verify', coaching_report:'Coaching Report', team_report:'Team Report', accountability:'Accountability', free_book_verify:'Free Book Verify', free_book_delivery:'Free Book Delivery' };
   const typeTotals = {};
   let totalSent = 0, totalFailed = 0;
   for (const s of (data.stats||[])) {
@@ -641,8 +644,8 @@ function renderEmailLog(data) {
 }
 
 function renderEmailList(logs) {
-  const typeLabels = { assessment_report:'Assessment Report', sign_in:'Sign-In', coaching:'Coaching', coaching_verify:'Coaching Verify', coaching_report:'Coaching Report', team_report:'Team Report', accountability:'Accountability' };
-  const typeColors = { assessment_report:'#D4A847', sign_in:'#3b82f6', coaching:'#22c55e', coaching_verify:'#a855f7', coaching_report:'#f97316', team_report:'#06b6d4', accountability:'#ec4899' };
+  const typeLabels = { assessment_report:'Assessment Report', sign_in:'Sign-In', coaching:'Coaching', coaching_verify:'Coaching Verify', coaching_report:'Coaching Report', team_report:'Team Report', accountability:'Accountability', free_book_verify:'Free Book Verify', free_book_delivery:'Free Book Delivery' };
+  const typeColors = { assessment_report:'#D4A847', sign_in:'#3b82f6', coaching:'#22c55e', coaching_verify:'#a855f7', coaching_report:'#f97316', team_report:'#06b6d4', accountability:'#ec4899', free_book_verify:'#14b8a6', free_book_delivery:'#84cc16' };
   document.getElementById('emailLogCount').textContent = logs.length + ' emails';
   if (logs.length === 0) {
     document.getElementById('emailLogList').innerHTML = '<div class="empty">No emails logged yet. Emails will appear here as they are sent.</div>';
@@ -711,6 +714,13 @@ function sendAccountabilityEmails() {
   fetch(BASE+'/accountability/send', { headers:{'x-api-key':API_KEY} })
     .then(r=>r.json()).then(d=>showToolResult(`Accountability: ${d.sent||0} emails sent`))
     .catch(e=>showToolResult('Failed: '+e.message,true));
+}
+function backfillEmailLog() {
+  if (!confirm('Backfill email log from existing assessments, coaching, and free book data?')) return;
+  showToolResult('Backfilling... this may take a moment.');
+  api('/admin/email-log/backfill')
+    .then(d=>{ showToolResult(`Backfill complete: ${d.inserted} records added (total: ${d.afterCount})`); loadAll(); })
+    .catch(e=>showToolResult('Backfill failed: '+e.message, true));
 }
 </script>
 </body>
