@@ -8,201 +8,163 @@
 <meta property="og:title" content="Valley Word Church — Connecting People to God and Their Destiny"/>
 <meta property="og:description" content="Word of Faith Church in Roanoke/Salem VA. Sunday 10AM. Led by Drs. Eddie &amp; Debbie Crabtree."/>
 <meta property="og:type" content="website"/>
-<meta property="og:url" content="https://vwc.valuetovictory.com"/>
-<meta name="twitter:card" content="summary_large_image"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <script type="application/ld+json">
-{
-  "@context":"https://schema.org","@type":"Church","name":"Valley Word Church",
-  "url":"https://vwconline.org","telephone":"+1-540-562-1500",
-  "address":{"@type":"PostalAddress","streetAddress":"1928 Loch Haven Drive","addressLocality":"Roanoke","addressRegion":"VA","postalCode":"24019","addressCountry":"US"},
-  "sameAs":["https://www.facebook.com/valleyword/","https://www.youtube.com/@valleywordtv","https://x.com/valleyword","https://www.linkedin.com/company/valley-word-church"]
-}
+{"@context":"https://schema.org","@type":"Church","name":"Valley Word Church","url":"https://vwconline.org","telephone":"+1-540-562-1500","address":{"@type":"PostalAddress","streetAddress":"1928 Loch Haven Drive","addressLocality":"Roanoke","addressRegion":"VA","postalCode":"24019","addressCountry":"US"},"sameAs":["https://www.facebook.com/valleyword/","https://www.youtube.com/@valleywordtv","https://x.com/valleyword","https://www.linkedin.com/company/valley-word-church"]}
 </script>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
-
-/* ===== LIGHT MODE (default) ===== */
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .4s,color .4s}
 :root{
-  --navy:#1a1a2e;--navy-light:#2d2d5e;
-  --royal:#3a3a8c;--royal-light:#e8e8f8;
-  --gold:#c5a44e;--gold-light:#f5efd8;--gold-dark:#a8893a;
-  --white:#ffffff;--off-white:#f8f7f4;--cream:#faf9f6;
-  --bg:#ffffff;
-  --text:#1a1a2e;--text-light:#5a5a7a;--text-muted:#8a8aaa;
-  --border:#e8e6e0;--border-light:#f0eeea;
-  --hero-bg:linear-gradient(180deg,#1a1a2e 0%,#2d2d5e 100%);
-  --card-bg:#ffffff;--card-shadow:0 1px 4px rgba(0,0,0,.06);
-  --svc-bg:var(--gold);--svc-text:var(--navy);
-  --mcard-bg:var(--off-white);
-  --college-bg:linear-gradient(135deg,#e8e8f8 0%,#fff 100%);--college-border:#d0d0f0;
-  --give-bg:linear-gradient(135deg,#f5efd8 0%,#fff 100%);--give-border:rgba(197,164,78,.25);
-  --partner-bg:var(--navy);--partner-text:#fff;
-  --tag-live-bg:#e8f8e8;--tag-live-color:#1a8a3a;--tag-live-border:#c8e8c8;
-  --map-filter:none;
+  --deep:#12203A;--gold:#C8A84E;--gold-glow:rgba(200,168,78,.15);--gold-dark:#A8893A;
+  --bg:#FDFBF7;--text:#12203A;--text-sec:#3A4A5C;--text-muted:#7A8A9C;
+  --border:#E5E0D6;--card-bg:#fff;--card-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.04);
+  --hero-bg:linear-gradient(160deg,#12203A 0%,#1C3356 40%,#244570 100%);
+  --svc-bg:var(--gold);--svc-text:#12203A;
+  --tag-live:#0D7A3A;--tag-live-bg:rgba(13,122,58,.08);
+  --map-filter:none;--fade:cubic-bezier(.22,1,.36,1);
+  --royal:#4040A0;--royal-light:#E8E8F8;
 }
-
-/* ===== DARK MODE ===== */
 [data-theme="dark"]{
-  --navy:#e4e4e7;--navy-light:#a1a1aa;
-  --royal:#8888cc;--royal-light:rgba(88,88,204,.15);
-  --gold:#D4A847;--gold-light:rgba(212,168,71,.12);--gold-dark:#b8942e;
-  --white:#18181b;--off-white:#1e1e22;--cream:#222226;
-  --bg:#0a0a0a;
-  --text:#e4e4e7;--text-light:#a1a1aa;--text-muted:#71717a;
-  --border:#27272a;--border-light:#1f1f23;
-  --hero-bg:linear-gradient(180deg,#0f0f1a 0%,#1a1a2e 100%);
-  --card-bg:#18181b;--card-shadow:0 1px 4px rgba(0,0,0,.3);
-  --svc-bg:#1a1a2e;--svc-text:var(--gold);
-  --mcard-bg:#18181b;
-  --college-bg:linear-gradient(135deg,rgba(88,88,204,.1) 0%,#18181b 100%);--college-border:rgba(88,88,204,.25);
-  --give-bg:linear-gradient(135deg,rgba(212,168,71,.08) 0%,#18181b 100%);--give-border:rgba(212,168,71,.2);
-  --partner-bg:#18181b;--partner-text:#e4e4e7;
-  --tag-live-bg:rgba(34,197,94,.12);--tag-live-color:#22c55e;--tag-live-border:rgba(34,197,94,.25);
-  --map-filter:grayscale(.8) invert(.92) contrast(1.1);
+  --deep:#E8E4DE;--gold:#D4A847;--gold-glow:rgba(212,168,71,.1);--gold-dark:#B8942E;
+  --bg:#0A0A0A;--text:#E8E4DE;--text-sec:#B0A898;--text-muted:#6A6A6A;
+  --border:#222;--card-bg:#141414;--card-shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.2);
+  --hero-bg:linear-gradient(160deg,#050A14 0%,#0C1B33 40%,#162D50 100%);
+  --svc-bg:#162D50;--svc-text:var(--gold);
+  --tag-live:#34D399;--tag-live-bg:rgba(52,211,153,.08);
+  --map-filter:grayscale(.85) invert(.92) contrast(1.1);
+  --royal:#8888CC;--royal-light:rgba(88,88,204,.12);
 }
-
-/* MODE TOGGLE */
-.mode-toggle{position:fixed;top:12px;right:12px;z-index:999;width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(255,255,255,.3);background:rgba(0,0,0,.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s}
-[data-theme="dark"] .mode-toggle{border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.08)}
-
-.page{max-width:720px;margin:0 auto;padding:0 1.25rem 3rem}
-
-/* HERO with church photo background */
-.hero{position:relative;text-align:center;padding:4rem 1.5rem 3rem;background:var(--hero-bg);color:#fff;overflow:hidden}
-.hero::before{content:'';position:absolute;inset:0;background:url('https://lh3.googleusercontent.com/p/AF1QipN_VWC_valley_word_church_roanoke') center/cover;opacity:.15;pointer-events:none}
-.hero-eyebrow{font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:1rem;position:relative}
-.hero h1{font-family:'Playfair Display',Georgia,serif;font-size:2.2rem;font-weight:700;line-height:1.2;margin-bottom:.6rem;position:relative}
-.hero .sub{color:rgba(255,255,255,.75);font-size:.9rem;line-height:1.6;max-width:480px;margin:0 auto .75rem;position:relative}
-.hero .pastor{font-size:.85rem;color:var(--gold);font-weight:600;position:relative}
-.hero .loc{font-size:.72rem;color:rgba(255,255,255,.5);margin-top:.35rem;position:relative}
-
-/* SERVICE STRIP */
-.svc-strip{display:flex;background:var(--svc-bg);color:var(--svc-text);margin:0}
-.svc-strip .svc{flex:1;text-align:center;padding:.75rem .5rem;border-right:1px solid rgba(128,128,128,.15)}
-.svc-strip .svc:last-child{border-right:none}
-.svc-strip .time{font-size:.95rem;font-weight:800}
-.svc-strip .label{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-top:.1rem;opacity:.7}
-
-/* NAV GRID */
-.nav-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:.75rem;overflow:hidden;margin:1.5rem 0}
-.nav-grid a{display:flex;flex-direction:column;align-items:center;gap:.35rem;padding:1rem .5rem;background:var(--card-bg);text-decoration:none;color:var(--text);font-size:.72rem;font-weight:600;transition:background .2s}
-.nav-grid a:active{background:var(--off-white)}
-.nav-grid a .ni{font-size:1.5rem}
-
-/* SECTIONS */
-.section{margin-top:2.25rem}
-.slabel{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-dark);font-weight:700;margin-bottom:.25rem}
-.stitle{font-family:'Playfair Display',Georgia,serif;font-size:1.4rem;font-weight:700;color:var(--navy);margin-bottom:.5rem}
-.sdesc{font-size:.85rem;color:var(--text-light);line-height:1.65;margin-bottom:1.25rem}
-
-/* CARDS */
-.card{background:var(--card-bg);border:1px solid var(--border);border-radius:.75rem;padding:1.25rem;margin-bottom:.6rem;transition:box-shadow .2s;box-shadow:var(--card-shadow)}
-.card:active{box-shadow:0 2px 12px rgba(0,0,0,.12)}
-.card h3{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:.25rem}
-.card p{font-size:.82rem;color:var(--text-light);line-height:1.55;margin-bottom:.6rem}
-.card .tag{display:inline-block;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;padding:.2rem .6rem;border-radius:2rem;font-weight:700;margin-bottom:.5rem}
-.tag-live{background:var(--tag-live-bg);color:var(--tag-live-color);border:1px solid var(--tag-live-border)}
-.tag-new{background:var(--royal-light);color:var(--royal);border:1px solid #d0d0f0}
-
-.btn{display:inline-block;padding:.6rem 1.4rem;background:var(--gold);color:#0a0a0a;font-size:.78rem;font-weight:700;border-radius:.5rem;text-decoration:none;transition:background .2s}
-.btn:active{background:var(--gold-dark)}
-.btn-gold{background:var(--gold);color:#0a0a0a}
-.btn-gold:active{background:var(--gold-dark)}
-.btn-outline{background:transparent;border:1.5px solid var(--gold);color:var(--gold);margin-left:.4rem}
-
-/* PHOTO BANNER */
-.photo-banner{width:100%;height:180px;border-radius:.75rem;object-fit:cover;margin-bottom:1rem;background:var(--off-white);border:1px solid var(--border)}
-
-/* MINISTRY GRID */
+.toggle{position:fixed;top:16px;right:16px;z-index:999;width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 2px 12px rgba(0,0,0,.1);color:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .3s var(--fade)}
+.toggle:active{transform:scale(.92)}
+.page{max-width:680px;margin:0 auto;padding:0 1.25rem 4rem}
+.hero{position:relative;text-align:center;padding:3rem 1.5rem 2rem;background:var(--hero-bg);color:#fff;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
+.hero-banner{position:relative;width:calc(100% + 3rem);margin:-1rem -1.5rem 1.25rem;height:260px;overflow:hidden}
+.hero-banner img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-banner::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,32,58,.2) 0%,rgba(18,32,58,.1) 40%,rgba(18,32,58,.65) 100%)}
+.hero-banner .bt{position:absolute;bottom:.75rem;left:0;right:0;text-align:center;z-index:2;font-family:'Playfair Display',serif;font-size:.6rem;letter-spacing:.35em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.hero-banner .bt span{display:block;font-size:.42rem;letter-spacing:.2em;color:rgba(200,168,78,.6);margin-top:.2rem}
+.hero-tag{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .9rem;border-radius:2rem;font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;background:rgba(200,168,78,.1);color:var(--gold);border:1px solid rgba(200,168,78,.15);font-weight:700;margin-bottom:1rem}
+.hero-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-family:'Playfair Display',Georgia,serif;font-size:2rem;font-weight:700;line-height:1.15;margin-bottom:.5rem}
+.hero h1 em{font-style:italic;color:var(--gold)}
+.hero .sub{color:rgba(255,255,255,.6);font-size:.85rem;line-height:1.6;max-width:460px;margin:0 auto .6rem}
+.hero .pastor{font-size:.8rem;color:var(--gold);font-weight:600}
+.hero .loc{font-size:.66rem;color:rgba(255,255,255,.35);margin-top:.25rem}
+.svc-strip{display:flex;background:var(--svc-bg);color:var(--svc-text)}
+.svc-strip .s{flex:1;text-align:center;padding:.8rem .5rem;border-right:1px solid rgba(0,0,0,.08)}
+[data-theme="dark"] .svc-strip .s{border-right-color:rgba(255,255,255,.06)}
+.svc-strip .s:last-child{border-right:none}
+.svc-strip .s .t{font-size:.92rem;font-weight:800}
+.svc-strip .s .d{font-size:.52rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;opacity:.6;margin-top:.1rem}
+.sec{margin-top:2.5rem}
+.sec-label{font-size:.52rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold-dark);font-weight:700;margin-bottom:.2rem}
+[data-theme="dark"] .sec-label{color:var(--gold)}
+.sec-title{font-family:'Playfair Display',Georgia,serif;font-size:1.4rem;font-weight:700;color:var(--text);margin-bottom:.5rem}
+.sec-desc{font-size:.82rem;color:var(--text-sec);line-height:1.7;margin-bottom:1.25rem}
+.accent-line{width:40px;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-dark));border-radius:2px;margin-bottom:.75rem}
+.gc{background:var(--card-bg);border:1px solid var(--border);border-radius:1rem;padding:1.3rem;margin-bottom:.6rem;box-shadow:var(--card-shadow);transition:border-color .25s,transform .25s var(--fade)}
+.gc:hover{border-color:var(--gold);transform:translateY(-1px)}
+.gc h3{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:.2rem}
+.gc p{font-size:.78rem;color:var(--text-sec);line-height:1.6;margin-bottom:.6rem}
+.gc .tag{display:inline-block;font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;padding:.2rem .6rem;border-radius:2rem;font-weight:700;margin-bottom:.5rem}
+.tag-live{background:var(--tag-live-bg);color:var(--tag-live)}
+.tag-mid{background:var(--gold-glow);color:var(--gold-dark)}
+[data-theme="dark"] .tag-mid{color:var(--gold)}
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.6rem 1.4rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#12203A;font-size:.74rem;font-weight:700;border-radius:.6rem;text-decoration:none;transition:all .25s var(--fade);box-shadow:0 2px 8px rgba(200,168,78,.25)}
+.btn:hover{box-shadow:0 4px 16px rgba(200,168,78,.35)}
+.btn:active{transform:scale(.97)}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--text);box-shadow:none;margin-left:.35rem}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.photo-card{position:relative;border-radius:1rem;overflow:hidden;margin-bottom:.6rem;box-shadow:var(--card-shadow)}
+.photo-card img{width:100%;height:180px;object-fit:cover;display:block}
+.photo-card::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(18,32,58,.85) 100%);pointer-events:none}
+.photo-card .pc{position:absolute;bottom:0;left:0;right:0;padding:1.2rem;z-index:2;color:#fff}
+.photo-card .pc h3{font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:.2rem}
+.photo-card .pc p{font-size:.72rem;color:rgba(255,255,255,.7);line-height:1.5}
+.photo-div{width:calc(100% + 2.5rem);margin:2.5rem -1.25rem;height:130px;overflow:hidden;position:relative}
+.photo-div img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.5)}
+.photo-div::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 20%,transparent 80%,var(--bg) 100%)}
+.photo-div .pd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-family:'Playfair Display',serif;font-style:italic;font-size:1rem;color:rgba(255,255,255,.8);text-shadow:0 2px 8px rgba(0,0,0,.5);padding:0 2rem;text-align:center}
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
-.mcard{background:var(--mcard-bg);border:1px solid var(--border);border-radius:.6rem;padding:.85rem;text-align:center;transition:background .2s}
-.mcard:active{background:var(--cream)}
-.mcard .mi{font-size:1.5rem;margin-bottom:.2rem}
-.mcard .mn{font-size:.78rem;font-weight:700;color:var(--text)}
-.mcard .md{font-size:.65rem;color:var(--text-muted);margin-top:.15rem}
-
-/* COLLEGE */
-.college-card{background:var(--college-bg);border:1px solid var(--college-border);border-radius:.75rem;padding:1.5rem;text-align:center}
-.college-card .badge{display:inline-block;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--royal);background:rgba(58,58,140,.08);padding:.2rem .7rem;border-radius:2rem;font-weight:700;margin-bottom:.75rem;border:1px solid rgba(58,58,140,.15)}
-.college-card h3{font-size:1.1rem;color:var(--text);margin-bottom:.4rem}
-.college-card p{font-size:.82rem;color:var(--text-light);line-height:1.5;margin-bottom:1rem}
-
-/* SHOP */
+.mc{background:var(--card-bg);border:1px solid var(--border);border-radius:.75rem;padding:.9rem;text-align:center;box-shadow:var(--card-shadow);transition:border-color .2s,transform .2s var(--fade)}
+.mc:hover{border-color:var(--gold);transform:translateY(-1px)}
+.mc .mi{font-size:1.4rem;margin-bottom:.2rem}
+.mc .mn{font-size:.74rem;font-weight:700;color:var(--text)}
+.mc .md{font-size:.58rem;color:var(--text-muted);margin-top:.1rem}
+.college{background:linear-gradient(135deg,var(--royal-light),var(--card-bg));border:1px solid rgba(64,64,160,.15);border-radius:1rem;padding:1.4rem;text-align:center;box-shadow:var(--card-shadow)}
+.college h3{font-size:1.05rem;color:var(--text);margin-bottom:.35rem}
+.college p{font-size:.8rem;color:var(--text-sec);line-height:1.5;margin-bottom:.85rem}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-top:.6rem}
+.stat{background:var(--card-bg);border:1px solid var(--border);border-radius:.6rem;padding:.7rem;text-align:center;box-shadow:var(--card-shadow)}
+.stat .num{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--royal)}
+[data-theme="dark"] .stat .num{color:var(--royal)}
+.stat .lbl{font-size:.5rem;color:var(--text-muted);margin-top:.1rem}
 .shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
-.shop-item{background:var(--card-bg);border:1px solid var(--border);border-radius:.6rem;padding:1rem;text-align:center}
-.shop-item .si{font-size:2rem;margin-bottom:.3rem}
-.shop-item .sn{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.15rem}
-.shop-item .sd{font-size:.68rem;color:var(--text-muted);margin-bottom:.6rem;line-height:1.4}
-
-/* SOCIAL */
-.social-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}
-.social-grid a{display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:.65rem .4rem;background:var(--off-white);border:1px solid var(--border-light);border-radius:.5rem;text-decoration:none;color:var(--text);font-size:.68rem;font-weight:600;text-align:center}
-.social-grid a .si{font-size:1.2rem}
-.social-grid a .sh{font-size:.55rem;color:var(--text-muted)}
-
-/* CONTACT */
-.contact-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem}
-.cbox{flex:1;min-width:170px;background:var(--off-white);border:1px solid var(--border-light);border-radius:.5rem;padding:.75rem;text-align:center}
-.cbox .cl{font-size:.58rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.2rem}
-.cbox .cv{font-size:.8rem;font-weight:700;color:var(--navy)}
-.cbox a{color:var(--gold-dark);text-decoration:none}
-
-/* GIVE */
-.give-card{margin-top:1.5rem;padding:1.5rem;background:var(--give-bg);border:1px solid var(--give-border);border-radius:.75rem;text-align:center}
-.give-card h3{font-size:1.05rem;color:var(--text);margin-bottom:.3rem}
-.give-card p{font-size:.8rem;color:var(--text-light);margin-bottom:1rem;line-height:1.5}
-
-/* MAP */
-.map-wrap{margin-top:.75rem;border-radius:.75rem;overflow:hidden;border:1px solid var(--border)}
-.map-wrap iframe{width:100%;height:220px;border:0;display:block;filter:var(--map-filter)}
-
-/* PARTNER */
-.partner-card{margin-top:2rem;padding:1.1rem;background:var(--partner-bg);border-radius:.75rem;text-align:center;color:var(--partner-text);border:1px solid var(--border)}
-.partner-card .pl{font-size:.5rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:.35rem}
-.partner-card .pt{font-size:.82rem;font-weight:600;margin-bottom:.2rem}
-.partner-card .pt a{color:var(--gold);text-decoration:none}
-.partner-card p{font-size:.7rem;color:rgba(255,255,255,.55);line-height:1.5;max-width:400px;margin:0 auto .6rem}
-.partner-card .pa{display:inline-block;padding:.4rem 1rem;border:1px solid var(--gold);color:var(--gold);font-size:.7rem;font-weight:700;border-radius:.35rem;text-decoration:none}
-
-.footer{text-align:center;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--text-muted);line-height:1.8}
-.footer a{color:var(--gold-dark);text-decoration:none}
-
-@media(max-width:480px){
-  .hero h1{font-size:1.75rem}
-  .mgrid,.shop-grid{grid-template-columns:1fr}
-  .nav-grid{grid-template-columns:repeat(2,1fr)}
-}
+.shop-item{background:var(--card-bg);border:1px solid var(--border);border-radius:.6rem;padding:.9rem;text-align:center;box-shadow:var(--card-shadow)}
+.shop-item .si{font-size:1.6rem;margin-bottom:.2rem}
+.shop-item .sn{font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:.1rem}
+.shop-item .sd{font-size:.62rem;color:var(--text-muted);margin-bottom:.5rem;line-height:1.4}
+.give{margin-top:1.5rem;padding:1.5rem;background:linear-gradient(135deg,var(--gold-glow),var(--card-bg));border:1px solid rgba(200,168,78,.18);border-radius:1rem;text-align:center;box-shadow:var(--card-shadow)}
+.give h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text);margin-bottom:.3rem}
+.give p{font-size:.76rem;color:var(--text-sec);margin-bottom:1rem;line-height:1.5}
+.soc{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}
+.soc a{display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.65rem .4rem;background:var(--card-bg);border:1px solid var(--border);border-radius:.6rem;text-decoration:none;color:var(--text);font-size:.64rem;font-weight:600;text-align:center;transition:border-color .2s;box-shadow:var(--card-shadow)}
+.soc a:hover{border-color:var(--gold)}
+.soc a .si{font-size:1.1rem}
+.soc a .sh{font-size:.48rem;color:var(--text-muted)}
+.cx{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-top:.7rem}
+.cb{background:var(--card-bg);border:1px solid var(--border);border-radius:.6rem;padding:.7rem;text-align:center;box-shadow:var(--card-shadow)}
+.cb .cl{font-size:.48rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.15rem}
+.cb .cv{font-size:.72rem;font-weight:700;color:var(--text)}
+.cb a{color:var(--gold-dark);text-decoration:none}
+[data-theme="dark"] .cb a{color:var(--gold)}
+.map{margin-top:.7rem;border-radius:1rem;overflow:hidden;border:1px solid var(--border);box-shadow:var(--card-shadow)}
+.map iframe{width:100%;height:200px;border:0;display:block;filter:var(--map-filter)}
+.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:1rem;overflow:hidden;margin:1.5rem 0}
+.nav a{display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:1rem .5rem;background:var(--card-bg);text-decoration:none;color:var(--text);font-size:.66rem;font-weight:600}
+.nav a:active{background:rgba(200,168,78,.04)}
+.nav a .ni{font-size:1.3rem}
+.scripture{position:relative;margin:1.5rem 0;padding:1.4rem 1.4rem 1.4rem 1.8rem;background:var(--card-bg);border-left:3px solid var(--gold);border-radius:0 .75rem .75rem 0;box-shadow:var(--card-shadow);font-family:'Playfair Display',serif;font-style:italic;font-size:.88rem;color:var(--text);line-height:1.7}
+.scripture::before{content:'\201C';position:absolute;top:-.1rem;left:.4rem;font-family:'Playfair Display',serif;font-size:3rem;color:var(--gold);opacity:.2}
+.scripture .ref{display:block;font-family:'Inter',sans-serif;font-style:normal;font-size:.6rem;color:var(--gold-dark);font-weight:700;letter-spacing:.08em;margin-top:.4rem;text-transform:uppercase}
+[data-theme="dark"] .scripture .ref{color:var(--gold)}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s var(--fade),transform .6s var(--fade)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.divider{display:flex;align-items:center;gap:.75rem;margin:2.5rem 0 .5rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
+.divider span{font-size:.48rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-dark);font-weight:700}
+[data-theme="dark"] .divider span{color:var(--gold)}
+.foot{text-align:center;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.58rem;color:var(--text-muted);line-height:2}
+.foot a{color:var(--gold-dark);text-decoration:none}
+[data-theme="dark"] .foot a{color:var(--gold)}
+@media(max-width:480px){.hero h1{font-size:1.6rem}.mgrid,.shop-grid,.cx{grid-template-columns:1fr}.nav{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-
-<!-- HERO -->
 <div class="hero">
-  <div class="hero-eyebrow">Valley Word Church</div>
-  <h1>Connecting People to God<br>and Their Destiny in Christ</h1>
+  <div class="hero-banner">
+    <img src="https://images.unsplash.com/photo-1477346611705-65d1883cee1e?w=900&q=85&auto=format" alt="19-acre mountain campus at golden hour" loading="eager"/>
+    <div class="bt">Valley Word Church<span>19-Acre Campus &bull; Roanoke, Virginia</span></div>
+  </div>
+  <div class="hero-tag"><span class="dot"></span> Live Every Sunday at 10:00 AM</div>
+  <h1>Connecting People to God<br>and Their <em>Destiny in Christ</em></h1>
   <p class="sub">Empowering believers of all nations and cultures for success in the home, the church, the marketplace, and the world.</p>
   <p class="pastor">Drs. Eddie &amp; Debbie Crabtree</p>
-  <p class="loc">19-Acre Campus &bull; I-81 Exit 141 &bull; Roanoke / Salem, VA</p>
+  <p class="loc">I-81 Exit 141 &bull; Roanoke / Salem, VA</p>
 </div>
-
-<!-- SERVICE STRIP -->
 <div class="svc-strip">
-  <div class="svc"><div class="time">10:00 AM</div><div class="label">Sunday Worship</div></div>
-  <div class="svc"><div class="time">6:00 PM</div><div class="label">Sunday UCML</div></div>
-  <div class="svc"><div class="time">By Appt</div><div class="label">Mon — Thu</div></div>
+  <div class="s"><div class="t">10:00 AM</div><div class="d">Sunday Worship</div></div>
+  <div class="s"><div class="t">6:00 PM</div><div class="d">Sunday UCML</div></div>
+  <div class="s"><div class="t">By Appt</div><div class="d">Mon — Thu</div></div>
 </div>
-
 <div class="page">
-
-<!-- NAV -->
-<div class="nav-grid">
-  <a href="https://vwconline.org/" target="_blank"><span class="ni">&#9962;</span> Website</a>
+<div class="nav">
+  <a href="https://vwconline.org/" target="_blank"><span class="ni">&#127760;</span> Website</a>
   <a href="#watch"><span class="ni">&#9654;&#65039;</span> Watch</a>
   <a href="#give"><span class="ni">&#10084;&#65039;</span> Give</a>
   <a href="#college"><span class="ni">&#127891;</span> College</a>
@@ -210,167 +172,149 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   <a href="#connect"><span class="ni">&#128241;</span> Connect</a>
 </div>
 
-<!-- ABOUT -->
-<div class="section">
-  <div class="slabel">About VWC</div>
-  <div class="stitle">A Word of Faith Church on the Move</div>
-  <p class="sdesc">Valley Word Church is an ethnically diverse, nondenominational Word of Faith Church of approximately 200 members on a beautiful 19-acre campus in Roanoke, Virginia. An active and growing body of believers reaching out to impact every nation for Christ.</p>
-  <div class="card">
+<div class="scripture reveal">
+  "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future."
+  <span class="ref">— Jeremiah 29:11</span>
+</div>
+
+<div class="divider"><span>About</span></div>
+<div class="sec reveal">
+  <div class="accent-line"></div>
+  <div class="sec-label">About VWC</div>
+  <div class="sec-title">A Word of Faith Church on the Move</div>
+  <div class="photo-card">
+    <img src="https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=800&q=80&auto=format" alt="Diverse congregation in worship" loading="lazy"/>
+    <div class="pc"><h3>Ethnically Diverse &bull; ~200 Members</h3><p>Situated on a beautiful 19-acre property along the I-81 corridor</p></div>
+  </div>
+  <p class="sec-desc">Valley Word Church is an ethnically diverse, nondenominational Word of Faith Church. An active and growing body of believers reaching out to impact every nation for Christ through services, ministries, mission programs, books, DVDs, and their website.</p>
+  <div class="gc">
     <h3>Our Beliefs</h3>
     <p>We believe in the power of God's love, the divinity of Jesus Christ, and the guidance of the Holy Spirit. Through faith and prayer, we can overcome any obstacle and live a life of purpose and meaning.</p>
     <a class="btn" href="https://vwconline.org/about" target="_blank">Learn More</a>
   </div>
 </div>
 
-<!-- WATCH -->
-<div class="section" id="watch">
-  <div class="slabel">Watch &amp; Listen</div>
-  <div class="stitle">Sermons &amp; Teaching</div>
-  <p class="sdesc">Stream Sunday worship, catch up on past sermons, and hear the Word from Dr. Eddie Crabtree — anytime, anywhere.</p>
+<div class="photo-div">
+  <img src="https://images.unsplash.com/photo-1445445290350-18a3b86e0968?w=900&q=80&auto=format" alt="Open Bible with light" loading="lazy"/>
+  <div class="pd">"Faith comes by hearing, and hearing by the Word of God"</div>
+</div>
 
-  <div class="card">
-    <div class="tag tag-live">Live Sundays</div>
-    <h3>&#127909; Sunday Worship Livestream</h3>
-    <p>Join us live every Sunday at 10 AM. Powerful Word of Faith teaching, praise &amp; worship, and fellowship.</p>
-    <a class="btn" href="https://www.youtube.com/@valleywordtv" target="_blank">Watch on YouTube</a>
-    <a class="btn btn-outline" href="https://www.facebook.com/valleyword/" target="_blank">Facebook</a>
+<div class="sec reveal" id="watch">
+  <div class="accent-line"></div>
+  <div class="sec-label">Watch &amp; Listen</div>
+  <div class="sec-title">Sermons &amp; Teaching</div>
+  <div class="photo-card">
+    <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80&auto=format" alt="Worship service" loading="lazy"/>
+    <div class="pc">
+      <div class="tag tag-live" style="color:#fff;background:rgba(13,122,58,.5)">&#9679; Live Sundays</div>
+      <h3>Sunday Worship Livestream</h3>
+      <p>YouTube @valleywordtv &amp; Facebook @valleyword</p>
+      <a class="btn" href="https://www.youtube.com/@valleywordtv" target="_blank" style="margin-top:.4rem">Watch on YouTube</a>
+    </div>
   </div>
-
-  <div class="card">
-    <h3>&#127897; Word from God — Dr. Eddie Crabtree</h3>
-    <p>Teaching series, conference messages, and special Word of Faith content from Dr. Crabtree's decades of ministry.</p>
+  <div class="gc">
+    <h3>Word from God — Dr. Eddie Crabtree</h3>
+    <p>Teaching series, conference messages, and Word of Faith content from Dr. Crabtree's decades of ministry.</p>
     <a class="btn" href="https://www.youtube.com/@valleywordtv" target="_blank">Browse Sermons</a>
+    <a class="btn btn-ghost" href="https://www.facebook.com/valleyword/" target="_blank">Facebook</a>
   </div>
 </div>
 
-<!-- MINISTRIES -->
-<div class="section">
-  <div class="slabel">Get Involved</div>
-  <div class="stitle">Ministries at VWC</div>
-  <p class="sdesc">From Sunday worship to small groups, outreach to missions — there's a place for you.</p>
+<div class="divider"><span>Ministries</span></div>
+<div class="sec reveal">
+  <div class="accent-line"></div>
+  <div class="sec-label">Get Involved</div>
+  <div class="sec-title">Ministries at VWC</div>
   <div class="mgrid">
-    <div class="mcard"><div class="mi">&#9962;</div><div class="mn">Sunday Worship</div><div class="md">10 AM &amp; 6 PM</div></div>
-    <div class="mcard"><div class="mi">&#128101;</div><div class="mn">Small Groups</div><div class="md">Weekly community</div></div>
-    <div class="mcard"><div class="mi">&#128102;</div><div class="mn">Youth Ministry</div><div class="md">Student discipleship</div></div>
-    <div class="mcard"><div class="mi">&#128118;</div><div class="mn">Children's Ministry</div><div class="md">Kids programming</div></div>
-    <div class="mcard"><div class="mi">&#128104;&#8205;&#128105;&#8205;&#128103;&#8205;&#128102;</div><div class="mn">Men's &amp; Women's</div><div class="md">Growth groups</div></div>
-    <div class="mcard"><div class="mi">&#127758;</div><div class="mn">Outreach &amp; Missions</div><div class="md">Local &amp; global</div></div>
-    <div class="mcard"><div class="mi">&#128149;</div><div class="mn">Marriage &amp; Family</div><div class="md">Strengthening homes</div></div>
-    <div class="mcard"><div class="mi">&#129309;</div><div class="mn">Partnerships</div><div class="md">Ministry partners</div></div>
+    <div class="mc"><div class="mi">&#9962;</div><div class="mn">Sunday Worship</div><div class="md">10 AM &amp; 6 PM</div></div>
+    <div class="mc"><div class="mi">&#128101;</div><div class="mn">Small Groups</div><div class="md">Weekly community</div></div>
+    <div class="mc"><div class="mi">&#128102;</div><div class="mn">Youth Ministry</div><div class="md">Student discipleship</div></div>
+    <div class="mc"><div class="mi">&#128118;</div><div class="mn">Children's Ministry</div><div class="md">Kids programming</div></div>
+    <div class="mc"><div class="mi">&#129309;</div><div class="mn">Men's &amp; Women's</div><div class="md">Growth groups</div></div>
+    <div class="mc"><div class="mi">&#127758;</div><div class="mn">Outreach &amp; Missions</div><div class="md">Local &amp; global</div></div>
+    <div class="mc"><div class="mi">&#128149;</div><div class="mn">Marriage &amp; Family</div><div class="md">Strengthening homes</div></div>
+    <div class="mc"><div class="mi">&#128218;</div><div class="mn">Books &amp; DVDs</div><div class="md">Teaching resources</div></div>
   </div>
 </div>
 
-<!-- COLLEGE -->
-<div class="section" id="college">
-  <div class="slabel">Biblical Education</div>
-  <div class="stitle">Word Bible College at VWC</div>
-  <p class="sdesc">Advance your calling with theological education — local classes on our Roanoke campus or fully online.</p>
-  <div class="college-card">
-    <div class="badge">Local &amp; Online Classes</div>
+<div class="divider"><span>Education</span></div>
+<div class="sec reveal" id="college">
+  <div class="accent-line"></div>
+  <div class="sec-label">Biblical Education</div>
+  <div class="sec-title">Word Bible College at VWC</div>
+  <div class="college">
     <h3>Earn Up to a Doctor of Ministry in Theology</h3>
-    <p>From certificate level through doctoral studies, Word Bible College at VWC equips believers for their calling and destiny.</p>
-    <a class="btn btn-gold" href="https://vwconline.org/" target="_blank">Enroll at VWCOnline.org</a>
+    <p>Local and online classes. From certificate level through doctoral studies — equipping believers for their calling and destiny.</p>
+    <a class="btn" href="https://vwconline.org/" target="_blank">Enroll at VWCOnline.org</a>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-top:.6rem">
-    <div style="background:var(--royal-light);border-radius:.5rem;padding:.65rem;text-align:center">
-      <div style="font-size:1.2rem;font-weight:900;color:var(--royal)">4</div>
-      <div style="font-size:.55rem;color:var(--text-muted)">Degree Levels</div>
-    </div>
-    <div style="background:var(--royal-light);border-radius:.5rem;padding:.65rem;text-align:center">
-      <div style="font-size:1rem;font-weight:900;color:var(--royal)">Online</div>
-      <div style="font-size:.55rem;color:var(--text-muted)">+ In-Person</div>
-    </div>
-    <div style="background:var(--royal-light);border-radius:.5rem;padding:.65rem;text-align:center">
-      <div style="font-size:1rem;font-weight:900;color:var(--royal)">D.Min</div>
-      <div style="font-size:.55rem;color:var(--text-muted)">Highest Degree</div>
-    </div>
+  <div class="stats">
+    <div class="stat"><div class="num">4</div><div class="lbl">Degree Levels</div></div>
+    <div class="stat"><div class="num">Online</div><div class="lbl">+ In-Person</div></div>
+    <div class="stat"><div class="num">D.Min</div><div class="lbl">Highest Degree</div></div>
   </div>
 </div>
 
-<!-- SHOP -->
-<div class="section" id="shop">
-  <div class="slabel">Resources</div>
-  <div class="stitle">Books, DVDs &amp; Teaching</div>
-  <p class="sdesc">Powerful Word of Faith resources from Dr. Eddie &amp; Dr. Debbie Crabtree.</p>
+<div class="divider"><span>Resources</span></div>
+<div class="sec reveal" id="shop">
+  <div class="accent-line"></div>
+  <div class="sec-label">Resources</div>
+  <div class="sec-title">Books, DVDs &amp; Teaching</div>
   <div class="shop-grid">
-    <div class="shop-item"><div class="si">&#128214;</div><div class="sn">Books</div><div class="sd">Study guides, devotionals, ministry resources</div><a class="btn btn-gold" href="https://vwconline.org/" target="_blank">Browse</a></div>
-    <div class="shop-item"><div class="si">&#128191;</div><div class="sn">DVD Series</div><div class="sd">Conference messages &amp; sermon series</div><a class="btn btn-gold" href="https://vwconline.org/" target="_blank">Shop</a></div>
-    <div class="shop-item"><div class="si">&#127897;</div><div class="sn">Audio</div><div class="sd">Teaching for your commute or quiet time</div><a class="btn btn-gold" href="https://www.youtube.com/@valleywordtv" target="_blank">Listen</a></div>
-    <div class="shop-item"><div class="si">&#127891;</div><div class="sn">Courses</div><div class="sd">Certificate to doctorate level</div><a class="btn btn-gold" href="https://vwconline.org/" target="_blank">Enroll</a></div>
+    <div class="shop-item"><div class="si">&#128214;</div><div class="sn">Books</div><div class="sd">Study guides &amp; devotionals</div><a class="btn" href="https://vwconline.org/" target="_blank">Browse</a></div>
+    <div class="shop-item"><div class="si">&#128191;</div><div class="sn">DVD Series</div><div class="sd">Conference messages</div><a class="btn" href="https://vwconline.org/" target="_blank">Shop</a></div>
+    <div class="shop-item"><div class="si">&#127897;</div><div class="sn">Audio</div><div class="sd">Teaching on the go</div><a class="btn" href="https://www.youtube.com/@valleywordtv" target="_blank">Listen</a></div>
+    <div class="shop-item"><div class="si">&#127891;</div><div class="sn">Courses</div><div class="sd">Certificate to doctorate</div><a class="btn" href="https://vwconline.org/" target="_blank">Enroll</a></div>
   </div>
 </div>
 
-<!-- GIVE -->
-<div class="section" id="give">
-  <div class="give-card">
-    <div class="slabel" style="margin-bottom:.4rem">Support the Ministry</div>
+<div class="photo-div">
+  <img src="https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=900&q=80&auto=format" alt="Golden sunrise" loading="lazy"/>
+  <div class="pd">"Give, and it will be given to you" — Luke 6:38</div>
+</div>
+
+<div class="sec reveal" id="give">
+  <div class="give">
+    <div class="sec-label" style="margin-bottom:.4rem">Support the Ministry</div>
     <h3>Give to Valley Word Church</h3>
     <p>Your tithes and offerings fuel every ministry, mission trip, and outreach program.</p>
-    <a class="btn btn-gold" href="https://vwconline.org/" target="_blank" style="padding:.7rem 2.5rem;font-size:.85rem">Give Online</a>
+    <a class="btn" href="https://vwconline.org/" target="_blank" style="padding:.7rem 2.5rem;font-size:.82rem">Give Online</a>
   </div>
 </div>
 
-<!-- CONNECT -->
-<div class="section" id="connect">
-  <div class="slabel">Stay Connected</div>
-  <div class="stitle">Follow Valley Word Church</div>
-  <div class="social-grid">
+<div class="divider"><span>Connect</span></div>
+<div class="sec reveal" id="connect">
+  <div class="sec-label">Stay Connected</div>
+  <div class="sec-title">Follow Valley Word Church</div>
+  <div class="soc">
     <a href="https://vwconline.org/" target="_blank"><span class="si">&#127760;</span>Website<span class="sh">vwconline.org</span></a>
     <a href="https://www.facebook.com/valleyword/" target="_blank"><span class="si">&#128101;</span>Facebook<span class="sh">@valleyword</span></a>
     <a href="https://www.youtube.com/@valleywordtv" target="_blank"><span class="si">&#9654;</span>YouTube<span class="sh">@valleywordtv</span></a>
-    <a href="https://x.com/valleyword" target="_blank"><span class="si">&#120143;</span>X / Twitter<span class="sh">@valleyword</span></a>
+    <a href="https://x.com/valleyword" target="_blank"><span class="si">&#120143;</span>X<span class="sh">@valleyword</span></a>
     <a href="https://www.linkedin.com/company/valley-word-church" target="_blank"><span class="si">&#128188;</span>LinkedIn<span class="sh">Valley Word</span></a>
-    <a href="https://play.google.com/store/apps/details?id=com.app.valleywordchurch" target="_blank"><span class="si">&#128241;</span>Church App<span class="sh">Google Play</span></a>
+    <a href="https://play.google.com/store/apps/details?id=com.app.valleywordchurch" target="_blank"><span class="si">&#128241;</span>App<span class="sh">Google Play</span></a>
   </div>
-
-  <div class="contact-row">
-    <div class="cbox"><div class="cl">Phone</div><div class="cv"><a href="tel:5405621500">540-562-1500</a></div></div>
-    <div class="cbox"><div class="cl">Location</div><div class="cv">1928 Loch Haven Dr<br>Roanoke, VA 24019</div></div>
-    <div class="cbox"><div class="cl">Mail</div><div class="cv">PO Box 846<br>Salem, VA 24153</div></div>
+  <div class="cx">
+    <div class="cb"><div class="cl">Phone</div><div class="cv"><a href="tel:5405621500">540-562-1500</a></div></div>
+    <div class="cb"><div class="cl">Location</div><div class="cv">1928 Loch Haven Dr<br>Roanoke VA 24019</div></div>
+    <div class="cb"><div class="cl">Mail</div><div class="cv">PO Box 846<br>Salem VA 24153</div></div>
   </div>
-
-  <div class="map-wrap">
+  <div class="map">
     <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3170.5!2d-79.9414!3d37.3218!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzfCsDE5JzE4LjUiTiA3OcKwNTYnMjkuMCJX!5e0!3m2!1sen!2sus!4v1" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
   </div>
 </div>
 
-<!-- VTV PARTNER -->
-<div class="partner-card">
-  <div class="pl">Partner Network</div>
-  <div class="pt">VWC is a <a href="https://valuetovictory.com" target="_blank">Value to Victory</a> Partner</div>
-  <p>Members get access to relationship tools, personal growth assessments, coaching, and daily devotionals.</p>
-  <a class="pa" href="https://valuetovictory.com" target="_blank">Explore Partner Tools</a>
-</div>
-
-<!-- FOOTER -->
-<div class="footer">
-  Valley Word Church &bull; 1928 Loch Haven Dr, Roanoke, VA 24019 &bull; <a href="tel:5405621500">540-562-1500</a><br>
-  <a href="https://vwconline.org/" target="_blank">vwconline.org</a> &bull; A Word of Faith Church &bull; Drs. Eddie &amp; Debbie Crabtree<br>
-  Site powered by <a href="https://valuetovictory.com" target="_blank">Value to Victory</a><br>
+<div class="foot">
+  Valley Word Church &bull; 1928 Loch Haven Dr, Roanoke VA 24019 &bull; <a href="tel:5405621500">540-562-1500</a><br>
+  <a href="https://vwconline.org/" target="_blank">vwconline.org</a> &bull; Drs. Eddie &amp; Debbie Crabtree<br>
   &copy; 2026 Valley Word Church. All rights reserved.
 </div>
-
 </div>
-
-<!-- MODE TOGGLE -->
-<button class="mode-toggle" onclick="toggleMode()" aria-label="Toggle dark mode" id="modeBtn">&#9790;</button>
-
+<button class="toggle" onclick="toggleMode()" id="mBtn" aria-label="Toggle theme">&#9790;</button>
 <script>
-function toggleMode(){
-  const html=document.documentElement;
-  const isDark=html.getAttribute('data-theme')==='dark';
-  html.setAttribute('data-theme',isDark?'light':'dark');
-  document.getElementById('modeBtn').innerHTML=isDark?'&#9790;':'&#9788;';
-  localStorage.setItem('vwc-theme',isDark?'light':'dark');
-}
-// Load saved preference
-(function(){
-  const saved=localStorage.getItem('vwc-theme');
-  if(saved==='dark'){
-    document.documentElement.setAttribute('data-theme','dark');
-    document.getElementById('modeBtn').innerHTML='&#9788;';
-  }
-})();
+function toggleMode(){var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('mBtn').innerHTML=d?'\u263E':'\u263C';localStorage.setItem('vwc-theme',d?'light':'dark')}
+(function(){var s=localStorage.getItem('vwc-theme');if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('mBtn').innerHTML='\u263C'}})();
+var ro=new IntersectionObserver(function(e){e.forEach(function(i){if(i.isIntersecting){i.target.classList.add('visible');ro.unobserve(i.target)}})},{threshold:.15,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el)});
 </script>
 </body>
 </html>
