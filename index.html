@@ -212,6 +212,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   .stats{grid-template-columns:repeat(3,1fr)}
 }
 
+/* HERO BANNER ART */
+.hero-banner{position:relative;width:100%;max-width:500px;margin:0 auto 1.5rem;aspect-ratio:5/3;border-radius:1rem;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.hero-banner svg{width:100%;height:100%;display:block}
+
 /* PHOTOS */
 .photo-hero{width:100%;height:200px;object-fit:cover;border-radius:1rem;border:1px solid var(--border);box-shadow:var(--card-shadow);margin-bottom:1.25rem;background:var(--warm)}
 .pastor-photo{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);box-shadow:0 4px 16px rgba(0,0,0,.12);float:left;margin:0 1rem .5rem 0;background:var(--warm)}
@@ -231,10 +235,114 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   <div class="hero-particles"><span style="left:10%;top:20%"></span><span></span><span></span><span></span><span></span><span></span></div>
   <!-- Cross watermark -->
   <svg class="hero-cross" width="220" height="300" viewBox="0 0 220 300" fill="none"><rect x="85" y="0" width="50" height="300" rx="6" fill="white"/><rect x="0" y="80" width="220" height="50" rx="6" fill="white"/><circle cx="110" cy="105" r="35" stroke="white" stroke-width="4" fill="none"/></svg>
+
   <div class="hero-tag"><span class="dot"></span> Live Every Sunday at 10:30 AM</div>
-  <div class="monogram">G</div>
+
+  <!-- ====== CUSTOM BANNER ART: Galilean Sea + Cross + Sunrise ====== -->
+  <div class="hero-banner">
+    <svg viewBox="0 0 500 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0A1628"/>
+          <stop offset="35%" stop-color="#162D50"/>
+          <stop offset="60%" stop-color="#2A4A72"/>
+          <stop offset="80%" stop-color="#D4A24E" stop-opacity=".25"/>
+          <stop offset="100%" stop-color="#D4A24E" stop-opacity=".5"/>
+        </linearGradient>
+        <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#D4A24E" stop-opacity=".3"/>
+          <stop offset="30%" stop-color="#162D50"/>
+          <stop offset="100%" stop-color="#0A1628"/>
+        </linearGradient>
+        <linearGradient id="sunGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%" gradientUnits="userSpaceOnUse" x1="250" y1="140" x2="250" y2="200">
+          <stop offset="0%" stop-color="#D4A24E" stop-opacity=".6"/>
+          <stop offset="100%" stop-color="#D4A24E" stop-opacity="0"/>
+        </linearGradient>
+        <radialGradient id="sunDisc" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FFFFFF" stop-opacity=".9"/>
+          <stop offset="40%" stop-color="#D4A24E" stop-opacity=".7"/>
+          <stop offset="100%" stop-color="#D4A24E" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="crossG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0A1628"/>
+          <stop offset="50%" stop-color="#162D50"/>
+          <stop offset="100%" stop-color="#1E3A5F"/>
+        </linearGradient>
+        <linearGradient id="ray" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#D4A24E" stop-opacity=".12"/>
+          <stop offset="100%" stop-color="#D4A24E" stop-opacity="0"/>
+        </linearGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="8" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="softglow"><feGaussianBlur stdDeviation="3"/></filter>
+      </defs>
+
+      <!-- SKY -->
+      <rect width="500" height="300" fill="url(#sky)"/>
+
+      <!-- STARS -->
+      <circle cx="60" cy="30" r="1" fill="white" opacity=".5"/>
+      <circle cx="140" cy="55" r=".8" fill="white" opacity=".4"/>
+      <circle cx="320" cy="25" r="1.2" fill="white" opacity=".35"/>
+      <circle cx="400" cy="50" r=".7" fill="white" opacity=".5"/>
+      <circle cx="450" cy="18" r="1" fill="white" opacity=".3"/>
+      <circle cx="85" cy="70" r=".6" fill="white" opacity=".45"/>
+      <circle cx="220" cy="40" r=".9" fill="white" opacity=".25"/>
+      <circle cx="380" cy="72" r=".8" fill="white" opacity=".35"/>
+
+      <!-- SUN GLOW -->
+      <ellipse cx="250" cy="160" rx="180" ry="80" fill="url(#sunGlow)" filter="url(#glow)"/>
+
+      <!-- SUN DISC -->
+      <circle cx="250" cy="155" r="28" fill="url(#sunDisc)" filter="url(#softglow)"/>
+
+      <!-- LIGHT RAYS -->
+      <polygon points="250,155 200,0 210,0" fill="url(#ray)"/>
+      <polygon points="250,155 290,0 300,0" fill="url(#ray)"/>
+      <polygon points="250,155 100,50 115,45" fill="url(#ray)" opacity=".7"/>
+      <polygon points="250,155 385,45 400,50" fill="url(#ray)" opacity=".7"/>
+      <polygon points="250,155 50,100 68,92" fill="url(#ray)" opacity=".5"/>
+      <polygon points="250,155 432,92 450,100" fill="url(#ray)" opacity=".5"/>
+
+      <!-- DISTANT HILLS -->
+      <path d="M0,170 Q60,140 120,158 Q180,175 220,152 Q260,130 300,155 Q340,170 380,148 Q420,130 460,150 Q480,160 500,155 L500,180 L0,180Z" fill="#0F2240" opacity=".6"/>
+      <path d="M0,175 Q80,158 150,168 Q200,178 250,162 Q310,148 370,165 Q430,178 500,165 L500,185 L0,185Z" fill="#122A48" opacity=".7"/>
+
+      <!-- CROSS on hilltop -->
+      <g transform="translate(250,100)">
+        <!-- Cross shadow -->
+        <rect x="-5" y="-52" width="10" height="68" rx="2" fill="#0A1628" opacity=".3" transform="translate(3,3)"/>
+        <rect x="-18" y="-38" width="36" height="8" rx="2" fill="#0A1628" opacity=".3" transform="translate(3,3)"/>
+        <!-- Cross body -->
+        <rect x="-4.5" y="-55" width="9" height="70" rx="2" fill="url(#crossG)"/>
+        <rect x="-19" y="-40" width="38" height="8" rx="2" fill="url(#crossG)"/>
+        <!-- Cross highlight -->
+        <rect x="-3" y="-53" width="2" height="66" rx="1" fill="white" opacity=".08"/>
+        <rect x="-17" y="-39" width="34" height="2" rx="1" fill="white" opacity=".06"/>
+      </g>
+
+      <!-- WATER / SEA OF GALILEE -->
+      <rect y="178" width="500" height="122" fill="url(#water)"/>
+
+      <!-- Water ripples -->
+      <path d="M0,195 Q50,190 100,195 Q150,200 200,195 Q250,190 300,195 Q350,200 400,195 Q450,190 500,195" stroke="rgba(212,162,78,.12)" stroke-width="1" fill="none"/>
+      <path d="M0,210 Q60,205 120,210 Q180,215 240,210 Q300,205 360,210 Q420,215 500,210" stroke="rgba(212,162,78,.08)" stroke-width=".8" fill="none"/>
+      <path d="M0,230 Q70,226 140,230 Q210,234 280,230 Q350,226 420,230 Q460,234 500,230" stroke="rgba(212,162,78,.06)" stroke-width=".6" fill="none"/>
+      <path d="M0,250 Q80,247 160,250 Q240,253 320,250 Q400,247 500,250" stroke="rgba(255,255,255,.04)" stroke-width=".5" fill="none"/>
+
+      <!-- SUN REFLECTION on water -->
+      <ellipse cx="250" cy="195" rx="40" ry="3" fill="#D4A24E" opacity=".2" filter="url(#softglow)"/>
+      <ellipse cx="250" cy="210" rx="25" ry="2" fill="#D4A24E" opacity=".12"/>
+      <ellipse cx="250" cy="225" rx="15" ry="1.5" fill="#D4A24E" opacity=".08"/>
+
+      <!-- TEXT: GHOW -->
+      <text x="250" y="275" text-anchor="middle" font-family="Georgia,serif" font-size="11" letter-spacing=".35em" fill="rgba(212,162,78,.5)" font-weight="400">THE GALILEAN HOUSE OF WORSHIP</text>
+      <text x="250" y="292" text-anchor="middle" font-family="Georgia,serif" font-size="7" letter-spacing=".2em" fill="rgba(255,255,255,.25)">MARTINSVILLE, VIRGINIA</text>
+    </svg>
+  </div>
+  <!-- ====== END BANNER ART ====== -->
+
   <h1>Teaching Truth.<br>Uniting Cultures.<br><em>Empowering Believers.</em></h1>
-  <p class="sub">The Galilean House of Worship — a nondenominational church centered on Jesus Christ and the Holy Word of God, preparing believers for the last days.</p>
+  <p class="sub">A nondenominational church centered on Jesus Christ and the Holy Word of God, preparing believers for the last days.</p>
   <p class="pastor">Bishop Michael Penn &amp; Lady Angela Penn</p>
   <p class="loc">5078 A.L. Philpott Hwy &bull; Martinsville, VA</p>
 </div>
