@@ -49,6 +49,6 @@ module.exports = (req, res) => {
     cycle_day: dayIndex + 1,
     total_days: 60,
     date: today.toISOString().split('T')[0],
-    devotional: devotional
+    devotional
   });
 };

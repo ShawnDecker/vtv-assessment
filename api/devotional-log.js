@@ -90,6 +90,6 @@ module.exports = async (req, res) => {
     return res.json({ success: true, logged: true });
   } catch (err) {
     console.error('devotional-log error:', err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };

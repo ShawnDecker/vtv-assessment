@@ -83,9 +83,8 @@ module.exports = async (req, res) => {
 
     // If tables don't exist yet, return empty gracefully
     if (err.message.includes('does not exist')) {
-      return res.json({ success: true, count: 0, subscribers: [], note: 'Devotional tables not yet migrated' });
+      return res.json({ success: true, count: 0, subscribers: [], note: 'Devotional tables not yet created' });
     }
-
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };
