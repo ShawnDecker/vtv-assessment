@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/>
+<title>Peek N Play Childcare — Roanoke, VA</title>
+<meta name="description" content="Peek N Play Childcare Center — Premier childcare for infants, toddlers, and preschoolers in Roanoke, VA. 1,300+ learning activities. Safe, nurturing, fun."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ChildCare","name":"Peek N Play Childcare Center","url":"http://peeknplaychildcare.com","telephone":"+1-540-566-3432","email":"peeknplay2522@gmail.com","address":{"@type":"PostalAddress","streetAddress":"2522 Shenandoah Ave NW","addressLocality":"Roanoke","addressRegion":"VA","postalCode":"24017","addressCountry":"US"},"openingHoursSpecification":{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"07:00","closes":"17:30"}}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .4s,color .4s}
+:root{--bg:#FFF8F0;--text:#2A1A3A;--sec:#5A3A6A;--muted:#8A6A9A;--primary:#E8753A;--primary-g:rgba(232,117,58,.08);--primary-d:#C8552A;--teal:#2AADA8;--teal-g:rgba(42,173,168,.08);--gold:#D4A847;--border:#E8DDD0;--card:#fff;--shadow:0 1px 3px rgba(42,26,58,.06),0 8px 24px rgba(42,26,58,.04);--hero:linear-gradient(160deg,#2A1A3A,#4A2A5A,#6A3A7A);--fade:cubic-bezier(.22,1,.36,1)}
+[data-theme="dark"]{--bg:#0A0A0A;--text:#F0E8F4;--sec:#C0A8D0;--muted:#7A5A8A;--primary:#F08A4A;--primary-g:rgba(240,138,74,.08);--primary-d:#D06A2A;--teal:#4ACDC8;--teal-g:rgba(74,205,200,.06);--border:#222;--card:#141414;--shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.2);--hero:linear-gradient(160deg,#0A050E,#2A1A3A,#3A2A4A)}
+.toggle{position:fixed;top:14px;right:14px;z-index:999;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
+.hero{position:relative;text-align:center;padding:0 0 2rem;background:var(--hero);color:#fff;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
+.poster{position:relative;width:100%;height:380px;overflow:hidden}
+.poster .layer{position:absolute;inset:0;width:100%;height:100%}
+.poster .layer img{width:100%;height:100%;object-fit:cover;display:block}
+.poster .l-back img{filter:brightness(.3) blur(1px)}
+.poster .l-mid{top:auto;bottom:0;height:50%}
+.poster .l-mid img{object-position:center top;filter:brightness(.45)}
+.poster .l-mid::after{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:linear-gradient(to bottom,rgba(42,26,58,1),transparent)}
+.poster::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(42,26,58,.5) 0%,rgba(42,26,58,.15) 35%,rgba(42,26,58,.1) 60%,rgba(42,26,58,.95) 100%);z-index:3;pointer-events:none}
+.poster::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(232,117,58,.08) 0%,transparent 60%);z-index:4;pointer-events:none}
+.poster .ll{position:absolute;top:0;left:0;width:45%;height:60%;background:radial-gradient(ellipse at 20% 25%,rgba(42,173,168,.08) 0%,transparent 70%);z-index:5;pointer-events:none}
+.poster .pt{position:absolute;bottom:0;left:0;right:0;z-index:6;text-align:center;padding:2rem 1.5rem .5rem;background:linear-gradient(to top,rgba(42,26,58,.95),rgba(42,26,58,.5),transparent)}
+.poster .pt h2{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.5)}
+.poster .pt .tl{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--primary);margin-top:.25rem}
+.poster .pt .loc{font-size:.5rem;color:rgba(255,255,255,.4);margin-top:.15rem;letter-spacing:.1em}
+.nav-strip{display:flex;gap:.3rem;justify-content:center;margin:1.25rem 0;flex-wrap:wrap}
+.nav-strip a{padding:.45rem .9rem;background:var(--card);border:1px solid var(--border);border-radius:2rem;text-decoration:none;color:var(--text);font-size:.62rem;font-weight:600;transition:border-color .2s;box-shadow:var(--shadow)}
+.nav-strip a:hover{border-color:var(--primary)}
+.nav-strip a.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.sec{margin-top:2rem}
+.sl{font-size:.48rem;letter-spacing:.25em;text-transform:uppercase;color:var(--primary);font-weight:700;margin-bottom:.2rem}
+.st{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
+.sd{font-size:.78rem;color:var(--sec);line-height:1.7;margin-bottom:1rem}
+.al{width:40px;height:3px;background:linear-gradient(90deg,var(--primary),var(--teal));border-radius:2px;margin-bottom:.75rem}
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.6rem 1.4rem;background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;font-size:.72rem;font-weight:700;border-radius:.5rem;text-decoration:none;box-shadow:0 2px 8px rgba(232,117,58,.25);transition:all .2s var(--fade)}
+.btn:hover{box-shadow:0 4px 16px rgba(232,117,58,.35)}
+.btn-g{background:transparent;border:1.5px solid var(--border);color:var(--text);box-shadow:none;margin-left:.3rem}
+.btn-g:hover{border-color:var(--primary);color:var(--primary)}
+.age-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.45rem}
+.age{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1rem;text-align:center;box-shadow:var(--shadow);transition:border-color .2s}
+.age:hover{border-color:var(--primary)}
+.age .ai{font-size:1.5rem;margin-bottom:.25rem}
+.age .an{font-size:.78rem;font-weight:700;color:var(--text)}
+.age .aa{font-size:.55rem;color:var(--primary);font-weight:700;margin-top:.1rem}
+.age .ad{font-size:.55rem;color:var(--muted);margin-top:.15rem;line-height:1.4}
+.c{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1.1rem;margin-bottom:.5rem;box-shadow:var(--shadow);transition:border-color .2s}
+.c:hover{border-color:var(--primary)}
+.c h3{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.15rem}
+.c p{font-size:.72rem;color:var(--sec);line-height:1.6;margin-bottom:.4rem}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem;margin:1rem 0}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:.6rem;padding:.6rem;text-align:center;box-shadow:var(--shadow)}
+.stat .num{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--primary)}
+.stat .lbl{font-size:.45rem;color:var(--muted);margin-top:.1rem}
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:.75rem}
+.cb{background:var(--card);border:1px solid var(--border);border-radius:.6rem;padding:.7rem;text-align:center;box-shadow:var(--shadow)}
+.cb .cl{font-size:.48rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.1rem}
+.cb .cv{font-size:.72rem;font-weight:700;color:var(--text)}
+.cb a{color:var(--primary);text-decoration:none}
+.ph-div{width:calc(100% + 2.5rem);margin:2rem -1.25rem;height:120px;overflow:hidden;position:relative}
+.ph-div img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.35)}
+.ph-div::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 18%,transparent 82%,var(--bg) 100%)}
+.ph-div .pd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-family:'Playfair Display',serif;font-style:italic;font-size:.9rem;color:rgba(255,255,255,.85);text-shadow:0 2px 8px rgba(0,0,0,.5);text-align:center;padding:0 2rem}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s var(--fade),transform .6s var(--fade)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.foot{text-align:center;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.55rem;color:var(--muted);line-height:2}
+.foot a{color:var(--primary);text-decoration:none}
+@media(max-width:480px){.poster .pt h2{font-size:1.6rem}.age-grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.contact{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="poster">
+    <div class="layer l-back"><img src="https://images.unsplash.com/photo-1587654780291-39c9404d7dd0?w=1000&q=80&auto=format" alt="Children playing and learning" loading="eager"/></div>
+    <div class="layer l-mid"><img src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=1000&q=80&auto=format" alt="Happy child at daycare" loading="eager"/></div>
+    <div class="ll"></div>
+    <div class="pt">
+      <h2>Peek N Play<br>Childcare</h2>
+      <div class="tl">Premier Childcare &bull; Infants to Preschool</div>
+      <div class="loc">2522 Shenandoah Ave NW &bull; Roanoke, VA 24017</div>
+    </div>
+  </div>
+</div>
+
+<div class="p">
+  <!-- NAV between Mclean businesses -->
+  <div class="nav-strip">
+    <a href="childcare.html" class="active">Childcare</a>
+    <a href="bonds.html">Bail Bonds</a>
+    <a href="index.html">About Steadman</a>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="num">36</div><div class="lbl">Thematic Units</div></div>
+    <div class="stat"><div class="num">1,300+</div><div class="lbl">Activities</div></div>
+    <div class="stat"><div class="num">6mo–6yr</div><div class="lbl">Ages Served</div></div>
+    <div class="stat"><div class="num">M–F</div><div class="lbl">7AM–5:30PM</div></div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Programs</div>
+    <div class="st">Age-Based Learning</div>
+    <p class="sd">A comprehensive, research-based curriculum that incorporates play into daily learning routines — enhancing growth and development at every stage.</p>
+    <div class="age-grid">
+      <div class="age"><div class="ai">&#128118;</div><div class="an">Infants</div><div class="aa">6–12 Months</div><div class="ad">Safe, nurturing environment with trained staff for developmental needs</div></div>
+      <div class="age"><div class="ai">&#128103;</div><div class="an">Toddlers</div><div class="aa">1–3 Years</div><div class="ad">Building mobility, language skills, and social foundations</div></div>
+      <div class="age"><div class="ai">&#127891;</div><div class="an">Preschool</div><div class="aa">3–6 Years</div><div class="ad">Kindergarten prep through structured activities and social interaction</div></div>
+    </div>
+  </div>
+
+  <div class="ph-div">
+    <img src="https://images.unsplash.com/photo-1544776193-352d25ca82cd?w=900&q=80&auto=format" alt="Children learning together" loading="lazy"/>
+    <div class="pd">"Train up a child in the way he should go" — Proverbs 22:6</div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Curriculum</div>
+    <div class="st">Learning Through Play</div>
+    <div class="c">
+      <h3>36 Thematic Units</h3>
+      <p>Each unit incorporates literacy, math, science, social studies, and creative arts — totaling over 1,300 learning activities throughout the year.</p>
+    </div>
+    <div class="c">
+      <h3>Daily Structure</h3>
+      <p>Circle time, guided play, outdoor time, meals, rest, and creative exploration. Every day is designed with purpose and joy.</p>
+    </div>
+    <div class="c">
+      <h3>Kindergarten Readiness</h3>
+      <p>Our preschool program prepares children for school with early literacy, number sense, social skills, and independent thinking.</p>
+    </div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Leadership</div>
+    <div class="st">Meet the Team</div>
+    <div class="c">
+      <h3>Ms. Keriefa Mclean — Director</h3>
+      <p>Dedicated to providing a safe, nurturing, and stimulating environment where every child can thrive. Leading Peek N Play with heart and excellence.</p>
+    </div>
+    <div class="c">
+      <h3>Steadman Mclean — Owner</h3>
+      <p>Roanoke entrepreneur and family man. Committed to serving the community through quality childcare that families can trust and afford.</p>
+    </div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Enroll</div>
+    <div class="st">Ready to Join Peek N Play?</div>
+    <div style="margin-top:1rem;padding:1.5rem;background:linear-gradient(135deg,var(--primary-g),var(--card));border:1px solid rgba(232,117,58,.15);border-radius:1rem;text-align:center;box-shadow:var(--shadow)">
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text);margin-bottom:.3rem">Schedule a Tour</div>
+      <p style="font-size:.75rem;color:var(--sec);margin-bottom:1rem;line-height:1.5">Come see our facility, meet our staff, and find out if Peek N Play is the right fit for your family.</p>
+      <a class="btn" href="tel:5405663432" style="padding:.7rem 2.5rem;font-size:.82rem">Call (540) 566-3432</a>
+      <a class="btn btn-g" href="mailto:peeknplay2522@gmail.com">Email Us</a>
+    </div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="sl">Find Us</div>
+    <div class="contact">
+      <div class="cb"><div class="cl">Phone</div><div class="cv"><a href="tel:5405663432">(540) 566-3432</a></div></div>
+      <div class="cb"><div class="cl">Address</div><div class="cv">2522 Shenandoah Ave NW<br>Roanoke, VA 24017</div></div>
+      <div class="cb"><div class="cl">Hours</div><div class="cv">Mon–Fri<br>7:00 AM – 5:30 PM</div></div>
+      <div class="cb"><div class="cl">Email</div><div class="cv"><a href="mailto:peeknplay2522@gmail.com">peeknplay2522<br>@gmail.com</a></div></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    Peek N Play Childcare Center &bull; 2522 Shenandoah Ave NW, Roanoke VA 24017<br>
+    <a href="tel:5405663432">(540) 566-3432</a> &bull; <a href="http://peeknplaychildcare.com" target="_blank">peeknplaychildcare.com</a><br>
+    &copy; 2026 Peek N Play Childcare Center. All rights reserved.
+  </div>
+</div>
+<button class="toggle" onclick="toggleMode()" id="mBtn">&#9790;</button>
+<script>
+function toggleMode(){var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('mBtn').innerHTML=d?'\u263E':'\u263C';localStorage.setItem('pnp-theme',d?'light':'dark')}
+(function(){var s=localStorage.getItem('pnp-theme');if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('mBtn').innerHTML='\u263C'}})();
+var ro=new IntersectionObserver(function(e){e.forEach(function(i){if(i.isIntersecting){i.target.classList.add('visible');ro.unobserve(i.target)}})},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el)});
+</script>
+</body>
+</html>

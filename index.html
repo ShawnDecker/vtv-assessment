@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/>
+<title>Steadman Mclean — Entrepreneur, Community Leader, Family Man</title>
+<meta name="description" content="Steadman Mclean — Roanoke VA entrepreneur. Owner of Peek N Play Childcare, McLean's Bail Bonds. Community leader and family man."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .4s,color .4s}
+:root{--bg:#F5F3EE;--text:#1A1A2E;--sec:#3A3A5C;--muted:#7A7A9C;--deep:#2A2A4A;--gold:#C8A84E;--gold-g:rgba(200,168,78,.1);--gold-d:#A8883E;--border:#DDD8CC;--card:#fff;--shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.04);--hero:linear-gradient(160deg,#1A1A2E,#2A2A4A,#3A3A66);--fade:cubic-bezier(.22,1,.36,1)}
+[data-theme="dark"]{--bg:#0A0A0A;--text:#E4E4E7;--sec:#A1A1AA;--muted:#6A6A7A;--deep:#8888BB;--gold:#D4A847;--gold-g:rgba(212,168,71,.08);--gold-d:#B8942E;--border:#222;--card:#141414;--shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.2);--hero:linear-gradient(160deg,#050508,#0A0A1A,#1A1A2E)}
+.toggle{position:fixed;top:14px;right:14px;z-index:999;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
+.hero{position:relative;text-align:center;padding:0 0 2rem;background:var(--hero);color:#fff;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
+.poster{position:relative;width:100%;height:380px;overflow:hidden}
+.poster .layer{position:absolute;inset:0;width:100%;height:100%}
+.poster .layer img{width:100%;height:100%;object-fit:cover;display:block}
+.poster .l-back img{filter:brightness(.25) blur(1px)}
+.poster .l-mid{top:auto;bottom:0;height:55%}
+.poster .l-mid img{object-position:center top;filter:brightness(.4)}
+.poster .l-mid::after{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:linear-gradient(to bottom,rgba(26,26,46,1),transparent)}
+.poster::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,26,46,.5) 0%,rgba(26,26,46,.15) 35%,rgba(26,26,46,.1) 60%,rgba(26,26,46,.95) 100%);z-index:3;pointer-events:none}
+.poster::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(200,168,78,.06) 0%,transparent 60%);z-index:4;pointer-events:none}
+.poster .pt{position:absolute;bottom:0;left:0;right:0;z-index:6;text-align:center;padding:2rem 1.5rem .5rem;background:linear-gradient(to top,rgba(26,26,46,.95),rgba(26,26,46,.5),transparent)}
+.poster .pt h2{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.5)}
+.poster .pt .tl{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-top:.25rem}
+.poster .pt .loc{font-size:.5rem;color:rgba(255,255,255,.4);margin-top:.15rem}
+.hc{position:relative;padding:0 1.5rem;z-index:2}
+.avatar{width:100px;height:100px;border-radius:50%;border:4px solid rgba(200,168,78,.5);object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.3);margin:-3rem auto .75rem;display:block}
+.nav-strip{display:flex;gap:.3rem;justify-content:center;margin:.75rem 0;flex-wrap:wrap}
+.nav-strip a{padding:.45rem .9rem;background:var(--card);border:1px solid var(--border);border-radius:2rem;text-decoration:none;color:var(--text);font-size:.62rem;font-weight:600;transition:border-color .2s;box-shadow:var(--shadow)}
+.nav-strip a:hover{border-color:var(--gold)}
+.nav-strip a.active{background:var(--deep);color:#fff;border-color:var(--deep)}
+[data-theme="dark"] .nav-strip a.active{background:var(--gold);color:#0A0A0A}
+.sec{margin-top:2rem}
+.sl{font-size:.48rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold-d);font-weight:700;margin-bottom:.2rem}
+[data-theme="dark"] .sl{color:var(--gold)}
+.st{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
+.sd{font-size:.78rem;color:var(--sec);line-height:1.7;margin-bottom:1rem}
+.al{width:40px;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-d));border-radius:2px;margin-bottom:.75rem}
+.vc{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:1.25rem;margin-bottom:.65rem;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:border-color .25s,transform .25s var(--fade)}
+.vc:hover{border-color:var(--gold);transform:translateY(-2px)}
+.vc .accent{position:absolute;top:0;left:0;width:4px;height:100%;border-radius:2px 0 0 2px}
+.vc .vc-head{display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem}
+.vc .vc-icon{width:44px;height:44px;border-radius:.5rem;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.vc .vc-title{font-size:.85rem;font-weight:700;color:var(--text)}
+.vc .vc-role{font-size:.55rem;color:var(--muted);margin-top:.05rem}
+.vc p{font-size:.72rem;color:var(--sec);line-height:1.6;margin-bottom:.5rem}
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.55rem 1.2rem;background:linear-gradient(135deg,var(--gold),var(--gold-d));color:#1A1A2E;font-size:.7rem;font-weight:700;border-radius:.5rem;text-decoration:none;box-shadow:0 2px 8px rgba(200,168,78,.25);transition:all .2s var(--fade)}
+.btn:hover{box-shadow:0 4px 16px rgba(200,168,78,.35)}
+.btn-g{background:transparent;border:1.5px solid var(--border);color:var(--text);box-shadow:none;margin-left:.3rem}
+.btn-g:hover{border-color:var(--gold);color:var(--gold)}
+.c{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1.1rem;margin-bottom:.5rem;box-shadow:var(--shadow)}
+.c h3{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.15rem}
+.c p{font-size:.72rem;color:var(--sec);line-height:1.6;margin-bottom:.4rem}
+.ph-div{width:calc(100% + 2.5rem);margin:2rem -1.25rem;height:120px;overflow:hidden;position:relative}
+.ph-div img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.3)}
+.ph-div::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 18%,transparent 82%,var(--bg) 100%)}
+.ph-div .pd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-family:'Playfair Display',serif;font-style:italic;font-size:.9rem;color:rgba(255,255,255,.85);text-shadow:0 2px 8px rgba(0,0,0,.5);text-align:center;padding:0 2rem}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s var(--fade),transform .6s var(--fade)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.foot{text-align:center;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.55rem;color:var(--muted);line-height:2}
+.foot a{color:var(--gold-d);text-decoration:none}
+[data-theme="dark"] .foot a{color:var(--gold)}
+@media(max-width:480px){.poster .pt h2{font-size:1.8rem}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="poster">
+    <div class="layer l-back"><img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1000&q=80&auto=format" alt="Entrepreneur working" loading="eager"/></div>
+    <div class="layer l-mid"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1000&q=80&auto=format" alt="Family and community" loading="eager"/></div>
+    <div class="pt">
+      <h2>Steadman Mclean</h2>
+      <div class="tl">Entrepreneur &bull; Community Leader &bull; Family Man</div>
+      <div class="loc">Roanoke, Virginia &bull; Originally from St. Catharines</div>
+    </div>
+  </div>
+  <div class="hc">
+    <img class="avatar" src="https://graph.facebook.com/steadman.mclean/picture?type=large&width=400&height=400" alt="Steadman Mclean" onerror="this.style.display='none'"/>
+  </div>
+</div>
+
+<div class="p">
+  <div class="nav-strip">
+    <a href="childcare.html">Childcare</a>
+    <a href="bonds.html">Bail Bonds</a>
+    <a href="index.html" class="active">About Steadman</a>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">About</div>
+    <div class="st">Building Businesses. Serving Community.</div>
+    <p class="sd">Steadman Mclean is a Roanoke, Virginia entrepreneur and community leader. Originally from St. Catharines, educated at Virginia Western Community College (Class of 2010), Steadman builds businesses that serve families and strengthen communities. From childcare to bail bonds, every venture is rooted in meeting real needs for real people.</p>
+    <p class="sd">Married to Keriefa Mclean since April 14, 2007. Together they run Peek N Play Childcare and are building a legacy of service in the Roanoke Valley.</p>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Ventures</div>
+    <div class="st">What I'm Building</div>
+
+    <div class="vc">
+      <div class="accent" style="background:linear-gradient(180deg,#E8753A,#C8552A)"></div>
+      <div class="vc-head">
+        <div class="vc-icon" style="background:rgba(232,117,58,.1);color:#E8753A">&#128118;</div>
+        <div><div class="vc-title">Peek N Play Childcare</div><div class="vc-role">Owner &bull; 2522 Shenandoah Ave NW</div></div>
+      </div>
+      <p>Premier childcare for infants through preschool. 36 thematic units, 1,300+ learning activities. Director: Ms. Keriefa Mclean. Licensed, research-based curriculum, nurturing environment.</p>
+      <a class="btn" href="childcare.html">View Childcare</a>
+      <a class="btn btn-g" href="tel:5405663432">Call (540) 566-3432</a>
+    </div>
+
+    <div class="vc">
+      <div class="accent" style="background:linear-gradient(180deg,#2A4A6A,#1A3A5A)"></div>
+      <div class="vc-head">
+        <div class="vc-icon" style="background:rgba(42,74,106,.1);color:#2A4A6A">&#128274;</div>
+        <div><div class="vc-title">McLean's Bail Bonds LLC</div><div class="vc-role">Owner &bull; Virginia Licensed</div></div>
+      </div>
+      <p>24/7 bail bond services for Roanoke, Salem, Vinton, and surrounding areas. Fast, confidential, compassionate. Payment plans available.</p>
+      <a class="btn" href="bonds.html">View Bail Bonds</a>
+      <a class="btn btn-g" href="tel:5405550199">Call 24/7</a>
+    </div>
+
+    <div class="vc">
+      <div class="accent" style="background:linear-gradient(180deg,#B5547A,#9A3A5A)"></div>
+      <div class="vc-head">
+        <div class="vc-icon" style="background:rgba(181,84,122,.1);color:#B5547A">&#128149;</div>
+        <div><div class="vc-title">Better Marriage</div><div class="vc-role">Ministry &bull; With Keriefa</div></div>
+      </div>
+      <p>Marriage and family ministry rooted in faith. Steadman and Keriefa pour into couples, sharing what they've learned through 17+ years of marriage. Because better marriages build better communities.</p>
+      <a class="btn" href="https://www.facebook.com/steadman.mclean" target="_blank">Connect</a>
+    </div>
+  </div>
+
+  <div class="ph-div">
+    <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=900&q=80&auto=format" alt="Family together" loading="lazy"/>
+    <div class="pd">"A man who finds a wife finds a good thing" — Proverbs 18:22</div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Background</div>
+    <div class="st">The Journey</div>
+    <div class="c"><h3>Virginia Western Community College</h3><p>Class of 2010. Built the educational foundation for business and community leadership.</p></div>
+    <div class="c"><h3>Bridgeport High School</h3><p>Track &amp; Field Team. Discipline, teamwork, and drive — the same qualities he brings to business today.</p></div>
+    <div class="c"><h3>St. Catharines → Roanoke</h3><p>From St. Catharines to the Star City of the South. Chose Roanoke to raise a family and build a legacy of service.</p></div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Connect</div>
+    <div class="st">Get in Touch</div>
+    <div class="c">
+      <h3>Childcare Inquiries</h3>
+      <p>Peek N Play Childcare — <a href="tel:5405663432" style="color:var(--gold-d);text-decoration:none">(540) 566-3432</a> — peeknplay2522@gmail.com</p>
+    </div>
+    <div class="c">
+      <h3>Bail Bond Emergencies</h3>
+      <p>McLean's Bail Bonds — <a href="tel:5405550199" style="color:var(--gold-d);text-decoration:none">(540) 555-0199</a> — Available 24/7/365</p>
+    </div>
+    <div class="c">
+      <h3>Personal / Ministry</h3>
+      <p><a href="https://www.facebook.com/steadman.mclean" target="_blank" style="color:var(--gold-d);text-decoration:none">Facebook — Steadman Mclean</a></p>
+    </div>
+  </div>
+
+  <div class="foot">
+    Steadman Mclean &bull; Roanoke, Virginia<br>
+    Peek N Play Childcare &bull; McLean's Bail Bonds LLC &bull; Better Marriage<br>
+    &copy; 2026 Steadman Mclean. All rights reserved.
+  </div>
+</div>
+<button class="toggle" onclick="toggleMode()" id="mBtn">&#9790;</button>
+<script>
+function toggleMode(){var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('mBtn').innerHTML=d?'\u263E':'\u263C';localStorage.setItem('sm-theme',d?'light':'dark')}
+(function(){var s=localStorage.getItem('sm-theme');if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('mBtn').innerHTML='\u263C'}})();
+var ro=new IntersectionObserver(function(e){e.forEach(function(i){if(i.isIntersecting){i.target.classList.add('visible');ro.unobserve(i.target)}})},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el)});
+</script>
+</body>
+</html>

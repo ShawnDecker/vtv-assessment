@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/>
+<title>McLean's Bail Bonds — Roanoke, VA | 24/7</title>
+<meta name="description" content="McLean's Bail Bonds LLC — Fast, confidential bail bond services in Roanoke, VA. 24/7 availability. Get your loved one home."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .4s,color .4s}
+:root{--bg:#F4F4F8;--text:#1A1A2E;--sec:#3A3A5C;--muted:#6A6A8C;--steel:#2A4A6A;--steel-g:rgba(42,74,106,.08);--gold:#C8A84E;--gold-d:#A8883E;--urgent:#CC3333;--border:#D8D8E0;--card:#fff;--shadow:0 1px 3px rgba(26,26,46,.06),0 8px 24px rgba(26,26,46,.04);--hero:linear-gradient(160deg,#0A0A1A,#1A1A2E,#2A2A4E);--fade:cubic-bezier(.22,1,.36,1)}
+[data-theme="dark"]{--bg:#0A0A0A;--text:#E4E4E7;--sec:#A1A1AA;--muted:#6A6A7A;--steel:#6A9ACA;--steel-g:rgba(106,154,202,.08);--gold:#D4A847;--gold-d:#B8942E;--urgent:#EE5555;--border:#222;--card:#141414;--shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.2);--hero:linear-gradient(160deg,#050508,#0A0A1A,#1A1A2E)}
+.toggle{position:fixed;top:14px;right:14px;z-index:999;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
+.hero{position:relative;text-align:center;padding:4rem 1.5rem 2.5rem;background:var(--hero);color:#fff;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
+.hero::before{content:'';position:absolute;top:0;right:-20%;width:50%;height:100%;background:radial-gradient(ellipse,rgba(200,168,78,.06) 0%,transparent 70%);pointer-events:none}
+.hero .urgent{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem 1rem;border-radius:2rem;font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;background:rgba(204,51,51,.15);color:var(--urgent);border:1px solid rgba(204,51,51,.2);font-weight:700;margin-bottom:1rem;position:relative}
+.hero .urgent .dot{width:8px;height:8px;border-radius:50%;background:var(--urgent);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.hero h1{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;margin-bottom:.3rem;position:relative}
+.hero .sub{color:rgba(255,255,255,.55);font-size:.82rem;line-height:1.6;max-width:400px;margin:0 auto .8rem;position:relative}
+.hero .call-now{display:inline-flex;align-items:center;gap:.4rem;padding:.75rem 2rem;background:linear-gradient(135deg,var(--urgent),#AA2222);color:#fff;font-size:.9rem;font-weight:800;border-radius:.6rem;text-decoration:none;box-shadow:0 4px 16px rgba(204,51,51,.3);transition:all .2s;position:relative}
+.hero .call-now:hover{box-shadow:0 6px 24px rgba(204,51,51,.4);transform:translateY(-1px)}
+.nav-strip{display:flex;gap:.3rem;justify-content:center;margin:1.25rem 0;flex-wrap:wrap}
+.nav-strip a{padding:.45rem .9rem;background:var(--card);border:1px solid var(--border);border-radius:2rem;text-decoration:none;color:var(--text);font-size:.62rem;font-weight:600;transition:border-color .2s;box-shadow:var(--shadow)}
+.nav-strip a:hover{border-color:var(--steel)}
+.nav-strip a.active{background:var(--steel);color:#fff;border-color:var(--steel)}
+.sec{margin-top:2rem}
+.sl{font-size:.48rem;letter-spacing:.25em;text-transform:uppercase;color:var(--steel);font-weight:700;margin-bottom:.2rem}
+.st{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
+.sd{font-size:.78rem;color:var(--sec);line-height:1.7;margin-bottom:1rem}
+.al{width:40px;height:3px;background:linear-gradient(90deg,var(--steel),var(--gold));border-radius:2px;margin-bottom:.75rem}
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.6rem 1.4rem;background:linear-gradient(135deg,var(--steel),#1A3A5A);color:#fff;font-size:.72rem;font-weight:700;border-radius:.5rem;text-decoration:none;box-shadow:0 2px 8px rgba(42,74,106,.25);transition:all .2s var(--fade)}
+.btn:hover{box-shadow:0 4px 16px rgba(42,74,106,.35)}
+.btn-urgent{background:linear-gradient(135deg,var(--urgent),#AA2222);box-shadow:0 2px 8px rgba(204,51,51,.25)}
+.why-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem}
+.why{background:var(--card);border:1px solid var(--border);border-radius:.6rem;padding:.75rem;text-align:center;box-shadow:var(--shadow)}
+.why .wi{font-size:1.3rem;margin-bottom:.2rem}
+.why .wn{font-size:.68rem;font-weight:700;color:var(--text)}
+.why .wd{font-size:.52rem;color:var(--muted);margin-top:.1rem}
+.c{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1.1rem;margin-bottom:.5rem;box-shadow:var(--shadow);transition:border-color .2s}
+.c:hover{border-color:var(--steel)}
+.c h3{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.15rem}
+.c p{font-size:.72rem;color:var(--sec);line-height:1.6;margin-bottom:.4rem}
+.process{counter-reset:step}
+.step{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1rem 1rem 1rem 3.5rem;margin-bottom:.45rem;box-shadow:var(--shadow);position:relative;counter-increment:step}
+.step::before{content:counter(step);position:absolute;left:1rem;top:1rem;width:1.8rem;height:1.8rem;border-radius:50%;background:var(--steel);color:#fff;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center}
+.step h3{font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.1rem}
+.step p{font-size:.68rem;color:var(--sec);line-height:1.5}
+.cta-banner{margin-top:2rem;padding:1.5rem;background:linear-gradient(135deg,rgba(204,51,51,.06),var(--card));border:1px solid rgba(204,51,51,.12);border-radius:1rem;text-align:center;box-shadow:var(--shadow)}
+.cta-banner h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text);margin-bottom:.3rem}
+.cta-banner p{font-size:.75rem;color:var(--sec);margin-bottom:1rem}
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:.75rem}
+.cb{background:var(--card);border:1px solid var(--border);border-radius:.6rem;padding:.7rem;text-align:center;box-shadow:var(--shadow)}
+.cb .cl{font-size:.48rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.1rem}
+.cb .cv{font-size:.72rem;font-weight:700;color:var(--text)}
+.cb a{color:var(--steel);text-decoration:none}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s var(--fade),transform .6s var(--fade)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.foot{text-align:center;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.55rem;color:var(--muted);line-height:2}
+.foot a{color:var(--steel);text-decoration:none}
+@media(max-width:480px){.hero h1{font-size:1.7rem}.why-grid{grid-template-columns:1fr 1fr 1fr}.contact{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="urgent"><span class="dot"></span> Available 24/7</div>
+  <h1>McLean's<br>Bail Bonds</h1>
+  <p class="sub">Fast, confidential bail bond services in Roanoke, VA. When your family needs you, we get you home.</p>
+  <a class="call-now" href="tel:5405550199">&#128222; Call Now — Available 24/7</a>
+</div>
+
+<div class="p">
+  <div class="nav-strip">
+    <a href="childcare.html">Childcare</a>
+    <a href="bonds.html" class="active">Bail Bonds</a>
+    <a href="index.html">About Steadman</a>
+  </div>
+
+  <div class="why-grid" style="margin-top:.5rem">
+    <div class="why"><div class="wi">&#9201;</div><div class="wn">24/7</div><div class="wd">Always available</div></div>
+    <div class="why"><div class="wi">&#128274;</div><div class="wn">Confidential</div><div class="wd">Discreet service</div></div>
+    <div class="why"><div class="wi">&#9889;</div><div class="wn">Fast</div><div class="wd">Quick release</div></div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">How It Works</div>
+    <div class="st">The Bail Bond Process</div>
+    <div class="process">
+      <div class="step"><h3>Call Us</h3><p>24/7 availability. Tell us who needs help, what jail they're in, and the bond amount.</p></div>
+      <div class="step"><h3>We Handle the Paperwork</h3><p>We complete all necessary documents and work directly with the jail and court system.</p></div>
+      <div class="step"><h3>Your Loved One Comes Home</h3><p>Once the bond is posted, the release process begins. We keep you updated every step.</p></div>
+    </div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Services</div>
+    <div class="st">What We Cover</div>
+    <div class="c"><h3>Felony Bonds</h3><p>Full bail bond services for felony charges. We handle high-value bonds with professionalism and discretion.</p></div>
+    <div class="c"><h3>Misdemeanor Bonds</h3><p>Fast posting for misdemeanor charges. Get your loved one home quickly.</p></div>
+    <div class="c"><h3>Traffic &amp; DUI Bonds</h3><p>Traffic violations, DUI/DWI charges. Prompt, judgment-free service.</p></div>
+    <div class="c"><h3>Payment Plans</h3><p>We understand emergencies don't wait for payday. Flexible payment options available.</p></div>
+  </div>
+
+  <div class="cta-banner reveal">
+    <div class="sl">Need Help Now?</div>
+    <h3>Don't wait. Call now.</h3>
+    <p>Every minute matters. We're available 24 hours a day, 7 days a week, 365 days a year.</p>
+    <a class="btn btn-urgent" href="tel:5405550199" style="padding:.75rem 2.5rem;font-size:.85rem">&#128222; Call McLean's Bail Bonds</a>
+  </div>
+
+  <div class="sec reveal">
+    <div class="sl">Service Area</div>
+    <div class="contact">
+      <div class="cb"><div class="cl">Phone</div><div class="cv"><a href="tel:5405550199">(540) 555-0199</a></div></div>
+      <div class="cb"><div class="cl">Hours</div><div class="cv">24/7/365</div></div>
+      <div class="cb"><div class="cl">Area</div><div class="cv">Roanoke, Salem<br>Vinton &amp; Surrounding</div></div>
+      <div class="cb"><div class="cl">License</div><div class="cv">VA LLC<br>S6434577</div></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    McLean's Bail Bonds LLC &bull; Roanoke, VA &bull; <a href="tel:5405550199">(540) 555-0199</a><br>
+    Virginia Licensed &bull; Confidential &bull; 24/7<br>
+    &copy; 2026 McLean's Bail Bonds LLC. All rights reserved.
+  </div>
+</div>
+<button class="toggle" onclick="toggleMode()" id="mBtn">&#9790;</button>
+<script>
+function toggleMode(){var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('mBtn').innerHTML=d?'\u263E':'\u263C';localStorage.setItem('bb-theme',d?'light':'dark')}
+(function(){var s=localStorage.getItem('bb-theme');if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('mBtn').innerHTML='\u263C'}})();
+var ro=new IntersectionObserver(function(e){e.forEach(function(i){if(i.isIntersecting){i.target.classList.add('visible');ro.unobserve(i.target)}})},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el)});
+</script>
+</body>
+</html>
