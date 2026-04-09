@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/>
+<title>Brendon Albiston — Ministry Leader, Strengths Coach, Entrepreneur</title>
+<meta name="description" content="Brendon Albiston — Founder of Albiston Family Ministries, Creator of Sonship Matters, Gallup Certified Strengths Coach. Mount Airy, NC."/>
+<meta property="og:title" content="Brendon Albiston — Sonship. Strengths. Service."/>
+<meta property="og:description" content="Ministry leader, digital creator, Gallup strengths coach, entrepreneur. From New Zealand to North Carolina."/>
+<meta property="og:type" content="website"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .4s,color .4s}
+:root{
+  --deep:#1A2A1A;--gold:#8B7D3C;--gold-g:rgba(139,125,60,.12);--gold-d:#6B5D2C;
+  --forest:#2D4A2D;--forest-g:rgba(45,74,45,.1);
+  --bg:#F9F8F4;--text:#1A2A1A;--sec:#3A4A3C;--muted:#7A8A7C;
+  --border:#DDD8CC;--card:#fff;--shadow:0 1px 3px rgba(26,42,26,.06),0 8px 24px rgba(26,42,26,.04);
+  --hero:linear-gradient(160deg,#1A2A1A,#2D4A2D,#3A5C3A);
+  --fade:cubic-bezier(.22,1,.36,1)
+}
+[data-theme="dark"]{
+  --deep:#E4E8E4;--gold:#C8B84E;--gold-g:rgba(200,184,78,.1);--gold-d:#A8982E;
+  --forest:#88AA88;--forest-g:rgba(136,170,136,.08);
+  --bg:#0A0A0A;--text:#E4E8E4;--sec:#B0B8B0;--muted:#6A7A6A;
+  --border:#222;--card:#141414;--shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.2);
+  --hero:linear-gradient(160deg,#050A05,#1A2A1A,#2D4A2D)
+}
+.toggle{position:fixed;top:16px;right:16px;z-index:999;width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 2px 12px rgba(0,0,0,.1);color:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.p{max-width:660px;margin:0 auto;padding:0 1.25rem 4rem}
+/* HERO POSTER */
+.hero{text-align:center;padding:0 0 2rem;background:var(--hero);color:#fff;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
+.poster{position:relative;width:100%;height:400px;overflow:hidden}
+.poster .layer{position:absolute;inset:0;width:100%;height:100%}
+.poster .layer img{width:100%;height:100%;object-fit:cover;display:block}
+.poster .l-back img{filter:brightness(.25) blur(1px)}
+.poster .l-mid{top:auto;bottom:0;height:55%}
+.poster .l-mid img{object-position:center top;filter:brightness(.4)}
+.poster .l-mid::after{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:linear-gradient(to bottom,rgba(26,42,26,1),transparent)}
+.poster::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,42,26,.5) 0%,rgba(26,42,26,.15) 35%,rgba(26,42,26,.1) 60%,rgba(26,42,26,.95) 100%);z-index:3;pointer-events:none}
+.poster::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(139,125,60,.08) 0%,transparent 60%);z-index:4;pointer-events:none}
+.poster .ll{position:absolute;top:0;right:0;width:45%;height:65%;background:radial-gradient(ellipse at 80% 20%,rgba(139,125,60,.1) 0%,transparent 70%);z-index:5;pointer-events:none}
+.poster .pt{position:absolute;bottom:0;left:0;right:0;z-index:6;text-align:center;padding:2rem 1.5rem .5rem;background:linear-gradient(to top,rgba(26,42,26,.95),rgba(26,42,26,.5),transparent)}
+.poster .pt h2{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.5)}
+.poster .pt .tl{font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-top:.25rem}
+.poster .pt .loc{font-size:.5rem;color:rgba(255,255,255,.4);margin-top:.15rem;letter-spacing:.1em}
+.hc{position:relative;padding:0 1.5rem;margin-top:0;z-index:2}
+/* COMPONENTS */
+.avatar{width:100px;height:100px;border-radius:50%;border:4px solid rgba(139,125,60,.6);object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.4);margin-bottom:.75rem}
+.badges{display:flex;flex-wrap:wrap;gap:.3rem;justify-content:center;margin:.75rem 0}
+.badge{padding:.22rem .65rem;border-radius:2rem;font-size:.48rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;background:var(--gold-g);color:var(--gold);border:1px solid rgba(139,125,60,.15)}
+[data-theme="dark"] .badge{color:var(--gold)}
+.sec{margin-top:2.25rem}
+.sl{font-size:.48rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold-d);font-weight:700;margin-bottom:.2rem}
+[data-theme="dark"] .sl{color:var(--gold)}
+.st{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
+.sd{font-size:.78rem;color:var(--sec);line-height:1.7;margin-bottom:1rem}
+.al{width:40px;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-d));border-radius:2px;margin-bottom:.75rem}
+.c{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:1.2rem;margin-bottom:.55rem;box-shadow:var(--shadow);transition:border-color .25s,transform .25s var(--fade)}
+.c:hover{border-color:var(--gold);transform:translateY(-1px)}
+.c h3{font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:.2rem}
+.c p{font-size:.74rem;color:var(--sec);line-height:1.6;margin-bottom:.5rem}
+.c .tg{display:inline-block;font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;padding:.18rem .55rem;border-radius:2rem;font-weight:700;margin-bottom:.4rem;background:var(--gold-g);color:var(--gold-d);border:1px solid rgba(139,125,60,.12)}
+[data-theme="dark"] .c .tg{color:var(--gold)}
+.c .tg-forest{background:var(--forest-g);color:var(--forest);border-color:rgba(45,74,45,.12)}
+[data-theme="dark"] .c .tg-forest{color:var(--forest)}
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.55rem 1.3rem;background:linear-gradient(135deg,var(--gold),var(--gold-d));color:#1A2A1A;font-size:.7rem;font-weight:700;border-radius:.5rem;text-decoration:none;box-shadow:0 2px 8px rgba(139,125,60,.25);transition:all .2s var(--fade)}
+.btn:hover{box-shadow:0 4px 16px rgba(139,125,60,.35)}
+.btn-g{background:transparent;border:1.5px solid var(--border);color:var(--text);box-shadow:none;margin-left:.3rem}
+.btn-g:hover{border-color:var(--gold);color:var(--gold)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+.gi{background:var(--card);border:1px solid var(--border);border-radius:.7rem;padding:.8rem;text-align:center;box-shadow:var(--shadow)}
+.gi .num{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--gold-d)}
+[data-theme="dark"] .gi .num{color:var(--gold)}
+.gi .lbl{font-size:.48rem;color:var(--muted);margin-top:.1rem}
+/* VENTURE CARDS — bigger, with color accent */
+.vc{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:1.3rem;margin-bottom:.7rem;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:border-color .25s,transform .25s var(--fade)}
+.vc:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:var(--shadow),0 0 20px var(--gold-g)}
+.vc .accent{position:absolute;top:0;left:0;width:4px;height:100%;border-radius:2px 0 0 2px}
+.vc .vc-head{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
+.vc .vc-icon{width:48px;height:48px;border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.vc .vc-title{font-size:.9rem;font-weight:700;color:var(--text)}
+.vc .vc-role{font-size:.6rem;color:var(--muted);margin-top:.1rem}
+.vc .vc-years{font-size:.5rem;color:var(--gold-d);font-weight:700;letter-spacing:.05em}
+[data-theme="dark"] .vc .vc-years{color:var(--gold)}
+.vc p{font-size:.74rem;color:var(--sec);line-height:1.6;margin-bottom:.5rem}
+/* PHOTO DIVIDER */
+.ph-div{width:calc(100% + 2.5rem);margin:2.5rem -1.25rem;height:130px;overflow:hidden;position:relative}
+.ph-div img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.35)}
+.ph-div::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 18%,transparent 82%,var(--bg) 100%)}
+.ph-div .pd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-family:'Playfair Display',serif;font-style:italic;font-size:.95rem;color:rgba(255,255,255,.85);text-shadow:0 2px 12px rgba(0,0,0,.6);padding:0 2rem;text-align:center}
+.scripture{position:relative;margin:1.25rem 0;padding:1.2rem 1.2rem 1.2rem 1.6rem;background:var(--card);border-left:3px solid var(--gold);border-radius:0 .75rem .75rem 0;box-shadow:var(--shadow);font-family:'Playfair Display',serif;font-style:italic;font-size:.84rem;color:var(--text);line-height:1.7}
+.scripture::before{content:'\201C';position:absolute;top:-.1rem;left:.4rem;font-size:2.5rem;color:var(--gold);opacity:.2}
+.scripture .ref{display:block;font-family:'Inter',sans-serif;font-style:normal;font-size:.55rem;color:var(--gold-d);font-weight:700;letter-spacing:.08em;margin-top:.35rem;text-transform:uppercase}
+[data-theme="dark"] .scripture .ref{color:var(--gold)}
+.links{display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;margin-top:.75rem}
+.links a{display:flex;flex-direction:column;align-items:center;gap:.12rem;padding:.55rem .3rem;background:var(--card);border:1px solid var(--border);border-radius:.55rem;text-decoration:none;color:var(--text);font-size:.58rem;font-weight:600;box-shadow:var(--shadow);transition:border-color .2s}
+.links a:hover{border-color:var(--gold)}
+.links a .i{font-size:1rem}.links a .h{font-size:.44rem;color:var(--muted)}
+.divider{display:flex;align-items:center;gap:.75rem;margin:2.25rem 0 .5rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
+.divider span{font-size:.45rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-d);font-weight:700}
+[data-theme="dark"] .divider span{color:var(--gold)}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s var(--fade),transform .6s var(--fade)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.foot{text-align:center;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.55rem;color:var(--muted);line-height:2}
+.foot a{color:var(--gold-d);text-decoration:none}
+[data-theme="dark"] .foot a{color:var(--gold)}
+@media(max-width:480px){.poster .pt h2{font-size:1.8rem}.grid{grid-template-columns:1fr}.links{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="poster">
+    <div class="layer l-back"><img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80&auto=format" alt="Journey — road through mountains at golden hour" loading="eager"/></div>
+    <div class="layer l-mid"><img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80&auto=format" alt="Coaching session with engaged group" loading="eager"/></div>
+    <div class="ll"></div>
+    <div class="pt">
+      <h2>Brendon Albiston</h2>
+      <div class="tl">Sonship &bull; Strengths &bull; Service</div>
+      <div class="loc">Mount Airy, NC &bull; Originally from Whakatane, New Zealand</div>
+    </div>
+  </div>
+  <div class="hc">
+    <img class="avatar" src="https://graph.facebook.com/brendon.albiston/picture?type=large&width=400&height=400" alt="Brendon Albiston" onerror="this.style.display='none'"/>
+    <div class="badges">
+      <span class="badge">Ministry Leader</span>
+      <span class="badge">Digital Creator</span>
+      <span class="badge">Gallup Strengths Coach</span>
+      <span class="badge">Entrepreneur</span>
+      <span class="badge">Family Man</span>
+    </div>
+  </div>
+</div>
+
+<div class="p">
+  <div class="grid" style="margin-top:1.25rem">
+    <div class="gi"><div class="num">21+</div><div class="lbl">Years in Ministry</div></div>
+    <div class="gi"><div class="num">5</div><div class="lbl">Active Ventures</div></div>
+    <div class="gi"><div class="num">NZ</div><div class="lbl">Born &amp; Raised</div></div>
+    <div class="gi"><div class="num">NC</div><div class="lbl">Based Now</div></div>
+  </div>
+
+  <div class="scripture reveal">
+    "Living unloved is like clipping a bird's wing and removing its ability to fly."
+    <span class="ref">— Papa, The Shack</span>
+  </div>
+
+  <div class="divider"><span>About</span></div>
+  <div class="sec reveal">
+    <div class="al"></div>
+    <div class="sl">Who I Am</div>
+    <div class="st">From New Zealand to North Carolina</div>
+    <p class="sd">Brendon Albiston is a ministry leader, digital creator, Gallup Certified Strengths Coach, and entrepreneur. Born and raised in Whakatane, New Zealand, he graduated from Teen Mania Honor Academy (Class of 2001) and attended Domata School of Ministry before founding Albiston Family Ministries in 2005. Now based in Mount Airy, North Carolina, Brendon brings 21+ years of ministry experience across multiple ventures — all centered on helping people discover their identity as sons and daughters of God.</p>
+  </div>
+
+  <div class="divider"><span>Ventures</span></div>
+  <div class="sec reveal">
+    <div class="al"></div>
+    <div class="sl">Ministry &amp; Business</div>
+    <div class="st">Five Ways I Serve</div>
+
+    <!-- VENTURE 1: Albiston Family Ministries -->
+    <div class="vc">
+      <div class="accent" style="background:linear-gradient(180deg,var(--forest),var(--gold))"></div>
+      <div class="vc-head">
+        <div class="vc-icon" style="background:var(--forest-g);color:var(--forest)">&#9962;</div>
+        <div><div class="vc-title">Albiston Family Ministries</div><div class="vc-role">Founder</div><div class="vc-years">2005 — Present &bull; 21 Years</div></div>
+      </div>
+      <p>The foundation of everything. Family-centered ministry focused on missions, teaching, and community impact. Two decades of serving families and communities from New Zealand to North Carolina.</p>
+      <a class="btn" href="https://www.facebook.com/brendon.albiston/" target="_blank">Connect</a>
+    </div>
+
+    <!-- VENTURE 2: Sonship Matters -->
+    <div class="vc">
+      <div class="accent" style="background:linear-gradient(180deg,#8B7D3C,#C8B84E)"></div>
+      <div class="vc-head">
+        <div class="vc-icon" style="background:var(--gold-g);color:var(--gold-d)">&#128218;</div>
+        <div><div class="vc-title">Sonship Matters</div><div class="vc-role">Content Creator</div><div class="vc-years">2021 — Present &bull; 5 Years</div></div>
+      </div>
+      <p>Digital content platform teaching on identity, sonship, and what it means to be a beloved child of God. Because understanding who you ARE changes everything about what you DO. Content across Instagram and social platforms.</p>
+      <a class="btn" href="https://www.instagram.com/SonshipMatters/" target="_blank">@SonshipMatters</a>
+    </div>
+
+    <!-- VENTURE 3: Gallup Strengths Coaching -->
+    <div class="vc">
+      <div class="accent" style="background:linear-gradient(180deg,#2D4A6A,#4A7AB5)"></div>
+      <div class="vc-head">
+        <div class="vc-icon" style="background:rgba(45,74,106,.1);color:#2D4A6A">&#9889;</div>
+        <div><div class="vc-title">Gallup Certified Strengths Coach</div><div class="vc-role">Coach</div><div class="vc-years">2021 — Present &bull; 5 Years</div></div>
+      </div>
+      <p>Helping individuals and teams accomplish great things by doing what they naturally do best. CliftonStrengths assessment + personalized coaching to unlock your top talents and apply them to life, work, and ministry.</p>
+      <a class="btn" href="https://www.gallup.com/cliftonstrengths/en/home.aspx" target="_blank">CliftonStrengths</a>
+      <a class="btn btn-g" href="https://www.facebook.com/brendon.albiston/" target="_blank">Book Coaching</a>
+    </div>
+
+    <!-- VENTURE 4: Mattresses 4 Mates -->
+    <div class="vc">
+      <div class="accent" style="background:linear-gradient(180deg,#5A3A8A,#8A6ABA)"></div>
+      <div class="vc-head">
+        <div class="vc-icon" style="background:rgba(90,58,138,.1);color:#5A3A8A">&#128716;</div>
+        <div><div class="vc-title">Mattresses 4 Mates</div><div class="vc-role">Owner</div><div class="vc-years">Oct 2023 — Present</div></div>
+      </div>
+      <p>Business with a heart. Providing quality mattresses while building community and serving people with integrity. Because rest matters — and so does how you do business.</p>
+      <a class="btn" href="https://www.facebook.com/brendon.albiston/" target="_blank">Learn More</a>
+    </div>
+
+    <!-- VENTURE 5: Beelieve Enterprises (past) -->
+    <div class="vc" style="opacity:.75">
+      <div class="accent" style="background:linear-gradient(180deg,#8B6914,#C8A84E)"></div>
+      <div class="vc-head">
+        <div class="vc-icon" style="background:var(--gold-g);color:var(--gold-d)">&#127855;</div>
+        <div><div class="vc-title">Beelieve Enterprises</div><div class="vc-role">Beekeeper &bull; Factory Manager &bull; H&amp;S Manager</div><div class="vc-years">Sep 2014 — Oct 2017 &bull; 3 Years</div></div>
+      </div>
+      <p>Previous venture in New Zealand. Beekeeping, factory management, and health &amp; safety. Where Brendon learned to build systems, manage operations, and lead teams before bringing those skills to ministry and coaching.</p>
+    </div>
+  </div>
+
+  <div class="ph-div">
+    <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=80&auto=format" alt="New Zealand mountains — homeland" loading="lazy"/>
+    <div class="pd">"For we are God's masterpiece, created in Christ Jesus for good works" — Ephesians 2:10</div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div>
+    <div class="sl">Education &amp; Background</div>
+    <div class="st">The Journey</div>
+    <div class="c">
+      <div class="tg">Class of 2001</div>
+      <h3>Teen Mania Honor Academy</h3>
+      <p>Intensive one-year leadership training program in Lindale, TX. Foundational training in ministry, missions, and spiritual leadership for young adults.</p>
+    </div>
+    <div class="c">
+      <div class="tg">Ministry Training</div>
+      <h3>Domata School of Ministry</h3>
+      <p>Advanced ministry education building on the foundations of faith, leadership, and calling.</p>
+    </div>
+    <div class="c">
+      <div class="tg">Roots</div>
+      <h3>Whakatane, New Zealand</h3>
+      <p>Trident High School &amp; Whakatane High School. Born February 3, 1979 in the Bay of Plenty, NZ. The journey from the Southern Hemisphere to Southern Appalachia.</p>
+    </div>
+  </div>
+
+  <div class="divider"><span>Work With Me</span></div>
+  <div class="sec reveal">
+    <div class="al"></div>
+    <div class="sl">How to Get Involved</div>
+    <div class="st">Let's Connect</div>
+    <div class="c">
+      <div class="tg">Coaching</div>
+      <h3>Book a Strengths Session</h3>
+      <p>Discover your top CliftonStrengths and learn how to apply them to your life, career, ministry, and relationships. Individual and team sessions available.</p>
+      <a class="btn" href="https://www.facebook.com/brendon.albiston/" target="_blank">Book Now</a>
+    </div>
+    <div class="c">
+      <div class="tg">Content</div>
+      <h3>Follow Sonship Matters</h3>
+      <p>Daily content on identity, sonship, and knowing who you are in Christ. Because your identity as a beloved son or daughter changes everything.</p>
+      <a class="btn" href="https://www.instagram.com/SonshipMatters/" target="_blank">@SonshipMatters</a>
+    </div>
+    <div class="c">
+      <div class="tg">Ministry</div>
+      <h3>Invite Brendon to Speak</h3>
+      <p>Available for conferences, retreats, churches, and coaching workshops. 21+ years of ministry experience across multiple continents. Topics: Sonship, Identity, Strengths, Family, Leadership.</p>
+      <a class="btn" href="https://www.facebook.com/brendon.albiston/" target="_blank">Request Booking</a>
+    </div>
+    <div class="c">
+      <div class="tg">Business</div>
+      <h3>Mattresses 4 Mates</h3>
+      <p>Need a quality mattress from someone who cares? Business built on relationships, integrity, and serving the community. Mount Airy, NC area.</p>
+      <a class="btn" href="https://www.facebook.com/brendon.albiston/" target="_blank">Shop</a>
+    </div>
+  </div>
+
+  <div class="divider"><span>Connect</span></div>
+  <div class="sec reveal">
+    <div class="sl">Find Me Everywhere</div>
+    <div class="links">
+      <a href="https://www.facebook.com/brendon.albiston/" target="_blank"><span class="i">&#128101;</span>Facebook<span class="h">Brendon Albiston</span></a>
+      <a href="https://www.instagram.com/SonshipMatters/" target="_blank"><span class="i">&#128247;</span>Instagram<span class="h">@SonshipMatters</span></a>
+      <a href="https://www.gallup.com/cliftonstrengths/en/home.aspx" target="_blank"><span class="i">&#9889;</span>Strengths<span class="h">Gallup Coach</span></a>
+      <a href="https://www.facebook.com/brendon.albiston/" target="_blank"><span class="i">&#128716;</span>M4M<span class="h">Mattresses 4 Mates</span></a>
+      <a href="https://www.facebook.com/brendon.albiston/" target="_blank"><span class="i">&#9962;</span>Ministry<span class="h">Albiston Family</span></a>
+      <a href="https://www.facebook.com/brendon.albiston/" target="_blank"><span class="i">&#128172;</span>Message<span class="h">Get in Touch</span></a>
+    </div>
+  </div>
+
+  <div class="foot">
+    Brendon Albiston &bull; Mount Airy, NC &bull; Originally from Whakatane, New Zealand<br>
+    Albiston Family Ministries &bull; Sonship Matters &bull; Gallup Certified Strengths Coach<br>
+    &copy; 2026 Brendon Albiston. All rights reserved.
+  </div>
+</div>
+
+<button class="toggle" onclick="toggleMode()" id="mBtn">&#9790;</button>
+<script>
+function toggleMode(){var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('mBtn').innerHTML=d?'\u263E':'\u263C';localStorage.setItem('ba-theme',d?'light':'dark')}
+(function(){var s=localStorage.getItem('ba-theme');if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('mBtn').innerHTML='\u263C'}})();
+var ro=new IntersectionObserver(function(e){e.forEach(function(i){if(i.isIntersecting){i.target.classList.add('visible');ro.unobserve(i.target)}})},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el)});
+</script>
+</body>
+</html>
