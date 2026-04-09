@@ -13,9 +13,23 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 [data-theme="dark"]{--bg:#0A0A0A;--text:#E8E0F0;--sec:#B0A0C0;--muted:#6A5A7C;--gold:#D4A847;--gold-d:#B8942E;--border:#222;--card:#141414;--shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.2);--hero:linear-gradient(160deg,#0A0518,#1A0A2E,#2D1B50)}
 .toggle{position:fixed;top:16px;right:16px;z-index:999;width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 2px 12px rgba(0,0,0,.1);color:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
-.hero{text-align:center;padding:4rem 1.5rem 2.5rem;background:var(--hero);color:#fff;position:relative;overflow:hidden}
+.hero{text-align:center;padding:0 0 2rem;background:var(--hero);color:#fff;position:relative;overflow:hidden}
 .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
-.avatar{width:120px;height:120px;border-radius:50%;border:4px solid rgba(184,134,11,.5);object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.3);margin-bottom:1rem;position:relative}
+.hero-photo{position:relative;width:100%;height:320px;overflow:hidden}
+.hero-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.45)}
+.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,10,46,.1) 0%,rgba(26,10,46,.3) 50%,rgba(26,10,46,.92) 100%)}
+.hero-content{position:relative;padding:0 1.5rem;margin-top:-5rem;z-index:2}
+.avatar{width:110px;height:110px;border-radius:50%;border:4px solid rgba(184,134,11,.6);object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.4);margin-bottom:.75rem;position:relative}
+.ph-div{width:calc(100% + 2.5rem);margin:2.5rem -1.25rem;height:140px;overflow:hidden;position:relative}
+.ph-div img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.4)}
+.ph-div::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 18%,transparent 82%,var(--bg) 100%)}
+.ph-div .pd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-family:'Playfair Display',serif;font-style:italic;font-size:1rem;color:rgba(255,255,255,.85);text-shadow:0 2px 12px rgba(0,0,0,.6);padding:0 2rem;text-align:center}
+.ph-card{position:relative;border-radius:1rem;overflow:hidden;margin-bottom:.6rem;box-shadow:var(--shadow)}
+.ph-card img{width:100%;height:170px;object-fit:cover;display:block}
+.ph-card::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 25%,rgba(26,10,46,.88) 100%);pointer-events:none}
+.ph-card .pc{position:absolute;bottom:0;left:0;right:0;padding:1.1rem;z-index:2;color:#fff}
+.ph-card .pc h3{font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:.15rem}
+.ph-card .pc p{font-size:.7rem;color:rgba(255,255,255,.7);line-height:1.5}
 .hero h1{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;margin-bottom:.15rem;position:relative}
 .hero .title{font-size:.75rem;color:var(--gold);font-weight:600;letter-spacing:.05em;margin-bottom:.5rem;position:relative}
 .hero .sub{color:rgba(255,255,255,.55);font-size:.8rem;line-height:1.6;max-width:420px;margin:0 auto;position:relative}
@@ -58,6 +72,11 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 </head>
 <body>
 <div class="hero">
+  <!-- Hero: Man walking toward light — deliverance/transformation -->
+  <div class="hero-photo">
+    <img src="https://images.unsplash.com/photo-1508672019048-805c876b67e2?w=900&q=85&auto=format" alt="Man walking toward bright light at sunrise" loading="eager"/>
+  </div>
+  <div class="hero-content">
   <img class="avatar" src="https://graph.facebook.com/bishop.norman.330/picture?type=large&width=400&height=400" alt="Bishop Steven A. Norman" onerror="this.style.display='none'"/>
   <h1>Bishop Steven A. Norman</h1>
   <div class="title">Founder &bull; Pastor &bull; Bishop &bull; Overcomer</div>
@@ -67,6 +86,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     <span class="badge">Founder</span>
     <span class="badge">Liberty University</span>
     <span class="badge">Military Veteran</span>
+  </div>
   </div>
 </div>
 <div class="p">
@@ -82,6 +102,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     <span class="ref">— Philippians 4:13</span>
   </div>
 
+  <!-- PHOTO DIVIDER: deliverance -->
+  <div class="ph-div">
+    <img src="https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=900&q=80&auto=format" alt="Light breaking through darkness" loading="lazy"/>
+    <div class="pd">"If the Son sets you free, you will be free indeed" — John 8:36</div>
+  </div>
+
   <div class="sec reveal">
     <div class="al"></div><div class="sl">Testimony</div>
     <div class="st">From Darkness to Destiny</div>
@@ -89,9 +115,19 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     <p class="sd">In 1999, Bishop Norman heard God's voice calling him to the pastoral ministry. With obedience to the call, the first service of Jesus Is Lord ~ Assembly of Love was held with <strong>seven people</strong> in attendance on October 10, 1999 at Fairview Elementary School. He furthered his education at <strong>Liberty University</strong> in Biblical studies, and on March 6, 2016, was consecrated to the office of Bishop.</p>
   </div>
 
+  <!-- PHOTO DIVIDER: community -->
+  <div class="ph-div">
+    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=900&q=80&auto=format" alt="Community gathering" loading="lazy"/>
+    <div class="pd">"Love one another as I have loved you" — John 13:34</div>
+  </div>
+
   <div class="sec reveal">
     <div class="al"></div><div class="sl">Events &amp; Services</div>
     <div class="st">Join Bishop Norman</div>
+    <div class="ph-card">
+      <img src="https://images.unsplash.com/photo-1545232979-8bf68ee9b1af?w=800&q=80&auto=format" alt="Prayer gathering" loading="lazy"/>
+      <div class="pc"><h3>Sunday Worship &amp; Livestream</h3><p>11 AM — In-house + Facebook + YouTube</p></div>
+    </div>
     <div class="c">
       <div class="tg">Every Sunday</div>
       <h3>Sunday Worship — 11:00 AM</h3>
