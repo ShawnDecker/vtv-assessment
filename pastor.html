@@ -15,10 +15,23 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
 .hero{text-align:center;padding:0 0 2rem;background:var(--hero);color:#fff;position:relative;overflow:hidden}
 .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
-.hero-photo{position:relative;width:100%;height:320px;overflow:hidden}
-.hero-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.5)}
-.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,27,51,.1) 0%,rgba(12,27,51,.3) 50%,rgba(12,27,51,.9) 100%)}
-.hero-content{position:relative;padding:0 1.5rem;margin-top:-5rem;z-index:2}
+.poster{position:relative;width:100%;height:420px;overflow:hidden}
+.poster .layer{position:absolute;inset:0;width:100%;height:100%}
+.poster .layer img{width:100%;height:100%;object-fit:cover;display:block}
+.poster .l-back img{filter:brightness(.3) blur(1px)}
+.poster .l-mid{top:auto;bottom:0;height:55%}
+.poster .l-mid img{object-position:center top;filter:brightness(.45)}
+.poster .l-mid::after{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:linear-gradient(to bottom,rgba(12,27,51,1),transparent)}
+.poster .l-front{top:auto;bottom:0;height:70%;display:flex;justify-content:center}
+.poster .l-front img{width:auto;height:100%;object-fit:contain;filter:brightness(.55) contrast(1.1);mix-blend-mode:luminosity;opacity:.6}
+.poster::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,27,51,.6) 0%,rgba(12,27,51,.2) 30%,rgba(12,27,51,.15) 60%,rgba(12,27,51,.95) 100%);z-index:3;pointer-events:none}
+.poster::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(212,162,78,.08) 0%,transparent 60%);z-index:4;pointer-events:none}
+.poster .light-leak{position:absolute;top:0;right:0;width:40%;height:60%;background:radial-gradient(ellipse at 80% 20%,rgba(212,162,78,.1) 0%,transparent 70%);z-index:5;pointer-events:none}
+.poster .poster-text{position:absolute;bottom:0;left:0;right:0;z-index:6;text-align:center;padding:2rem 1.5rem .5rem;background:linear-gradient(to top,rgba(12,27,51,.95),rgba(12,27,51,.5),transparent)}
+.poster .poster-text h2{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.5)}
+.poster .poster-text .tagline{font-size:.65rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-top:.3rem}
+.poster .poster-text .loc{font-size:.55rem;color:rgba(255,255,255,.4);margin-top:.2rem;letter-spacing:.1em}
+.hero-content{position:relative;padding:0 1.5rem;margin-top:0;z-index:2}
 .avatar{width:110px;height:110px;border-radius:50%;border:4px solid rgba(212,162,78,.6);object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.4);margin-bottom:.75rem;position:relative}
 .ph-div{width:calc(100% + 2.5rem);margin:2.5rem -1.25rem;height:140px;overflow:hidden;position:relative}
 .ph-div img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.4)}
@@ -68,77 +81,17 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 </head>
 <body>
 <div class="hero">
-  <!-- 3D SVG: Bishop Penn on global stage, diverse crowd, globe -->
-  <div style="position:relative;width:100%;height:340px;overflow:hidden">
-  <svg viewBox="0 0 600 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
-    <defs>
-      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#060E1A"/><stop offset="50%" stop-color="#0C1B33"/><stop offset="100%" stop-color="#1E3A5F"/></linearGradient>
-      <linearGradient id="spot" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#D4A24E" stop-opacity=".3"/><stop offset="100%" stop-color="#D4A24E" stop-opacity="0"/></linearGradient>
-      <radialGradient id="globe-g" cx="50%" cy="40%"><stop offset="0%" stop-color="#1E3A5F" stop-opacity=".4"/><stop offset="100%" stop-color="#0C1B33" stop-opacity=".1"/></radialGradient>
-      <filter id="gl"><feGaussianBlur stdDeviation="5" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      <filter id="sh"><feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity=".3"/></filter>
-    </defs>
-    <rect width="600" height="340" fill="url(#sky)"/>
-    <!-- GLOBE in background -->
-    <circle cx="300" cy="120" r="85" fill="none" stroke="rgba(212,162,78,.06)" stroke-width="1"/>
-    <circle cx="300" cy="120" r="85" fill="url(#globe-g)"/>
-    <ellipse cx="300" cy="120" rx="85" ry="30" fill="none" stroke="rgba(212,162,78,.06)" stroke-width=".8"/>
-    <ellipse cx="300" cy="120" rx="40" ry="85" fill="none" stroke="rgba(212,162,78,.05)" stroke-width=".8"/>
-    <ellipse cx="300" cy="120" rx="65" ry="85" fill="none" stroke="rgba(212,162,78,.04)" stroke-width=".8"/>
-    <!-- Continent shapes (abstract) -->
-    <path d="M260,90 Q275,80 290,88 Q300,95 280,100 Q265,98 260,90Z" fill="rgba(212,162,78,.06)"/>
-    <path d="M310,100 Q330,90 340,105 Q335,115 320,112 Q310,108 310,100Z" fill="rgba(212,162,78,.05)"/>
-    <path d="M280,130 Q295,125 310,135 Q300,145 285,140 Q278,137 280,130Z" fill="rgba(212,162,78,.04)"/>
-    <!-- STAGE -->
-    <path d="M50,215 L550,215 L600,340 L0,340Z" fill="#0C1B33"/>
-    <line x1="50" y1="215" x2="550" y2="215" stroke="#D4A24E" stroke-width="1.5" opacity=".12"/>
-    <!-- Spotlights -->
-    <polygon points="300,0 250,215 350,215" fill="url(#spot)" opacity=".5"/>
-    <polygon points="150,0 120,215 180,215" fill="url(#spot)" opacity=".12"/>
-    <polygon points="450,0 420,215 480,215" fill="url(#spot)" opacity=".12"/>
-    <!-- BISHOP PENN silhouette — bold, arms open wide -->
-    <g filter="url(#sh)" transform="translate(300,168)">
-      <path d="M-14,48 L-18,115 L-7,115 L-4,78 L0,73 L4,78 L7,115 L18,115 L14,48Z" fill="#0A1628"/>
-      <path d="M-14,48 L-16,85 L0,80 L16,85 L14,48Z" fill="#122A48"/>
-      <circle cx="0" cy="32" r="13" fill="#162D50"/>
-      <circle cx="-1" cy="31" r="11" fill="#1A3555"/>
-      <!-- ARMS WIDE OPEN (uniting gesture) -->
-      <path d="M14,52 Q40,35 65,30" stroke="#122A48" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <circle cx="68" cy="28" r="4" fill="#162D50"/>
-      <path d="M-14,52 Q-40,35 -65,30" stroke="#122A48" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <circle cx="-68" cy="28" r="4" fill="#162D50"/>
-      <!-- Gold clergy stole -->
-      <path d="M-5,48 L-8,85 L-3,85Z" fill="#D4A24E" opacity=".35"/>
-      <path d="M5,48 L8,85 L3,85Z" fill="#D4A24E" opacity=".35"/>
-    </g>
-    <!-- DIVERSE CROWD (different sizes = different people) -->
-    <g opacity=".3">
-      <circle cx="70" cy="278" r="7" fill="#D4A24E"/><rect x="63" y="285" width="14" height="16" rx="4" fill="#D4A24E"/>
-      <circle cx="110" cy="275" r="7" fill="#fff"/><rect x="103" y="282" width="14" height="16" rx="4" fill="#fff"/>
-      <circle cx="155" cy="280" r="6" fill="#8BB" /><rect x="149" y="286" width="12" height="14" rx="3" fill="#8BB"/>
-      <circle cx="445" cy="280" r="6" fill="#B8A"/><rect x="439" y="286" width="12" height="14" rx="3" fill="#B8A"/>
-      <circle cx="490" cy="275" r="7" fill="#fff"/><rect x="483" y="282" width="14" height="16" rx="4" fill="#fff"/>
-      <circle cx="530" cy="278" r="7" fill="#D4A24E"/><rect x="523" y="285" width="14" height="16" rx="4" fill="#D4A24E"/>
-    </g>
-    <g opacity=".45">
-      <circle cx="45" cy="305" r="9" fill="#fff"/><rect x="36" y="314" width="18" height="20" rx="5" fill="#fff"/>
-      <line x1="40" y1="314" x2="30" y2="295" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="100" cy="300" r="9" fill="#D4A24E"/><rect x="91" y="309" width="18" height="20" rx="5" fill="#D4A24E"/>
-      <circle cx="160" cy="305" r="9" fill="#8AD"/><rect x="151" y="314" width="18" height="20" rx="5" fill="#8AD"/>
-      <circle cx="220" cy="298" r="9" fill="#fff"/><rect x="211" y="307" width="18" height="20" rx="5" fill="#fff"/>
-      <line x1="228" y1="307" x2="238" y2="290" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="380" cy="298" r="9" fill="#B8A"/><rect x="371" y="307" width="18" height="20" rx="5" fill="#B8A"/>
-      <circle cx="440" cy="305" r="9" fill="#fff"/><rect x="431" y="314" width="18" height="20" rx="5" fill="#fff"/>
-      <circle cx="500" cy="300" r="9" fill="#D4A24E"/><rect x="491" y="309" width="18" height="20" rx="5" fill="#D4A24E"/>
-      <line x1="495" y1="309" x2="485" y2="290" stroke="#D4A24E" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="555" cy="305" r="9" fill="#8BB"/><rect x="546" y="314" width="18" height="20" rx="5" fill="#8BB"/>
-    </g>
-    <!-- 3 PILLARS text at bottom -->
-    <text x="150" y="250" text-anchor="middle" font-family="sans-serif" font-size="6" letter-spacing=".25em" fill="rgba(212,162,78,.2)" font-weight="700">TEACH TRUTH</text>
-    <text x="300" y="250" text-anchor="middle" font-family="sans-serif" font-size="6" letter-spacing=".25em" fill="rgba(212,162,78,.2)" font-weight="700">UNITE CULTURES</text>
-    <text x="450" y="250" text-anchor="middle" font-family="sans-serif" font-size="6" letter-spacing=".25em" fill="rgba(212,162,78,.2)" font-weight="700">EMPOWER</text>
-    <text x="300" y="332" text-anchor="middle" font-family="Georgia,serif" font-size="8" letter-spacing=".3em" fill="rgba(212,162,78,.3)">BISHOP MICHAEL PENN</text>
-  </svg>
+  <!-- CINEMATIC PHOTO COMPOSITE: International, diverse, bold -->
+  <div class="poster">
+    <div class="layer l-back"><img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&q=80&auto=format" alt="Earth from space at night — global reach" loading="eager"/></div>
+    <div class="layer l-mid"><img src="https://images.unsplash.com/photo-1529070538774-1f9e5c9a61b0?w=1200&q=80&auto=format" alt="Diverse crowd united together" loading="eager"/></div>
+    <div class="layer l-front"><img src="https://images.unsplash.com/photo-1560439513-74b037a25d84?w=800&q=80&auto=format" alt="Leader addressing community" loading="eager"/></div>
+    <div class="light-leak"></div>
+    <div class="poster-text">
+      <h2>Bishop Michael Penn</h2>
+      <div class="tagline">Pastor &bull; Bishop &bull; MPMI Founder &bull; Speaker</div>
+      <div class="loc">The Galilean House of Worship &bull; Martinsville, VA</div>
+    </div>
   </div>
   <div class="hero-content">
   <img class="avatar" src="https://graph.facebook.com/galilean.house/picture?type=large&width=400&height=400" alt="Bishop Michael Penn" onerror="this.style.display='none'"/>
