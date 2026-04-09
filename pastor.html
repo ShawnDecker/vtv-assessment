@@ -13,9 +13,23 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 [data-theme="dark"]{--bg:#0A0A0A;--text:#E8E4DE;--sec:#B0A898;--muted:#6A6A6A;--gold:#D4A847;--gold-d:#B8942E;--border:#222;--card:#141414;--shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.2);--hero:linear-gradient(160deg,#050A14,#0C1B33,#162D50)}
 .toggle{position:fixed;top:16px;right:16px;z-index:999;width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 2px 12px rgba(0,0,0,.1);color:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
-.hero{text-align:center;padding:4rem 1.5rem 2.5rem;background:var(--hero);color:#fff;position:relative;overflow:hidden}
+.hero{text-align:center;padding:0 0 2rem;background:var(--hero);color:#fff;position:relative;overflow:hidden}
 .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
-.avatar{width:120px;height:120px;border-radius:50%;border:4px solid rgba(212,162,78,.5);object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.3);margin-bottom:1rem;position:relative}
+.hero-photo{position:relative;width:100%;height:320px;overflow:hidden}
+.hero-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.5)}
+.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,27,51,.1) 0%,rgba(12,27,51,.3) 50%,rgba(12,27,51,.9) 100%)}
+.hero-content{position:relative;padding:0 1.5rem;margin-top:-5rem;z-index:2}
+.avatar{width:110px;height:110px;border-radius:50%;border:4px solid rgba(212,162,78,.6);object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.4);margin-bottom:.75rem;position:relative}
+.ph-div{width:calc(100% + 2.5rem);margin:2.5rem -1.25rem;height:140px;overflow:hidden;position:relative}
+.ph-div img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.4)}
+.ph-div::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 18%,transparent 82%,var(--bg) 100%)}
+.ph-div .pd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-family:'Playfair Display',serif;font-style:italic;font-size:1rem;color:rgba(255,255,255,.85);text-shadow:0 2px 12px rgba(0,0,0,.6);padding:0 2rem;text-align:center}
+.ph-card{position:relative;border-radius:1rem;overflow:hidden;margin-bottom:.6rem;box-shadow:var(--shadow)}
+.ph-card img{width:100%;height:170px;object-fit:cover;display:block}
+.ph-card::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 25%,rgba(12,27,51,.88) 100%);pointer-events:none}
+.ph-card .pc{position:absolute;bottom:0;left:0;right:0;padding:1.1rem;z-index:2;color:#fff}
+.ph-card .pc h3{font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:.15rem}
+.ph-card .pc p{font-size:.7rem;color:rgba(255,255,255,.7);line-height:1.5}
 .hero h1{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;margin-bottom:.15rem;position:relative}
 .hero .title{font-size:.75rem;color:var(--gold);font-weight:600;letter-spacing:.05em;margin-bottom:.5rem;position:relative}
 .hero .sub{color:rgba(255,255,255,.55);font-size:.8rem;line-height:1.6;max-width:420px;margin:0 auto;position:relative}
@@ -54,6 +68,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 </head>
 <body>
 <div class="hero">
+  <div class="hero-photo">
+    <img src="https://images.unsplash.com/photo-1529070538774-1f9e5c9a61b0?w=900&q=85&auto=format" alt="Diverse community united" loading="eager"/>
+  </div>
+  <div class="hero-content">
   <img class="avatar" src="https://graph.facebook.com/galilean.house/picture?type=large&width=400&height=400" alt="Bishop Michael Penn" onerror="this.style.display='none'"/>
   <h1>Bishop Michael Penn</h1>
   <div class="title">Pastor &bull; Bishop &bull; Speaker &bull; Ministry Leader</div>
@@ -63,6 +81,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     <span class="badge">Senior Pastor</span>
     <span class="badge">MPMI Founder</span>
     <span class="badge">Speaker</span>
+  </div>
   </div>
 </div>
 <div class="p">
@@ -79,9 +98,18 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     <p class="sd">Bishop Michael Penn, better known as "Pastor Penn," is married to Angela Kidd Penn and father of three — Jonathan, Sean, and Candice — with two grandchildren, Havyn and Jaxon. In 2000, Pastor Penn began his journey of destiny as Senior Pastor of what was then Galilee Missionary Baptist Church, now The Galilean House of Worship.</p>
   </div>
 
+  <div class="ph-div">
+    <img src="https://images.unsplash.com/photo-1473177104440-ffee2f376098?w=900&q=80&auto=format" alt="Church with light rays" loading="lazy"/>
+    <div class="pd">"Teach truth, unite cultures, empower believers"</div>
+  </div>
+
   <div class="sec reveal">
     <div class="al"></div><div class="sl">Upcoming Events</div>
     <div class="st">Bring Bishop Penn to Your Church</div>
+    <div class="ph-card">
+      <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80&auto=format" alt="Conference speaking" loading="lazy"/>
+      <div class="pc"><h3>Book for Conferences &amp; Revivals</h3><p>International speaking through MPMI</p></div>
+    </div>
     <div class="c">
       <div class="tg">Speaking</div>
       <h3>Book for Conferences &amp; Revivals</h3>
