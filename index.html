@@ -382,6 +382,783 @@
   <body>
     <div id="root"></div>
 
+    <!-- ═══════════════════════════════════════════════════════════════
+         TRUST SIGNALS + CREDENTIAL UPGRADES
+         Sections: Featured On | Credentials | Testimonials | Video
+         ═══════════════════════════════════════════════════════════════ -->
+    <div id="ve-trust-sections" style="display:none;">
+      <style>
+        /* ── Scroll Reveal Animation ── */
+        .ve-reveal {
+          opacity: 0;
+          transform: translateY(40px);
+          transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
+        }
+        .ve-reveal.ve-visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .ve-reveal-delay-1 { transition-delay: 0.1s; }
+        .ve-reveal-delay-2 { transition-delay: 0.2s; }
+        .ve-reveal-delay-3 { transition-delay: 0.3s; }
+        .ve-reveal-delay-4 { transition-delay: 0.4s; }
+
+        /* ── AS FEATURED ON ── */
+        .ve-featured-bar {
+          background: linear-gradient(180deg, #0a0a0a 0%, #0f0f0f 50%, #0a0a0a 100%);
+          border-top: 1px solid #1a1a1a;
+          border-bottom: 1px solid #1a1a1a;
+          padding: 3rem 1.5rem;
+          text-align: center;
+        }
+        .ve-featured-bar .ve-eyebrow {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.65rem;
+          letter-spacing: 4px;
+          text-transform: uppercase;
+          color: #52525b;
+          margin-bottom: 2rem;
+        }
+        .ve-featured-logos {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-wrap: wrap;
+          gap: 2rem 3rem;
+          max-width: 800px;
+          margin: 0 auto;
+        }
+        .ve-featured-logo {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #3f3f46;
+          letter-spacing: 0.05em;
+          transition: color 0.3s ease;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .ve-featured-logo:hover { color: #71717a; }
+        .ve-featured-logo .ve-logo-icon {
+          font-size: 1.1rem;
+          opacity: 0.6;
+        }
+        .ve-featured-logo.ve-amazon { font-size: 1.05rem; letter-spacing: 0.02em; }
+        .ve-featured-logo.ve-wfxr { font-weight: 900; font-size: 1.1rem; }
+        .ve-featured-logo.ve-podcast { font-style: italic; font-weight: 500; }
+        .ve-featured-divider {
+          width: 1px;
+          height: 24px;
+          background: #27272a;
+        }
+        @media (max-width: 640px) {
+          .ve-featured-logos { gap: 1.5rem 2rem; }
+          .ve-featured-logo { font-size: 0.8rem; }
+          .ve-featured-logo.ve-wfxr { font-size: 0.95rem; }
+          .ve-featured-logo.ve-amazon { font-size: 0.9rem; }
+          .ve-featured-divider { display: none; }
+        }
+
+        /* ── CREDENTIAL BADGES ── */
+        .ve-credentials-section {
+          background: #0a0a0a;
+          padding: 5rem 1.5rem;
+          text-align: center;
+        }
+        .ve-credentials-section .ve-section-eyebrow {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.65rem;
+          letter-spacing: 4px;
+          text-transform: uppercase;
+          color: #D4A847;
+          margin-bottom: 0.75rem;
+        }
+        .ve-credentials-section .ve-section-title {
+          font-family: 'Instrument Serif', serif;
+          font-style: italic;
+          font-size: 2rem;
+          color: #fff;
+          margin-bottom: 0.75rem;
+        }
+        .ve-credentials-section .ve-section-sub {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.9rem;
+          color: #71717a;
+          margin-bottom: 3rem;
+          max-width: 480px;
+          margin-left: auto;
+          margin-right: auto;
+          line-height: 1.6;
+        }
+        .ve-badge-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 1.5rem;
+          max-width: 960px;
+          margin: 0 auto;
+        }
+        .ve-badge-card {
+          background: #18181b;
+          border: 1px solid #27272a;
+          border-radius: 1rem;
+          padding: 2rem 1.5rem;
+          text-align: center;
+          position: relative;
+          overflow: hidden;
+          transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+        .ve-badge-card:hover {
+          border-color: #D4A84760;
+          transform: translateY(-4px);
+          box-shadow: 0 8px 40px rgba(212,168,71,0.08);
+        }
+        .ve-badge-card::before {
+          content: '';
+          position: absolute;
+          top: -1px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 60px;
+          height: 3px;
+          background: linear-gradient(90deg, transparent, #D4A847, transparent);
+          border-radius: 0 0 4px 4px;
+        }
+        .ve-badge-icon {
+          width: 72px;
+          height: 72px;
+          margin: 0 auto 1.25rem;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .ve-badge-icon::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          background: conic-gradient(from 0deg, #D4A84700, #D4A84740, #D4A84700, #D4A84740, #D4A84700);
+          animation: ve-badge-spin 8s linear infinite;
+        }
+        .ve-badge-icon::after {
+          content: '';
+          position: absolute;
+          inset: 3px;
+          border-radius: 50%;
+          background: #18181b;
+        }
+        @keyframes ve-badge-spin {
+          to { transform: rotate(360deg); }
+        }
+        .ve-badge-icon svg {
+          position: relative;
+          z-index: 1;
+          width: 28px;
+          height: 28px;
+          stroke: #D4A847;
+          stroke-width: 1.5;
+          fill: none;
+        }
+        .ve-badge-glow {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 72px;
+          height: 72px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(212,168,71,0.15) 0%, transparent 70%);
+          filter: blur(12px);
+          z-index: 0;
+        }
+        .ve-badge-title {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #fff;
+          margin-bottom: 0.5rem;
+        }
+        .ve-badge-desc {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.8rem;
+          color: #71717a;
+          line-height: 1.5;
+        }
+        @media (max-width: 520px) {
+          .ve-badge-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
+          .ve-badge-card { padding: 1.5rem 1rem; }
+          .ve-badge-icon { width: 56px; height: 56px; }
+          .ve-credentials-section .ve-section-title { font-size: 1.65rem; }
+        }
+
+        /* ── TESTIMONIALS ── */
+        .ve-testimonials-section {
+          background: linear-gradient(180deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%);
+          padding: 5rem 1.5rem;
+          text-align: center;
+          border-top: 1px solid #1a1a1a;
+        }
+        .ve-testimonials-section .ve-section-eyebrow {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.65rem;
+          letter-spacing: 4px;
+          text-transform: uppercase;
+          color: #D4A847;
+          margin-bottom: 0.75rem;
+        }
+        .ve-testimonials-section .ve-section-title {
+          font-family: 'Instrument Serif', serif;
+          font-style: italic;
+          font-size: 2rem;
+          color: #fff;
+          margin-bottom: 3rem;
+        }
+        .ve-testimonial-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 1.5rem;
+          max-width: 960px;
+          margin: 0 auto;
+        }
+        .ve-testimonial-card {
+          background: #18181b;
+          border: 1px solid #27272a;
+          border-radius: 0.75rem;
+          padding: 2rem 1.5rem;
+          text-align: left;
+          position: relative;
+          transition: border-color 0.3s, transform 0.3s;
+        }
+        .ve-testimonial-card:hover {
+          border-color: #D4A84740;
+          transform: translateY(-2px);
+        }
+        .ve-testimonial-card .ve-quote-mark {
+          font-family: 'Instrument Serif', serif;
+          font-size: 3.5rem;
+          color: #D4A847;
+          line-height: 1;
+          margin-bottom: 0.25rem;
+          opacity: 0.4;
+        }
+        .ve-testimonial-card .ve-quote-text {
+          font-family: 'Instrument Serif', serif;
+          font-style: italic;
+          font-size: 0.95rem;
+          color: #d4d4d8;
+          line-height: 1.7;
+          margin-bottom: 1.5rem;
+        }
+        .ve-testimonial-card .ve-quote-author {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+        .ve-testimonial-card .ve-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #292007, #1a1510);
+          border: 2px solid #D4A847;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 900;
+          font-size: 0.8rem;
+          color: #D4A847;
+          flex-shrink: 0;
+        }
+        .ve-testimonial-card .ve-author-name {
+          font-weight: 700;
+          font-size: 0.85rem;
+          color: #fff;
+        }
+        .ve-testimonial-card .ve-author-role {
+          font-size: 0.72rem;
+          color: #71717a;
+        }
+        .ve-testimonial-card .ve-stat-badge {
+          display: inline-block;
+          margin-top: 1rem;
+          padding: 0.3rem 0.75rem;
+          background: rgba(212,168,71,0.08);
+          border: 1px solid rgba(212,168,71,0.2);
+          border-radius: 2rem;
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: #D4A847;
+        }
+        .ve-testimonials-cta {
+          margin-top: 2.5rem;
+        }
+        .ve-testimonials-cta a {
+          display: inline-block;
+          padding: 0.75rem 2rem;
+          border: 1px solid #27272a;
+          border-radius: 0.5rem;
+          color: #a1a1aa;
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.85rem;
+          font-weight: 600;
+          text-decoration: none;
+          transition: all 0.2s;
+        }
+        .ve-testimonials-cta a:hover {
+          border-color: #D4A847;
+          color: #D4A847;
+        }
+        @media (max-width: 520px) {
+          .ve-testimonial-grid { grid-template-columns: 1fr; }
+          .ve-testimonials-section .ve-section-title { font-size: 1.65rem; }
+        }
+
+        /* ── CINEMATIC VIDEO ── */
+        .ve-video-section {
+          background: #0a0a0a;
+          padding: 5rem 1.5rem;
+          text-align: center;
+        }
+        .ve-video-section .ve-section-eyebrow {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.65rem;
+          letter-spacing: 4px;
+          text-transform: uppercase;
+          color: #D4A847;
+          margin-bottom: 0.75rem;
+        }
+        .ve-video-section .ve-section-title {
+          font-family: 'Instrument Serif', serif;
+          font-style: italic;
+          font-size: 2rem;
+          color: #fff;
+          margin-bottom: 0.75rem;
+        }
+        .ve-video-section .ve-section-sub {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.9rem;
+          color: #71717a;
+          margin-bottom: 2.5rem;
+          max-width: 480px;
+          margin-left: auto;
+          margin-right: auto;
+          line-height: 1.6;
+        }
+        .ve-video-container {
+          max-width: 800px;
+          margin: 0 auto;
+          position: relative;
+          border-radius: 1rem;
+          overflow: hidden;
+          background: #18181b;
+          border: 1px solid #27272a;
+          box-shadow:
+            0 0 0 1px rgba(212,168,71,0.06),
+            0 4px 60px rgba(0,0,0,0.6),
+            0 0 120px rgba(212,168,71,0.04);
+        }
+        .ve-video-container::before {
+          content: '';
+          position: absolute;
+          inset: -1px;
+          border-radius: 1rem;
+          padding: 1px;
+          background: linear-gradient(135deg, #D4A84730, transparent 40%, transparent 60%, #D4A84730);
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
+          z-index: 1;
+        }
+        .ve-video-inner {
+          position: relative;
+          width: 100%;
+          padding-bottom: 56.25%;
+          background: #111;
+        }
+        .ve-video-inner iframe {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border: none;
+        }
+        .ve-video-caption {
+          padding: 1rem 1.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-top: 1px solid #27272a;
+        }
+        .ve-video-caption .ve-caption-text {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.78rem;
+          color: #71717a;
+        }
+        .ve-video-caption .ve-caption-text strong {
+          color: #a1a1aa;
+          font-weight: 600;
+        }
+        .ve-video-caption .ve-caption-badge {
+          padding: 0.25rem 0.75rem;
+          background: rgba(212,168,71,0.08);
+          border: 1px solid rgba(212,168,71,0.2);
+          border-radius: 2rem;
+          font-size: 0.65rem;
+          font-weight: 700;
+          color: #D4A847;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+        .ve-video-glow {
+          position: absolute;
+          bottom: -40px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 60%;
+          height: 80px;
+          background: radial-gradient(ellipse, rgba(212,168,71,0.06) 0%, transparent 70%);
+          filter: blur(20px);
+          pointer-events: none;
+        }
+        @media (max-width: 520px) {
+          .ve-video-section { padding: 3rem 1rem; }
+          .ve-video-section .ve-section-title { font-size: 1.65rem; }
+          .ve-video-caption { flex-direction: column; gap: 0.5rem; }
+        }
+
+        /* ── STATS BAR ── */
+        .ve-stats-bar {
+          background: #0f0f0f;
+          border-top: 1px solid #1a1a1a;
+          border-bottom: 1px solid #1a1a1a;
+          padding: 3rem 1.5rem;
+        }
+        .ve-stats-grid {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 3rem;
+          max-width: 800px;
+          margin: 0 auto;
+          flex-wrap: wrap;
+        }
+        .ve-stat-item {
+          text-align: center;
+        }
+        .ve-stat-number {
+          font-family: 'Instrument Serif', serif;
+          font-size: 2.5rem;
+          font-style: italic;
+          color: #D4A847;
+          line-height: 1;
+          margin-bottom: 0.25rem;
+        }
+        .ve-stat-label {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 0.72rem;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #52525b;
+          font-weight: 600;
+        }
+        .ve-stat-divider {
+          width: 1px;
+          height: 40px;
+          background: #27272a;
+        }
+        @media (max-width: 520px) {
+          .ve-stats-grid { gap: 2rem; }
+          .ve-stat-number { font-size: 2rem; }
+          .ve-stat-divider { display: none; }
+        }
+
+        /* ── PHOTO DIVIDER ── */
+        .ve-photo-divider {
+          position: relative;
+          height: 200px;
+          background: linear-gradient(180deg, #0a0a0a, #111 20%, #111 80%, #0a0a0a);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          overflow: hidden;
+        }
+        .ve-photo-divider::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(212,168,71,0.03) 0%, transparent 50%, rgba(212,168,71,0.03) 100%);
+        }
+        .ve-photo-divider .ve-divider-verse {
+          position: relative;
+          z-index: 1;
+          font-family: 'Instrument Serif', serif;
+          font-style: italic;
+          font-size: 1.25rem;
+          color: #d4d4d8;
+          max-width: 520px;
+          padding: 0 2rem;
+          line-height: 1.7;
+        }
+        .ve-photo-divider .ve-verse-ref {
+          display: block;
+          font-family: 'Satoshi', sans-serif;
+          font-style: normal;
+          font-size: 0.7rem;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: #D4A847;
+          margin-top: 0.75rem;
+          font-weight: 600;
+        }
+      </style>
+
+      <!-- ═══ AS FEATURED ON ═══ -->
+      <section class="ve-featured-bar ve-reveal">
+        <div class="ve-eyebrow">As Featured On</div>
+        <div class="ve-featured-logos">
+          <div class="ve-featured-logo ve-wfxr">
+            <span class="ve-logo-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+            </span>
+            WFXR
+          </div>
+          <div class="ve-featured-divider"></div>
+          <div class="ve-featured-logo ve-amazon">
+            <span class="ve-logo-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            </span>
+            Amazon Best Seller
+          </div>
+          <div class="ve-featured-divider"></div>
+          <div class="ve-featured-logo ve-podcast">
+            <span class="ve-logo-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </span>
+            Monday Christian Podcast
+          </div>
+          <div class="ve-featured-divider"></div>
+          <div class="ve-featured-logo">
+            <span class="ve-logo-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </span>
+            The Roanoker
+          </div>
+          <div class="ve-featured-divider"></div>
+          <div class="ve-featured-logo">
+            <span class="ve-logo-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </span>
+            578 Media
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ STATS BAR ═══ -->
+      <section class="ve-stats-bar ve-reveal">
+        <div class="ve-stats-grid">
+          <div class="ve-stat-item">
+            <div class="ve-stat-number">281</div>
+            <div class="ve-stat-label">Questions in the Bank</div>
+          </div>
+          <div class="ve-stat-divider"></div>
+          <div class="ve-stat-item">
+            <div class="ve-stat-number">5</div>
+            <div class="ve-stat-label">Pillars of Value</div>
+          </div>
+          <div class="ve-stat-divider"></div>
+          <div class="ve-stat-item">
+            <div class="ve-stat-number">90</div>
+            <div class="ve-stat-label">Day Challenge</div>
+          </div>
+          <div class="ve-stat-divider"></div>
+          <div class="ve-stat-item">
+            <div class="ve-stat-number">3</div>
+            <div class="ve-stat-label">Assessment Modes</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ SCRIPTURE DIVIDER ═══ -->
+      <div class="ve-photo-divider ve-reveal">
+        <div class="ve-divider-verse">
+          "His master said to him, 'Well done, good and faithful servant. You have been faithful over a little; I will set you over much.'"
+          <span class="ve-verse-ref">Matthew 25:23</span>
+        </div>
+      </div>
+
+      <!-- ═══ CREDENTIAL BADGES ═══ -->
+      <section class="ve-credentials-section">
+        <div class="ve-section-eyebrow ve-reveal">Credentials</div>
+        <h2 class="ve-section-title ve-reveal">Not Templates. Not Clip-Art.</h2>
+        <p class="ve-section-sub ve-reveal">Built on real experience, real results, and a real framework rooted in faith.</p>
+        <div class="ve-badge-grid">
+          <div class="ve-badge-card ve-reveal ve-reveal-delay-1">
+            <div class="ve-badge-icon">
+              <div class="ve-badge-glow"></div>
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            </div>
+            <div class="ve-badge-title">Amazon Best-Selling Author</div>
+            <div class="ve-badge-desc">Running From Miracles &mdash; a story of struggle, purpose, and the unfinished journey</div>
+          </div>
+          <div class="ve-badge-card ve-reveal ve-reveal-delay-2">
+            <div class="ve-badge-icon">
+              <div class="ve-badge-glow"></div>
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div class="ve-badge-title">P.I.N.K. Framework Creator</div>
+            <div class="ve-badge-desc">Original 5-pillar value system measuring People, Influence, Numbers, Knowledge & Time</div>
+          </div>
+          <div class="ve-badge-card ve-reveal ve-reveal-delay-3">
+            <div class="ve-badge-icon">
+              <div class="ve-badge-glow"></div>
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="ve-badge-title">Certified Value Strategist</div>
+            <div class="ve-badge-desc">Individual, couples & leadership coaching powered by data-driven assessment diagnostics</div>
+          </div>
+          <div class="ve-badge-card ve-reveal ve-reveal-delay-4">
+            <div class="ve-badge-icon">
+              <div class="ve-badge-glow"></div>
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </div>
+            <div class="ve-badge-title">Featured Speaker</div>
+            <div class="ve-badge-desc">WFXR, Monday Christian Podcast, 578 Media, The Roanoker &mdash; sharing the value message</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ TESTIMONIALS ═══ -->
+      <section class="ve-testimonials-section">
+        <div class="ve-section-eyebrow ve-reveal">Real Results</div>
+        <h2 class="ve-section-title ve-reveal">Don't Take Our Word For It</h2>
+        <div class="ve-testimonial-grid">
+          <div class="ve-testimonial-card ve-reveal ve-reveal-delay-1">
+            <div class="ve-quote-mark">&ldquo;</div>
+            <div class="ve-quote-text">I scored 171 on my first assessment. Within 90 days I gained back 10+ hours per week just by applying the Time pillar recommendations. The system works if you actually run it.</div>
+            <div class="ve-quote-author">
+              <div class="ve-avatar">SA</div>
+              <div>
+                <div class="ve-author-name">Sandra Aldridge</div>
+                <div class="ve-author-role">VictoryPath Member</div>
+              </div>
+            </div>
+            <div class="ve-stat-badge">+10 hrs/week recovered</div>
+          </div>
+          <div class="ve-testimonial-card ve-reveal ve-reveal-delay-2">
+            <div class="ve-quote-mark">&ldquo;</div>
+            <div class="ve-quote-text">I thought I was doing fine until I saw my Numbers pillar score. It forced me to look at what I was actually managing versus what I was ignoring. That one pillar changed my whole approach to business.</div>
+            <div class="ve-quote-author">
+              <div class="ve-avatar">CD</div>
+              <div>
+                <div class="ve-author-name">Cameron Decker</div>
+                <div class="ve-author-role">Victory VIP</div>
+              </div>
+            </div>
+            <div class="ve-stat-badge">Numbers pillar: +22 pts</div>
+          </div>
+          <div class="ve-testimonial-card ve-reveal ve-reveal-delay-3">
+            <div class="ve-quote-mark">&ldquo;</div>
+            <div class="ve-quote-text">I retook the assessment after 90 days and my master score went up 18 points. The action plan gave me specific things to do &mdash; not motivational fluff. Just the moves.</div>
+            <div class="ve-quote-author">
+              <div class="ve-avatar">AL</div>
+              <div>
+                <div class="ve-author-name">Alex LB</div>
+                <div class="ve-author-role">VictoryPath Member</div>
+              </div>
+            </div>
+            <div class="ve-stat-badge">Master score: +18 pts</div>
+          </div>
+        </div>
+        <div class="ve-testimonials-cta ve-reveal">
+          <a href="/testimonials">See All Results &rarr;</a>
+        </div>
+      </section>
+
+      <!-- ═══ SCRIPTURE DIVIDER 2 ═══ -->
+      <div class="ve-photo-divider ve-reveal">
+        <div class="ve-divider-verse">
+          "Where your treasure is, there your heart will be also."
+          <span class="ve-verse-ref">Matthew 6:21</span>
+        </div>
+      </div>
+
+      <!-- ═══ CINEMATIC VIDEO ═══ -->
+      <section class="ve-video-section">
+        <div class="ve-section-eyebrow ve-reveal">The Story</div>
+        <h2 class="ve-section-title ve-reveal">See What This Is Really About</h2>
+        <p class="ve-section-sub ve-reveal">Not a pitch. Not a webinar. A real conversation about value, purpose, and the framework that changes how you see your life.</p>
+        <div class="ve-video-container ve-reveal">
+          <div class="ve-video-inner">
+            <!-- Replace VIDEO_ID with your YouTube video ID -->
+            <iframe src="https://www.youtube.com/embed/VIDEO_ID?rel=0&modestbranding=1&color=white" title="The Value Engine — The Story" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+          </div>
+          <div class="ve-video-caption">
+            <div class="ve-caption-text"><strong>Shawn E. Decker</strong> &mdash; Author, Coach, Framework Creator</div>
+            <div class="ve-caption-badge">Watch Now</div>
+          </div>
+          <div class="ve-video-glow"></div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+    // ── Trust Sections: Show/Hide + Scroll Reveal ──
+    (function() {
+      var trustSections = document.getElementById('ve-trust-sections');
+      if (!trustSections) return;
+
+      // Show after React renders (same pattern as free-book-section)
+      var root = document.getElementById('root');
+      if (root && root.children.length === 0) {
+        var obs = new MutationObserver(function() {
+          trustSections.style.display = 'block';
+          obs.disconnect();
+        });
+        obs.observe(root, { childList: true });
+        setTimeout(function() { trustSections.style.display = 'block'; }, 3000);
+      } else {
+        trustSections.style.display = 'block';
+      }
+
+      // Hide during assessment
+      function updateTrustVisibility() {
+        var hash = window.location.hash;
+        var isAssessment = hash.indexOf('#/assessment') === 0;
+        var isCapture = hash.indexOf('#/capture') === 0;
+        var isModeSelect = hash.indexOf('#/mode-select') === 0;
+        var isResults = hash.indexOf('#/results') === 0;
+        if (isAssessment || isCapture || isModeSelect || isResults) {
+          trustSections.style.display = 'none';
+        } else {
+          trustSections.style.display = 'block';
+        }
+      }
+      window.addEventListener('hashchange', updateTrustVisibility);
+      updateTrustVisibility();
+
+      // Scroll-reveal with IntersectionObserver
+      var reveals = trustSections.querySelectorAll('.ve-reveal');
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('ve-visible');
+              io.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+        reveals.forEach(function(el) { io.observe(el); });
+      } else {
+        // Fallback: show all
+        reveals.forEach(function(el) { el.classList.add('ve-visible'); });
+      }
+    })();
+    </script>
+
     <!-- Free Book Section -->
     <div id="free-book-section" style="display:none;">
       <style>
