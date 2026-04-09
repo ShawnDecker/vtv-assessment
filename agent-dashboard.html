@@ -53,6 +53,13 @@
   td { padding:8px 6px; border-bottom:1px solid #1f1f23; color:#e4e4e7; }
 
   .refresh-btn { position:fixed; bottom:16px; right:16px; padding:12px 20px; background:linear-gradient(135deg,#D4A847,#b8942e); color:#0a0a0a; font-size:13px; font-weight:bold; border:none; border-radius:8px; cursor:pointer; z-index:100; }
+  .quick-links { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:8px; margin-bottom:16px; }
+  .quick-link { display:flex; flex-direction:column; align-items:center; gap:4px; background:#18181b; border:1px solid #27272a; border-radius:10px; padding:14px 8px; text-decoration:none; color:#e4e4e7; transition:border-color 0.2s; }
+  .quick-link:hover { border-color:#D4A847; }
+  .quick-link .icon { font-size:22px; }
+  .quick-link .ql-name { font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; }
+  .quick-link .ql-sub { font-size:9px; color:#71717a; }
+
   .loading { text-align:center; padding:40px; color:#71717a; }
   .spinner { display:inline-block; width:20px; height:20px; border:3px solid #27272a; border-top-color:#D4A847; border-radius:50%; animation:spin 0.7s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
@@ -126,6 +133,28 @@ async function loadDashboard() {
 function render(data) {
   const el = document.getElementById('content');
   let html = '';
+
+  // === QUICK LINKS ===
+  html += '<div class="section-title">Quick Access</div>';
+  html += '<div class="quick-links">';
+  const links = [
+    { icon:'&#9881;', name:'n8n', sub:'Workflows', url:'https://n8n.shawnedecker.com' },
+    { icon:'&#9650;', name:'Vercel', sub:'Deployments', url:'https://vercel.com/danddappraisal-7740s-projects' },
+    { icon:'&#128202;', name:'Neon', sub:'Database', url:'https://console.neon.tech' },
+    { icon:'&#128179;', name:'Stripe', sub:'Payments', url:'https://dashboard.stripe.com' },
+    { icon:'&#127760;', name:'Hostinger', sub:'VPS', url:'https://hpanel.hostinger.com' },
+    { icon:'&#128231;', name:'Gmail', sub:'Email', url:'https://mail.google.com' },
+    { icon:'&#128100;', name:'HubSpot', sub:'CRM', url:'https://app.hubspot.com' },
+    { icon:'&#128197;', name:'Calendly', sub:'Scheduling', url:'https://calendly.com/app/scheduled_events/upcoming' },
+    { icon:'&#127968;', name:'GoDaddy', sub:'Domains', url:'https://dcc.godaddy.com' },
+    { icon:'&#128218;', name:'VTV Portal', sub:'Assessment', url:'https://assessment.valuetovictory.com' },
+    { icon:'&#127908;', name:'Audiobook', sub:'VPS Audio', url:'http://147.93.97.228:8082' },
+    { icon:'&#128221;', name:'Admin', sub:'Contacts', url:'https://assessment.valuetovictory.com/admin/contacts' },
+  ];
+  for (const l of links) {
+    html += `<a class="quick-link" href="${l.url}" target="_blank"><span class="icon">${l.icon}</span><span class="ql-name">${l.name}</span><span class="ql-sub">${l.sub}</span></a>`;
+  }
+  html += '</div>';
 
   // === SYSTEM HEALTH ===
   html += '<div class="section-title">System Health</div>';
