@@ -28,9 +28,13 @@ try {
 }
 
 module.exports = (req, res) => {
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS — locked to allowed origins
+  const ALLOWED = ['https://valuetovictory.com','https://www.valuetovictory.com','https://assessment.valuetovictory.com','https://shawnedecker.com','http://localhost:3000','http://localhost:5173'];
+  const origin = req.headers.origin || '';
+  const corsOrigin = ALLOWED.includes(origin) ? origin : (origin.endsWith('.vercel.app') ? origin : ALLOWED[0]);
+  res.setHeader('Access-Control-Allow-Origin', corsOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Vary', 'Origin');
 
   // Calculate which day we're on (60-day cycle from a start date)
   const startDate = new Date('2026-04-06'); // Start date for cycle

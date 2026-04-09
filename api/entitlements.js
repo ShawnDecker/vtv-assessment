@@ -3,10 +3,15 @@ const { neon } = require('@neondatabase/serverless');
 // Product IDs that VIP (premium) members get automatically
 const VIP_PRODUCTS = ['rfm-audiobook'];
 
+// CORS allowed origins
+const ALLOWED_ORIGINS = ['https://valuetovictory.com','https://www.valuetovictory.com','https://assessment.valuetovictory.com','https://shawnedecker.com','http://localhost:3000','http://localhost:5173'];
+function getCorsOrigin(req) { const o = req.headers.origin||''; return ALLOWED_ORIGINS.includes(o)?o:o.endsWith('.vercel.app')?o:ALLOWED_ORIGINS[0]; }
+
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', getCorsOrigin(req));
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method !== 'GET') {
