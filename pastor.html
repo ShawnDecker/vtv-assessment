@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/>
+<title>Bishop Michael Penn — Pastor, Speaker, Ministry Leader</title>
+<meta name="description" content="Bishop Michael Penn — Senior Pastor of The Galilean House of Worship, founder of Michael Penn Ministries International. Martinsville, VA."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .4s,color .4s}
+:root{--bg:#FDFBF7;--text:#0C1B33;--sec:#3A4A5C;--muted:#7A8A9C;--gold:#D4A24E;--gold-d:#B8892E;--border:#E5E0D6;--card:#fff;--shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.04);--hero:linear-gradient(160deg,#0C1B33,#162D50,#1E3A5F);--fade:cubic-bezier(.22,1,.36,1)}
+[data-theme="dark"]{--bg:#0A0A0A;--text:#E8E4DE;--sec:#B0A898;--muted:#6A6A6A;--gold:#D4A847;--gold-d:#B8942E;--border:#222;--card:#141414;--shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.2);--hero:linear-gradient(160deg,#050A14,#0C1B33,#162D50)}
+.toggle{position:fixed;top:16px;right:16px;z-index:999;width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 2px 12px rgba(0,0,0,.1);color:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
+.hero{text-align:center;padding:4rem 1.5rem 2.5rem;background:var(--hero);color:#fff;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
+.avatar{width:120px;height:120px;border-radius:50%;border:4px solid rgba(212,162,78,.5);object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.3);margin-bottom:1rem;position:relative}
+.hero h1{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;margin-bottom:.15rem;position:relative}
+.hero .title{font-size:.75rem;color:var(--gold);font-weight:600;letter-spacing:.05em;margin-bottom:.5rem;position:relative}
+.hero .sub{color:rgba(255,255,255,.55);font-size:.8rem;line-height:1.6;max-width:420px;margin:0 auto;position:relative}
+.badges{display:flex;flex-wrap:wrap;gap:.35rem;justify-content:center;margin-top:1rem;position:relative}
+.badge{padding:.25rem .7rem;border-radius:2rem;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;background:rgba(212,162,78,.1);color:var(--gold);border:1px solid rgba(212,162,78,.15)}
+.sec{margin-top:2.25rem}.sl{font-size:.5rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold-d);font-weight:700;margin-bottom:.2rem}
+[data-theme="dark"] .sl{color:var(--gold)}
+.st{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:.5rem}
+.sd{font-size:.8rem;color:var(--sec);line-height:1.7;margin-bottom:1rem}
+.al{width:40px;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-d));border-radius:2px;margin-bottom:.75rem}
+.c{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:1.25rem;margin-bottom:.55rem;box-shadow:var(--shadow);transition:border-color .25s,transform .25s var(--fade)}
+.c:hover{border-color:var(--gold);transform:translateY(-1px)}
+.c h3{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:.2rem}
+.c p{font-size:.76rem;color:var(--sec);line-height:1.6;margin-bottom:.5rem}
+.c .tg{display:inline-block;font-size:.45rem;letter-spacing:.1em;text-transform:uppercase;padding:.18rem .55rem;border-radius:2rem;font-weight:700;margin-bottom:.4rem;background:rgba(212,162,78,.1);color:var(--gold-d);border:1px solid rgba(212,162,78,.12)}
+[data-theme="dark"] .c .tg{color:var(--gold)}
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.55rem 1.3rem;background:linear-gradient(135deg,var(--gold),var(--gold-d));color:#0C1B33;font-size:.72rem;font-weight:700;border-radius:.5rem;text-decoration:none;box-shadow:0 2px 8px rgba(212,162,78,.25);transition:all .2s var(--fade)}
+.btn:hover{box-shadow:0 4px 16px rgba(212,162,78,.35)}
+.btn-g{background:transparent;border:1.5px solid var(--border);color:var(--text);box-shadow:none;margin-left:.3rem}
+.btn-g:hover{border-color:var(--gold);color:var(--gold)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+.gi{background:var(--card);border:1px solid var(--border);border-radius:.7rem;padding:.85rem;text-align:center;box-shadow:var(--shadow)}
+.gi .num{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--gold-d)}
+[data-theme="dark"] .gi .num{color:var(--gold)}
+.gi .lbl{font-size:.5rem;color:var(--muted);margin-top:.1rem}
+.links{display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;margin-top:1rem}
+.links a{display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.6rem .3rem;background:var(--card);border:1px solid var(--border);border-radius:.55rem;text-decoration:none;color:var(--text);font-size:.6rem;font-weight:600;box-shadow:var(--shadow);transition:border-color .2s}
+.links a:hover{border-color:var(--gold)}
+.links a .i{font-size:1.1rem}.links a .h{font-size:.45rem;color:var(--muted)}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s var(--fade),transform .6s var(--fade)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.foot{text-align:center;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.55rem;color:var(--muted);line-height:2}
+.foot a{color:var(--gold-d);text-decoration:none}[data-theme="dark"] .foot a{color:var(--gold)}
+@media(max-width:480px){.hero h1{font-size:1.9rem}.grid{grid-template-columns:1fr}.links{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <img class="avatar" src="https://graph.facebook.com/galilean.house/picture?type=large&width=400&height=400" alt="Bishop Michael Penn" onerror="this.style.display='none'"/>
+  <h1>Bishop Michael Penn</h1>
+  <div class="title">Pastor &bull; Bishop &bull; Speaker &bull; Ministry Leader</div>
+  <p class="sub">Senior Pastor of The Galilean House of Worship. Founder of Michael Penn Ministries International. Teaching truth, uniting cultures, empowering believers.</p>
+  <div class="badges">
+    <span class="badge">Bishop</span>
+    <span class="badge">Senior Pastor</span>
+    <span class="badge">MPMI Founder</span>
+    <span class="badge">Speaker</span>
+  </div>
+</div>
+<div class="p">
+  <div class="grid" style="margin-top:1.5rem">
+    <div class="gi"><div class="num">25+</div><div class="lbl">Years in Ministry</div></div>
+    <div class="gi"><div class="num">2000</div><div class="lbl">Founded GHOW</div></div>
+    <div class="gi"><div class="num">3</div><div class="lbl">Services Weekly</div></div>
+    <div class="gi"><div class="num">Intl</div><div class="lbl">Ministry Reach</div></div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">About</div>
+    <div class="st">A Journey of Destiny</div>
+    <p class="sd">Bishop Michael Penn, better known as "Pastor Penn," is married to Angela Kidd Penn and father of three — Jonathan, Sean, and Candice — with two grandchildren, Havyn and Jaxon. In 2000, Pastor Penn began his journey of destiny as Senior Pastor of what was then Galilee Missionary Baptist Church, now The Galilean House of Worship.</p>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Upcoming Events</div>
+    <div class="st">Bring Bishop Penn to Your Church</div>
+    <div class="c">
+      <div class="tg">Speaking</div>
+      <h3>Book for Conferences &amp; Revivals</h3>
+      <p>Bishop Penn is available for conferences, revivals, church services, and community events. Teaching truth and uniting cultures wherever God opens the door.</p>
+      <a class="btn" href="http://www.michaelpennministries.com/contact.html" target="_blank">Book Bishop Penn</a>
+    </div>
+    <div class="c">
+      <div class="tg">Every Sunday</div>
+      <h3>Sunday Morning Worship — 10:30 AM</h3>
+      <p>Join Bishop Penn live at GHOW or stream on Facebook. Powerful Word-centered teaching with traditional hymns, praise &amp; worship, and contemporary music.</p>
+      <a class="btn" href="https://www.facebook.com/galilean.house" target="_blank">Watch Live</a>
+    </div>
+    <div class="c">
+      <div class="tg">Every Wednesday</div>
+      <h3>Midweek Bible Study &amp; Prayer — 7 PM</h3>
+      <p>Deepen your walk every Wednesday. Prayer from 7-7:30, Bible Study 7:30-8 PM. Youth meet simultaneously.</p>
+      <a class="btn" href="http://www.galileanhouse.org/service.html" target="_blank">Details</a>
+    </div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Community Outreach</div>
+    <div class="st">Michael Penn Ministries International</div>
+    <div class="c">
+      <div class="tg">MPMI</div>
+      <h3>Impacting Communities Beyond Martinsville</h3>
+      <p>Through MPMI, Bishop Penn extends his ministry internationally — conferences, teaching, community outreach, and empowering local churches. If you want to partner with MPMI or bring this ministry to your community, reach out.</p>
+      <a class="btn" href="http://michaelpennministries.com/" target="_blank">Visit MPMI</a>
+      <a class="btn btn-g" href="http://www.michaelpennministries.com/contact.html" target="_blank">Contact</a>
+    </div>
+    <div class="c">
+      <div class="tg">Local</div>
+      <h3>Martinsville Community Outreach</h3>
+      <p>GHOW serves Martinsville through community service, evangelism, youth programs, and local partnerships. Get involved or invite GHOW to your community event.</p>
+      <a class="btn" href="http://www.galileanhouse.org/" target="_blank">Get Involved</a>
+    </div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Connect</div>
+    <div class="st">Follow Bishop Penn</div>
+    <div class="links">
+      <a href="http://www.galileanhouse.org/" target="_blank"><span class="i">&#127760;</span>GHOW<span class="h">galileanhouse.org</span></a>
+      <a href="http://michaelpennministries.com/" target="_blank"><span class="i">&#9889;</span>MPMI<span class="h">Ministry</span></a>
+      <a href="https://www.facebook.com/galilean.house" target="_blank"><span class="i">&#128101;</span>Facebook<span class="h">@galilean.house</span></a>
+      <a href="https://www.facebook.com/theghowpastor" target="_blank"><span class="i">&#128081;</span>Pastor FB<span class="h">Bishop Penn</span></a>
+      <a href="https://www.instagram.com/the_ghow/" target="_blank"><span class="i">&#128247;</span>Instagram<span class="h">@the_ghow</span></a>
+      <a href="https://x.com/pastorpenn" target="_blank"><span class="i">&#120143;</span>X<span class="h">@PastorPenn</span></a>
+    </div>
+  </div>
+
+  <div class="foot">
+    Bishop Michael Penn &bull; The Galilean House of Worship &bull; <a href="tel:2766382066">(276) 638-2066</a><br>
+    <a href="http://www.galileanhouse.org/" target="_blank">galileanhouse.org</a> &bull; <a href="http://michaelpennministries.com/" target="_blank">michaelpennministries.com</a><br>
+    &copy; 2026 Bishop Michael Penn. All rights reserved.
+  </div>
+</div>
+<button class="toggle" onclick="toggleMode()" id="mBtn">&#9790;</button>
+<script>
+function toggleMode(){var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('mBtn').innerHTML=d?'\u263E':'\u263C';localStorage.setItem('mp-theme',d?'light':'dark')}
+(function(){var s=localStorage.getItem('mp-theme');if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('mBtn').innerHTML='\u263C'}})();
+var ro=new IntersectionObserver(function(e){e.forEach(function(i){if(i.isIntersecting){i.target.classList.add('visible');ro.unobserve(i.target)}})},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el)});
+</script>
+</body>
+</html>
