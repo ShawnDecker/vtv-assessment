@@ -15,10 +15,23 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
 .hero{text-align:center;padding:0 0 2rem;background:var(--hero);color:#fff;position:relative;overflow:hidden}
 .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
-.hero-photo{position:relative;width:100%;height:320px;overflow:hidden}
-.hero-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.45)}
-.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,10,46,.1) 0%,rgba(26,10,46,.3) 50%,rgba(26,10,46,.92) 100%)}
-.hero-content{position:relative;padding:0 1.5rem;margin-top:-5rem;z-index:2}
+.poster{position:relative;width:100%;height:420px;overflow:hidden}
+.poster .layer{position:absolute;inset:0;width:100%;height:100%}
+.poster .layer img{width:100%;height:100%;object-fit:cover;display:block}
+.poster .l-back img{filter:brightness(.25) blur(1px)}
+.poster .l-mid{top:auto;bottom:0;height:55%}
+.poster .l-mid img{object-position:center top;filter:brightness(.4)}
+.poster .l-mid::after{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:linear-gradient(to bottom,rgba(26,10,46,1),transparent)}
+.poster .l-front{top:auto;bottom:0;height:70%;display:flex;justify-content:center}
+.poster .l-front img{width:auto;height:100%;object-fit:contain;filter:brightness(.5) contrast(1.1);mix-blend-mode:luminosity;opacity:.55}
+.poster::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,10,46,.5) 0%,rgba(26,10,46,.15) 30%,rgba(26,10,46,.1) 60%,rgba(26,10,46,.95) 100%);z-index:3;pointer-events:none}
+.poster::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(184,134,11,.1) 0%,transparent 60%);z-index:4;pointer-events:none}
+.poster .light-leak{position:absolute;top:0;right:0;width:50%;height:70%;background:radial-gradient(ellipse at 85% 25%,rgba(184,134,11,.12) 0%,transparent 65%);z-index:5;pointer-events:none}
+.poster .poster-text{position:absolute;bottom:0;left:0;right:0;z-index:6;text-align:center;padding:2rem 1.5rem .5rem;background:linear-gradient(to top,rgba(26,10,46,.95),rgba(26,10,46,.5),transparent)}
+.poster .poster-text h2{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.5)}
+.poster .poster-text .tagline{font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-top:.3rem}
+.poster .poster-text .loc{font-size:.52rem;color:rgba(255,255,255,.4);margin-top:.2rem;letter-spacing:.1em}
+.hero-content{position:relative;padding:0 1.5rem;margin-top:0;z-index:2}
 .avatar{width:110px;height:110px;border-radius:50%;border:4px solid rgba(184,134,11,.6);object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.4);margin-bottom:.75rem;position:relative}
 .ph-div{width:calc(100% + 2.5rem);margin:2.5rem -1.25rem;height:140px;overflow:hidden;position:relative}
 .ph-div img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.4)}
@@ -72,81 +85,17 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 </head>
 <body>
 <div class="hero">
-  <!-- 3D SVG: Bishop Norman — darkness to light, prayer circle, cross -->
-  <div style="position:relative;width:100%;height:340px;overflow:hidden">
-  <svg viewBox="0 0 600 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
-    <defs>
-      <linearGradient id="sky" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#050210"/><stop offset="40%" stop-color="#1A0A2E"/><stop offset="70%" stop-color="#2D1B50"/><stop offset="100%" stop-color="#B8860B" stop-opacity=".15"/></linearGradient>
-      <radialGradient id="light" cx="85%" cy="40%"><stop offset="0%" stop-color="#B8860B" stop-opacity=".25"/><stop offset="50%" stop-color="#B8860B" stop-opacity=".08"/><stop offset="100%" stop-color="transparent"/></radialGradient>
-      <linearGradient id="ground" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#050210"/><stop offset="100%" stop-color="#1A0A2E"/></linearGradient>
-      <filter id="gl"><feGaussianBlur stdDeviation="8" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      <filter id="sh"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity=".4"/></filter>
-    </defs>
-    <!-- DARK TO LIGHT gradient sky (left=darkness, right=dawn) -->
-    <rect width="600" height="340" fill="url(#sky)"/>
-    <rect width="600" height="340" fill="url(#light)"/>
-    <!-- LIGHT RAYS from right (deliverance) -->
-    <polygon points="600,100 400,200 420,220 600,130" fill="#B8860B" opacity=".04"/>
-    <polygon points="600,80 350,190 370,210 600,110" fill="#B8860B" opacity=".03"/>
-    <polygon points="600,140 430,220 450,240 600,170" fill="#B8860B" opacity=".035"/>
-    <polygon points="600,50 300,180 325,200 600,80" fill="#B8860B" opacity=".02"/>
-    <!-- SUN/LIGHT SOURCE (right side = freedom/deliverance) -->
-    <circle cx="560" cy="120" r="40" fill="#B8860B" opacity=".06" filter="url(#gl)"/>
-    <circle cx="560" cy="120" r="18" fill="#B8860B" opacity=".1"/>
-    <!-- CROSS in the light -->
-    <g transform="translate(540,80)">
-      <rect x="-4" y="-30" width="8" height="55" rx="2" fill="#B8860B" opacity=".2"/>
-      <rect x="-15" y="-18" width="30" height="7" rx="2" fill="#B8860B" opacity=".2"/>
-    </g>
-    <!-- GROUND -->
-    <rect y="230" width="600" height="110" fill="url(#ground)"/>
-    <!-- BROKEN CHAINS on left (darkness/bondage) -->
-    <g opacity=".15" transform="translate(80,250)">
-      <ellipse cx="0" cy="0" rx="8" ry="6" fill="none" stroke="#666" stroke-width="2"/>
-      <ellipse cx="14" cy="3" rx="8" ry="6" fill="none" stroke="#666" stroke-width="2"/>
-      <line x1="22" y1="3" x2="35" y2="8" stroke="#666" stroke-width="2" stroke-dasharray="4,3"/>
-    </g>
-    <!-- BISHOP NORMAN — walking FROM darkness TOWARD light -->
-    <g filter="url(#sh)" transform="translate(320,185)">
-      <!-- Body walking right -->
-      <path d="M-12,45 L-18,110 L-8,110 L-3,75 L3,75 L8,110 L18,110 L12,45Z" fill="#1A0A2E"/>
-      <path d="M-12,45 L-14,80 L0,76 L14,80 L12,45Z" fill="#2D1B50"/>
-      <circle cx="2" cy="30" r="13" fill="#2D1B50"/>
-      <circle cx="3" cy="29" r="11" fill="#3A2566"/>
-      <!-- Right arm reaching toward light -->
-      <path d="M12,50 Q35,35 55,25" stroke="#2D1B50" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <circle cx="58" cy="23" r="4" fill="#3A2566"/>
-      <!-- Left arm down (releasing the past) -->
-      <path d="M-12,50 Q-20,70 -22,80" stroke="#2D1B50" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <!-- Gold light reflection on right side of body -->
-      <path d="M12,45 L14,80 L8,78Z" fill="#B8860B" opacity=".1"/>
-    </g>
-    <!-- PRAYER CIRCLE (7 people = founding members) -->
-    <g opacity=".3" transform="translate(180,260)">
-      <!-- 7 figures in a small circle, heads bowed -->
-      <circle cx="0" cy="0" r="6" fill="#B8860B"/><rect x="-4" y="6" width="8" height="10" rx="2" fill="#B8860B"/>
-      <circle cx="30" cy="-8" r="6" fill="#fff"/><rect x="26" y="-2" width="8" height="10" rx="2" fill="#fff"/>
-      <circle cx="55" cy="-3" r="6" fill="#B8860B"/><rect x="51" y="3" width="8" height="10" rx="2" fill="#B8860B"/>
-      <circle cx="70" cy="10" r="6" fill="#fff"/><rect x="66" y="16" width="8" height="10" rx="2" fill="#fff"/>
-      <circle cx="55" cy="25" r="6" fill="#B8860B"/><rect x="51" y="31" width="8" height="10" rx="2" fill="#B8860B"/>
-      <circle cx="30" cy="30" r="6" fill="#fff"/><rect x="26" y="36" width="8" height="10" rx="2" fill="#fff"/>
-      <circle cx="5" cy="22" r="6" fill="#B8860B"/><rect x="1" y="28" width="8" height="10" rx="2" fill="#B8860B"/>
-      <!-- Prayer glow -->
-      <circle cx="35" cy="12" r="25" fill="#B8860B" opacity=".04" filter="url(#gl)"/>
-    </g>
-    <!-- Roanoke skyline silhouette (far background) -->
-    <g opacity=".08">
-      <rect x="350" y="210" width="25" height="20" fill="#fff"/>
-      <rect x="380" y="200" width="15" height="30" fill="#fff"/>
-      <rect x="400" y="215" width="20" height="15" fill="#fff"/>
-      <rect x="425" y="205" width="12" height="25" fill="#fff"/>
-      <rect x="442" y="210" width="30" height="20" fill="#fff"/>
-    </g>
-    <!-- TEXT -->
-    <text x="100" y="325" font-family="Georgia,serif" font-size="7" letter-spacing=".2em" fill="rgba(184,134,11,.2)">FROM DARKNESS</text>
-    <text x="440" y="325" font-family="Georgia,serif" font-size="7" letter-spacing=".2em" fill="rgba(184,134,11,.3)">TO DESTINY</text>
-    <text x="300" y="335" text-anchor="middle" font-family="Georgia,serif" font-size="8" letter-spacing=".3em" fill="rgba(184,134,11,.25)">BISHOP STEVEN A. NORMAN</text>
-  </svg>
+  <!-- CINEMATIC PHOTO COMPOSITE: Darkness to light, intimate, deliverance -->
+  <div class="poster">
+    <div class="layer l-back"><img src="https://images.unsplash.com/photo-1508672019048-805c876b67e2?w=1200&q=80&auto=format" alt="Person walking toward brilliant sunrise light" loading="eager"/></div>
+    <div class="layer l-mid"><img src="https://images.unsplash.com/photo-1545232979-8bf68ee9b1af?w=1200&q=80&auto=format" alt="Small group in prayer circle" loading="eager"/></div>
+    <div class="layer l-front"><img src="https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=800&q=80&auto=format" alt="Light breaking through darkness" loading="eager"/></div>
+    <div class="light-leak"></div>
+    <div class="poster-text">
+      <h2>Bishop Steven A. Norman</h2>
+      <div class="tagline">From Darkness to Destiny &bull; Founder &bull; Overcomer</div>
+      <div class="loc">Jesus is Lord ~ Assembly of Love &bull; Roanoke, VA</div>
+    </div>
   </div>
   <div class="hero-content">
   <img class="avatar" src="https://graph.facebook.com/bishop.norman.330/picture?type=large&width=400&height=400" alt="Bishop Steven A. Norman" onerror="this.style.display='none'"/>
