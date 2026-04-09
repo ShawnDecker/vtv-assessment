@@ -82,6 +82,17 @@
 let API_KEY = '';
 const API = '/api/agent';
 
+// Auto-login via ?key= URL parameter
+const urlKey = new URLSearchParams(window.location.search).get('key');
+if (urlKey) {
+  API_KEY = urlKey.trim();
+  document.getElementById('auth').style.display = 'none';
+  document.getElementById('dashboard').classList.add('show');
+  document.getElementById('refreshBtn').style.display = 'block';
+  window.addEventListener('DOMContentLoaded', () => loadDashboard());
+  if (document.readyState !== 'loading') loadDashboard();
+}
+
 function authenticate() {
   API_KEY = document.getElementById('apiKey').value.trim();
   if (!API_KEY) return;
