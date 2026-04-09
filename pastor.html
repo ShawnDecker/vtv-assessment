@@ -15,11 +15,30 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
 .hero{text-align:center;padding:0 0 2rem;background:var(--hero);color:#fff;position:relative;overflow:hidden}
 .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
-/* HERO PHOTO BANNER */
-.hero-photo{position:relative;width:100%;height:320px;overflow:hidden}
-.hero-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.55)}
-.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,32,58,.1) 0%,rgba(18,32,58,.3) 50%,rgba(18,32,58,.9) 100%)}
-.hero-content{position:relative;padding:0 1.5rem;margin-top:-5rem;z-index:2}
+/* CINEMATIC POSTER COMPOSITE */
+.poster{position:relative;width:100%;height:420px;overflow:hidden}
+.poster .layer{position:absolute;inset:0;width:100%;height:100%}
+.poster .layer img{width:100%;height:100%;object-fit:cover;display:block}
+/* Back layer: wide establishing shot */
+.poster .l-back img{filter:brightness(.3) blur(1px)}
+/* Mid layer: crowd/community from behind */
+.poster .l-mid{top:auto;bottom:0;height:55%}
+.poster .l-mid img{object-position:center top;filter:brightness(.45)}
+.poster .l-mid::after{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:linear-gradient(to bottom,rgba(18,32,58,1),transparent)}
+/* Front layer: speaker/leader close-up or profile */
+.poster .l-front{top:auto;bottom:0;height:70%;display:flex;justify-content:center}
+.poster .l-front img{width:auto;height:100%;object-fit:contain;filter:brightness(.55) contrast(1.1);mix-blend-mode:luminosity;opacity:.6}
+/* Gradient overlays */
+.poster::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,32,58,.6) 0%,rgba(18,32,58,.2) 30%,rgba(18,32,58,.15) 60%,rgba(18,32,58,.95) 100%);z-index:3;pointer-events:none}
+.poster::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(200,168,78,.08) 0%,transparent 60%);z-index:4;pointer-events:none}
+/* Gold light leak accent */
+.poster .light-leak{position:absolute;top:0;right:0;width:40%;height:60%;background:radial-gradient(ellipse at 80% 20%,rgba(200,168,78,.1) 0%,transparent 70%);z-index:5;pointer-events:none}
+/* Poster title overlay */
+.poster .poster-text{position:absolute;bottom:0;left:0;right:0;z-index:6;text-align:center;padding:2rem 1.5rem .5rem;background:linear-gradient(to top,rgba(18,32,58,.95),rgba(18,32,58,.5),transparent)}
+.poster .poster-text h2{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:#fff;letter-spacing:.02em;text-shadow:0 2px 20px rgba(0,0,0,.5)}
+.poster .poster-text .tagline{font-size:.65rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-top:.3rem;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+.poster .poster-text .loc{font-size:.55rem;color:rgba(255,255,255,.4);margin-top:.2rem;letter-spacing:.1em}
+.hero-content{position:relative;padding:0 1.5rem;margin-top:0;z-index:2}
 .avatar{width:110px;height:110px;border-radius:50%;border:4px solid rgba(200,168,78,.6);object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.4);margin-bottom:.75rem;position:relative}
 .hero h1{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;margin-bottom:.15rem;position:relative}
 .hero .title{font-size:.75rem;color:var(--gold);font-weight:600;letter-spacing:.05em;margin-bottom:.5rem;position:relative}
@@ -74,115 +93,22 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 </head>
 <body>
 <div class="hero">
-  <!-- 3D SVG SCENE: Dr. Crabtree teaching to crowd on campus -->
-  <div style="position:relative;width:100%;height:340px;overflow:hidden">
-  <svg viewBox="0 0 600 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
-    <defs>
-      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0A1628"/><stop offset="50%" stop-color="#162D50"/><stop offset="100%" stop-color="#244570"/></linearGradient>
-      <linearGradient id="spotlight" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#C8A84E" stop-opacity=".35"/><stop offset="100%" stop-color="#C8A84E" stop-opacity="0"/></linearGradient>
-      <linearGradient id="stage" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1C3356"/><stop offset="100%" stop-color="#12203A"/></linearGradient>
-      <linearGradient id="podium" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2A4A6A"/><stop offset="100%" stop-color="#1A3050"/></linearGradient>
-      <filter id="glow"><feGaussianBlur stdDeviation="6" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      <filter id="shadow"><feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity=".3"/></filter>
-    </defs>
-    <!-- SKY -->
-    <rect width="600" height="340" fill="url(#sky)"/>
-    <!-- HILLS (19-acre campus) -->
-    <path d="M0,160 Q80,130 160,150 Q240,170 320,140 Q400,110 480,145 Q540,160 600,150 L600,200 L0,200Z" fill="#0F1E38" opacity=".5"/>
-    <path d="M0,170 Q100,155 200,168 Q300,180 400,158 Q500,140 600,165 L600,210 L0,210Z" fill="#0F2240" opacity=".6"/>
-    <!-- TREES on campus -->
-    <ellipse cx="80" cy="160" rx="25" ry="18" fill="#0A1A30" opacity=".7"/>
-    <ellipse cx="160" cy="155" rx="20" ry="15" fill="#0D1E35" opacity=".6"/>
-    <ellipse cx="500" cy="150" rx="30" ry="20" fill="#0A1A30" opacity=".7"/>
-    <ellipse cx="540" cy="155" rx="18" ry="14" fill="#0D1E35" opacity=".5"/>
-    <!-- CHURCH BUILDING silhouette -->
-    <rect x="220" y="130" width="160" height="65" rx="3" fill="#0D1E38"/>
-    <polygon points="300,95 220,130 380,130" fill="#0D1E38"/>
-    <rect x="290" y="100" width="20" height="30" fill="#0D1E38"/><!-- steeple -->
-    <polygon points="300,82 285,100 315,100" fill="#0D1E38"/>
-    <!-- Cross on steeple -->
-    <rect x="298" y="78" width="4" height="16" fill="#C8A84E" opacity=".4"/>
-    <rect x="293" y="84" width="14" height="3" fill="#C8A84E" opacity=".4"/>
-    <!-- Windows glow -->
-    <rect x="245" y="150" width="12" height="18" rx="1" fill="#C8A84E" opacity=".15"/>
-    <rect x="275" y="150" width="12" height="18" rx="1" fill="#C8A84E" opacity=".12"/>
-    <rect x="315" y="150" width="12" height="18" rx="1" fill="#C8A84E" opacity=".15"/>
-    <rect x="345" y="150" width="12" height="18" rx="1" fill="#C8A84E" opacity=".12"/>
-    <!-- STAGE FLOOR with perspective -->
-    <path d="M100,210 L500,210 L600,340 L0,340Z" fill="url(#stage)"/>
-    <!-- Stage edge highlight -->
-    <line x1="100" y1="210" x2="500" y2="210" stroke="#C8A84E" stroke-width="1" opacity=".15"/>
-    <!-- SPOTLIGHT beams -->
-    <polygon points="300,0 240,210 360,210" fill="url(#spotlight)" opacity=".4"/>
-    <polygon points="200,0 170,210 230,210" fill="url(#spotlight)" opacity=".15"/>
-    <polygon points="400,0 370,210 430,210" fill="url(#spotlight)" opacity=".15"/>
-    <!-- PODIUM 3D -->
-    <g filter="url(#shadow)">
-      <path d="M280,225 L320,225 L325,290 L275,290Z" fill="url(#podium)"/>
-      <rect x="275" y="220" width="50" height="8" rx="2" fill="#2A4A6A"/>
-      <rect x="278" y="230" width="44" height="3" fill="#C8A84E" opacity=".15"/>
-      <!-- Mic -->
-      <line x1="300" y1="215" x2="300" y2="195" stroke="#666" stroke-width="1.5"/>
-      <circle cx="300" cy="192" r="4" fill="#444"/>
-    </g>
-    <!-- SPEAKER (Dr. Crabtree silhouette) — 3D style with highlights -->
-    <g filter="url(#shadow)" transform="translate(300,170)">
-      <!-- Body -->
-      <path d="M-15,50 L-20,120 L-8,120 L-5,80 L0,75 L5,80 L8,120 L20,120 L15,50Z" fill="#0C1B33"/>
-      <!-- Suit jacket -->
-      <path d="M-15,50 L-18,90 L0,85 L18,90 L15,50Z" fill="#162D50"/>
-      <!-- Suit lapel highlight -->
-      <path d="M-2,50 L-5,75 L0,72 L5,75 L2,50Z" fill="#1E3A5F"/>
-      <!-- Head -->
-      <circle cx="0" cy="35" r="14" fill="#1A3050"/>
-      <!-- Face highlight -->
-      <circle cx="-2" cy="34" r="12" fill="#1E3A5F"/>
-      <!-- Gold tie -->
-      <path d="M-2,50 L0,65 L2,50Z" fill="#C8A84E" opacity=".6"/>
-      <!-- Right arm extended (teaching gesture) -->
-      <path d="M15,55 Q35,45 45,35" stroke="#162D50" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <circle cx="47" cy="33" r="4" fill="#1A3050"/>
-      <!-- Left arm holding Bible -->
-      <path d="M-15,55 Q-25,65 -28,70" stroke="#162D50" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <rect x="-38" y="62" width="16" height="12" rx="1" fill="#C8A84E" opacity=".4" transform="rotate(-10,-30,68)"/>
-    </g>
-    <!-- CROWD SILHOUETTES (3 rows, depth perspective) -->
-    <!-- Row 3 (back, small) -->
-    <g opacity=".25">
-      <circle cx="80" cy="280" r="6" fill="#fff"/><rect x="74" y="286" width="12" height="14" rx="3" fill="#fff"/>
-      <circle cx="110" cy="278" r="6" fill="#fff"/><rect x="104" y="284" width="12" height="14" rx="3" fill="#fff"/>
-      <circle cx="140" cy="282" r="6" fill="#fff"/><rect x="134" y="288" width="12" height="14" rx="3" fill="#fff"/>
-      <circle cx="460" cy="280" r="6" fill="#fff"/><rect x="454" y="286" width="12" height="14" rx="3" fill="#fff"/>
-      <circle cx="490" cy="278" r="6" fill="#fff"/><rect x="484" y="284" width="12" height="14" rx="3" fill="#fff"/>
-      <circle cx="520" cy="282" r="6" fill="#fff"/><rect x="514" y="288" width="12" height="14" rx="3" fill="#fff"/>
-    </g>
-    <!-- Row 2 (mid) -->
-    <g opacity=".35">
-      <circle cx="60" cy="300" r="8" fill="#fff"/><rect x="52" y="308" width="16" height="18" rx="4" fill="#fff"/>
-      <circle cx="100" cy="298" r="8" fill="#fff"/><rect x="92" y="306" width="16" height="18" rx="4" fill="#fff"/>
-      <circle cx="145" cy="302" r="8" fill="#fff"/><rect x="137" y="310" width="16" height="18" rx="4" fill="#fff"/>
-      <circle cx="185" cy="297" r="8" fill="#fff"/><rect x="177" y="305" width="16" height="18" rx="4" fill="#fff"/>
-      <circle cx="415" cy="297" r="8" fill="#fff"/><rect x="407" y="305" width="16" height="18" rx="4" fill="#fff"/>
-      <circle cx="455" cy="302" r="8" fill="#fff"/><rect x="447" y="310" width="16" height="18" rx="4" fill="#fff"/>
-      <circle cx="500" cy="298" r="8" fill="#fff"/><rect x="492" y="306" width="16" height="18" rx="4" fill="#fff"/>
-      <circle cx="540" cy="300" r="8" fill="#fff"/><rect x="532" y="308" width="16" height="18" rx="4" fill="#fff"/>
-    </g>
-    <!-- Row 1 (front, large, raised hands) -->
-    <g opacity=".5">
-      <circle cx="40" cy="315" r="10" fill="#fff"/><rect x="30" y="325" width="20" height="20" rx="5" fill="#fff"/>
-      <line x1="35" y1="325" x2="28" y2="305" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="120" cy="318" r="10" fill="#fff"/><rect x="110" y="328" width="20" height="20" rx="5" fill="#fff"/>
-      <line x1="130" y1="328" x2="138" y2="308" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="200" cy="313" r="10" fill="#fff"/><rect x="190" y="323" width="20" height="20" rx="5" fill="#fff"/>
-      <circle cx="400" cy="313" r="10" fill="#fff"/><rect x="390" y="323" width="20" height="20" rx="5" fill="#fff"/>
-      <circle cx="480" cy="318" r="10" fill="#fff"/><rect x="470" y="328" width="20" height="20" rx="5" fill="#fff"/>
-      <line x1="475" y1="328" x2="465" y2="305" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="560" cy="315" r="10" fill="#fff"/><rect x="550" y="325" width="20" height="20" rx="5" fill="#fff"/>
-      <line x1="565" y1="325" x2="575" y2="305" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-    </g>
-    <!-- FLOATING TEXT -->
-    <text x="300" y="330" text-anchor="middle" font-family="Georgia,serif" font-size="8" letter-spacing=".3em" fill="rgba(200,168,78,.35)" font-weight="400">DR. EDDIE CRABTREE</text>
-  </svg>
+  <!-- CINEMATIC PHOTO COMPOSITE POSTER -->
+  <div class="poster">
+    <!-- Layer 1: Establishing shot — mountain/campus landscape -->
+    <div class="layer l-back"><img src="https://images.unsplash.com/photo-1477346611705-65d1883cee1e?w=1200&q=80&auto=format" alt="Mountain landscape at golden hour" loading="eager"/></div>
+    <!-- Layer 2: Crowd from behind looking at stage -->
+    <div class="layer l-mid"><img src="https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=1200&q=80&auto=format" alt="Crowd at event from behind" loading="eager"/></div>
+    <!-- Layer 3: Speaker at podium close-up silhouette -->
+    <div class="layer l-front"><img src="https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&q=80&auto=format" alt="Speaker at podium" loading="eager"/></div>
+    <!-- Gold light leak -->
+    <div class="light-leak"></div>
+    <!-- Title -->
+    <div class="poster-text">
+      <h2>Dr. Eddie Crabtree</h2>
+      <div class="tagline">Pastor &bull; Author &bull; Speaker &bull; Life Coach</div>
+      <div class="loc">Valley Word Church &bull; Roanoke, VA</div>
+    </div>
   </div>
   <div class="hero-content">
   <img class="avatar" src="https://graph.facebook.com/valleyword/picture?type=large&width=400&height=400" alt="Dr. Eddie Crabtree" onerror="this.style.display='none'"/>
