@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/>
+<title>Your Name Lawn Care — Clean Cuts. Happy Yards.</title>
+<meta name="description" content="Professional lawn care, mowing, landscaping, and yard maintenance. Free estimates. Reliable, affordable, local."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .4s,color .4s}
+:root{--bg:#F6FAF4;--text:#1A3A1A;--sec:#3A5A3C;--muted:#6A8A6C;--green:#2D7A2D;--green-g:rgba(45,122,45,.08);--gold:#C8A84E;--gold-d:#A8883E;--border:#D4E0D4;--card:#fff;--shadow:0 1px 3px rgba(26,58,26,.06),0 8px 24px rgba(26,58,26,.04);--hero:linear-gradient(160deg,#1A3A1A,#2D5A2D,#3A7A3A);--fade:cubic-bezier(.22,1,.36,1)}
+[data-theme="dark"]{--bg:#0A0A0A;--text:#D4E8D4;--sec:#A0B8A0;--muted:#6A7A6A;--green:#4CAF50;--green-g:rgba(76,175,80,.08);--gold:#D4A847;--gold-d:#B8942E;--border:#1A2A1A;--card:#141414;--shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.2);--hero:linear-gradient(160deg,#050A05,#1A2A1A,#2D3A2D)}
+.toggle{position:fixed;top:14px;right:14px;z-index:999;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
+.hero{position:relative;text-align:center;padding:0 0 2rem;background:var(--hero);color:#fff;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
+.hero-img{width:100%;height:300px;overflow:hidden;position:relative}
+.hero-img img{width:100%;height:100%;object-fit:cover;filter:brightness(.4)}
+.hero-img::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,58,26,.2) 0%,rgba(26,58,26,.1) 40%,rgba(26,58,26,.9) 100%)}
+.hero-txt{position:relative;padding:0 1.5rem;margin-top:-4rem;z-index:2}
+.hero-txt h1{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;margin-bottom:.15rem}
+.hero-txt .tag{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--green);margin-bottom:.4rem;font-weight:700}
+[data-theme="dark"] .hero-txt .tag{color:#4CAF50}
+.hero-txt .sub{color:rgba(255,255,255,.55);font-size:.8rem;line-height:1.6;max-width:400px;margin:0 auto}
+.hero-txt .cta-row{display:flex;gap:.4rem;justify-content:center;margin-top:1rem}
+.sec{margin-top:2.25rem}
+.sl{font-size:.48rem;letter-spacing:.25em;text-transform:uppercase;color:var(--green);font-weight:700;margin-bottom:.2rem}
+.st{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
+.sd{font-size:.78rem;color:var(--sec);line-height:1.7;margin-bottom:1rem}
+.al{width:40px;height:3px;background:linear-gradient(90deg,var(--green),var(--gold));border-radius:2px;margin-bottom:.75rem}
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.6rem 1.4rem;background:linear-gradient(135deg,var(--green),#1D6A1D);color:#fff;font-size:.72rem;font-weight:700;border-radius:.5rem;text-decoration:none;box-shadow:0 2px 8px rgba(45,122,45,.25);transition:all .2s var(--fade)}
+.btn:hover{box-shadow:0 4px 16px rgba(45,122,45,.35)}
+.btn-g{background:transparent;border:1.5px solid var(--border);color:var(--text);box-shadow:none;margin-left:.3rem}
+.btn-g:hover{border-color:var(--green);color:var(--green)}
+.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.svc{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1rem;box-shadow:var(--shadow);transition:border-color .2s}
+.svc:hover{border-color:var(--green)}
+.svc .si{font-size:1.4rem;margin-bottom:.3rem}
+.svc .sn{font-size:.78rem;font-weight:700;color:var(--text)}
+.svc .sp{font-size:.6rem;color:var(--green);font-weight:700;margin-top:.15rem}
+.svc .sd2{font-size:.6rem;color:var(--muted);margin-top:.1rem;line-height:1.4}
+.pkg{background:var(--card);border:2px solid var(--border);border-radius:1rem;padding:1.25rem;margin-bottom:.6rem;box-shadow:var(--shadow);text-align:center;transition:border-color .2s}
+.pkg:hover{border-color:var(--green)}
+.pkg.featured{border-color:var(--green);background:linear-gradient(135deg,var(--green-g),var(--card))}
+.pkg .pn{font-size:.9rem;font-weight:800;color:var(--text)}
+.pkg .pp{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--green);margin:.3rem 0}
+.pkg .pp span{font-size:.7rem;font-weight:400;color:var(--muted)}
+.pkg .pd{font-size:.65rem;color:var(--sec);line-height:1.5;margin-bottom:.75rem}
+.pkg .feat{font-size:.6rem;color:var(--muted);text-align:left;line-height:1.8;margin-bottom:.75rem}
+.pkg .feat b{color:var(--green)}
+.review{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1.1rem;margin-bottom:.5rem;box-shadow:var(--shadow)}
+.review .stars{color:var(--gold);font-size:.85rem;margin-bottom:.3rem}
+.review p{font-size:.74rem;color:var(--sec);line-height:1.6;font-style:italic}
+.review .rn{font-size:.6rem;color:var(--muted);margin-top:.3rem;font-style:normal;font-weight:700}
+.cta-banner{margin-top:2rem;padding:1.5rem;background:linear-gradient(135deg,var(--green-g),var(--card));border:1px solid rgba(45,122,45,.15);border-radius:1rem;text-align:center;box-shadow:var(--shadow)}
+.cta-banner h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text);margin-bottom:.3rem}
+.cta-banner p{font-size:.75rem;color:var(--sec);margin-bottom:1rem}
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:.75rem}
+.cb{background:var(--card);border:1px solid var(--border);border-radius:.6rem;padding:.7rem;text-align:center;box-shadow:var(--shadow)}
+.cb .cl{font-size:.48rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.1rem}
+.cb .cv{font-size:.72rem;font-weight:700;color:var(--text)}
+.cb a{color:var(--green);text-decoration:none}
+.ph-div{width:calc(100% + 2.5rem);margin:2rem -1.25rem;height:120px;overflow:hidden;position:relative}
+.ph-div img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.35)}
+.ph-div::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 18%,transparent 82%,var(--bg) 100%)}
+.ph-div .pd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-family:'Playfair Display',serif;font-style:italic;font-size:.9rem;color:rgba(255,255,255,.85);text-shadow:0 2px 8px rgba(0,0,0,.5);text-align:center;padding:0 2rem}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s var(--fade),transform .6s var(--fade)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.foot{text-align:center;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.55rem;color:var(--muted);line-height:2}
+@media(max-width:480px){.hero-txt h1{font-size:1.7rem}.svc-grid,.contact{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-img"><img src="https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=1000&q=80&auto=format" alt="Perfectly mowed lawn with stripes" loading="eager"/></div>
+  <div class="hero-txt">
+    <div class="tag">Professional &bull; Reliable &bull; Affordable</div>
+    <h1>[Your Name]<br>Lawn Care</h1>
+    <p class="sub">Clean cuts, healthy yards, happy neighbors. Weekly, biweekly, or one-time service. Free estimates.</p>
+    <div class="cta-row">
+      <a class="btn" href="tel:5555555555">Free Estimate</a>
+      <a class="btn btn-g" href="#packages">See Packages</a>
+    </div>
+  </div>
+</div>
+
+<div class="p">
+  <div class="sec reveal" id="services">
+    <div class="al"></div><div class="sl">Services</div>
+    <div class="st">What We Do</div>
+    <div class="svc-grid">
+      <div class="svc"><div class="si">&#127807;</div><div class="sn">Lawn Mowing</div><div class="sp">From $30</div><div class="sd2">Weekly or biweekly cuts</div></div>
+      <div class="svc"><div class="si">&#9986;</div><div class="sn">Edging &amp; Trimming</div><div class="sp">Included</div><div class="sd2">Sidewalks, driveways, beds</div></div>
+      <div class="svc"><div class="si">&#127811;</div><div class="sn">Leaf Removal</div><div class="sp">From $50</div><div class="sd2">Fall &amp; spring cleanup</div></div>
+      <div class="svc"><div class="si">&#127793;</div><div class="sn">Mulching</div><div class="sp">From $75</div><div class="sd2">Beds, trees, pathways</div></div>
+      <div class="svc"><div class="si">&#127796;</div><div class="sn">Bush Trimming</div><div class="sp">From $40</div><div class="sd2">Hedges and shrubs</div></div>
+      <div class="svc"><div class="si">&#128167;</div><div class="sn">Fertilization</div><div class="sp">From $45</div><div class="sd2">Seasonal treatments</div></div>
+      <div class="svc"><div class="si">&#127806;</div><div class="sn">Aeration &amp; Seeding</div><div class="sp">From $100</div><div class="sd2">Thick, healthy turf</div></div>
+      <div class="svc"><div class="si">&#128736;</div><div class="sn">Yard Cleanup</div><div class="sp">Quote</div><div class="sd2">Debris, overgrowth, one-time</div></div>
+    </div>
+  </div>
+
+  <div class="ph-div">
+    <img src="https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?w=900&q=80&auto=format" alt="Landscaping work" loading="lazy"/>
+    <div class="pd">Your yard is the first thing people see</div>
+  </div>
+
+  <div class="sec reveal" id="packages">
+    <div class="al"></div><div class="sl">Packages</div>
+    <div class="st">Pick Your Plan</div>
+    <div class="pkg">
+      <div class="pn">Basic</div>
+      <div class="pp">$30 <span>/visit</span></div>
+      <div class="feat"><b>&#10003;</b> Mowing<br><b>&#10003;</b> Edging<br><b>&#10003;</b> Blowing</div>
+      <a class="btn btn-g" href="tel:5555555555">Get Started</a>
+    </div>
+    <div class="pkg featured">
+      <div style="font-size:.5rem;letter-spacing:.15em;text-transform:uppercase;color:var(--green);font-weight:700;margin-bottom:.3rem">Most Popular</div>
+      <div class="pn">Full Service</div>
+      <div class="pp">$55 <span>/visit</span></div>
+      <div class="feat"><b>&#10003;</b> Mowing<br><b>&#10003;</b> Edging &amp; Trimming<br><b>&#10003;</b> Bush Trimming<br><b>&#10003;</b> Blowing<br><b>&#10003;</b> Spot Weeding</div>
+      <a class="btn" href="tel:5555555555">Get Started</a>
+    </div>
+    <div class="pkg">
+      <div class="pn">Premium</div>
+      <div class="pp">$95 <span>/visit</span></div>
+      <div class="feat"><b>&#10003;</b> Everything in Full Service<br><b>&#10003;</b> Fertilization<br><b>&#10003;</b> Mulching<br><b>&#10003;</b> Seasonal Cleanup</div>
+      <a class="btn btn-g" href="tel:5555555555">Get Started</a>
+    </div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Reviews</div>
+    <div class="st">Happy Yards, Happy People</div>
+    <div class="review"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p>"My yard has never looked this good. Reliable, on time every week, and the price is right."</p><div class="rn">— [Customer], [City]</div></div>
+    <div class="review"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p>"They went above and beyond — cleaned up stuff I didn't even ask about. Highly recommend."</p><div class="rn">— [Customer], [City]</div></div>
+  </div>
+
+  <div class="cta-banner reveal">
+    <div class="sl">Free Estimate</div>
+    <h3>Ready for a Better Yard?</h3>
+    <p>Call or text for a free estimate. We'll come look at your property and give you an honest quote.</p>
+    <a class="btn" href="tel:5555555555" style="padding:.7rem 2.5rem;font-size:.82rem">Call [Your Number]</a>
+  </div>
+
+  <div class="sec reveal">
+    <div class="sl">Find Us</div>
+    <div class="contact">
+      <div class="cb"><div class="cl">Phone</div><div class="cv"><a href="tel:5555555555">[Your Phone]</a></div></div>
+      <div class="cb"><div class="cl">Area</div><div class="cv">[Your City]<br>&amp; Surrounding</div></div>
+      <div class="cb"><div class="cl">Season</div><div class="cv">Mar — Nov<br>Year-round cleanup</div></div>
+      <div class="cb"><div class="cl">Estimates</div><div class="cv">Always Free</div></div>
+    </div>
+  </div>
+
+  <div class="foot">[Your Name] Lawn Care &bull; [Your City, State] &bull; [Your Phone]<br>&copy; 2026 [Your Name] Lawn Care. All rights reserved.</div>
+</div>
+<button class="toggle" onclick="toggleMode()" id="mBtn">&#9790;</button>
+<script>
+function toggleMode(){var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('mBtn').innerHTML=d?'\u263E':'\u263C';localStorage.setItem('lawn-theme',d?'light':'dark')}
+(function(){var s=localStorage.getItem('lawn-theme');if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('mBtn').innerHTML='\u263C'}})();
+var ro=new IntersectionObserver(function(e){e.forEach(function(i){if(i.isIntersecting){i.target.classList.add('visible');ro.unobserve(i.target)}})},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el)});
+</script>
+</body>
+</html>

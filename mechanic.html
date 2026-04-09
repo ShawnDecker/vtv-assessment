@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/>
+<title>Your Name Auto Repair — Honest Work. Fair Prices.</title>
+<meta name="description" content="Local auto repair and mechanic services. Honest diagnostics, fair pricing, quality work. Book your appointment today."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .4s,color .4s}
+:root{--bg:#F8F7F4;--text:#1A1A2E;--sec:#3A3A5C;--muted:#7A7A9C;--red:#C0392B;--red-g:rgba(192,57,43,.08);--gold:#D4A24E;--gold-d:#B8892E;--border:#E0DDD6;--card:#fff;--shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.04);--hero:linear-gradient(160deg,#1A1A2E,#2D2D50,#3A3A66);--fade:cubic-bezier(.22,1,.36,1)}
+[data-theme="dark"]{--bg:#0A0A0A;--text:#E4E4E7;--sec:#A1A1AA;--muted:#6A6A7A;--red:#E74C3C;--red-g:rgba(231,76,60,.08);--gold:#D4A847;--gold-d:#B8942E;--border:#222;--card:#141414;--shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.2);--hero:linear-gradient(160deg,#0A0A14,#1A1A2E,#2D2D50)}
+.toggle{position:fixed;top:14px;right:14px;z-index:999;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
+.hero{position:relative;text-align:center;padding:0 0 2rem;background:var(--hero);color:#fff;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
+.hero-img{width:100%;height:300px;overflow:hidden;position:relative}
+.hero-img img{width:100%;height:100%;object-fit:cover;filter:brightness(.4)}
+.hero-img::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,26,46,.2) 0%,rgba(26,26,46,.1) 40%,rgba(26,26,46,.9) 100%)}
+.hero-txt{position:relative;padding:0 1.5rem;margin-top:-4rem;z-index:2}
+.hero-txt h1{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;margin-bottom:.15rem}
+.hero-txt .tag{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--red);margin-bottom:.4rem;font-weight:700}
+.hero-txt .sub{color:rgba(255,255,255,.55);font-size:.8rem;line-height:1.6;max-width:400px;margin:0 auto}
+.hero-txt .cta-row{display:flex;gap:.4rem;justify-content:center;margin-top:1rem}
+.sec{margin-top:2.25rem}
+.sl{font-size:.48rem;letter-spacing:.25em;text-transform:uppercase;color:var(--red);font-weight:700;margin-bottom:.2rem}
+.st{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
+.sd{font-size:.78rem;color:var(--sec);line-height:1.7;margin-bottom:1rem}
+.al{width:40px;height:3px;background:linear-gradient(90deg,var(--red),var(--gold));border-radius:2px;margin-bottom:.75rem}
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.6rem 1.4rem;background:linear-gradient(135deg,var(--red),#A02020);color:#fff;font-size:.72rem;font-weight:700;border-radius:.5rem;text-decoration:none;box-shadow:0 2px 8px rgba(192,57,43,.25);transition:all .2s var(--fade)}
+.btn:hover{box-shadow:0 4px 16px rgba(192,57,43,.35)}
+.btn-g{background:transparent;border:1.5px solid var(--border);color:var(--text);box-shadow:none;margin-left:.3rem}
+.btn-g:hover{border-color:var(--red);color:var(--red)}
+.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.svc{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1rem;box-shadow:var(--shadow);transition:border-color .2s}
+.svc:hover{border-color:var(--red)}
+.svc .si{font-size:1.4rem;margin-bottom:.3rem}
+.svc .sn{font-size:.78rem;font-weight:700;color:var(--text)}
+.svc .sp{font-size:.6rem;color:var(--red);font-weight:700;margin-top:.15rem}
+.svc .sd2{font-size:.6rem;color:var(--muted);margin-top:.1rem;line-height:1.4}
+.why-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem}
+.why{background:var(--card);border:1px solid var(--border);border-radius:.6rem;padding:.75rem;text-align:center;box-shadow:var(--shadow)}
+.why .wi{font-size:1.3rem;margin-bottom:.2rem}
+.why .wn{font-size:.68rem;font-weight:700;color:var(--text)}
+.why .wd{font-size:.55rem;color:var(--muted);margin-top:.1rem}
+.review{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1.1rem;margin-bottom:.5rem;box-shadow:var(--shadow)}
+.review .stars{color:var(--gold);font-size:.85rem;margin-bottom:.3rem}
+.review p{font-size:.74rem;color:var(--sec);line-height:1.6;font-style:italic}
+.review .rn{font-size:.6rem;color:var(--muted);margin-top:.3rem;font-style:normal;font-weight:700}
+.cta-banner{margin-top:2rem;padding:1.5rem;background:linear-gradient(135deg,var(--red-g),var(--card));border:1px solid rgba(192,57,43,.15);border-radius:1rem;text-align:center;box-shadow:var(--shadow)}
+.cta-banner h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text);margin-bottom:.3rem}
+.cta-banner p{font-size:.75rem;color:var(--sec);margin-bottom:1rem}
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:.75rem}
+.cb{background:var(--card);border:1px solid var(--border);border-radius:.6rem;padding:.7rem;text-align:center;box-shadow:var(--shadow)}
+.cb .cl{font-size:.48rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.1rem}
+.cb .cv{font-size:.72rem;font-weight:700;color:var(--text)}
+.cb a{color:var(--red);text-decoration:none}
+.ph-div{width:calc(100% + 2.5rem);margin:2rem -1.25rem;height:120px;overflow:hidden;position:relative}
+.ph-div img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.35)}
+.ph-div::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 18%,transparent 82%,var(--bg) 100%)}
+.ph-div .pd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-family:'Playfair Display',serif;font-style:italic;font-size:.9rem;color:rgba(255,255,255,.85);text-shadow:0 2px 8px rgba(0,0,0,.5);text-align:center;padding:0 2rem}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s var(--fade),transform .6s var(--fade)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.foot{text-align:center;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.55rem;color:var(--muted);line-height:2}
+@media(max-width:480px){.hero-txt h1{font-size:1.7rem}.svc-grid,.contact{grid-template-columns:1fr}.why-grid{grid-template-columns:1fr 1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-img"><img src="https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=1000&q=80&auto=format" alt="Mechanic working under car hood" loading="eager"/></div>
+  <div class="hero-txt">
+    <div class="tag">Honest Work &bull; Fair Prices</div>
+    <h1>[Your Name]<br>Auto Repair</h1>
+    <p class="sub">Your neighborhood mechanic. Transparent diagnostics, quality parts, and work you can trust. No surprises on the bill.</p>
+    <div class="cta-row">
+      <a class="btn" href="tel:5555555555">Call Now</a>
+      <a class="btn btn-g" href="#services">See Services</a>
+    </div>
+  </div>
+</div>
+
+<div class="p">
+  <div class="why-grid" style="margin-top:1.25rem">
+    <div class="why"><div class="wi">&#128267;</div><div class="wn">Honest</div><div class="wd">No hidden fees</div></div>
+    <div class="why"><div class="wi">&#9201;</div><div class="wn">Fast</div><div class="wd">Same-day service</div></div>
+    <div class="why"><div class="wi">&#128176;</div><div class="wn">Fair</div><div class="wd">Competitive rates</div></div>
+  </div>
+
+  <div class="sec reveal" id="services">
+    <div class="al"></div><div class="sl">Services</div>
+    <div class="st">What We Fix</div>
+    <div class="svc-grid">
+      <div class="svc"><div class="si">&#128663;</div><div class="sn">Oil Change</div><div class="sp">From $35</div><div class="sd2">Conventional &amp; synthetic</div></div>
+      <div class="svc"><div class="si">&#9881;</div><div class="sn">Brake Service</div><div class="sp">From $99</div><div class="sd2">Pads, rotors, fluid</div></div>
+      <div class="svc"><div class="si">&#128295;</div><div class="sn">Engine Diagnostics</div><div class="sp">$49</div><div class="sd2">Check engine light? We'll find it.</div></div>
+      <div class="svc"><div class="si">&#127777;</div><div class="sn">A/C &amp; Heating</div><div class="sp">From $75</div><div class="sd2">Stay comfortable year-round</div></div>
+      <div class="svc"><div class="si">&#128690;</div><div class="sn">Tire Service</div><div class="sp">From $20/tire</div><div class="sd2">Mount, balance, rotate, patch</div></div>
+      <div class="svc"><div class="si">&#9889;</div><div class="sn">Electrical</div><div class="sp">From $65</div><div class="sd2">Battery, alternator, starter</div></div>
+      <div class="svc"><div class="si">&#128168;</div><div class="sn">Exhaust</div><div class="sp">Quote</div><div class="sd2">Muffler, catalytic, pipes</div></div>
+      <div class="svc"><div class="si">&#128736;</div><div class="sn">General Repair</div><div class="sp">Hourly</div><div class="sd2">If it's broken, we fix it</div></div>
+    </div>
+  </div>
+
+  <div class="ph-div">
+    <img src="https://images.unsplash.com/photo-1530046339160-ce3e530c7d2f?w=900&q=80&auto=format" alt="Clean auto shop" loading="lazy"/>
+    <div class="pd">Trusted by your neighbors since day one</div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Reviews</div>
+    <div class="st">What Customers Say</div>
+    <div class="review"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p>"Honest, fast, and didn't try to sell me stuff I didn't need. Finally a mechanic I can trust."</p><div class="rn">— [Customer Name], [City]</div></div>
+    <div class="review"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p>"Fixed my check engine light same day for half what the dealer quoted. Going back for everything from now on."</p><div class="rn">— [Customer Name], [City]</div></div>
+    <div class="review"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p>"Great with communication — texted me photos of what needed replacing and explained everything. No pressure."</p><div class="rn">— [Customer Name], [City]</div></div>
+  </div>
+
+  <div class="cta-banner reveal">
+    <div class="sl">Book Today</div>
+    <h3>Need a Repair? Let's Talk.</h3>
+    <p>Call, text, or message. Walk-ins welcome. We'll get you back on the road.</p>
+    <a class="btn" href="tel:5555555555" style="padding:.7rem 2.5rem;font-size:.82rem">Call [Your Number]</a>
+  </div>
+
+  <div class="sec reveal">
+    <div class="sl">Find Us</div>
+    <div class="contact">
+      <div class="cb"><div class="cl">Phone</div><div class="cv"><a href="tel:5555555555">[Your Phone]</a></div></div>
+      <div class="cb"><div class="cl">Location</div><div class="cv">[Your Address]<br>[City, State ZIP]</div></div>
+      <div class="cb"><div class="cl">Hours</div><div class="cv">Mon-Fri 8-6<br>Sat 8-2</div></div>
+      <div class="cb"><div class="cl">Walk-Ins</div><div class="cv">Welcome!</div></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    [Your Name] Auto Repair &bull; [Your Address] &bull; [Your Phone]<br>
+    &copy; 2026 [Your Name] Auto Repair. All rights reserved.
+  </div>
+</div>
+<button class="toggle" onclick="toggleMode()" id="mBtn">&#9790;</button>
+<script>
+function toggleMode(){var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('mBtn').innerHTML=d?'\u263E':'\u263C';localStorage.setItem('mech-theme',d?'light':'dark')}
+(function(){var s=localStorage.getItem('mech-theme');if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('mBtn').innerHTML='\u263C'}})();
+var ro=new IntersectionObserver(function(e){e.forEach(function(i){if(i.isIntersecting){i.target.classList.add('visible');ro.unobserve(i.target)}})},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el)});
+</script>
+</body>
+</html>

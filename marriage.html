@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1"/>
+<title>Your Name — Marriage Coaching for Women</title>
+<meta name="description" content="Christian marriage coaching for women. Strengthen your relationship, restore communication, and rediscover the love God designed for your marriage."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .4s,color .4s}
+:root{--bg:#FBF5F8;--text:#2E1A2E;--sec:#5A3A5A;--muted:#8A6A8A;--rose:#B5547A;--rose-g:rgba(181,84,122,.08);--gold:#C8A84E;--gold-d:#A8883E;--border:#E8D8E0;--card:#fff;--shadow:0 1px 3px rgba(46,26,46,.06),0 8px 24px rgba(46,26,46,.04);--hero:linear-gradient(160deg,#2E1A2E,#4A2A4A,#6A3A6A);--fade:cubic-bezier(.22,1,.36,1)}
+[data-theme="dark"]{--bg:#0A0A0A;--text:#F0E4F0;--sec:#C0A8C0;--muted:#7A5A7A;--rose:#D4789A;--rose-g:rgba(212,120,154,.08);--gold:#D4A847;--gold-d:#B8942E;--border:#2A1A2A;--card:#141414;--shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.2);--hero:linear-gradient(160deg,#0A050A,#2E1A2E,#4A2A4A)}
+.toggle{position:fixed;top:14px;right:14px;z-index:999;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
+.hero{position:relative;text-align:center;padding:0 0 2rem;background:var(--hero);color:#fff;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
+.hero-img{width:100%;height:300px;overflow:hidden;position:relative}
+.hero-img img{width:100%;height:100%;object-fit:cover;filter:brightness(.35)}
+.hero-img::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(46,26,46,.2) 0%,rgba(46,26,46,.1) 40%,rgba(46,26,46,.92) 100%)}
+.hero-txt{position:relative;padding:0 1.5rem;margin-top:-4.5rem;z-index:2}
+.hero-txt h1{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;margin-bottom:.15rem;font-style:italic}
+.hero-txt .tag{font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rose);margin-bottom:.4rem;font-weight:700}
+[data-theme="dark"] .hero-txt .tag{color:#D4789A}
+.hero-txt .sub{color:rgba(255,255,255,.55);font-size:.78rem;line-height:1.65;max-width:400px;margin:0 auto}
+.hero-txt .cta-row{display:flex;gap:.4rem;justify-content:center;margin-top:1rem}
+.sec{margin-top:2.25rem}
+.sl{font-size:.48rem;letter-spacing:.25em;text-transform:uppercase;color:var(--rose);font-weight:700;margin-bottom:.2rem}
+.st{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
+.sd{font-size:.78rem;color:var(--sec);line-height:1.7;margin-bottom:1rem}
+.al{width:40px;height:3px;background:linear-gradient(90deg,var(--rose),var(--gold));border-radius:2px;margin-bottom:.75rem}
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.6rem 1.4rem;background:linear-gradient(135deg,var(--rose),#9A3A5A);color:#fff;font-size:.72rem;font-weight:700;border-radius:.5rem;text-decoration:none;box-shadow:0 2px 8px rgba(181,84,122,.25);transition:all .2s var(--fade)}
+.btn:hover{box-shadow:0 4px 16px rgba(181,84,122,.35)}
+.btn-g{background:transparent;border:1.5px solid var(--border);color:var(--text);box-shadow:none;margin-left:.3rem}
+.btn-g:hover{border-color:var(--rose);color:var(--rose)}
+.svc-grid{display:grid;grid-template-columns:1fr;gap:.5rem}
+.svc{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1.1rem;box-shadow:var(--shadow);display:flex;gap:.75rem;align-items:flex-start;transition:border-color .2s}
+.svc:hover{border-color:var(--rose)}
+.svc .si{font-size:1.5rem;flex-shrink:0;margin-top:.1rem}
+.svc .sc{flex:1}
+.svc .sn{font-size:.82rem;font-weight:700;color:var(--text)}
+.svc .sp{font-size:.58rem;color:var(--rose);font-weight:700;margin-top:.1rem}
+.svc .sd2{font-size:.62rem;color:var(--muted);margin-top:.15rem;line-height:1.5}
+.pkg{background:var(--card);border:2px solid var(--border);border-radius:1rem;padding:1.25rem;margin-bottom:.6rem;box-shadow:var(--shadow);text-align:center;transition:border-color .2s}
+.pkg:hover{border-color:var(--rose)}
+.pkg.featured{border-color:var(--rose);background:linear-gradient(135deg,var(--rose-g),var(--card))}
+.pkg .pn{font-size:.9rem;font-weight:800;color:var(--text)}
+.pkg .pp{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--rose);margin:.3rem 0}
+.pkg .pp span{font-size:.7rem;font-weight:400;color:var(--muted)}
+.pkg .feat{font-size:.6rem;color:var(--sec);text-align:left;line-height:1.9;margin-bottom:.75rem}
+.pkg .feat b{color:var(--rose)}
+.scripture{position:relative;margin:1.25rem 0;padding:1.2rem 1.2rem 1.2rem 1.6rem;background:var(--card);border-left:3px solid var(--rose);border-radius:0 .75rem .75rem 0;box-shadow:var(--shadow);font-family:'Playfair Display',serif;font-style:italic;font-size:.84rem;color:var(--text);line-height:1.7}
+.scripture::before{content:'\201C';position:absolute;top:-.1rem;left:.4rem;font-size:2.5rem;color:var(--rose);opacity:.2}
+.scripture .ref{display:block;font-family:'Inter',sans-serif;font-style:normal;font-size:.55rem;color:var(--rose);font-weight:700;letter-spacing:.08em;margin-top:.35rem;text-transform:uppercase}
+.review{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1.1rem;margin-bottom:.5rem;box-shadow:var(--shadow)}
+.review .stars{color:var(--gold);font-size:.85rem;margin-bottom:.3rem}
+.review p{font-size:.74rem;color:var(--sec);line-height:1.6;font-style:italic}
+.review .rn{font-size:.6rem;color:var(--muted);margin-top:.3rem;font-style:normal;font-weight:700}
+.cta-banner{margin-top:2rem;padding:1.5rem;background:linear-gradient(135deg,var(--rose-g),var(--card));border:1px solid rgba(181,84,122,.15);border-radius:1rem;text-align:center;box-shadow:var(--shadow)}
+.cta-banner h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text);margin-bottom:.3rem;font-style:italic}
+.cta-banner p{font-size:.75rem;color:var(--sec);margin-bottom:1rem}
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:.75rem}
+.cb{background:var(--card);border:1px solid var(--border);border-radius:.6rem;padding:.7rem;text-align:center;box-shadow:var(--shadow)}
+.cb .cl{font-size:.48rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.1rem}
+.cb .cv{font-size:.72rem;font-weight:700;color:var(--text)}
+.cb a{color:var(--rose);text-decoration:none}
+.ph-div{width:calc(100% + 2.5rem);margin:2rem -1.25rem;height:120px;overflow:hidden;position:relative}
+.ph-div img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.3)}
+.ph-div::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 18%,transparent 82%,var(--bg) 100%)}
+.ph-div .pd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-family:'Playfair Display',serif;font-style:italic;font-size:.9rem;color:rgba(255,255,255,.85);text-shadow:0 2px 8px rgba(0,0,0,.5);text-align:center;padding:0 2rem}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s var(--fade),transform .6s var(--fade)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.foot{text-align:center;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.55rem;color:var(--muted);line-height:2}
+@media(max-width:480px){.hero-txt h1{font-size:1.6rem}.contact{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-img"><img src="https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=1000&q=80&auto=format" alt="Couple holding hands walking at sunset" loading="eager"/></div>
+  <div class="hero-txt">
+    <div class="tag">Christian Marriage Coaching for Women</div>
+    <h1>Your Marriage<br>Matters</h1>
+    <p class="sub">You don't have to figure this out alone. Faith-based coaching to strengthen communication, restore connection, and rediscover the love God designed for your marriage.</p>
+    <div class="cta-row">
+      <a class="btn" href="tel:5555555555">Book a Session</a>
+      <a class="btn btn-g" href="#services">Learn More</a>
+    </div>
+  </div>
+</div>
+
+<div class="p">
+  <div class="scripture reveal">
+    "Above all, love each other deeply, because love covers over a multitude of sins."
+    <span class="ref">— 1 Peter 4:8</span>
+  </div>
+
+  <div class="sec reveal" id="services">
+    <div class="al"></div><div class="sl">Services</div>
+    <div class="st">How I Can Help</div>
+    <div class="svc-grid">
+      <div class="svc"><div class="si">&#128149;</div><div class="sc"><div class="sn">1-on-1 Marriage Coaching</div><div class="sp">From $65/session</div><div class="sd2">Private sessions focused on YOUR specific marriage challenges. Communication breakdowns, conflict resolution, emotional disconnection, trust rebuilding.</div></div></div>
+      <div class="svc"><div class="si">&#128101;</div><div class="sc"><div class="sn">Couples Sessions</div><div class="sp">From $85/session</div><div class="sd2">Work together with your husband in a safe, guided environment. Biblical framework for unity, mutual respect, and renewed intimacy.</div></div></div>
+      <div class="svc"><div class="si">&#128218;</div><div class="sc"><div class="sn">Group Workshop</div><div class="sp">From $25/person</div><div class="sd2">Small group setting for women. Share, learn, and grow together. Topics: communication, forgiveness, love languages, boundaries, spiritual partnership.</div></div></div>
+      <div class="svc"><div class="si">&#128241;</div><div class="sc"><div class="sn">Virtual Coaching</div><div class="sp">From $55/session</div><div class="sd2">Can't meet in person? Video sessions available. Same depth, same confidentiality, from the comfort of your home.</div></div></div>
+      <div class="svc"><div class="si">&#127793;</div><div class="sc"><div class="sn">Marriage Retreat Planning</div><div class="sp">Custom Quote</div><div class="sd2">Let me help your church or women's group plan a marriage retreat. Speaking, workshops, and structured sessions for transformation.</div></div></div>
+    </div>
+  </div>
+
+  <div class="ph-div">
+    <img src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=900&q=80&auto=format" alt="Couple reading Bible together" loading="lazy"/>
+    <div class="pd">"And the two shall become one flesh" — Ephesians 5:31</div>
+  </div>
+
+  <div class="sec reveal" id="packages">
+    <div class="al"></div><div class="sl">Packages</div>
+    <div class="st">Investment in Your Marriage</div>
+    <div class="pkg">
+      <div class="pn">Discovery Session</div>
+      <div class="pp">$45</div>
+      <div class="feat"><b>&#10003;</b> 60-minute initial consultation<br><b>&#10003;</b> Assess where you are<br><b>&#10003;</b> Create a personalized plan<br><b>&#10003;</b> No commitment required</div>
+      <a class="btn btn-g" href="tel:5555555555">Book Discovery</a>
+    </div>
+    <div class="pkg featured">
+      <div style="font-size:.5rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rose);font-weight:700;margin-bottom:.3rem">Most Popular</div>
+      <div class="pn">6-Week Transformation</div>
+      <div class="pp">$349 <span>(save $41)</span></div>
+      <div class="feat"><b>&#10003;</b> 6 weekly coaching sessions (60 min each)<br><b>&#10003;</b> Personalized marriage action plan<br><b>&#10003;</b> Between-session resources &amp; exercises<br><b>&#10003;</b> Text/email support between sessions<br><b>&#10003;</b> Biblical framework workbook</div>
+      <a class="btn" href="tel:5555555555">Start Transformation</a>
+    </div>
+    <div class="pkg">
+      <div class="pn">12-Week Deep Restoration</div>
+      <div class="pp">$599 <span>(save $181)</span></div>
+      <div class="feat"><b>&#10003;</b> Everything in 6-Week package<br><b>&#10003;</b> 12 sessions for deeper work<br><b>&#10003;</b> 2 couples sessions included<br><b>&#10003;</b> Marriage retreat workbook<br><b>&#10003;</b> Follow-up session at 90 days</div>
+      <a class="btn btn-g" href="tel:5555555555">Begin Restoration</a>
+    </div>
+  </div>
+
+  <div class="sec reveal">
+    <div class="al"></div><div class="sl">Testimonials</div>
+    <div class="st">What Women Are Saying</div>
+    <div class="review"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p>"I came in ready to give up. Six weeks later, we're communicating better than we have in years. She helped me see things I couldn't see on my own."</p><div class="rn">— [Name], married 12 years</div></div>
+    <div class="review"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p>"The Biblical foundation makes all the difference. This isn't just therapy — it's rooted in God's design for marriage. I finally feel heard AND hopeful."</p><div class="rn">— [Name], married 8 years</div></div>
+    <div class="review"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p>"I brought three friends to the group workshop. All of us left with tools we'd never been taught before. Every woman in our church needs this."</p><div class="rn">— [Name], women's group leader</div></div>
+  </div>
+
+  <div class="cta-banner reveal">
+    <div class="sl">Your First Step</div>
+    <h3>Your marriage is worth fighting for.</h3>
+    <p>A single conversation can change everything. Book a discovery session — no pressure, no judgment, just a safe space to start.</p>
+    <a class="btn" href="tel:5555555555" style="padding:.7rem 2.5rem;font-size:.82rem">Book Your Session</a>
+  </div>
+
+  <div class="sec reveal">
+    <div class="sl">Connect</div>
+    <div class="contact">
+      <div class="cb"><div class="cl">Phone</div><div class="cv"><a href="tel:5555555555">[Your Phone]</a></div></div>
+      <div class="cb"><div class="cl">Email</div><div class="cv"><a href="mailto:you@email.com">[Your Email]</a></div></div>
+      <div class="cb"><div class="cl">Sessions</div><div class="cv">In-Person &amp; Virtual</div></div>
+      <div class="cb"><div class="cl">Area</div><div class="cv">[Your City]<br>&amp; Online Nationwide</div></div>
+    </div>
+  </div>
+
+  <div class="foot">[Your Name] Marriage Coaching &bull; [Your City, State] &bull; [Your Phone]<br>Faith-Based &bull; Confidential &bull; Transformational<br>&copy; 2026 [Your Name]. All rights reserved.</div>
+</div>
+<button class="toggle" onclick="toggleMode()" id="mBtn">&#9790;</button>
+<script>
+function toggleMode(){var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('mBtn').innerHTML=d?'\u263E':'\u263C';localStorage.setItem('marr-theme',d?'light':'dark')}
+(function(){var s=localStorage.getItem('marr-theme');if(s==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('mBtn').innerHTML='\u263C'}})();
+var ro=new IntersectionObserver(function(e){e.forEach(function(i){if(i.isIntersecting){i.target.classList.add('visible');ro.unobserve(i.target)}})},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el)});
+</script>
+</body>
+</html>
