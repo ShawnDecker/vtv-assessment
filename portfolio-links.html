@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VTV Portfolio — All Project Links</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  @page { margin: 0.6in 0.75in; size: letter; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #fff;
+    color: #1a1a1a;
+    line-height: 1.6;
+    padding: 2.5rem 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1.5rem;
+    border-bottom: 3px solid #D4A847;
+    margin-bottom: 2rem;
+  }
+  .header-brand h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+  }
+  .header-brand .tagline {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #D4A847;
+    font-weight: 700;
+    margin-top: 0.15rem;
+  }
+  .header-meta {
+    text-align: right;
+    font-size: 0.75rem;
+    color: #888;
+    line-height: 1.5;
+  }
+  .header-meta strong { color: #1a1a1a; }
+
+  /* Section headers */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+  .section-header .icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #D4A847, #b8942e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .section-header .icon svg {
+    width: 14px;
+    height: 14px;
+    stroke: #fff;
+    stroke-width: 2;
+    fill: none;
+  }
+  .section-header h2 {
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #1a1a1a;
+  }
+  .section-header .count {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #D4A847;
+    background: rgba(212,168,71,0.1);
+    padding: 0.2rem 0.6rem;
+    border-radius: 2rem;
+  }
+
+  /* Project cards */
+  .project {
+    background: #fafaf9;
+    border: 1px solid #e8e5e0;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    page-break-inside: avoid;
+  }
+  .project-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+    margin-bottom: 0.15rem;
+  }
+  .project-role {
+    font-size: 0.72rem;
+    color: #888;
+    margin-bottom: 0.6rem;
+  }
+  .project-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .project-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #D4A847;
+    text-decoration: none;
+    padding: 0.3rem 0.7rem;
+    background: rgba(212,168,71,0.08);
+    border: 1px solid rgba(212,168,71,0.2);
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  .project-link:hover { background: rgba(212,168,71,0.15); }
+  .project-link svg {
+    width: 10px;
+    height: 10px;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    fill: none;
+  }
+  .branch-tag {
+    display: inline-block;
+    font-size: 0.62rem;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: #666;
+    background: #eee;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+  }
+
+  /* Summary bar */
+  .summary {
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    padding: 1.25rem 0;
+    margin: 2rem 0 0.5rem;
+    border-top: 2px solid #f0ede8;
+    border-bottom: 2px solid #f0ede8;
+  }
+  .summary-item { text-align: center; }
+  .summary-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #D4A847;
+    line-height: 1;
+  }
+  .summary-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #888;
+    font-weight: 600;
+    margin-top: 0.2rem;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+    font-size: 0.7rem;
+    color: #aaa;
+  }
+  .footer a { color: #D4A847; text-decoration: none; }
+  .footer .sig {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Print styles */
+  @media print {
+    body { padding: 0; }
+    .project-link { border-color: #D4A847; }
+    .project { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">
+    <h1>Value to Victory</h1>
+    <div class="tagline">Web Design & Digital Strategy Portfolio</div>
+  </div>
+  <div class="header-meta">
+    <strong>Shawn E. Decker</strong><br>
+    Prepared April 9, 2026<br>
+    assessment.valuetovictory.com
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div class="summary">
+  <div class="summary-item">
+    <div class="summary-num">7</div>
+    <div class="summary-label">Clients</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-num">17</div>
+    <div class="summary-label">Pages Built</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-num">3</div>
+    <div class="summary-label">Churches</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-num">4</div>
+    <div class="summary-label">Templates</div>
+  </div>
+</div>
+
+<!-- ═══ PERSONAL BRANDS ═══ -->
+<div class="section-header">
+  <div class="icon"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+  <h2>Personal Brands</h2>
+  <span class="count">3 clients</span>
+</div>
+
+<div class="project">
+  <div class="project-name">Dr. Charnika P. Elliott <span class="branch-tag">elliott-site</span></div>
+  <div class="project-role">Educator, International Best-Selling Author, Certified Christian Life Coach, Noah-Christian Academy Founder</div>
+  <div class="project-links">
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/elliott-site/index.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Personal Brand Site
+    </a>
+  </div>
+</div>
+
+<div class="project">
+  <div class="project-name">Brendon Albiston <span class="branch-tag">albiston-site</span></div>
+  <div class="project-role">Ministry Leader, Gallup Certified Strengths Coach, Albiston Family Ministries, Sonship Matters Creator</div>
+  <div class="project-links">
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/albiston-site/index.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Personal Brand Site
+    </a>
+  </div>
+</div>
+
+<div class="project">
+  <div class="project-name">Steadman McLean <span class="branch-tag">mclean-site</span></div>
+  <div class="project-role">Entrepreneur, Community Leader &mdash; 3-Page Business Package</div>
+  <div class="project-links">
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/mclean-site/index.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Personal Hub
+    </a>
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/mclean-site/bonds.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      McLean's Bail Bonds
+    </a>
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/mclean-site/childcare.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Peek N Play Childcare
+    </a>
+  </div>
+</div>
+
+<!-- ═══ CHURCHES ═══ -->
+<div class="section-header">
+  <div class="icon"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2H6v7l6 3.5L18 9V2zM6 9v12h12V9"/><path d="M12 22V12"/></svg></div>
+  <h2>Churches</h2>
+  <span class="count">3 churches, 6 pages</span>
+</div>
+
+<div class="project">
+  <div class="project-name">Valley Word Church &mdash; Salem, VA <span class="branch-tag">vwc-site</span></div>
+  <div class="project-role">Drs. Eddie & Debbie Crabtree &mdash; Word of Faith Church</div>
+  <div class="project-links">
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/vwc-site/index.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Church Site
+    </a>
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/vwc-site/pastor.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Pastor Page
+    </a>
+  </div>
+</div>
+
+<div class="project">
+  <div class="project-name">Galilean House of Worship &mdash; Martinsville, VA <span class="branch-tag">ghow-site</span></div>
+  <div class="project-role">Bishop Michael Penn & Lady Angela Penn &mdash; Nondenominational</div>
+  <div class="project-links">
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/ghow-site/index.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Church Site
+    </a>
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/ghow-site/pastor.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Pastor Page
+    </a>
+  </div>
+</div>
+
+<div class="project">
+  <div class="project-name">Jesus is Lord ~ Assembly of Love &mdash; Roanoke, VA <span class="branch-tag">jlal-site</span></div>
+  <div class="project-role">Bishop Steven A. Norman & Elder LaVerne Norman &mdash; Nondenominational</div>
+  <div class="project-links">
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/jlal-site/index.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Church Site
+    </a>
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/jlal-site/pastor.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Pastor Page
+    </a>
+  </div>
+</div>
+
+<!-- ═══ TEMPLATES ═══ -->
+<div class="section-header">
+  <div class="icon"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div>
+  <h2>Business Templates</h2>
+  <span class="count">4 templates</span>
+</div>
+
+<div class="project">
+  <div class="project-name">Ready-to-Launch Templates <span class="branch-tag">biz-templates</span></div>
+  <div class="project-role">Turnkey small business websites &mdash; white-label, Roanoke VA market pricing</div>
+  <div class="project-links">
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/biz-templates/index.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Template Hub
+    </a>
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/biz-templates/mechanic.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Auto Repair
+    </a>
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/biz-templates/lawn.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Lawn Care
+    </a>
+    <a class="project-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/biz-templates/marriage.html" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Marriage Coaching
+    </a>
+  </div>
+</div>
+
+<!-- ═══ PLATFORM ═══ -->
+<div class="section-header">
+  <div class="icon"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
+  <h2>Platform</h2>
+  <span class="count">Live</span>
+</div>
+
+<div class="project">
+  <div class="project-name">Value to Victory &mdash; P.I.N.K. Assessment Platform <span class="branch-tag">master</span></div>
+  <div class="project-role">Full SaaS: 281-question bank, 5 pillars, 3 modes, coaching, reports, action plans, Stripe billing</div>
+  <div class="project-links">
+    <a class="project-link" href="https://assessment.valuetovictory.com" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Live Site
+    </a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="sig">Shawn E. Decker</div>
+  <a href="https://valuetovictory.com">valuetovictory.com</a> &nbsp;&middot;&nbsp; <a href="https://assessment.valuetovictory.com">assessment.valuetovictory.com</a>
+  <div style="margin-top:0.5rem;">&copy; 2026 Value to Victory. All rights reserved.</div>
+</div>
+
+</body>
+</html>
