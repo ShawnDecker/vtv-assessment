@@ -728,7 +728,7 @@ async function logEmail(sql, { recipient, emailType, subject, contactId, assessm
   try {
     await ensureEmailLogTable(sql);
     await sql`INSERT INTO email_log (recipient, email_type, subject, contact_id, assessment_id, status, metadata)
-      VALUES (${recipient}, ${emailType}, ${subject || null}, ${contactId || null}, ${assessmentId || null}, ${status || 'sent'}, ${metadata ? JSON.stringify(metadata) : null}::jsonb)`;
+      VALUES (${recipient}, ${emailType}, ${subject ?? null}, ${contactId ?? null}, ${assessmentId ?? null}, ${status || 'sent'}, ${metadata ? JSON.stringify(metadata) : null}::jsonb)`;
   } catch(e) { console.error('logEmail error (non-fatal):', e.message); }
 }
 
@@ -915,17 +915,42 @@ module.exports = async (req, res) => {
     }
 
     // POST /api/member/set-pin — Set or update PIN for member portal
+    // Requires either: JWT token (logged-in user), old PIN, or first-time setup (no existing PIN)
     if (req.method === 'POST' && url === '/member/set-pin') {
       const b = req.body || {};
       const email = (b.email || '').toLowerCase().trim();
       const pin = (b.pin || '').trim();
+      const oldPin = (b.oldPin || '').trim();
       if (!email || !pin) return res.status(400).json({ error: 'Email and PIN required' });
       if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) return res.status(400).json({ error: 'PIN must be 4-6 digits' });
 
-      const pinHash = crypto.createHash('sha256').update(pin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+      // Look up existing contact
+      const existing = await sql`SELECT id, pin_hash FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (existing.length === 0) return res.status(404).json({ error: 'No account with that email' });
 
-      const rows = await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE LOWER(email) = ${email} RETURNING id, first_name`;
-      if (rows.length === 0) return res.status(404).json({ error: 'No account with that email' });
+      const contact = existing[0];
+
+      // If contact already has a PIN, require authentication to change it
+      if (contact.pin_hash) {
+        // Option 1: Valid JWT token
+        const token = extractToken(req);
+        const jwt = token ? verifyJWT(token) : null;
+        const jwtValid = jwt && jwt.email === email;
+
+        // Option 2: Old PIN matches
+        let oldPinValid = false;
+        if (oldPin) {
+          const oldPinHash = crypto.createHash('sha256').update(oldPin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+          oldPinValid = oldPinHash === contact.pin_hash;
+        }
+
+        if (!jwtValid && !oldPinValid) {
+          return res.status(401).json({ error: 'Authentication required to change PIN. Provide your current PIN as oldPin or a valid JWT token.' });
+        }
+      }
+
+      const pinHash = crypto.createHash('sha256').update(pin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+      await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE id = ${contact.id}`;
       return res.json({ success: true, message: 'PIN set successfully' });
     }
 
@@ -3102,7 +3127,7 @@ ${roadmapHtml}
     }
 
     // GET /api/admin/email-log — View all sent emails with filtering
-    if (req.method === 'GET' && url.startsWith('/admin/email-log')) {
+    if (req.method === 'GET' && url.startsWith('/admin/email-log') && url !== '/admin/email-log/backfill') {
       try {
         await ensureEmailLogTable(sql);
         const params = new URL('http://x' + req.url).searchParams;

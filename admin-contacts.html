@@ -655,7 +655,8 @@ function renderEmailList(logs) {
     const name = [l.firstName, l.lastName].filter(Boolean).join(' ');
     const typeColor = typeColors[l.emailType] || '#71717a';
     const statusIcon = l.status === 'sent' ? '<span style="color:#22c55e;">&#10003;</span>' : '<span style="color:#ef4444;">&#10007;</span>';
-    const meta = l.metadata ? (typeof l.metadata === 'string' ? JSON.parse(l.metadata) : l.metadata) : {};
+    let meta = {};
+    try { meta = l.metadata ? (typeof l.metadata === 'string' ? JSON.parse(l.metadata) : l.metadata) : {}; } catch(e) { meta = {}; }
     let detail = '';
     if (meta.day) detail = 'Day ' + meta.day;
     if (meta.score) detail = 'Score: ' + meta.score + ' (' + (meta.range||'') + ')';
