@@ -13,9 +13,14 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 [data-theme="dark"]{--bg:#0A0A0A;--text:#E8E4DE;--sec:#B0A898;--muted:#6A6A6A;--gold:#D4A847;--gold-d:#B8942E;--border:#222;--card:#141414;--shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.2);--hero:linear-gradient(160deg,#050A14,#0C1B33,#162D50)}
 .toggle{position:fixed;top:16px;right:16px;z-index:999;width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 2px 12px rgba(0,0,0,.1);color:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .p{max-width:640px;margin:0 auto;padding:0 1.25rem 4rem}
-.hero{text-align:center;padding:4rem 1.5rem 2.5rem;background:var(--hero);color:#fff;position:relative;overflow:hidden}
+.hero{text-align:center;padding:0 0 2rem;background:var(--hero);color:#fff;position:relative;overflow:hidden}
 .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
-.avatar{width:120px;height:120px;border-radius:50%;border:4px solid rgba(200,168,78,.5);object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.3);margin-bottom:1rem;position:relative}
+/* HERO PHOTO BANNER */
+.hero-photo{position:relative;width:100%;height:320px;overflow:hidden}
+.hero-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.55)}
+.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,32,58,.1) 0%,rgba(18,32,58,.3) 50%,rgba(18,32,58,.9) 100%)}
+.hero-content{position:relative;padding:0 1.5rem;margin-top:-5rem;z-index:2}
+.avatar{width:110px;height:110px;border-radius:50%;border:4px solid rgba(200,168,78,.6);object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.4);margin-bottom:.75rem;position:relative}
 .hero h1{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;margin-bottom:.15rem;position:relative}
 .hero .title{font-size:.75rem;color:var(--gold);font-weight:600;letter-spacing:.05em;margin-bottom:.5rem;position:relative}
 .hero .sub{color:rgba(255,255,255,.55);font-size:.8rem;line-height:1.6;max-width:420px;margin:0 auto;position:relative}
@@ -47,6 +52,18 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .links a:hover{border-color:var(--gold)}
 .links a .i{font-size:1.1rem}
 .links a .h{font-size:.45rem;color:var(--muted)}
+/* PHOTO DIVIDERS */
+.ph-div{width:calc(100% + 2.5rem);margin:2.5rem -1.25rem;height:140px;overflow:hidden;position:relative}
+.ph-div img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.4)}
+.ph-div::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 18%,transparent 82%,var(--bg) 100%)}
+.ph-div .pd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-family:'Playfair Display',serif;font-style:italic;font-size:1rem;color:rgba(255,255,255,.85);text-shadow:0 2px 12px rgba(0,0,0,.6);padding:0 2rem;text-align:center}
+/* PHOTO CARDS */
+.ph-card{position:relative;border-radius:1rem;overflow:hidden;margin-bottom:.6rem;box-shadow:var(--shadow)}
+.ph-card img{width:100%;height:170px;object-fit:cover;display:block}
+.ph-card::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 25%,rgba(18,32,58,.88) 100%);pointer-events:none}
+.ph-card .pc{position:absolute;bottom:0;left:0;right:0;padding:1.1rem;z-index:2;color:#fff}
+.ph-card .pc h3{font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:.15rem}
+.ph-card .pc p{font-size:.7rem;color:rgba(255,255,255,.7);line-height:1.5}
 .reveal{opacity:0;transform:translateY(20px);transition:opacity .6s var(--fade),transform .6s var(--fade)}
 .reveal.visible{opacity:1;transform:translateY(0)}
 .foot{text-align:center;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.55rem;color:var(--muted);line-height:2}
@@ -57,6 +74,11 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 </head>
 <body>
 <div class="hero">
+  <!-- CINEMATIC HERO BANNER: speaker at podium / teaching -->
+  <div class="hero-photo">
+    <img src="https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=900&q=85&auto=format" alt="Speaker at podium with dramatic lighting" loading="eager"/>
+  </div>
+  <div class="hero-content">
   <img class="avatar" src="https://graph.facebook.com/valleyword/picture?type=large&width=400&height=400" alt="Dr. Eddie Crabtree" onerror="this.style.display='none'"/>
   <h1>Dr. Eddie Crabtree</h1>
   <div class="title">Pastor &bull; Author &bull; Speaker &bull; Life Coach</div>
@@ -68,6 +90,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     <span class="badge">Author</span>
     <span class="badge">Professor</span>
   </div>
+  </div><!-- /hero-content -->
 </div>
 <div class="p">
   <div class="grid" style="margin-top:1.5rem">
@@ -84,6 +107,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     <p class="sd">Dr. Eddie Crabtree is a husband, pastor, friend to pastors, certified life coach, board-certified crisis and trauma care chaplain, senior money coach, and university professor. He holds a PhD in Theology from Life Christian University and has dedicated his life to empowering believers of all nations for success in every area of life.</p>
   </div>
 
+  <!-- PHOTO DIVIDER -->
+  <div class="ph-div">
+    <img src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=900&q=80&auto=format" alt="Books and knowledge" loading="lazy"/>
+    <div class="pd">"Study to show thyself approved" — 2 Timothy 2:15</div>
+  </div>
+
   <div class="sec reveal">
     <div class="al"></div>
     <div class="sl">Published Work</div>
@@ -97,10 +126,23 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     </div>
   </div>
 
+  <!-- PHOTO DIVIDER -->
+  <div class="ph-div">
+    <img src="https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=900&q=80&auto=format" alt="Diverse group in fellowship" loading="lazy"/>
+    <div class="pd">"Go into all the world and preach the gospel" — Mark 16:15</div>
+  </div>
+
   <div class="sec reveal">
     <div class="al"></div>
     <div class="sl">Ministry</div>
     <div class="st">How to Get Involved</div>
+
+    <!-- PHOTO CARD: Speaking -->
+    <div class="ph-card">
+      <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80&auto=format" alt="Conference speaking event" loading="lazy"/>
+      <div class="pc"><h3>Book Dr. Crabtree for Your Event</h3><p>Conferences, revivals, church services &amp; organizations worldwide</p></div>
+    </div>
+
     <div class="c">
       <div class="tg">Weekly</div>
       <h3>Word from God — Sunday Teaching</h3>
