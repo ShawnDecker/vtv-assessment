@@ -50,14 +50,6 @@
       "dest": "/api/devotional-today.js"
     },
     {
-      "src": "/api/devotional-subscribers",
-      "dest": "/api/devotional-subscribers.js"
-    },
-    {
-      "src": "/api/devotional-log",
-      "dest": "/api/devotional-log.js"
-    },
-    {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     },

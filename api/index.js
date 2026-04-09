@@ -5682,6 +5682,74 @@ This link expires in 24 hours.
       }
     }
 
+    // ========== GET /api/devotional-subscribers ==========
+    // Returns active devotional subscribers for n8n email workflow
+    if (req.method === 'GET' && url === '/devotional-subscribers') {
+      const apiKey = req.headers['x-api-key'] || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!validKey || apiKey !== validKey) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      try {
+        const subscribers = await sql`
+          SELECT DISTINCT
+            c.id as contact_id, c.email, c.first_name,
+            COALESCE(dp.current_day, 1) as current_day,
+            COALESCE(dp.last_sent_at, '1970-01-01'::timestamp) as last_sent_at,
+            COALESCE(up.membership_tier, 'free') as tier
+          FROM contacts c
+          LEFT JOIN devotional_progress dp ON dp.contact_id = c.id
+          LEFT JOIN user_profiles up ON up.contact_id = c.id
+          WHERE c.email IS NOT NULL AND c.email != ''
+            AND (dp.id IS NOT NULL OR up.membership_tier IN ('individual','couple','premium'))
+            AND (dp.opted_out IS NULL OR dp.opted_out = false)
+          ORDER BY c.id ASC
+        `;
+        return res.json({
+          success: true, count: subscribers.length,
+          subscribers: subscribers.map(s => ({
+            contact_id: s.contact_id, email: s.email,
+            first_name: s.first_name || 'Friend',
+            current_day: s.current_day, last_sent_at: s.last_sent_at, tier: s.tier
+          }))
+        });
+      } catch (subErr) {
+        if (subErr.message.includes('does not exist')) {
+          return res.json({ success: true, count: 0, subscribers: [], note: 'Devotional tables not yet created' });
+        }
+        return res.status(500).json({ error: subErr.message });
+      }
+    }
+
+    // ========== POST /api/devotional-log ==========
+    // Logs that a devotional email was sent (called by n8n)
+    if (req.method === 'POST' && url === '/devotional-log') {
+      const apiKey = req.headers['x-api-key'] || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!validKey || apiKey !== validKey) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      const { contact_id, email, day_number, status } = body || {};
+      if (!email) return res.status(400).json({ error: 'email is required' });
+      if (contact_id) {
+        try {
+          await sql`INSERT INTO devotional_progress (contact_id, current_day, last_sent_at)
+            VALUES (${contact_id}, ${day_number || 1}, NOW())
+            ON CONFLICT (contact_id) DO UPDATE SET current_day = ${day_number || 1}, last_sent_at = NOW(), total_sent = devotional_progress.total_sent + 1`;
+        } catch (e) { console.warn('devotional_progress update (non-fatal):', e.message); }
+      }
+      try {
+        await sql`INSERT INTO email_log (recipient, email_type, subject, contact_id, status, metadata)
+          VALUES (${email}, 'devotional', ${'Day ' + (day_number || '?') + ' Devotional'}, ${contact_id || null}, ${status || 'sent'}, ${JSON.stringify({ day_number, source: 'n8n_workflow' })}::jsonb)`;
+      } catch (e) { console.warn('email_log insert (non-fatal):', e.message); }
+      try {
+        await sql`INSERT INTO analytics_events (event_type, contact_id, metadata)
+          VALUES ('devotional_sent', ${contact_id || null}, ${JSON.stringify({ day_number, email })}::jsonb)`;
+      } catch (e) { /* analytics non-fatal */ }
+      return res.json({ success: true, logged: true });
+    }
+
     return res.status(404).json({ error: 'Not found' });
   } catch (err) {
     console.error('API Error:', err);
