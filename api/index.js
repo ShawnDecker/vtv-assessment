@@ -4893,6 +4893,770 @@ This link expires in 24 hours.
       return res.json({ message: 'Seeded 2 links for house-fire-relief', links: 2 });
     }
 
+    // ========== AGENT SYSTEM — SELF-LEARNING MULTI-AGENT LOOP ==========
+    // All /agent/* routes require API key (same as admin)
+    if (url.startsWith('/agent')) {
+      const apiKey = req.headers['x-api-key'] || new URL('http://x' + req.url).searchParams.get('key') || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!validKey || apiKey !== validKey) {
+        return res.status(401).json({ error: 'Unauthorized. Valid API key required.' });
+      }
+    }
+
+    // POST /api/agent/migrate — Create all agent tables
+    if (req.method === 'POST' && url === '/agent/migrate') {
+      try {
+        await sql`CREATE TABLE IF NOT EXISTS agent_state (
+          id SERIAL PRIMARY KEY,
+          agent_name TEXT NOT NULL,
+          run_at TIMESTAMP DEFAULT NOW(),
+          observations JSONB DEFAULT '{}',
+          decisions JSONB DEFAULT '{}',
+          actions_taken JSONB DEFAULT '[]',
+          outcome JSONB DEFAULT '{}',
+          learning_updates JSONB DEFAULT '{}'
+        )`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_agent_state_name ON agent_state(agent_name)`;
+
+        await sql`CREATE TABLE IF NOT EXISTS agent_rules (
+          id SERIAL PRIMARY KEY,
+          agent_name TEXT NOT NULL,
+          rule_key TEXT NOT NULL,
+          rule_config JSONB DEFAULT '{}',
+          weight FLOAT DEFAULT 1.0,
+          times_fired INTEGER DEFAULT 0,
+          times_succeeded INTEGER DEFAULT 0,
+          last_fired_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(agent_name, rule_key)
+        )`;
+
+        await sql`CREATE TABLE IF NOT EXISTS email_engagement (
+          id SERIAL PRIMARY KEY,
+          contact_id INTEGER,
+          email TEXT NOT NULL,
+          coaching_day INTEGER,
+          sent_at TIMESTAMP DEFAULT NOW(),
+          opened_at TIMESTAMP,
+          clicked_at TIMESTAMP,
+          action_completed BOOLEAN DEFAULT FALSE,
+          retook_assessment BOOLEAN DEFAULT FALSE,
+          email_variant TEXT DEFAULT 'default',
+          metadata JSONB DEFAULT '{}'
+        )`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_email_engagement_email ON email_engagement(email)`;
+
+        await sql`CREATE TABLE IF NOT EXISTS page_analytics (
+          id SERIAL PRIMARY KEY,
+          page_path TEXT NOT NULL,
+          period_start DATE NOT NULL,
+          period_end DATE NOT NULL,
+          views INTEGER DEFAULT 0,
+          unique_visitors INTEGER DEFAULT 0,
+          bounce_rate FLOAT DEFAULT 0,
+          conversion_rate FLOAT DEFAULT 0,
+          drop_off_rate FLOAT DEFAULT 0,
+          insights JSONB DEFAULT '{}',
+          UNIQUE(page_path, period_start)
+        )`;
+
+        await sql`CREATE TABLE IF NOT EXISTS system_health_log (
+          id SERIAL PRIMARY KEY,
+          checked_at TIMESTAMP DEFAULT NOW(),
+          service TEXT NOT NULL,
+          status TEXT NOT NULL,
+          response_time_ms INTEGER,
+          details JSONB DEFAULT '{}',
+          alert_sent BOOLEAN DEFAULT FALSE,
+          auto_healed BOOLEAN DEFAULT FALSE,
+          heal_action TEXT
+        )`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_health_service ON system_health_log(service)`;
+
+        // Alter coaching_sequences
+        await sql`ALTER TABLE coaching_sequences ADD COLUMN IF NOT EXISTS engagement_score FLOAT DEFAULT 0`;
+        await sql`ALTER TABLE coaching_sequences ADD COLUMN IF NOT EXISTS email_variant TEXT DEFAULT 'default'`;
+        await sql`ALTER TABLE coaching_sequences ADD COLUMN IF NOT EXISTS persona TEXT DEFAULT 'standard'`;
+
+        // Seed initial agent rules
+        const seedRules = [
+          // Systems Agent rules
+          ['systems', 'neon_slow', JSON.stringify({threshold_ms: 500, action: 'flag_degraded'}), 1.0],
+          ['systems', 'n8n_down_consecutive', JSON.stringify({consecutive_fails: 3, action: 'restart_via_api'}), 1.5],
+          ['systems', 'vps_unreachable', JSON.stringify({action: 'alert_owner'}), 2.0],
+          ['systems', 'gmail_auth_fail', JSON.stringify({action: 'pause_email_agent'}), 2.0],
+          // Email Agent rules
+          ['email', 'skip_if_no_open_2_days', JSON.stringify({condition: 'no_open_last_2', action: 'delay_1_day', subject: 'curiosity'}), 1.2],
+          ['email', 'nudge_on_no_click', JSON.stringify({condition: 'opened_no_click', action: 'send_nudge_variant'}), 0.9],
+          ['email', 'accelerate_fast_mover', JSON.stringify({condition: 'persona_fast_mover', action: 'send_next_same_day'}), 1.5],
+          ['email', 'momentum_on_action', JSON.stringify({condition: 'action_completed', action: 'send_momentum_variant'}), 1.3],
+          ['email', 'recalculate_on_retake', JSON.stringify({condition: 'retook_assessment', action: 'regenerate_prescription'}), 2.0],
+          ['email', 're_engage_subject', JSON.stringify({condition: 'no_open_last_1', action: 'use_curiosity_subject'}), 1.1],
+          // Website Agent rules
+          ['website', 'high_bounce_alert', JSON.stringify({threshold: 0.7, action: 'flag_page'}), 1.0],
+          ['website', 'conversion_drop', JSON.stringify({threshold_pct: 15, action: 'alert_owner'}), 1.5],
+          ['website', 'drop_off_spike', JSON.stringify({threshold_pct: 20, action: 'flag_and_recommend'}), 1.3],
+        ];
+        for (const [agent, key, config, weight] of seedRules) {
+          await sql`INSERT INTO agent_rules (agent_name, rule_key, rule_config, weight)
+            VALUES (${agent}, ${key}, ${config}::jsonb, ${weight})
+            ON CONFLICT (agent_name, rule_key) DO NOTHING`;
+        }
+
+        return res.json({ success: true, message: 'All agent tables created and rules seeded' });
+      } catch (migErr) {
+        console.error('[agent/migrate] Error:', migErr);
+        return res.status(500).json({ error: migErr.message });
+      }
+    }
+
+    // ========== SYSTEMS AGENT ==========
+
+    // GET /api/agent/systems/run — Main systems health check loop
+    if (req.method === 'GET' && url === '/agent/systems/run') {
+      try {
+        const services = [];
+        const alerts = [];
+        const actions = [];
+
+        // 1. Check Neon DB
+        const dbStart = Date.now();
+        try {
+          await sql`SELECT 1`;
+          const dbMs = Date.now() - dbStart;
+          services.push({ service: 'neon', status: dbMs > 500 ? 'degraded' : 'healthy', response_time_ms: dbMs });
+        } catch (dbErr) {
+          services.push({ service: 'neon', status: 'down', response_time_ms: null, details: { error: dbErr.message } });
+        }
+
+        // 2. Check n8n
+        try {
+          const n8nStart = Date.now();
+          const n8nResp = await fetch('https://n8n.srv1138119.hstgr.cloud', { signal: AbortSignal.timeout(8000) });
+          const n8nMs = Date.now() - n8nStart;
+          services.push({ service: 'n8n', status: n8nResp.ok ? 'healthy' : 'degraded', response_time_ms: n8nMs });
+        } catch (n8nErr) {
+          services.push({ service: 'n8n', status: 'down', response_time_ms: null, details: { error: n8nErr.message } });
+        }
+
+        // 3. Check VPS audiobook (nginx on 8082)
+        try {
+          const vpsStart = Date.now();
+          const vpsResp = await fetch('http://72.61.11.55:8082/audio/rfm/01-introduction.mp3', { method: 'HEAD', signal: AbortSignal.timeout(8000) });
+          const vpsMs = Date.now() - vpsStart;
+          services.push({ service: 'vps_audio', status: vpsResp.ok ? 'healthy' : 'degraded', response_time_ms: vpsMs });
+        } catch (vpsErr) {
+          services.push({ service: 'vps_audio', status: 'down', response_time_ms: null, details: { error: vpsErr.message } });
+        }
+
+        // 4. Check Stripe API
+        try {
+          const stripeStart = Date.now();
+          const stripeResp = await fetch('https://api.stripe.com/v1/balance', {
+            headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` },
+            signal: AbortSignal.timeout(8000)
+          });
+          const stripeMs = Date.now() - stripeStart;
+          services.push({ service: 'stripe', status: stripeResp.ok ? 'healthy' : 'degraded', response_time_ms: stripeMs });
+        } catch (stripeErr) {
+          services.push({ service: 'stripe', status: 'down', response_time_ms: null, details: { error: stripeErr.message } });
+        }
+
+        // 5. Check Gmail SMTP (lightweight — just verify transporter can be created)
+        try {
+          const gmailTransporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+          });
+          await gmailTransporter.verify();
+          services.push({ service: 'gmail', status: 'healthy', response_time_ms: 0 });
+        } catch (gmailErr) {
+          services.push({ service: 'gmail', status: 'down', response_time_ms: null, details: { error: gmailErr.message } });
+        }
+
+        // Log all results to system_health_log
+        for (const s of services) {
+          await sql`INSERT INTO system_health_log (service, status, response_time_ms, details)
+            VALUES (${s.service}, ${s.status}, ${s.response_time_ms}, ${JSON.stringify(s.details || {})}::jsonb)`;
+        }
+
+        // Check for transitions to "down" — compare with previous check
+        for (const s of services) {
+          if (s.status === 'down' || s.status === 'degraded') {
+            const prev = await sql`SELECT status FROM system_health_log
+              WHERE service = ${s.service} AND id != (SELECT MAX(id) FROM system_health_log WHERE service = ${s.service})
+              ORDER BY id DESC LIMIT 1`;
+            const wasHealthy = prev.length === 0 || prev[0].status === 'healthy';
+            if (wasHealthy) {
+              alerts.push({ service: s.service, transition: `healthy → ${s.status}`, details: s.details });
+            }
+
+            // Auto-heal: VPS/n8n restart via Hostinger API
+            if (s.service === 'n8n' && s.status === 'down') {
+              const recentDowns = await sql`SELECT COUNT(*) as cnt FROM system_health_log
+                WHERE service = 'n8n' AND status = 'down'
+                AND checked_at > NOW() - INTERVAL '20 minutes'`;
+              if (parseInt(recentDowns[0].cnt) >= 3) {
+                try {
+                  const hostingerResp = await fetch('https://developers.hostinger.com/api/vps/v1/virtual-machines/1138119/restart', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${process.env.HOSTINGER_API_KEY || 'drvZUDXBzWZe6Ps8y0y6nEhbUbmdJQfbIohs9xvke878bd41'}` }
+                  });
+                  actions.push({ action: 'vps_restart', result: hostingerResp.ok ? 'sent' : 'failed' });
+                  await sql`UPDATE system_health_log SET auto_healed = true, heal_action = 'vps_restart'
+                    WHERE id = (SELECT MAX(id) FROM system_health_log WHERE service = 'n8n')`;
+                } catch (healErr) {
+                  actions.push({ action: 'vps_restart', result: 'error', error: healErr.message });
+                }
+              }
+            }
+          }
+        }
+
+        // Update agent_rules — track firing
+        for (const s of services) {
+          if (s.status !== 'healthy') {
+            const ruleKey = s.service === 'neon' ? 'neon_slow' : s.service === 'n8n' ? 'n8n_down_consecutive' : s.service === 'gmail' ? 'gmail_auth_fail' : 'vps_unreachable';
+            await sql`UPDATE agent_rules SET times_fired = times_fired + 1, last_fired_at = NOW()
+              WHERE agent_name = 'systems' AND rule_key = ${ruleKey}`;
+          }
+        }
+
+        // Log agent state
+        await sql`INSERT INTO agent_state (agent_name, observations, decisions, actions_taken)
+          VALUES ('systems', ${JSON.stringify({ services })}::jsonb, ${JSON.stringify({ alerts })}::jsonb, ${JSON.stringify(actions)}::jsonb)`;
+
+        return res.json({ success: true, services, alerts, actions, timestamp: new Date().toISOString() });
+      } catch (sysErr) {
+        console.error('[agent/systems/run] Error:', sysErr);
+        return res.status(500).json({ error: sysErr.message });
+      }
+    }
+
+    // GET /api/agent/systems/status — Dashboard view of current health
+    if (req.method === 'GET' && url === '/agent/systems/status') {
+      try {
+        // Latest status per service
+        const latest = await sql`SELECT DISTINCT ON (service) service, status, response_time_ms, checked_at, details, auto_healed, heal_action
+          FROM system_health_log ORDER BY service, checked_at DESC`;
+
+        // 24h uptime per service
+        const uptime = await sql`SELECT service,
+          ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'healthy') / NULLIF(COUNT(*), 0), 1) as uptime_pct,
+          COUNT(*) as total_checks
+          FROM system_health_log WHERE checked_at > NOW() - INTERVAL '24 hours' GROUP BY service`;
+
+        // Recent alerts (last 24h)
+        const recentAlerts = await sql`SELECT * FROM agent_state
+          WHERE agent_name = 'systems' AND decisions::text != '{"alerts":[]}'
+          AND run_at > NOW() - INTERVAL '24 hours' ORDER BY run_at DESC LIMIT 10`;
+
+        return res.json({ latest, uptime, recentAlerts });
+      } catch (statusErr) {
+        return res.status(500).json({ error: statusErr.message });
+      }
+    }
+
+    // ========== EMAIL AGENT — OBSERVATION LAYER ==========
+
+    // GET /api/agent/email/track-open?id=X — 1x1 tracking pixel
+    if (req.method === 'GET' && url.startsWith('/agent/email/track-open')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const engagementId = params.get('id');
+      if (engagementId) {
+        try {
+          await sql`UPDATE email_engagement SET opened_at = NOW() WHERE id = ${parseInt(engagementId)} AND opened_at IS NULL`;
+        } catch (e) { /* non-fatal */ }
+      }
+      // Return 1x1 transparent GIF
+      const pixel = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+      res.setHeader('Content-Type', 'image/gif');
+      res.setHeader('Cache-Control', 'no-store, no-cache');
+      return res.end(pixel);
+    }
+
+    // GET /api/agent/email/track-click?id=X&url=Y — Link redirect tracker
+    if (req.method === 'GET' && url.startsWith('/agent/email/track-click')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const engagementId = params.get('id');
+      const redirectUrl = params.get('url') || 'https://assessment.valuetovictory.com/member';
+      if (engagementId) {
+        try {
+          await sql`UPDATE email_engagement SET clicked_at = NOW() WHERE id = ${parseInt(engagementId)} AND clicked_at IS NULL`;
+        } catch (e) { /* non-fatal */ }
+      }
+      res.writeHead(302, { Location: redirectUrl });
+      return res.end();
+    }
+
+    // POST /api/agent/email/report-action — Frontend reports action step completed
+    if (req.method === 'POST' && url === '/agent/email/report-action') {
+      try {
+        const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+        const { email, coaching_day } = b;
+        if (!email) return res.status(400).json({ error: 'Email required' });
+        await sql`UPDATE email_engagement SET action_completed = true
+          WHERE email = ${email.toLowerCase()} AND (coaching_day = ${coaching_day || null} OR coaching_day IS NULL)
+          AND action_completed = false`;
+        return res.json({ success: true });
+      } catch (actionErr) {
+        return res.status(500).json({ error: actionErr.message });
+      }
+    }
+
+    // ========== EMAIL AGENT — ADAPTIVE LAYER ==========
+
+    // GET /api/agent/email/run — Main adaptive coaching loop (replaces /coaching/send)
+    if (req.method === 'GET' && url === '/agent/email/run') {
+      try {
+        await ensureCoachingTable(sql);
+
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const sequences = await sql`
+          SELECT cs.*, c.first_name, c.email as contact_email, c.id as contact_id
+          FROM coaching_sequences cs
+          JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
+          WHERE cs.unsubscribed = false AND cs.current_day < 8
+          AND (cs.last_sent_at IS NULL OR cs.last_sent_at < ${todayStart.toISOString()})
+          LIMIT 50`;
+
+        let sentCount = 0, skippedCount = 0, adaptedCount = 0;
+        const decisions = [];
+
+        for (const seq of sequences) {
+          const email = seq.email.toLowerCase();
+          const day = seq.current_day;
+
+          // Skip day 0 (assessment day)
+          if (day === 0) {
+            await sql`UPDATE coaching_sequences SET current_day = 1 WHERE email = ${email}`;
+            continue;
+          }
+
+          // === OBSERVE: Get engagement history ===
+          const engagement = await sql`SELECT * FROM email_engagement
+            WHERE email = ${email} ORDER BY sent_at DESC LIMIT 7`;
+
+          const recentOpens = engagement.filter(e => e.opened_at).length;
+          const recentClicks = engagement.filter(e => e.clicked_at).length;
+          const recentActions = engagement.filter(e => e.action_completed).length;
+
+          // Check for assessment retake
+          const retake = await sql`SELECT id FROM assessments
+            WHERE contact_id = ${seq.contact_id}
+            AND completed_at > NOW() - INTERVAL '48 hours'
+            ORDER BY completed_at DESC LIMIT 1`;
+          const hasRetaken = retake.length > 0;
+
+          // === CLASSIFY: Assign persona ===
+          let persona = 'standard';
+          const engagementScore = engagement.length > 0
+            ? ((recentOpens * 0.3 + recentClicks * 0.3 + recentActions * 0.3 + (hasRetaken ? 0.1 : 0)) / Math.max(engagement.length, 1))
+            : 0.5; // Default for new users
+
+          if (recentOpens >= 3 && recentClicks >= 2) persona = 'fast_mover';
+          else if (recentOpens <= 1 && recentClicks === 0 && engagement.length >= 2) persona = 'disengaged';
+
+          // Check if high performer
+          const latestAssessment = await sql`SELECT score_range FROM assessments
+            WHERE contact_id = ${seq.contact_id} ORDER BY completed_at DESC LIMIT 1`;
+          if (latestAssessment.length > 0 && ['Momentum', 'Mastery'].includes(latestAssessment[0].score_range)) {
+            persona = 'high_performer';
+          }
+
+          // === DECIDE: Apply rules sorted by weight ===
+          const rules = await sql`SELECT * FROM agent_rules WHERE agent_name = 'email' ORDER BY weight DESC`;
+
+          let variant = 'default';
+          let shouldSkip = false;
+          let decision = { email, day, persona, engagementScore: Math.round(engagementScore * 100) / 100, rules_fired: [] };
+
+          for (const rule of rules) {
+            const config = rule.rule_config;
+            let fired = false;
+
+            if (rule.rule_key === 'skip_if_no_open_2_days' && recentOpens === 0 && engagement.length >= 2) {
+              shouldSkip = true;
+              decision.rules_fired.push('skip_if_no_open_2_days');
+              fired = true;
+            }
+            if (rule.rule_key === 'nudge_on_no_click' && recentOpens > 0 && recentClicks === 0) {
+              variant = 'nudge';
+              decision.rules_fired.push('nudge_on_no_click');
+              fired = true;
+            }
+            if (rule.rule_key === 'momentum_on_action' && recentActions > 0) {
+              variant = 'momentum';
+              decision.rules_fired.push('momentum_on_action');
+              fired = true;
+            }
+            if (rule.rule_key === 'accelerate_fast_mover' && persona === 'fast_mover') {
+              decision.rules_fired.push('accelerate_fast_mover');
+              fired = true;
+              // Don't skip — send immediately
+            }
+            if (rule.rule_key === 'recalculate_on_retake' && hasRetaken) {
+              decision.rules_fired.push('recalculate_on_retake');
+              fired = true;
+              // Will use latest assessment data below
+            }
+            if (rule.rule_key === 're_engage_subject' && recentOpens === 0 && engagement.length >= 1 && persona === 'disengaged') {
+              variant = 're_engage';
+              decision.rules_fired.push('re_engage_subject');
+              fired = true;
+            }
+
+            if (fired) {
+              await sql`UPDATE agent_rules SET times_fired = times_fired + 1, last_fired_at = NOW()
+                WHERE id = ${rule.id}`;
+            }
+          }
+
+          if (shouldSkip && persona !== 'fast_mover') {
+            skippedCount++;
+            decision.action = 'skipped';
+            decisions.push(decision);
+            await sql`UPDATE coaching_sequences SET engagement_score = ${engagementScore}, persona = ${persona} WHERE email = ${email}`;
+            continue;
+          }
+
+          // === ACT: Get assessment data and generate email ===
+          const assessmentRow = await sql`SELECT a.* FROM assessments a
+            JOIN contacts c ON a.contact_id = c.id
+            WHERE LOWER(c.email) = ${email}
+            ORDER BY a.completed_at DESC LIMIT 1`;
+          if (assessmentRow.length === 0) continue;
+
+          const assessment = assessmentRow[0];
+          const prescription = typeof assessment.prescription === 'string' ? JSON.parse(assessment.prescription) : (assessment.prescription || {});
+
+          // Generate email with variant awareness
+          let emailContent = generateCoachingEmail(day, assessment, prescription, email);
+
+          // Modify subject line based on variant
+          let subject = emailContent.subject || `Day ${day}: Your Value Engine Coaching`;
+          if (variant === 'nudge') {
+            subject = `⚡ Quick win for today — Day ${day}`;
+          } else if (variant === 're_engage') {
+            subject = `Did you know this about your ${assessment.weakest_pillar || 'weakest'} score?`;
+          } else if (variant === 'momentum') {
+            subject = `🔥 You're on fire — Day ${day} momentum builder`;
+          }
+
+          // Create engagement record BEFORE sending
+          const engRecord = await sql`INSERT INTO email_engagement (contact_id, email, coaching_day, email_variant)
+            VALUES (${seq.contact_id}, ${email}, ${day}, ${variant}) RETURNING id`;
+          const engId = engRecord[0].id;
+
+          // Wrap links and add tracking pixel
+          let html = emailContent.html || '';
+          const trackBase = 'https://assessment.valuetovictory.com/api/agent/email';
+          html = html.replace(/href="(https?:\/\/[^"]+)"/g, (match, url) => {
+            return `href="${trackBase}/track-click?id=${engId}&url=${encodeURIComponent(url)}"`;
+          });
+          html += `<img src="${trackBase}/track-open?id=${engId}" width="1" height="1" style="display:none" alt=""/>`;
+
+          // Send email
+          try {
+            const transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+            });
+            await transporter.sendMail({
+              from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
+              to: email,
+              subject,
+              html,
+            });
+            sentCount++;
+            if (variant !== 'default') adaptedCount++;
+            decision.action = `sent_${variant}`;
+          } catch (sendErr) {
+            decision.action = 'send_failed';
+            decision.error = sendErr.message;
+          }
+
+          // Update coaching sequence
+          await sql`UPDATE coaching_sequences
+            SET current_day = ${day + 1}, last_sent_at = NOW(),
+                engagement_score = ${engagementScore}, email_variant = ${variant}, persona = ${persona}
+            WHERE email = ${email}`;
+
+          decisions.push(decision);
+
+          // === LEARN: Check outcomes of previous decisions ===
+          // For emails sent 24-48h ago, check if they were opened/clicked
+          const oldEngagement = await sql`SELECT ee.*, ar.id as rule_id, ar.rule_key, ar.times_succeeded
+            FROM email_engagement ee
+            LEFT JOIN agent_rules ar ON ar.agent_name = 'email'
+            WHERE ee.email = ${email}
+            AND ee.sent_at > NOW() - INTERVAL '48 hours'
+            AND ee.sent_at < NOW() - INTERVAL '24 hours'
+            LIMIT 5`;
+          for (const old of oldEngagement) {
+            const succeeded = old.opened_at || old.clicked_at;
+            if (succeeded && old.email_variant !== 'default') {
+              // The variant worked — increase weight of the rule that chose it
+              const variantRuleMap = { nudge: 'nudge_on_no_click', re_engage: 're_engage_subject', momentum: 'momentum_on_action' };
+              const ruleKey = variantRuleMap[old.email_variant];
+              if (ruleKey) {
+                await sql`UPDATE agent_rules SET times_succeeded = times_succeeded + 1,
+                  weight = LEAST(3.0, weight + 0.05)
+                  WHERE agent_name = 'email' AND rule_key = ${ruleKey}`;
+              }
+            } else if (!succeeded && old.email_variant !== 'default') {
+              // Variant didn't work — decrease weight slightly
+              const variantRuleMap = { nudge: 'nudge_on_no_click', re_engage: 're_engage_subject', momentum: 'momentum_on_action' };
+              const ruleKey = variantRuleMap[old.email_variant];
+              if (ruleKey) {
+                await sql`UPDATE agent_rules SET weight = GREATEST(0.1, weight - 0.02)
+                  WHERE agent_name = 'email' AND rule_key = ${ruleKey}`;
+              }
+            }
+          }
+        }
+
+        // Log agent state
+        await sql`INSERT INTO agent_state (agent_name, observations, decisions, actions_taken)
+          VALUES ('email', ${JSON.stringify({ total: sequences.length, personas: decisions.map(d => d.persona) })}::jsonb,
+                  ${JSON.stringify(decisions)}::jsonb,
+                  ${JSON.stringify({ sent: sentCount, skipped: skippedCount, adapted: adaptedCount })}::jsonb)`;
+
+        return res.json({ success: true, processed: sequences.length, sent: sentCount, skipped: skippedCount, adapted: adaptedCount, decisions });
+      } catch (emailAgentErr) {
+        console.error('[agent/email/run] Error:', emailAgentErr);
+        return res.status(500).json({ error: emailAgentErr.message });
+      }
+    }
+
+    // ========== WEBSITE AGENT ==========
+
+    // GET /api/agent/website/run — Aggregate analytics and generate insights
+    if (req.method === 'GET' && url === '/agent/website/run') {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+        // Aggregate analytics_events from last 24h
+        const pageStats = await sql`
+          SELECT
+            COALESCE(metadata->>'page', 'unknown') as page_path,
+            COUNT(*) as views,
+            COUNT(DISTINCT session_id) as unique_visitors,
+            COUNT(*) FILTER (WHERE event_type = 'assessment_completed') as conversions
+          FROM analytics_events
+          WHERE created_at > NOW() - INTERVAL '24 hours'
+          AND event_type IN ('page_view', 'assessment_completed', 'assessment_started')
+          GROUP BY metadata->>'page'
+          ORDER BY views DESC`;
+
+        // Calculate bounce rate per page (single-page sessions)
+        const bounceData = await sql`
+          WITH session_pages AS (
+            SELECT session_id, COUNT(DISTINCT COALESCE(metadata->>'page', '')) as page_count
+            FROM analytics_events
+            WHERE created_at > NOW() - INTERVAL '24 hours' AND session_id IS NOT NULL
+            GROUP BY session_id
+          )
+          SELECT
+            ROUND(100.0 * COUNT(*) FILTER (WHERE page_count = 1) / NULLIF(COUNT(*), 0), 1) as overall_bounce_rate,
+            COUNT(*) as total_sessions
+          FROM session_pages`;
+
+        // Get previous period for comparison
+        const prevStats = await sql`SELECT page_path, views, conversion_rate, bounce_rate
+          FROM page_analytics WHERE period_start = ${new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0]}`;
+        const prevMap = {};
+        for (const p of prevStats) prevMap[p.page_path] = p;
+
+        const insights = [];
+        const pageResults = [];
+
+        for (const page of pageStats) {
+          const convRate = page.views > 0 ? (page.conversions / page.views) : 0;
+          const prev = prevMap[page.page_path];
+          let pageInsight = null;
+
+          if (prev && prev.views > 5) {
+            const viewChange = ((page.views - prev.views) / prev.views * 100).toFixed(1);
+            const convChange = prev.conversion_rate > 0 ? ((convRate - prev.conversion_rate) / prev.conversion_rate * 100).toFixed(1) : 0;
+
+            if (parseFloat(viewChange) < -20) {
+              pageInsight = `Traffic dropped ${Math.abs(viewChange)}% vs previous day`;
+              insights.push({ page: page.page_path, type: 'traffic_drop', detail: pageInsight, severity: 'warning' });
+            }
+            if (parseFloat(convChange) < -15 && prev.conversion_rate > 0.05) {
+              pageInsight = `Conversion rate dropped ${Math.abs(convChange)}% vs previous day`;
+              insights.push({ page: page.page_path, type: 'conversion_drop', detail: pageInsight, severity: 'critical' });
+            }
+          }
+
+          // Upsert into page_analytics
+          await sql`INSERT INTO page_analytics (page_path, period_start, period_end, views, unique_visitors, conversion_rate, bounce_rate, insights)
+            VALUES (${page.page_path}, ${yesterday}, ${today}, ${page.views}, ${page.unique_visitors}, ${convRate},
+                    ${bounceData[0]?.overall_bounce_rate || 0}, ${JSON.stringify(pageInsight ? { note: pageInsight } : {})}::jsonb)
+            ON CONFLICT (page_path, period_start)
+            DO UPDATE SET views = ${page.views}, unique_visitors = ${page.unique_visitors},
+              conversion_rate = ${convRate}, insights = ${JSON.stringify(pageInsight ? { note: pageInsight } : {})}::jsonb`;
+
+          pageResults.push({ page: page.page_path, views: page.views, unique: page.unique_visitors, convRate: Math.round(convRate * 1000) / 10 + '%' });
+        }
+
+        // Update rule weights based on whether flagged pages improved
+        const rules = await sql`SELECT * FROM agent_rules WHERE agent_name = 'website'`;
+        for (const r of rules) {
+          if (r.times_fired > 0) {
+            // Simple: if we flagged something and it improved, count as success
+            await sql`UPDATE agent_rules SET times_fired = times_fired WHERE id = ${r.id}`;
+          }
+        }
+
+        // Log agent state
+        await sql`INSERT INTO agent_state (agent_name, observations, decisions, actions_taken)
+          VALUES ('website',
+            ${JSON.stringify({ pages_analyzed: pageStats.length, bounce_rate: bounceData[0]?.overall_bounce_rate })}::jsonb,
+            ${JSON.stringify(insights)}::jsonb,
+            ${JSON.stringify({ pages_updated: pageResults.length })}::jsonb)`;
+
+        return res.json({ success: true, pages_analyzed: pageStats.length, pages: pageResults, insights, bounce_rate: bounceData[0]?.overall_bounce_rate || 'N/A' });
+      } catch (webErr) {
+        console.error('[agent/website/run] Error:', webErr);
+        return res.status(500).json({ error: webErr.message });
+      }
+    }
+
+    // GET /api/agent/website/insights — Latest aggregated insights
+    if (req.method === 'GET' && url === '/agent/website/insights') {
+      try {
+        const topPages = await sql`SELECT * FROM page_analytics ORDER BY period_start DESC, views DESC LIMIT 20`;
+        const recentInsights = await sql`SELECT decisions FROM agent_state
+          WHERE agent_name = 'website' ORDER BY run_at DESC LIMIT 1`;
+        return res.json({ topPages, insights: recentInsights[0]?.decisions || [] });
+      } catch (insErr) {
+        return res.status(500).json({ error: insErr.message });
+      }
+    }
+
+    // ========== COORDINATOR ==========
+
+    // GET /api/agent/coordination/run — Cross-agent coordination
+    if (req.method === 'GET' && url === '/agent/coordination/run') {
+      try {
+        const coordActions = [];
+
+        // Get latest state from each agent
+        const systemsState = await sql`SELECT * FROM agent_state WHERE agent_name = 'systems' ORDER BY run_at DESC LIMIT 1`;
+        const emailState = await sql`SELECT * FROM agent_state WHERE agent_name = 'email' ORDER BY run_at DESC LIMIT 1`;
+        const websiteState = await sql`SELECT * FROM agent_state WHERE agent_name = 'website' ORDER BY run_at DESC LIMIT 1`;
+
+        // Cross-agent rule 1: Gmail down → pause email
+        if (systemsState.length > 0) {
+          const sysObs = systemsState[0].observations;
+          const services = sysObs.services || [];
+          const gmailDown = services.find(s => s.service === 'gmail' && s.status === 'down');
+          if (gmailDown) {
+            coordActions.push({ rule: 'gmail_down_pause_email', action: 'Email Agent should be paused until Gmail recovers' });
+          }
+        }
+
+        // Cross-agent rule 2: High drop-off pages → tell Email Agent
+        if (websiteState.length > 0) {
+          const webInsights = websiteState[0].decisions || [];
+          const criticalPages = (Array.isArray(webInsights) ? webInsights : []).filter(i => i.severity === 'critical');
+          if (criticalPages.length > 0) {
+            coordActions.push({
+              rule: 'critical_page_email_adjust',
+              action: `Email Agent should avoid linking to: ${criticalPages.map(p => p.page).join(', ')}`,
+              pages: criticalPages.map(p => p.page)
+            });
+          }
+        }
+
+        // Cross-agent rule 3: Email engagement trends
+        if (emailState.length > 0) {
+          const emailActions = emailState[0].actions_taken || {};
+          if (emailActions.skipped > emailActions.sent && emailActions.sent > 0) {
+            coordActions.push({
+              rule: 'high_skip_rate',
+              action: 'More users being skipped than sent to. Consider refreshing email content or adjusting skip threshold.'
+            });
+          }
+        }
+
+        // Cross-agent rule 4: Vercel slow → exclude from website metrics
+        if (systemsState.length > 0) {
+          const services = (systemsState[0].observations.services || []);
+          const vercelSlow = services.find(s => s.service === 'neon' && s.response_time_ms > 500);
+          if (vercelSlow) {
+            coordActions.push({ rule: 'neon_slow_exclude_metrics', action: 'Website Agent should note DB was slow — page metrics may be inflated' });
+          }
+        }
+
+        // Log coordination state
+        await sql`INSERT INTO agent_state (agent_name, observations, decisions, actions_taken)
+          VALUES ('coordinator',
+            ${JSON.stringify({ systems: systemsState[0]?.run_at, email: emailState[0]?.run_at, website: websiteState[0]?.run_at })}::jsonb,
+            ${JSON.stringify(coordActions)}::jsonb,
+            ${JSON.stringify({ rules_evaluated: 4, actions_generated: coordActions.length })}::jsonb)`;
+
+        return res.json({ success: true, actions: coordActions, timestamp: new Date().toISOString() });
+      } catch (coordErr) {
+        console.error('[agent/coordination/run] Error:', coordErr);
+        return res.status(500).json({ error: coordErr.message });
+      }
+    }
+
+    // GET /api/agent/dashboard — Unified agent dashboard data
+    if (req.method === 'GET' && url === '/agent/dashboard') {
+      try {
+        // Latest run per agent
+        const agentRuns = await sql`SELECT DISTINCT ON (agent_name) agent_name, run_at, observations, decisions, actions_taken
+          FROM agent_state ORDER BY agent_name, run_at DESC`;
+
+        // System health
+        const health = await sql`SELECT DISTINCT ON (service) service, status, response_time_ms, checked_at
+          FROM system_health_log ORDER BY service, checked_at DESC`;
+
+        // Email engagement summary (last 7 days)
+        const emailStats = await sql`SELECT
+          COUNT(*) as total_sent,
+          COUNT(*) FILTER (WHERE opened_at IS NOT NULL) as opened,
+          COUNT(*) FILTER (WHERE clicked_at IS NOT NULL) as clicked,
+          COUNT(*) FILTER (WHERE action_completed = true) as actions_done,
+          ROUND(100.0 * COUNT(*) FILTER (WHERE opened_at IS NOT NULL) / NULLIF(COUNT(*), 0), 1) as open_rate,
+          ROUND(100.0 * COUNT(*) FILTER (WHERE clicked_at IS NOT NULL) / NULLIF(COUNT(*), 0), 1) as click_rate
+          FROM email_engagement WHERE sent_at > NOW() - INTERVAL '7 days'`;
+
+        // Persona distribution
+        const personas = await sql`SELECT persona, COUNT(*) as count FROM coaching_sequences
+          WHERE unsubscribed = false GROUP BY persona`;
+
+        // Top 5 page insights
+        const topInsights = await sql`SELECT page_path, views, conversion_rate, insights
+          FROM page_analytics ORDER BY period_start DESC, views DESC LIMIT 5`;
+
+        // Rule weights
+        const rules = await sql`SELECT agent_name, rule_key, weight, times_fired, times_succeeded FROM agent_rules ORDER BY agent_name, weight DESC`;
+
+        // Recent decisions
+        const recentDecisions = await sql`SELECT agent_name, run_at, decisions FROM agent_state
+          ORDER BY run_at DESC LIMIT 10`;
+
+        return res.json({
+          agents: agentRuns,
+          health,
+          email: { stats: emailStats[0] || {}, personas },
+          pages: topInsights,
+          rules,
+          recentDecisions
+        });
+      } catch (dashErr) {
+        return res.status(500).json({ error: dashErr.message });
+      }
+    }
+
     return res.status(404).json({ error: 'Not found' });
   } catch (err) {
     console.error('API Error:', err);

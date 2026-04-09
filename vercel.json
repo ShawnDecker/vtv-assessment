@@ -241,6 +241,10 @@
       "dest": "/admin-contacts.html"
     },
     {
+      "src": "/agent-dashboard",
+      "dest": "/agent-dashboard.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }

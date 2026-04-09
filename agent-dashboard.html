@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VTV Agent Dashboard</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0a0a0a; color:#e4e4e7; font-family:Arial,Helvetica,sans-serif; min-height:100vh; padding:0 0 60px; }
+  a { color:#D4A847; text-decoration:none; }
+
+  .header { text-align:center; padding:24px 16px 12px; border-bottom:1px solid #1a1a1a; }
+  .header .brand { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:#D4A847; }
+  .header h1 { font-family:Georgia,serif; font-size:20px; font-style:italic; color:#fff; margin-top:4px; }
+
+  .auth-screen { max-width:400px; margin:80px auto; padding:0 20px; text-align:center; }
+  .auth-screen input { width:100%; padding:14px 16px; background:#18181b; border:1px solid #27272a; border-radius:8px; color:#e4e4e7; font-size:16px; margin-bottom:12px; outline:none; }
+  .auth-screen input:focus { border-color:#D4A847; }
+  .auth-screen button { width:100%; padding:14px; background:linear-gradient(135deg,#D4A847,#b8942e); color:#0a0a0a; font-size:15px; font-weight:bold; border:none; border-radius:8px; cursor:pointer; }
+
+  .container { max-width:800px; margin:0 auto; padding:16px; display:none; }
+  .container.show { display:block; }
+
+  .section-title { font-size:12px; font-weight:bold; color:#D4A847; letter-spacing:1.5px; text-transform:uppercase; margin:24px 0 10px; }
+
+  .health-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:8px; }
+  .health-card { background:#18181b; border:1px solid #27272a; border-radius:10px; padding:14px; text-align:center; }
+  .health-card .svc { font-size:11px; color:#71717a; text-transform:uppercase; letter-spacing:0.5px; }
+  .health-card .dot { width:12px; height:12px; border-radius:50%; display:inline-block; margin:8px 0; }
+  .dot.healthy { background:#22c55e; box-shadow:0 0 8px #22c55e44; }
+  .dot.degraded { background:#eab308; box-shadow:0 0 8px #eab30844; }
+  .dot.down { background:#ef4444; box-shadow:0 0 8px #ef444444; }
+  .health-card .ms { font-size:13px; font-weight:bold; color:#e4e4e7; }
+
+  .stat-row { display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:8px; margin-bottom:12px; }
+  .stat-box { background:#18181b; border:1px solid #27272a; border-radius:10px; padding:14px; text-align:center; }
+  .stat-box .num { font-size:24px; font-weight:bold; color:#D4A847; }
+  .stat-box .label { font-size:10px; color:#71717a; text-transform:uppercase; letter-spacing:0.5px; margin-top:2px; }
+
+  .card { background:#18181b; border:1px solid #27272a; border-radius:10px; padding:14px; margin-bottom:8px; }
+  .card .name { font-size:13px; font-weight:bold; color:#e4e4e7; }
+  .card .meta { font-size:11px; color:#71717a; margin-top:4px; }
+  .card .detail { font-size:12px; color:#a1a1aa; margin-top:6px; line-height:1.5; }
+
+  .badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:10px; font-weight:bold; text-transform:uppercase; }
+  .b-green { background:#0a3b1a; color:#22c55e; }
+  .b-yellow { background:#3b3506; color:#eab308; }
+  .b-red { background:#3b1114; color:#ef4444; }
+  .b-gold { background:#3b3006; color:#D4A847; }
+
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { text-align:left; color:#71717a; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; padding:8px 6px; border-bottom:1px solid #27272a; }
+  td { padding:8px 6px; border-bottom:1px solid #1f1f23; color:#e4e4e7; }
+
+  .refresh-btn { position:fixed; bottom:16px; right:16px; padding:12px 20px; background:linear-gradient(135deg,#D4A847,#b8942e); color:#0a0a0a; font-size:13px; font-weight:bold; border:none; border-radius:8px; cursor:pointer; z-index:100; }
+  .loading { text-align:center; padding:40px; color:#71717a; }
+  .spinner { display:inline-block; width:20px; height:20px; border:3px solid #27272a; border-top-color:#D4A847; border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">VALUE TO VICTORY</div>
+  <h1>Agent Command Center</h1>
+</div>
+
+<div id="auth" class="auth-screen">
+  <p style="color:#71717a;font-size:13px;margin-bottom:20px;">Enter your admin API key.</p>
+  <input type="password" id="apiKey" placeholder="Admin API Key" autocomplete="off"/>
+  <button onclick="authenticate()">Access Dashboard</button>
+  <div id="authError" style="color:#ef4444;font-size:13px;margin-top:8px;display:none;"></div>
+</div>
+
+<div id="dashboard" class="container">
+  <div id="content"><div class="loading"><div class="spinner"></div><p style="margin-top:8px;">Loading agent data...</p></div></div>
+</div>
+
+<button class="refresh-btn" onclick="loadDashboard()" style="display:none" id="refreshBtn">Refresh</button>
+
+<script>
+let API_KEY = '';
+const API = '/api/agent';
+
+function authenticate() {
+  API_KEY = document.getElementById('apiKey').value.trim();
+  if (!API_KEY) return;
+  document.getElementById('auth').style.display = 'none';
+  document.getElementById('dashboard').classList.add('show');
+  document.getElementById('refreshBtn').style.display = 'block';
+  loadDashboard();
+}
+
+document.getElementById('apiKey').addEventListener('keydown', e => { if (e.key === 'Enter') authenticate(); });
+
+async function api(path) {
+  const r = await fetch(`${API}${path}`, { headers: { 'x-api-key': API_KEY } });
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.json();
+}
+
+async function loadDashboard() {
+  const el = document.getElementById('content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div><p style="margin-top:8px;">Loading...</p></div>';
+
+  try {
+    const data = await api('/dashboard');
+    render(data);
+  } catch (err) {
+    el.innerHTML = `<div class="card"><p style="color:#ef4444;">Failed to load: ${err.message}</p></div>`;
+  }
+}
+
+function render(data) {
+  const el = document.getElementById('content');
+  let html = '';
+
+  // === SYSTEM HEALTH ===
+  html += '<div class="section-title">System Health</div>';
+  html += '<div class="health-grid">';
+  for (const h of (data.health || [])) {
+    const dot = h.status === 'healthy' ? 'healthy' : h.status === 'degraded' ? 'degraded' : 'down';
+    const ms = h.response_time_ms !== null ? h.response_time_ms + 'ms' : '—';
+    html += `<div class="health-card"><div class="svc">${h.service}</div><div class="dot ${dot}"></div><div class="ms">${ms}</div></div>`;
+  }
+  html += '</div>';
+
+  // === AGENT STATUS ===
+  html += '<div class="section-title">Agent Status</div>';
+  for (const agent of (data.agents || [])) {
+    const ago = timeAgo(agent.run_at);
+    html += `<div class="card"><div class="name">${agent.agent_name.toUpperCase()} Agent</div>`;
+    html += `<div class="meta">Last run: ${ago}</div>`;
+    const actions = agent.actions_taken || {};
+    html += `<div class="detail">${JSON.stringify(actions).substring(0, 200)}</div></div>`;
+  }
+
+  // === EMAIL PERFORMANCE ===
+  html += '<div class="section-title">Email Performance (7 days)</div>';
+  const es = data.email?.stats || {};
+  html += '<div class="stat-row">';
+  html += stat(es.total_sent || 0, 'Sent');
+  html += stat(es.open_rate || 0, 'Open %');
+  html += stat(es.click_rate || 0, 'Click %');
+  html += stat(es.actions_done || 0, 'Actions');
+  html += '</div>';
+
+  // Persona distribution
+  if (data.email?.personas?.length) {
+    html += '<div class="stat-row">';
+    for (const p of data.email.personas) {
+      const badge = p.persona === 'fast_mover' ? 'b-green' : p.persona === 'disengaged' ? 'b-red' : p.persona === 'high_performer' ? 'b-gold' : 'b-yellow';
+      html += `<div class="stat-box"><div class="num">${p.count}</div><div class="label"><span class="badge ${badge}">${p.persona}</span></div></div>`;
+    }
+    html += '</div>';
+  }
+
+  // === TOP PAGES ===
+  html += '<div class="section-title">Top Pages</div>';
+  if (data.pages?.length) {
+    html += '<table><tr><th>Page</th><th>Views</th><th>Conv %</th></tr>';
+    for (const p of data.pages) {
+      html += `<tr><td>${p.page_path}</td><td>${p.views}</td><td>${(p.conversion_rate * 100).toFixed(1)}%</td></tr>`;
+    }
+    html += '</table>';
+  } else {
+    html += '<div class="card"><div class="detail">No page data yet. Run the Website Agent first.</div></div>';
+  }
+
+  // === RULE WEIGHTS ===
+  html += '<div class="section-title">Learning Rules</div>';
+  if (data.rules?.length) {
+    html += '<table><tr><th>Agent</th><th>Rule</th><th>Weight</th><th>Fired</th><th>Success</th></tr>';
+    for (const r of data.rules) {
+      const successRate = r.times_fired > 0 ? Math.round(r.times_succeeded / r.times_fired * 100) : 0;
+      html += `<tr><td>${r.agent_name}</td><td>${r.rule_key}</td><td style="color:#D4A847;font-weight:bold;">${r.weight.toFixed(2)}</td><td>${r.times_fired}</td><td>${successRate}%</td></tr>`;
+    }
+    html += '</table>';
+  }
+
+  // === RECENT DECISIONS ===
+  html += '<div class="section-title">Recent Agent Decisions</div>';
+  for (const d of (data.recentDecisions || []).slice(0, 5)) {
+    const ago = timeAgo(d.run_at);
+    const decisions = d.decisions;
+    const preview = JSON.stringify(decisions).substring(0, 200);
+    html += `<div class="card"><div class="name">${d.agent_name.toUpperCase()}</div><div class="meta">${ago}</div><div class="detail">${preview}</div></div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function stat(val, label) {
+  return `<div class="stat-box"><div class="num">${val}</div><div class="label">${label}</div></div>`;
+}
+
+function timeAgo(ts) {
+  if (!ts) return 'Never';
+  const diff = Date.now() - new Date(ts).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  return Math.floor(hrs / 24) + 'd ago';
+}
+</script>
+</body>
+</html>
