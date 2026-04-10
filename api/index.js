@@ -2278,7 +2278,7 @@ Don't guess. Run the system.
       const validPin = (process.env.ADMIN_PIN || 'Launchdate04152026').trim();
       const validKey = process.env.ADMIN_API_KEY || '';
       if (!pin || pin.trim() !== validPin) {
-        return res.status(401).json({ error: 'Invalid PIN', debug: { pinLen: (pin||'').length, validLen: validPin.length } });
+        return res.status(401).json({ error: 'Invalid PIN' });
       }
       return res.json({ success: true, apiKey: validKey });
     }
