@@ -237,28 +237,37 @@ function authenticate() {
   if (!key) return;
   const errEl = document.getElementById('authError');
   errEl.style.display = 'none';
-  fetch(BASE + '/admin/analytics', { headers: { 'x-api-key': key } })
-    .then(r => {
-      if (!r.ok) throw new Error(r.status === 401 ? 'Invalid API key' : 'API error: ' + r.status);
-      return r.json();
-    })
-    .then(() => {
-      API_KEY = key;
-      document.getElementById('auth').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      try { sessionStorage.setItem('vtv_admin_key', API_KEY); } catch(e){}
-      loadAll();
-    })
-    .catch(err => {
-      errEl.textContent = err.message;
-      errEl.style.display = 'block';
-      try { sessionStorage.removeItem('vtv_admin_key'); } catch(e){}
-    });
+
+  // Try as admin PIN first (short codes), then as full API key
+  const tryKey = key.length <= 20
+    ? fetch(BASE + '/admin/pin-login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({pin:key}) })
+        .then(r => { if (!r.ok) throw new Error('Invalid PIN'); return r.json(); })
+        .then(d => d.apiKey)
+    : Promise.resolve(key);
+
+  tryKey.then(resolvedKey => {
+    return fetch(BASE + '/admin/analytics', { headers: { 'x-api-key': resolvedKey } })
+      .then(r => {
+        if (!r.ok) throw new Error(r.status === 401 ? 'Invalid API key' : 'API error: ' + r.status);
+        return r.json();
+      })
+      .then(() => {
+        API_KEY = resolvedKey;
+        document.getElementById('auth').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        try { localStorage.setItem('vtv_admin_key', API_KEY); } catch(e){}
+        loadAll();
+      });
+  }).catch(err => {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    try { localStorage.removeItem('vtv_admin_key'); } catch(e){}
+  });
 }
-// Auto-restore session
+// Auto-restore session from localStorage (persists across tabs)
 (function() {
   try {
-    const k = sessionStorage.getItem('vtv_admin_key');
+    const k = localStorage.getItem('vtv_admin_key');
     if (k) {
       fetch(BASE + '/admin/analytics', { headers: { 'x-api-key': k } })
         .then(r => { if (!r.ok) throw new Error('expired'); return r.json(); })
@@ -268,7 +277,7 @@ function authenticate() {
           document.getElementById('dashboard').style.display='block';
           loadAll();
         })
-        .catch(() => { sessionStorage.removeItem('vtv_admin_key'); });
+        .catch(() => { localStorage.removeItem('vtv_admin_key'); });
     }
   } catch(e){}
 })();

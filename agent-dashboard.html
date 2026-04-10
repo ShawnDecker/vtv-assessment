@@ -89,25 +89,47 @@
 let API_KEY = '';
 const API = '/api/agent';
 
-// Auto-login via ?key= URL parameter
+function unlockDashboard() {
+  document.getElementById('auth').style.display = 'none';
+  document.getElementById('dashboard').classList.add('show');
+  document.getElementById('refreshBtn').style.display = 'block';
+  try { localStorage.setItem('vtv_admin_key', API_KEY); } catch(e){}
+  loadDashboard();
+}
+
+// Auto-login: URL param > localStorage
 try {
   const urlKey = new URLSearchParams(window.location.search).get('key');
   if (urlKey) {
     API_KEY = urlKey.trim();
-    document.getElementById('auth').style.display = 'none';
-    document.getElementById('dashboard').classList.add('show');
-    document.getElementById('refreshBtn').style.display = 'block';
-    setTimeout(() => loadDashboard(), 0);
+    setTimeout(() => unlockDashboard(), 0);
+  } else {
+    const saved = localStorage.getItem('vtv_admin_key');
+    if (saved) {
+      API_KEY = saved;
+      setTimeout(() => unlockDashboard(), 0);
+    }
   }
 } catch(e) {}
 
 function authenticate() {
-  API_KEY = document.getElementById('apiKey').value.trim();
-  if (!API_KEY) return;
-  document.getElementById('auth').style.display = 'none';
-  document.getElementById('dashboard').classList.add('show');
-  document.getElementById('refreshBtn').style.display = 'block';
-  loadDashboard();
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key) return;
+
+  // Short input = try PIN login first
+  const tryKey = key.length <= 20
+    ? fetch('/api/admin/pin-login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({pin:key}) })
+        .then(r => { if (!r.ok) throw new Error('Invalid PIN'); return r.json(); })
+        .then(d => d.apiKey)
+    : Promise.resolve(key);
+
+  tryKey.then(resolvedKey => {
+    API_KEY = resolvedKey;
+    unlockDashboard();
+  }).catch(() => {
+    API_KEY = key;
+    unlockDashboard();
+  });
 }
 
 document.getElementById('apiKey').addEventListener('keydown', e => { if (e.key === 'Enter') authenticate(); });

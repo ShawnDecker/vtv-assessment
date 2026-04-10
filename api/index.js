@@ -2272,6 +2272,17 @@ Don't guess. Run the system.
     }
 
     // ========== ADMIN ENDPOINTS — REQUIRE API KEY ==========
+    // POST /api/admin/pin-login — Short PIN login returns API key
+    if (req.method === 'POST' && url === '/admin/pin-login') {
+      const { pin } = req.body || {};
+      const validPin = process.env.ADMIN_PIN || 'Launchdate04152026';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!pin || pin !== validPin) {
+        return res.status(401).json({ error: 'Invalid PIN' });
+      }
+      return res.json({ success: true, apiKey: validKey });
+    }
+
     // All /admin/* routes require x-api-key header matching ADMIN_API_KEY env var
     if (url.startsWith('/admin')) {
       const apiKey = req.headers['x-api-key'] || '';
