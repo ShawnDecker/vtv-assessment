@@ -8,6 +8,13 @@ module.exports = async (req, res) => {
   res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  // Require admin API key for migration endpoints
+  const apiKey = req.headers['x-api-key'] || '';
+  const validKey = process.env.ADMIN_API_KEY || '';
+  if (!validKey || apiKey !== validKey) {
+    return res.status(401).json({ error: 'Admin API key required' });
+  }
+
   const sql = neon(process.env.DATABASE_URL);
   const results = [];
 

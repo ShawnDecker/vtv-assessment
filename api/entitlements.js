@@ -96,6 +96,6 @@ module.exports = async (req, res) => {
     });
   } catch (err) {
     console.error('[entitlements] Error:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };

@@ -5,6 +5,7 @@ const crypto = require('crypto');
 // CORS allowed origins
 const ALLOWED_ORIGINS = ['https://valuetovictory.com','https://www.valuetovictory.com','https://assessment.valuetovictory.com','https://shawnedecker.com','https://www.shawnedecker.com','http://localhost:3000','http://localhost:5173'];
 function getCorsOrigin(req) { const o = req.headers.origin||''; return ALLOWED_ORIGINS.includes(o)?o:o.endsWith('.vercel.app')?o:ALLOWED_ORIGINS[0]; }
+function escHtml(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', getCorsOrigin(req));
@@ -103,7 +104,7 @@ module.exports = async (req, res) => {
           <!-- Body -->
           <tr>
             <td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:40px 32px;">
-              <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 16px;">Hey ${name},</p>
+              <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 16px;">Hey ${escHtml(name)},</p>
               <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 24px;">
                 Thanks for requesting your free copy of <strong style="color:#D4A847;">Running From Miracles</strong> by Shawn Decker.
                 We just need to verify your email address before we send it over.

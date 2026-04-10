@@ -4,6 +4,11 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -116,7 +121,7 @@ module.exports = async (req, res) => {
           <!-- Body -->
           <tr>
             <td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:40px 32px;">
-              <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 16px;">Hey ${signup.name},</p>
+              <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 16px;">Hey ${escHtml(signup.name)},</p>
               <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 16px;">
                 Your email is confirmed. Here's your free digital copy of
                 <strong style="color:#D4A847;">Running From Miracles</strong> by Shawn Decker.
@@ -204,7 +209,7 @@ module.exports = async (req, res) => {
     }
 
     return sendPage(res, 200, 'Email Confirmed!', `
-      <p>Your free copy of <strong style="color:#D4A847;">Running From Miracles</strong> is on its way to <strong>${signup.email}</strong>.</p>
+      <p>Your free copy of <strong style="color:#D4A847;">Running From Miracles</strong> is on its way to <strong>${escHtml(signup.email)}</strong>.</p>
       <p style="margin-top:16px;">Check your inbox in the next few minutes. If you don't see it, check your spam or promotions folder.</p>
       <div style="margin-top:32px;">
         <a href="${'https://assessment.valuetovictory.com/running-from-miracles.pdf'}" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:15px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Download Now</a>
@@ -229,7 +234,7 @@ function sendPage(res, statusCode, title, bodyHtml) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${title} — Value to Victory</title>
+  <title>${escHtml(title)} — Value to Victory</title>
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <style>
@@ -249,7 +254,7 @@ function sendPage(res, statusCode, title, bodyHtml) {
 <body>
   <div class="container">
     <div class="brand">VALUE TO VICTORY</div>
-    <h1>${title}</h1>
+    <h1>${escHtml(title)}</h1>
     <div class="card">${bodyHtml}</div>
     <div class="footer">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</div>
   </div>

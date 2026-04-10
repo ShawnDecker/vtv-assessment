@@ -732,6 +732,20 @@ async function logEmail(sql, { recipient, emailType, subject, contactId, assessm
   } catch(e) { console.error('logEmail error (non-fatal):', e.message); }
 }
 
+// Authenticate cron/scheduled endpoints — accepts admin API key OR Vercel cron secret
+function isCronAuthorized(req) {
+  const apiKey = req.headers['x-api-key'] || '';
+  const adminKey = process.env.ADMIN_API_KEY || '';
+  if (adminKey && apiKey === adminKey) return true;
+  // Vercel cron sends Authorization: Bearer <CRON_SECRET>
+  const authHeader = req.headers['authorization'] || '';
+  const cronSecret = process.env.CRON_SECRET || '';
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true;
+  // Allow if request comes from Vercel's internal cron (has x-vercel-cron header)
+  if (req.headers['x-vercel-cron'] === '1') return true;
+  return false;
+}
+
 module.exports = async (req, res) => {
   const corsOrigin = getCorsOrigin(req);
   res.setHeader('Access-Control-Allow-Origin', corsOrigin);
@@ -747,7 +761,7 @@ module.exports = async (req, res) => {
 
   // Determine rate limit category
   const rateCategory = url.startsWith('/admin') ? 'admin'
-    : (url.includes('/verify-pin') || url.includes('/set-pin')) ? 'auth'
+    : (url.includes('/verify-pin') || url.includes('/set-pin') || url.includes('/pin-login')) ? 'auth'
     : url === '/assessment' ? 'assessment'
     : 'default';
   const rateCheck = checkRateLimit(clientIP, rateCategory);
@@ -2275,7 +2289,8 @@ Don't guess. Run the system.
     // POST /api/admin/pin-login — Short PIN login returns API key
     if (req.method === 'POST' && url === '/admin/pin-login') {
       const { pin } = req.body || {};
-      const validPin = (process.env.ADMIN_PIN || 'Launchdate04152026').trim();
+      const validPin = process.env.ADMIN_PIN;
+      if (!validPin) return res.status(500).json({ error: 'ADMIN_PIN not configured in environment variables' });
       const validKey = process.env.ADMIN_API_KEY || '';
       if (!pin || pin.trim() !== validPin) {
         return res.status(401).json({ error: 'Invalid PIN' });
@@ -2731,8 +2746,14 @@ Don't guess. Run the system.
 
       if (!a.email) return res.status(400).json({ error: 'No email on file for this contact' });
 
-      // Allow overriding recipient email (for admin preview)
-      const recipientEmail = b.overrideEmail || a.email;
+      // Allow overriding recipient email (admin only)
+      let recipientEmail = a.email;
+      if (b.overrideEmail) {
+        const apiKey = req.headers['x-api-key'] || '';
+        const validKey = process.env.ADMIN_API_KEY || '';
+        if (!validKey || apiKey !== validKey) return res.status(401).json({ error: 'Admin API key required to use overrideEmail' });
+        recipientEmail = b.overrideEmail;
+      }
 
       const firstName = a.first_name || 'there';
       const masterScore = a.master_score;
@@ -3241,7 +3262,7 @@ ${roadmapHtml}
       const pinHash = crypto.createHash('sha256').update(newPin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
       const rows = await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE LOWER(email) = ${email} RETURNING id, email, first_name`;
       if (rows.length === 0) return res.status(404).json({ error: 'No contact found with that email' });
-      return res.json({ success: true, contact: { id: rows[0].id, email: rows[0].email, firstName: rows[0].first_name }, message: `PIN reset to ${newPin} for ${email}` });
+      return res.json({ success: true, contact: { id: rows[0].id, email: rows[0].email, firstName: rows[0].first_name }, message: `PIN reset successfully for ${email}` });
     }
 
     // POST /api/admin/update-profile — Update user profile tier, Stripe IDs, etc.
@@ -3281,8 +3302,6 @@ ${roadmapHtml}
       if (pin) {
         const testHash = crypto.createHash('sha256').update(pin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
         result.pinMatches = testHash === rows[0].pin_hash;
-        result.storedHashPrefix = rows[0].pin_hash ? rows[0].pin_hash.substring(0, 8) + '...' : null;
-        result.testHashPrefix = testHash.substring(0, 8) + '...';
       }
       return res.json(result);
     }
@@ -4644,6 +4663,7 @@ This link expires in 24 hours.
 
     // GET /api/coaching/send — called by cron job to send daily coaching emails
     if (req.method === 'GET' && url === '/coaching/send') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized. Requires admin API key or cron secret.' });
       try {
         await ensureCoachingTable(sql);
 
@@ -4767,7 +4787,7 @@ This link expires in 24 hours.
         return res.json({ sent: sentCount, skipped: skippedCount, total: sequences.length, results });
       } catch (coachingSendErr) {
         console.error('[coaching/send] Handler error:', coachingSendErr);
-        return res.status(500).json({ error: 'Coaching send failed', details: coachingSendErr.message, stack: coachingSendErr.stack });
+        return res.status(500).json({ error: 'Coaching send failed' });
       }
     }
 
@@ -4836,6 +4856,7 @@ This link expires in 24 hours.
 
     // GET /api/accountability/send — evening accountability + platform updates email
     if (req.method === 'GET' && url === '/accountability/send') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized. Requires admin API key or cron secret.' });
       try {
         await ensureCoachingTable(sql);
 
@@ -5003,6 +5024,7 @@ This link expires in 24 hours.
     // ========== CEO DAILY BRIEFING ==========
     // GET /api/ceo-briefing — Daily executive summary email sent at 6:45 AM
     if (req.method === 'GET' && url === '/ceo-briefing') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized. Requires admin API key or cron secret.' });
       try {
         const ceoEmail = 'valuetovictory@gmail.com';
         const now = new Date();
@@ -5644,7 +5666,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
                 try {
                   const hostingerResp = await fetch('https://developers.hostinger.com/api/vps/v1/virtual-machines/1138119/restart', {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${process.env.HOSTINGER_API_KEY || 'drvZUDXBzWZe6Ps8y0y6nEhbUbmdJQfbIohs9xvke878bd41'}` }
+                    headers: { 'Authorization': `Bearer ${process.env.HOSTINGER_API_KEY || ''}` }
                   });
                   actions.push({ action: 'vps_restart', result: hostingerResp.ok ? 'sent' : 'failed' });
                   await sql`UPDATE system_health_log SET auto_healed = true, heal_action = 'vps_restart'
@@ -6203,6 +6225,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
     // ========== GET /api/devotional/send — Send daily devotional to all subscribers ==========
     if (req.method === 'GET' && url === '/devotional/send') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized. Requires admin API key or cron secret.' });
       try {
         // Get today's devotional
         const fs = require('fs');
