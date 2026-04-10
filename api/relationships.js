@@ -110,7 +110,7 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const sql = neon(process.env.DATABASE_URL);
-  const url = req.url.replace(/^\/api\/r/, '');
+  const url = req.url.replace(/^\/api\/r/, '').replace(/^\/api\/couples/, '/couples');
 
   try {
     // ============================================================
@@ -853,6 +853,119 @@ module.exports = async (req, res) => {
 
       if (rows.length === 0) return res.status(404).json({ error: 'Profile not found' });
       return res.json({ success: true, profile: rows[0] });
+    }
+
+    // ============================================================
+    // GET /api/r/couples/results — Couple comparison report
+    // Supports ?code=INVITE_CODE or ?contactId=N (for logged-in users)
+    // ============================================================
+    if (req.method === 'GET' && url.startsWith('/couples/results')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const code = params.get('code');
+      const contactId = params.get('contactId');
+
+      let initiatorContactId, partnerContactId;
+
+      if (code) {
+        // Look up by invite code
+        const couple = await sql`SELECT * FROM couples WHERE invite_code = ${code} LIMIT 1`;
+        if (couple.length === 0) return res.status(404).json({ error: 'Couple not found' });
+        initiatorContactId = couple[0].initiator_contact_id;
+        partnerContactId = couple[0].partner_contact_id;
+        if (!partnerContactId) {
+          return res.json({ status: 'waiting', message: 'Partner has not completed their assessment yet' });
+        }
+      } else if (contactId) {
+        // Look up by contact_id via partner_profiles link
+        const profile = await sql`SELECT * FROM user_profiles WHERE contact_id = ${parseInt(contactId)} LIMIT 1`;
+        if (profile.length === 0) return res.status(404).json({ error: 'Profile not found' });
+        if (!profile[0].partner_id) return res.status(404).json({ error: 'No partner linked' });
+
+        // Get partner's contact_id
+        const partnerProfile = await sql`SELECT * FROM user_profiles WHERE id = ${profile[0].partner_id} LIMIT 1`;
+        if (partnerProfile.length === 0) return res.status(404).json({ error: 'Partner profile not found' });
+
+        initiatorContactId = parseInt(contactId);
+        partnerContactId = partnerProfile[0].contact_id;
+      } else {
+        return res.status(400).json({ error: 'code or contactId required' });
+      }
+
+      // Get latest relationship-mode assessment for each, falling back to any mode
+      async function getScores(cid) {
+        let rows = await sql`SELECT * FROM assessments WHERE contact_id = ${cid} AND mode = 'relationship' ORDER BY completed_at DESC LIMIT 1`;
+        if (rows.length === 0) {
+          rows = await sql`SELECT * FROM assessments WHERE contact_id = ${cid} ORDER BY completed_at DESC LIMIT 1`;
+        }
+        return rows.length > 0 ? rows[0] : null;
+      }
+
+      const initiatorAssessment = await getScores(initiatorContactId);
+      const partnerAssessment = await getScores(partnerContactId);
+
+      // Get names
+      const initiatorContact = await sql`SELECT first_name, last_name FROM contacts WHERE id = ${initiatorContactId} LIMIT 1`;
+      const partnerContact = await sql`SELECT first_name, last_name FROM contacts WHERE id = ${partnerContactId} LIMIT 1`;
+
+      if (!initiatorAssessment && !partnerAssessment) {
+        return res.json({ status: 'waiting', message: 'Neither partner has completed an assessment yet' });
+      }
+
+      const iName = initiatorContact.length > 0
+        ? [initiatorContact[0].first_name, initiatorContact[0].last_name].filter(Boolean).join(' ')
+        : 'Partner 1';
+      const pName = partnerContact.length > 0
+        ? [partnerContact[0].first_name, partnerContact[0].last_name].filter(Boolean).join(' ')
+        : 'Partner 2';
+
+      function extractScores(a) {
+        if (!a) return { time: 0, people: 0, influence: 0, numbers: 0, knowledge: 0, total: 0 };
+        return {
+          time: a.time_total || 0,
+          people: a.people_total || 0,
+          influence: a.influence_total || 0,
+          numbers: a.numbers_total || 0,
+          knowledge: a.knowledge_total || 0,
+          total: a.master_score || 0
+        };
+      }
+
+      const iScores = extractScores(initiatorAssessment);
+      const pScores = extractScores(partnerAssessment);
+
+      // Calculate gaps (absolute difference per pillar)
+      const gaps = {
+        time: Math.abs(iScores.time - pScores.time),
+        people: Math.abs(iScores.people - pScores.people),
+        influence: Math.abs(iScores.influence - pScores.influence),
+        numbers: Math.abs(iScores.numbers - pScores.numbers),
+        knowledge: Math.abs(iScores.knowledge - pScores.knowledge)
+      };
+
+      // Growth encouragements based on combined weakest areas
+      const combined = {
+        time: iScores.time + pScores.time,
+        people: iScores.people + pScores.people,
+        influence: iScores.influence + pScores.influence,
+        numbers: iScores.numbers + pScores.numbers,
+        knowledge: iScores.knowledge + pScores.knowledge
+      };
+      const sortedPillars = Object.entries(combined).sort((a, b) => a[1] - b[1]);
+      const growthAreas = sortedPillars.slice(0, 2).map(([key]) => key);
+      const strengthAreas = sortedPillars.slice(-2).map(([key]) => key);
+
+      return res.json({
+        status: 'complete',
+        initiator: { name: iName, scores: iScores, contactId: initiatorContactId },
+        partner: { name: pName, scores: pScores, contactId: partnerContactId },
+        gaps,
+        insights: {
+          strengthAreas,
+          growthAreas,
+          totalCombined: iScores.total + pScores.total,
+          alignmentScore: Math.round(100 - (Object.values(gaps).reduce((s, v) => s + v, 0) / 5))
+        }
+      });
     }
 
     return res.status(404).json({ error: 'Not found' });

@@ -649,6 +649,17 @@
   (function() {
     var params = new URLSearchParams(window.location.search);
     var code = params.get('code');
+    // If no code, try to get contactId from JWT in localStorage
+    var contactId = null;
+    if (!code) {
+      try {
+        var token = localStorage.getItem('vtv_token');
+        if (token) {
+          var payload = JSON.parse(atob(token.split('.')[1]));
+          contactId = payload.contactId;
+        }
+      } catch(e) {}
+    }
 
     var PILLAR_COLORS = {
       time: '#D4A847',
@@ -846,14 +857,17 @@
       show('reportView');
     }
 
-    if (!code) {
+    if (!code && !contactId) {
       show('errorView');
       return;
     }
 
     show('loadingView');
 
-    fetch('/api/couples/results?code=' + encodeURIComponent(code))
+    var apiUrl = code
+      ? '/api/couples/results?code=' + encodeURIComponent(code)
+      : '/api/couples/results?contactId=' + contactId;
+    fetch(apiUrl)
       .then(function(r) {
         if (!r.ok) throw new Error('error');
         return r.json();

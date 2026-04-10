@@ -16,6 +16,10 @@
   ],
   "routes": [
     {
+      "src": "/api/couples/(.*)",
+      "dest": "/api/relationships.js"
+    },
+    {
       "src": "/api/r/(.*)",
       "dest": "/api/relationships.js"
     },

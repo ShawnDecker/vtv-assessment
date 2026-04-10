@@ -147,6 +147,29 @@
       </a>
     </div>
 
+    <!-- Couple Snapshot (populated dynamically) -->
+    <div id="coupleSnapshot" style="display:none; margin-top:1.5rem;">
+      <div class="section-title">Couple Snapshot</div>
+      <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:16px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="text-align:center;flex:1;">
+            <div id="snapName1" style="font-size:13px;color:#D4A847;font-weight:bold;"></div>
+            <div id="snapScore1" style="font-size:28px;font-weight:bold;color:#fff;margin:4px 0;"></div>
+            <div id="snapRange1" style="font-size:11px;color:#71717a;"></div>
+          </div>
+          <div style="color:#71717a;font-size:20px;padding:0 12px;">vs</div>
+          <div style="text-align:center;flex:1;">
+            <div id="snapName2" style="font-size:13px;color:#f472b6;font-weight:bold;"></div>
+            <div id="snapScore2" style="font-size:28px;font-weight:bold;color:#fff;margin:4px 0;"></div>
+            <div id="snapRange2" style="font-size:11px;color:#71717a;"></div>
+          </div>
+        </div>
+        <div id="snapPillars" style="display:flex;gap:4px;margin-bottom:10px;"></div>
+        <div id="snapInsight" style="font-size:12px;color:#a1a1aa;text-align:center;margin-top:8px;"></div>
+        <a href="/couple-report" style="display:block;text-align:center;margin-top:10px;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;padding:8px;border-radius:8px;font-weight:bold;font-size:13px;text-decoration:none;">View Full Couple Report</a>
+      </div>
+    </div>
+
     <!-- Reports Section -->
     <div class="section-title" style="margin-top:2rem">Your Reports</div>
     <div class="tools-grid" id="reportsGrid">
@@ -235,9 +258,65 @@
         // Show hub
         document.getElementById('loadingView').classList.add('hidden');
         document.getElementById('hubView').classList.remove('hidden');
+
+        // Load couple snapshot if partner linked
+        if (userProfile.partner_id && userProfile.contact_id) {
+          loadCoupleSnapshot(userProfile.contact_id);
+        }
       } catch (e) {
         window.location.href = '/onboarding';
       }
+    }
+
+    async function loadCoupleSnapshot(contactId) {
+      try {
+        var resp = await fetch('/api/couples/results?contactId=' + contactId);
+        if (!resp.ok) return;
+        var data = await resp.json();
+        if (data.status !== 'complete') return;
+
+        document.getElementById('snapName1').textContent = data.initiator.name.split(' ')[0];
+        document.getElementById('snapScore1').textContent = data.initiator.scores.total || '—';
+        document.getElementById('snapRange1').textContent = getRange(data.initiator.scores.total);
+        document.getElementById('snapName2').textContent = data.partner.name.split(' ')[0];
+        document.getElementById('snapScore2').textContent = data.partner.scores.total || '—';
+        document.getElementById('snapRange2').textContent = getRange(data.partner.scores.total);
+
+        // Mini pillar bars
+        var pillars = ['time','people','influence','numbers','knowledge'];
+        var colors = { time:'#D4A847', people:'#f472b6', influence:'#2dd4bf', numbers:'#60a5fa', knowledge:'#a78bfa' };
+        var html = '';
+        pillars.forEach(function(p) {
+          var s1 = data.initiator.scores[p] || 0;
+          var s2 = data.partner.scores[p] || 0;
+          var gap = Math.abs(s1 - s2);
+          var icon = gap >= 15 ? '!' : gap >= 5 ? '~' : '=';
+          html += '<div style="flex:1;text-align:center;font-size:10px;">';
+          html += '<div style="color:' + colors[p] + ';font-weight:bold;">' + p.charAt(0).toUpperCase() + '</div>';
+          html += '<div style="color:#fff;font-size:12px;">' + s1 + '/' + s2 + '</div>';
+          html += '<div style="color:' + (gap >= 15 ? '#ef4444' : gap >= 5 ? '#eab308' : '#22c55e') + ';">' + icon + '</div>';
+          html += '</div>';
+        });
+        document.getElementById('snapPillars').innerHTML = html;
+
+        // Insight
+        var align = data.insights ? data.insights.alignmentScore : 0;
+        var msg = align >= 85 ? 'Strong alignment — keep building together!'
+          : align >= 65 ? 'Good alignment with room to grow closer.'
+          : 'Some gaps to explore — small changes make a big difference.';
+        document.getElementById('snapInsight').textContent = msg + ' (Alignment: ' + align + '%)';
+
+        document.getElementById('coupleSnapshot').style.display = 'block';
+      } catch(e) {}
+    }
+
+    function getRange(score) {
+      if (!score) return '';
+      if (score <= 50) return 'Crisis';
+      if (score <= 100) return 'Survival';
+      if (score <= 150) return 'Growth';
+      if (score <= 200) return 'Momentum';
+      return 'Mastery';
     }
 
     loadProfile();
