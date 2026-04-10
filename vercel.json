@@ -83,8 +83,20 @@
       "handle": "filesystem"
     },
     {
+      "src": "/checkout",
+      "dest": "/api/checkout.js"
+    },
+    {
       "src": "/checkout/success",
       "dest": "/checkout-success.html"
+    },
+    {
+      "src": "/privacy",
+      "dest": "/privacy.html"
+    },
+    {
+      "src": "/terms",
+      "dest": "/terms.html"
     },
     {
       "src": "/dating",

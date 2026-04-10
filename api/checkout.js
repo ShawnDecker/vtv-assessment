@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-  const url = req.url.split('?')[0].replace(/^\/api\/checkout/, '');
+  const url = req.url.split('?')[0].replace(/^\/api\/checkout/, '').replace(/^\/checkout/, '');
 
   try {
     // ============================================================
