@@ -5410,6 +5410,16 @@ This link expires in 24 hours.
         )`;
         await sql`CREATE INDEX IF NOT EXISTS idx_health_service ON system_health_log(service)`;
 
+        await sql`CREATE TABLE IF NOT EXISTS partner_invites (
+          id SERIAL PRIMARY KEY,
+          inviter_email TEXT NOT NULL,
+          partner_email TEXT NOT NULL,
+          inviter_name TEXT,
+          created_at TIMESTAMP DEFAULT NOW(),
+          accepted_at TIMESTAMP,
+          UNIQUE(inviter_email)
+        )`;
+
         // Alter coaching_sequences
         await sql`ALTER TABLE coaching_sequences ADD COLUMN IF NOT EXISTS engagement_score FLOAT DEFAULT 0`;
         await sql`ALTER TABLE coaching_sequences ADD COLUMN IF NOT EXISTS email_variant TEXT DEFAULT 'default'`;

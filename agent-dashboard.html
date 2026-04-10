@@ -160,7 +160,7 @@ function render(data) {
   html += '<div class="section-title">Quick Access</div>';
   html += '<div class="quick-links">';
   const links = [
-    { icon:'&#9881;', name:'n8n', sub:'Workflows', url:'https://n8n.shawnedecker.com' },
+    { icon:'&#9881;', name:'n8n', sub:'Workflows', url:'https://n8n.srv1138119.hstgr.cloud' },
     { icon:'&#9650;', name:'Vercel', sub:'Deployments', url:'https://vercel.com/danddappraisal-7740s-projects' },
     { icon:'&#128202;', name:'Neon', sub:'Database', url:'https://console.neon.tech' },
     { icon:'&#128179;', name:'Stripe', sub:'Payments', url:'https://dashboard.stripe.com' },
@@ -172,6 +172,9 @@ function render(data) {
     { icon:'&#128218;', name:'VTV Portal', sub:'Assessment', url:'https://assessment.valuetovictory.com' },
     { icon:'&#127908;', name:'Audiobook', sub:'VPS Audio', url:'http://147.93.97.228:8082' },
     { icon:'&#128221;', name:'Admin', sub:'Contacts', url:'https://assessment.valuetovictory.com/admin/contacts' },
+    { icon:'&#128150;', name:'Couples', sub:'Report', url:'https://assessment.valuetovictory.com/couple-report' },
+    { icon:'&#129309;', name:'Relationships', sub:'Hub', url:'https://assessment.valuetovictory.com/relationship-hub' },
+    { icon:'&#128187;', name:'GitHub', sub:'Repos', url:'https://github.com/ShawnDecker' },
   ];
   for (const l of links) {
     html += `<a class="quick-link" href="${l.url}" target="_blank"><span class="icon">${l.icon}</span><span class="ql-name">${l.name}</span><span class="ql-sub">${l.sub}</span></a>`;
