@@ -259,6 +259,15 @@
         document.getElementById('loadingView').classList.add('hidden');
         document.getElementById('hubView').classList.remove('hidden');
 
+        // Store contactId for couple-report page and update links
+        if (userProfile.contact_id) {
+          try { localStorage.setItem('vtv_contact_id', userProfile.contact_id); } catch(e) {}
+          // Update couple report links with contactId
+          document.querySelectorAll('a[href="/couple-report"]').forEach(function(a) {
+            a.href = '/couple-report?contactId=' + userProfile.contact_id;
+          });
+        }
+
         // Load couple snapshot if partner linked
         if (userProfile.partner_id && userProfile.contact_id) {
           loadCoupleSnapshot(userProfile.contact_id);

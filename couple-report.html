@@ -655,15 +655,22 @@
   (function() {
     var params = new URLSearchParams(window.location.search);
     var code = params.get('code');
-    // If no code, try to get contactId from JWT in localStorage
-    var contactId = null;
-    if (!code) {
+    // Support direct ?contactId= parameter, JWT token, or localStorage contactId
+    var contactId = params.get('contactId') || null;
+    if (!code && !contactId) {
       try {
         var token = localStorage.getItem('vtv_token');
         if (token) {
           var payload = JSON.parse(atob(token.split('.')[1]));
           contactId = payload.contactId;
         }
+      } catch(e) {}
+    }
+    if (!code && !contactId) {
+      try {
+        // Fallback: try contactId stored directly by relationship-hub
+        var stored = localStorage.getItem('vtv_contact_id');
+        if (stored) contactId = stored;
       } catch(e) {}
     }
 
