@@ -3244,6 +3244,29 @@ ${roadmapHtml}
       return res.json({ success: true, contact: { id: rows[0].id, email: rows[0].email, firstName: rows[0].first_name }, message: `PIN reset to ${newPin} for ${email}` });
     }
 
+    // POST /api/admin/update-profile — Update user profile tier, Stripe IDs, etc.
+    if (req.method === 'POST' && url === '/admin/update-profile') {
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      if (!email) return res.status(400).json({ error: 'email required' });
+
+      const contact = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (contact.length === 0) return res.status(404).json({ error: 'No contact found' });
+      const contactId = contact[0].id;
+
+      // Ensure user_profiles row exists
+      await sql`INSERT INTO user_profiles (contact_id) VALUES (${contactId}) ON CONFLICT (contact_id) DO NOTHING`;
+
+      const updates = [];
+      if (b.tier) updates.push(sql`UPDATE user_profiles SET membership_tier = ${b.tier} WHERE contact_id = ${contactId}`);
+      if (b.stripeCustomerId) updates.push(sql`UPDATE user_profiles SET stripe_customer_id = ${b.stripeCustomerId} WHERE contact_id = ${contactId}`);
+      if (b.stripeSubscriptionId) updates.push(sql`UPDATE user_profiles SET stripe_subscription_id = ${b.stripeSubscriptionId} WHERE contact_id = ${contactId}`);
+      await Promise.all(updates);
+
+      const profile = await sql`SELECT membership_tier, stripe_customer_id, stripe_subscription_id, partner_id FROM user_profiles WHERE contact_id = ${contactId} LIMIT 1`;
+      return res.json({ success: true, contactId, email, profile: profile[0] });
+    }
+
     // GET /api/admin/verify-pin-check — Check what PIN hash is stored vs what you're entering
     if (req.method === 'GET' && url.startsWith('/admin/verify-pin-check')) {
       const params = new URL('http://x' + req.url).searchParams;
