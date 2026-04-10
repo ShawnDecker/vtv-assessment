@@ -2275,10 +2275,10 @@ Don't guess. Run the system.
     // POST /api/admin/pin-login — Short PIN login returns API key
     if (req.method === 'POST' && url === '/admin/pin-login') {
       const { pin } = req.body || {};
-      const validPin = process.env.ADMIN_PIN || 'Launchdate04152026';
+      const validPin = (process.env.ADMIN_PIN || 'Launchdate04152026').trim();
       const validKey = process.env.ADMIN_API_KEY || '';
-      if (!pin || pin !== validPin) {
-        return res.status(401).json({ error: 'Invalid PIN' });
+      if (!pin || pin.trim() !== validPin) {
+        return res.status(401).json({ error: 'Invalid PIN', debug: { pinLen: (pin||'').length, validLen: validPin.length } });
       }
       return res.json({ success: true, apiKey: validKey });
     }
