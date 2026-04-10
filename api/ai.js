@@ -115,14 +115,14 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
     }
 
     // Call Vercel AI Gateway (OpenAI-compatible)
-    const aiResponse = await fetch('https://gateway.ai.vercel.app/v1/chat/completions', {
+    const aiResponse = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${AI_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4-20250514',
+        model: 'anthropic/claude-sonnet-4.5',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
