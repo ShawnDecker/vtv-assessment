@@ -439,8 +439,10 @@ function openContact(id) {
           <div class="pillar-bar"><div class="plbl">Numbers</div><div class="track"><div class="fill" style="width:${((a.numbersTotal||0)/pillarMax*100)}%"></div></div><div class="pval">${a.numbersTotal||0}</div></div>
           <div class="pillar-bar"><div class="plbl">Knowledge</div><div class="track"><div class="fill" style="width:${((a.knowledgeTotal||0)/pillarMax*100)}%"></div></div><div class="pval">${a.knowledgeTotal||0}</div></div>
           <div style="margin-top:8px;font-size:11px;color:#71717a;">Weakest: <span style="color:#ef4444;">${a.weakestPillar||'—'}</span></div>
-          <div style="margin-top:8px;text-align:center;">
-            <a href="https://assessment.valuetovictory.com/report/${a.id}" target="_blank" class="btn btn-sm">View Full Report</a>
+          <div style="margin-top:8px;text-align:center;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+            <a href="https://assessment.valuetovictory.com/report/${a.id}" target="_blank" class="btn btn-sm">View Report</a>
+            <button class="btn btn-sm btn-outline" onclick="emailReport(${a.id},'${esc(c.email)}')">Email to Them</button>
+            <button class="btn btn-sm btn-outline" onclick="emailReport(${a.id},'valuetovictory@gmail.com')">Email to Me</button>
           </div>
         </div>`;
       }).join('')}
@@ -722,6 +724,21 @@ function backfillEmailLog() {
   api('/admin/email-log/backfill')
     .then(d=>{ showToolResult(`Backfill complete: ${d.inserted} records added (total: ${d.afterCount})`); loadAll(); })
     .catch(e=>showToolResult('Backfill failed: '+e.message, true));
+}
+function emailReport(assessmentId, toEmail) {
+  const sendTo = prompt('Send assessment report to:', toEmail);
+  if (!sendTo) return;
+  fetch(BASE+'/send-report', {
+    method:'POST',
+    headers:{'x-api-key':API_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({assessmentId, overrideEmail:sendTo})
+  })
+    .then(r=>r.json())
+    .then(d=>{
+      if (d.error) alert('Error: '+d.error);
+      else alert('Report emailed to '+sendTo);
+    })
+    .catch(e=>alert('Failed: '+e.message));
 }
 </script>
 </body>
