@@ -5063,6 +5063,39 @@ This link expires in 24 hours.
             due_date ASC NULLS LAST, created_at ASC`;
         } catch(e) {}
 
+        // === TOP 3 NEW SIGNUPS (enriched) ===
+        const top3Signups = [];
+        const top3Raw = await sql`
+          SELECT c.id, c.first_name, c.last_name, c.email, c.phone, c.created_at,
+            (SELECT COUNT(*) FROM assessments a WHERE a.contact_id = c.id) as assessment_count,
+            (SELECT a.master_score FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as latest_score,
+            (SELECT a.score_range FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as score_range,
+            (SELECT a.weakest_pillar FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as weakest_pillar,
+            (SELECT a.id FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as latest_assessment_id
+          FROM contacts c ORDER BY c.created_at DESC LIMIT 3
+        `;
+        for (const s of top3Raw) {
+          top3Signups.push({
+            name: [s.first_name, s.last_name].filter(Boolean).join(' ') || 'No Name',
+            email: s.email, phone: s.phone, joinedAt: s.created_at,
+            assessments: Number(s.assessment_count), score: s.latest_score,
+            range: s.score_range, weakest: s.weakest_pillar,
+            reportUrl: s.latest_assessment_id ? `https://assessment.valuetovictory.com/report/${s.latest_assessment_id}` : null
+          });
+        }
+
+        // === TODAY'S DEVOTIONAL PREVIEW ===
+        let todayDevotional = null;
+        try {
+          const fs = require('fs');
+          const path = require('path');
+          const devData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'devotionals.json'), 'utf-8'));
+          const startDate = new Date('2026-04-06');
+          const diffDays = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+          const dayIndex = ((diffDays % 60) + 60) % 60;
+          todayDevotional = devData[dayIndex] || devData[0];
+        } catch(e) {}
+
         // === RECOMMENDATIONS ENGINE ===
         const recommendations = [];
 
@@ -5172,6 +5205,29 @@ This link expires in 24 hours.
 
 <tr><td style="height:16px;"></td></tr>
 
+<!-- TOP 3 NEW PEOPLE -->
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:28px 24px;">
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4A847;font-weight:bold;margin-bottom:16px;">Top 3 Newest People</div>
+  ${top3Signups.map((s,i) => {
+    const scoreColor = {Crisis:'#ef4444',Survival:'#f97316',Growth:'#eab308',Momentum:'#22c55e',Mastery:'#D4A847'}[s.range] || '#71717a';
+    return `<div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:16px;margin-bottom:${i<2?'10':'0'}px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="color:#e4e4e7;font-size:15px;font-weight:bold;">${i+1}. ${s.name}</span>
+        ${s.score ? '<span style="color:'+scoreColor+';font-size:14px;font-weight:bold;">'+s.score+' ('+s.range+')</span>' : '<span style="color:#71717a;font-size:12px;">No assessment yet</span>'}
+      </div>
+      <div style="color:#D4A847;font-size:12px;margin-bottom:4px;">${s.email}</div>
+      <div style="font-size:12px;color:#71717a;">
+        ${s.phone ? 'Phone: '+s.phone+' &mdash; ' : ''}Joined ${new Date(s.joinedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+        ${s.assessments > 0 ? ' &mdash; '+s.assessments+' assessment'+(s.assessments>1?'s':'') : ''}
+        ${s.weakest ? ' &mdash; Weakest: <span style="color:#ef4444;">'+s.weakest+'</span>' : ''}
+      </div>
+      ${s.reportUrl ? '<div style="margin-top:8px;"><a href="'+s.reportUrl+'" style="color:#D4A847;font-size:12px;text-decoration:underline;">View Full Report &rarr;</a></div>' : ''}
+    </div>`;
+  }).join('')}
+</td></tr>
+
+<tr><td style="height:16px;"></td></tr>
+
 <!-- RECOMMENDATIONS -->
 <tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:28px 24px;">
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4A847;font-weight:bold;margin-bottom:12px;">Strategic Recommendations</div>
@@ -5238,6 +5294,24 @@ This link expires in 24 hours.
   </td>
 </tr></table>
 </td></tr>
+
+<!-- DEVOTIONAL PREVIEW -->
+${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:28px 24px;">
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4A847;font-weight:bold;margin-bottom:4px;">Today's Devotional &mdash; Going Out at 11:47 AM</div>
+  <div style="font-size:12px;color:#71717a;margin-bottom:16px;">Day ${todayDevotional.day_number} of 60 &mdash; Running From Miracles</div>
+  <div style="font-family:Georgia,serif;font-size:18px;color:#e4e4e7;font-style:italic;margin-bottom:12px;">${todayDevotional.title}</div>
+  <div style="font-size:12px;color:#71717a;margin-bottom:12px;">Chapter: ${todayDevotional.chapter_title} &mdash; Theme: ${todayDevotional.theme}</div>
+  <div style="background:#111118;border-left:3px solid #D4A847;padding:12px 16px;margin-bottom:16px;border-radius:0 6px 6px 0;">
+    <div style="color:#D4A847;font-size:12px;font-weight:bold;margin-bottom:4px;">${todayDevotional.scripture_reference}</div>
+    <div style="color:#e4e4e7;font-size:14px;font-style:italic;line-height:1.5;">"${todayDevotional.scripture_text}"</div>
+  </div>
+  <div style="color:#a1a1aa;font-size:13px;line-height:1.6;margin-bottom:12px;">${todayDevotional.reflection}</div>
+  <div style="background:#111118;border:1px solid #27272a;border-radius:6px;padding:12px 14px;">
+    <div style="color:#22c55e;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Action Step</div>
+    <div style="color:#e4e4e7;font-size:13px;line-height:1.5;">${todayDevotional.action_step}</div>
+  </div>
+</td></tr>` : ''}
 
 <!-- FOOTER -->
 <tr><td style="text-align:center;padding-top:24px;">
@@ -6101,6 +6175,121 @@ This link expires in 24 hours.
         });
       } catch (dashErr) {
         return res.status(500).json({ error: dashErr.message });
+      }
+    }
+
+    // ========== GET /api/devotional/send — Send daily devotional to all subscribers ==========
+    if (req.method === 'GET' && url === '/devotional/send') {
+      try {
+        // Get today's devotional
+        const fs = require('fs');
+        const path = require('path');
+        let devotionals = [];
+        try {
+          devotionals = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'devotionals.json'), 'utf-8'));
+        } catch(e) { return res.status(500).json({ error: 'Could not load devotionals data' }); }
+
+        const startDate = new Date('2026-04-06');
+        const today = new Date();
+        const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+        const dayIndex = ((diffDays % 60) + 60) % 60;
+        const dev = devotionals[dayIndex] || devotionals[0];
+
+        // Get subscribers
+        let subscribers = [];
+        try {
+          subscribers = await sql`
+            SELECT DISTINCT c.id as contact_id, c.email, c.first_name
+            FROM contacts c
+            LEFT JOIN devotional_progress dp ON dp.contact_id = c.id
+            LEFT JOIN user_profiles up ON up.contact_id = c.id
+            WHERE c.email IS NOT NULL AND c.email != ''
+              AND (dp.id IS NOT NULL OR up.membership_tier IN ('individual','couple','premium'))
+              AND (dp.opted_out IS NULL OR dp.opted_out = false)
+            ORDER BY c.id ASC
+          `;
+        } catch(e) {
+          // If devotional tables don't exist, send to all contacts
+          subscribers = await sql`SELECT id as contact_id, email, first_name FROM contacts WHERE email IS NOT NULL AND email != '' ORDER BY id ASC`;
+        }
+
+        if (subscribers.length === 0) return res.json({ sent: 0, message: 'No subscribers found' });
+        if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return res.status(500).json({ error: 'Email credentials not configured' });
+
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+        });
+
+        let sentCount = 0;
+        const results = [];
+
+        for (const sub of subscribers) {
+          try {
+            const firstName = sub.first_name || 'Friend';
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 16px;"><tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+<tr><td style="text-align:center;padding-bottom:20px;">
+  <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;margin-bottom:6px;">RUNNING FROM MIRACLES</div>
+  <div style="font-family:Georgia,serif;font-size:22px;font-style:italic;color:#ffffff;">Daily Word</div>
+  <div style="font-size:12px;color:#71717a;margin-top:4px;">Day ${dev.day_number} of 60 &mdash; ${today.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>
+</td></tr>
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:36px 28px;">
+  <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 16px;">${firstName},</p>
+  <div style="font-family:Georgia,serif;font-size:20px;color:#D4A847;font-style:italic;margin-bottom:4px;">${dev.title}</div>
+  <div style="font-size:12px;color:#71717a;margin-bottom:20px;">Chapter: ${dev.chapter_title} &mdash; Theme: ${dev.theme}</div>
+  <div style="background:#111118;border-left:3px solid #D4A847;padding:16px 20px;margin:0 0 24px;border-radius:0 8px 8px 0;">
+    <p style="color:#D4A847;font-size:13px;font-weight:bold;margin:0 0 6px;">${dev.scripture_reference}</p>
+    <p style="color:#e4e4e7;font-size:15px;font-style:italic;line-height:1.6;margin:0;">"${dev.scripture_text}"</p>
+  </div>
+  <p style="color:#a1a1aa;font-size:14px;line-height:1.7;margin:0 0 20px;">${dev.reflection}</p>
+  <hr style="border:none;border-top:1px solid #27272a;margin:20px 0;"/>
+  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:16px 20px;margin-bottom:20px;">
+    <p style="color:#D4A847;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 8px;">Today's Prayer</p>
+    <p style="color:#e4e4e7;font-size:14px;font-style:italic;line-height:1.6;margin:0;">${dev.prayer}</p>
+  </div>
+  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:16px 20px;">
+    <p style="color:#22c55e;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 8px;">Action Step</p>
+    <p style="color:#e4e4e7;font-size:14px;line-height:1.6;margin:0;">${dev.action_step}</p>
+  </div>
+</td></tr>
+<tr><td style="text-align:center;padding-top:24px;">
+  <a href="https://assessment.valuetovictory.com/daily-word" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:8px;">Read Online</a>
+</td></tr>
+<tr><td style="text-align:center;padding-top:20px;">
+  <p style="color:#52525b;font-size:11px;margin:0;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p>
+  <p style="color:#3f3f46;font-size:10px;margin:6px 0 0;">Running From Miracles &mdash; 60-Day Devotional</p>
+</td></tr>
+</table></td></tr></table></body></html>`;
+
+            await transporter.sendMail({
+              from: `"Running From Miracles" <${process.env.GMAIL_USER}>`,
+              to: sub.email,
+              subject: `Day ${dev.day_number}: ${dev.title} — ${dev.scripture_reference}`,
+              html,
+            });
+            sentCount++;
+            results.push({ email: sub.email, status: 'sent' });
+            await logEmail(sql, { recipient: sub.email, emailType: 'devotional', subject: `Day ${dev.day_number}: ${dev.title}`, contactId: sub.contact_id, metadata: { day: dev.day_number, chapter: dev.chapter_title } });
+
+            // Update progress
+            try {
+              await sql`INSERT INTO devotional_progress (contact_id, current_day, last_sent_at)
+                VALUES (${sub.contact_id}, ${dev.day_number}, NOW())
+                ON CONFLICT (contact_id) DO UPDATE SET current_day = ${dev.day_number}, last_sent_at = NOW(), total_sent = devotional_progress.total_sent + 1`;
+            } catch(e) {}
+          } catch (sendErr) {
+            results.push({ email: sub.email, status: 'error', error: sendErr.message });
+            await logEmail(sql, { recipient: sub.email, emailType: 'devotional', contactId: sub.contact_id, status: 'failed', metadata: { error: sendErr.message } });
+          }
+        }
+
+        return res.json({ sent: sentCount, total: subscribers.length, day: dev.day_number, title: dev.title, results });
+      } catch(devErr) {
+        console.error('[devotional/send] Error:', devErr);
+        return res.status(500).json({ error: devErr.message });
       }
     }
 
