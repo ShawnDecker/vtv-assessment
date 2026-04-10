@@ -4888,6 +4888,352 @@ This link expires in 24 hours.
       }
     }
 
+    // ========== CEO TODO LIST ==========
+    async function ensureCeoTodosTable() {
+      try {
+        await sql`CREATE TABLE IF NOT EXISTS ceo_todos (
+          id SERIAL PRIMARY KEY,
+          task TEXT NOT NULL,
+          priority TEXT DEFAULT 'medium',
+          status TEXT DEFAULT 'pending',
+          due_date DATE,
+          created_at TIMESTAMP DEFAULT NOW(),
+          completed_at TIMESTAMP
+        )`;
+      } catch(e) {}
+    }
+
+    // GET /api/admin/todos — List CEO todos
+    if (req.method === 'GET' && url === '/admin/todos') {
+      await ensureCeoTodosTable();
+      const todos = await sql`SELECT * FROM ceo_todos ORDER BY
+        CASE priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END,
+        created_at DESC`;
+      return res.json(todos);
+    }
+
+    // POST /api/admin/todos — Add a CEO todo
+    if (req.method === 'POST' && url === '/admin/todos') {
+      await ensureCeoTodosTable();
+      const b = req.body || {};
+      if (!b.task) return res.status(400).json({ error: 'task required' });
+      const row = await sql`INSERT INTO ceo_todos (task, priority, due_date) VALUES (${b.task}, ${b.priority || 'medium'}, ${b.dueDate || null}) RETURNING *`;
+      return res.json(row[0]);
+    }
+
+    // POST /api/admin/todos/:id/complete — Mark todo complete
+    if (req.method === 'POST' && url.match(/^\/admin\/todos\/\d+\/complete$/)) {
+      await ensureCeoTodosTable();
+      const todoId = parseInt(url.split('/')[3]);
+      await sql`UPDATE ceo_todos SET status = 'done', completed_at = NOW() WHERE id = ${todoId}`;
+      return res.json({ success: true });
+    }
+
+    // DELETE /api/admin/todos/:id — Delete a todo
+    if (req.method === 'DELETE' && url.match(/^\/admin\/todos\/\d+$/)) {
+      await ensureCeoTodosTable();
+      const todoId = parseInt(url.split('/')[3]);
+      await sql`DELETE FROM ceo_todos WHERE id = ${todoId}`;
+      return res.json({ success: true });
+    }
+
+    // ========== CEO DAILY BRIEFING ==========
+    // GET /api/ceo-briefing — Daily executive summary email sent at 6:45 AM
+    if (req.method === 'GET' && url === '/ceo-briefing') {
+      try {
+        const ceoEmail = 'valuetovictory@gmail.com';
+        const now = new Date();
+        const yesterday = new Date(now - 24 * 60 * 60 * 1000);
+        const last7 = new Date(now - 7 * 24 * 60 * 60 * 1000);
+        const last30 = new Date(now - 30 * 24 * 60 * 60 * 1000);
+        const todayStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        // === METRICS ===
+        const totalContacts = await sql`SELECT COUNT(*) as cnt FROM contacts`;
+        const totalAssessments = await sql`SELECT COUNT(*) as cnt FROM assessments`;
+
+        // New signups (24h, 7d, 30d)
+        const new24h = await sql`SELECT COUNT(*) as cnt FROM contacts WHERE created_at >= ${yesterday.toISOString()}`;
+        const new7d = await sql`SELECT COUNT(*) as cnt FROM contacts WHERE created_at >= ${last7.toISOString()}`;
+        const new30d = await sql`SELECT COUNT(*) as cnt FROM contacts WHERE created_at >= ${last30.toISOString()}`;
+
+        // New assessments (24h, 7d, 30d)
+        const assess24h = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE completed_at >= ${yesterday.toISOString()}`;
+        const assess7d = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE completed_at >= ${last7.toISOString()}`;
+        const assess30d = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE completed_at >= ${last30.toISOString()}`;
+
+        // Latest signups (last 24h with detail)
+        const recentSignups = await sql`SELECT id, first_name, last_name, email, created_at FROM contacts WHERE created_at >= ${yesterday.toISOString()} ORDER BY created_at DESC`;
+
+        // Latest assessments (last 24h with detail)
+        const recentAssessments = await sql`SELECT a.id, a.master_score, a.score_range, a.weakest_pillar, a.completed_at, a.depth, c.first_name, c.last_name, c.email
+          FROM assessments a JOIN contacts c ON a.contact_id = c.id
+          WHERE a.completed_at >= ${yesterday.toISOString()}
+          ORDER BY a.completed_at DESC`;
+
+        // Score distribution
+        const dist = await sql`SELECT score_range, COUNT(*) as cnt FROM assessments GROUP BY score_range ORDER BY cnt DESC`;
+        const totalA = Number(totalAssessments[0].cnt);
+
+        // Pillar averages
+        const avgs = await sql`SELECT AVG(time_total) as t, AVG(people_total) as p, AVG(influence_total) as i, AVG(numbers_total) as n, AVG(knowledge_total) as k FROM assessments`;
+        const avg = avgs[0] || {};
+
+        // Weakest pillar distribution
+        const weakDist = await sql`SELECT weakest_pillar, COUNT(*) as cnt FROM assessments WHERE weakest_pillar IS NOT NULL GROUP BY weakest_pillar ORDER BY cnt DESC`;
+
+        // Coaching sequences active
+        let coachingActive = 0, coachingTotal = 0;
+        try {
+          const cs = await sql`SELECT COUNT(*) as cnt FROM coaching_sequences WHERE unsubscribed = FALSE AND current_day <= 5`;
+          const ct = await sql`SELECT COUNT(*) as cnt FROM coaching_sequences`;
+          coachingActive = Number(cs[0].cnt);
+          coachingTotal = Number(ct[0].cnt);
+        } catch(e) {}
+
+        // Teams
+        let teamCount = 0;
+        try {
+          const tc = await sql`SELECT COUNT(*) as cnt FROM teams`;
+          teamCount = Number(tc[0].cnt);
+        } catch(e) {}
+
+        // Email log stats (last 24h)
+        let emailsSent24h = 0, emailsFailed24h = 0;
+        try {
+          const es = await sql`SELECT status, COUNT(*) as cnt FROM email_log WHERE sent_at >= ${yesterday.toISOString()} GROUP BY status`;
+          for (const r of es) {
+            if (r.status === 'sent') emailsSent24h = Number(r.cnt);
+            else emailsFailed24h = Number(r.cnt);
+          }
+        } catch(e) {}
+
+        // Membership tiers
+        let tierBreakdown = [];
+        try {
+          tierBreakdown = await sql`SELECT membership_tier, COUNT(*) as cnt FROM user_profiles GROUP BY membership_tier ORDER BY cnt DESC`;
+        } catch(e) {}
+
+        // === CEO TODOS ===
+        let pendingTodos = [];
+        try {
+          await ensureCeoTodosTable();
+          pendingTodos = await sql`SELECT * FROM ceo_todos WHERE status = 'pending' ORDER BY
+            CASE priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END,
+            due_date ASC NULLS LAST, created_at ASC`;
+        } catch(e) {}
+
+        // === RECOMMENDATIONS ENGINE ===
+        const recommendations = [];
+
+        // Growth velocity
+        const n24 = Number(new24h[0].cnt);
+        const n7 = Number(new7d[0].cnt);
+        const n30 = Number(new30d[0].cnt);
+        const dailyAvg7 = (n7 / 7).toFixed(1);
+        const dailyAvg30 = (n30 / 30).toFixed(1);
+        if (n24 === 0) recommendations.push({ priority: 'HIGH', area: 'Acquisition', action: 'Zero new signups in the last 24 hours. Review marketing channels and consider a social media push or email blast to re-engage leads.' });
+        if (Number(dailyAvg7) > Number(dailyAvg30) * 1.2) recommendations.push({ priority: 'INFO', area: 'Growth', action: `Signup velocity is accelerating — ${dailyAvg7}/day (7d) vs ${dailyAvg30}/day (30d). Consider scaling what\'s working.` });
+        if (Number(dailyAvg7) < Number(dailyAvg30) * 0.7 && n30 > 10) recommendations.push({ priority: 'HIGH', area: 'Growth', action: `Signup velocity is declining — ${dailyAvg7}/day (7d) vs ${dailyAvg30}/day (30d). Investigate drop-off and refresh acquisition strategy.` });
+
+        // Conversion
+        const totalC = Number(totalContacts[0].cnt);
+        if (totalC > 0) {
+          const conversionRate = ((totalA / totalC) * 100).toFixed(1);
+          if (conversionRate < 50) recommendations.push({ priority: 'MEDIUM', area: 'Conversion', action: `Only ${conversionRate}% of contacts have completed an assessment. Consider a re-engagement email campaign to unconverted contacts.` });
+        }
+
+        // Score health
+        const crisisCount = dist.find(d => d.score_range === 'Crisis');
+        if (crisisCount && Number(crisisCount.cnt) / totalA > 0.2) recommendations.push({ priority: 'MEDIUM', area: 'Product', action: `${Math.round(Number(crisisCount.cnt)/totalA*100)}% of assessments are in Crisis range. Consider adding a guided onboarding flow or crisis-specific coaching track.` });
+
+        // Coaching
+        if (coachingActive === 0 && coachingTotal > 0) recommendations.push({ priority: 'LOW', area: 'Engagement', action: 'No active coaching sequences. All users have completed or unsubscribed. Consider a re-engagement or advanced coaching series.' });
+
+        // Email health
+        if (emailsFailed24h > 0) recommendations.push({ priority: 'HIGH', area: 'Infrastructure', action: `${emailsFailed24h} emails failed in the last 24 hours. Check Gmail SMTP credentials and sending limits.` });
+
+        // Revenue opportunity
+        const freeUsers = tierBreakdown.find(t => t.membership_tier === 'free');
+        if (freeUsers && Number(freeUsers.cnt) > 10) recommendations.push({ priority: 'MEDIUM', area: 'Revenue', action: `${Number(freeUsers.cnt)} users are on the free tier. A targeted upgrade campaign could convert 10-20% to paid memberships.` });
+
+        if (recommendations.length === 0) recommendations.push({ priority: 'INFO', area: 'Status', action: 'All systems operating within normal parameters. No immediate action required.' });
+
+        // === BUILD EMAIL ===
+        const scoreColors = { Crisis:'#ef4444', Survival:'#f97316', Growth:'#eab308', Momentum:'#22c55e', Mastery:'#D4A847' };
+        const priorityColors = { HIGH:'#ef4444', MEDIUM:'#f97316', LOW:'#eab308', INFO:'#3b82f6' };
+
+        const signupRows = recentSignups.map(s =>
+          `<tr><td style="color:#e4e4e7;font-size:13px;padding:6px 8px;">${s.first_name || ''} ${s.last_name || ''}</td><td style="color:#D4A847;font-size:12px;padding:6px 8px;">${s.email}</td><td style="color:#71717a;font-size:11px;padding:6px 8px;">${new Date(s.created_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</td></tr>`
+        ).join('') || '<tr><td colspan="3" style="color:#71717a;font-size:13px;padding:12px 8px;text-align:center;">No new signups in the last 24 hours</td></tr>';
+
+        const assessmentRows = recentAssessments.map(a => {
+          const color = scoreColors[a.score_range] || '#D4A847';
+          return `<tr><td style="color:#e4e4e7;font-size:13px;padding:6px 8px;">${a.first_name || ''} ${a.last_name || ''}</td><td style="color:${color};font-size:13px;font-weight:bold;padding:6px 8px;">${a.master_score} (${a.score_range})</td><td style="color:#71717a;font-size:11px;padding:6px 8px;">${a.weakest_pillar}</td></tr>`;
+        }).join('') || '<tr><td colspan="3" style="color:#71717a;font-size:13px;padding:12px 8px;text-align:center;">No new assessments in the last 24 hours</td></tr>';
+
+        const distRows = dist.map(d => {
+          const pct = totalA > 0 ? Math.round(Number(d.cnt)/totalA*100) : 0;
+          const color = scoreColors[d.score_range] || '#71717a';
+          return `<tr><td style="color:${color};font-size:13px;font-weight:bold;padding:4px 8px;">${d.score_range||'Unknown'}</td><td style="color:#e4e4e7;font-size:13px;padding:4px 8px;text-align:right;">${d.cnt}</td><td style="color:#71717a;font-size:12px;padding:4px 8px;text-align:right;">${pct}%</td></tr>`;
+        }).join('');
+
+        const recRows = recommendations.map(r => {
+          const color = priorityColors[r.priority] || '#71717a';
+          return `<div style="background:#111118;border-left:3px solid ${color};padding:12px 16px;margin:8px 0;border-radius:0 6px 6px 0;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:${color};font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;">${r.priority}</span><span style="color:#71717a;font-size:11px;">${r.area}</span></div>
+            <div style="color:#a1a1aa;font-size:13px;line-height:1.5;">${r.action}</div>
+          </div>`;
+        }).join('');
+
+        const pillarBars = [
+          { name: 'Time', val: Math.round((Number(avg.t)||0)*10)/10 },
+          { name: 'People', val: Math.round((Number(avg.p)||0)*10)/10 },
+          { name: 'Influence', val: Math.round((Number(avg.i)||0)*10)/10 },
+          { name: 'Numbers', val: Math.round((Number(avg.n)||0)*10)/10 },
+          { name: 'Knowledge', val: Math.round((Number(avg.k)||0)*10)/10 },
+        ].map(p => `<tr><td style="color:#a1a1aa;font-size:12px;padding:4px 8px;width:80px;">${p.name}</td><td style="padding:4px 8px;"><div style="background:#27272a;border-radius:4px;height:16px;width:100%;"><div style="background:linear-gradient(90deg,#D4A847,#b8942e);height:16px;border-radius:4px;width:${(p.val/50*100).toFixed(0)}%;"></div></div></td><td style="color:#e4e4e7;font-size:12px;font-weight:bold;padding:4px 8px;width:40px;text-align:right;">${p.val}</td></tr>`).join('');
+
+        const tierRows = tierBreakdown.map(t =>
+          `<tr><td style="color:#a1a1aa;font-size:13px;padding:4px 8px;text-transform:capitalize;">${t.membership_tier}</td><td style="color:#e4e4e7;font-size:13px;font-weight:bold;padding:4px 8px;text-align:right;">${t.cnt}</td></tr>`
+        ).join('') || '<tr><td colspan="2" style="color:#71717a;font-size:13px;padding:8px;text-align:center;">No membership data</td></tr>';
+
+        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 16px;"><tr><td align="center">
+<table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;">
+
+<!-- HEADER -->
+<tr><td style="text-align:center;padding-bottom:24px;">
+  <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#D4A847;margin-bottom:6px;">VALUE TO VICTORY</div>
+  <div style="font-family:Georgia,serif;font-size:24px;font-style:italic;color:#ffffff;margin-bottom:4px;">CEO Daily Briefing</div>
+  <div style="font-size:12px;color:#71717a;">${todayStr} &mdash; 6:45 AM ET</div>
+</td></tr>
+
+<!-- EXECUTIVE SUMMARY -->
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:32px 28px;margin-bottom:16px;">
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4A847;font-weight:bold;margin-bottom:16px;">Executive Summary</div>
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="text-align:center;padding:12px 4px;"><div style="font-size:28px;font-weight:bold;color:#D4A847;">${totalC}</div><div style="font-size:10px;color:#71717a;text-transform:uppercase;letter-spacing:1px;margin-top:2px;">Total Clients</div></td>
+      <td style="text-align:center;padding:12px 4px;"><div style="font-size:28px;font-weight:bold;color:#D4A847;">${totalA}</div><div style="font-size:10px;color:#71717a;text-transform:uppercase;letter-spacing:1px;margin-top:2px;">Assessments</div></td>
+      <td style="text-align:center;padding:12px 4px;"><div style="font-size:28px;font-weight:bold;color:#D4A847;">${teamCount}</div><div style="font-size:10px;color:#71717a;text-transform:uppercase;letter-spacing:1px;margin-top:2px;">Teams</div></td>
+    </tr>
+  </table>
+  <hr style="border:none;border-top:1px solid #27272a;margin:16px 0;"/>
+  <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+    <tr><td style="color:#71717a;padding:4px 0;">New Signups (24h / 7d / 30d)</td><td style="color:#e4e4e7;text-align:right;font-weight:bold;padding:4px 0;">${n24} / ${n7} / ${n30}</td></tr>
+    <tr><td style="color:#71717a;padding:4px 0;">Assessments (24h / 7d / 30d)</td><td style="color:#e4e4e7;text-align:right;font-weight:bold;padding:4px 0;">${Number(assess24h[0].cnt)} / ${Number(assess7d[0].cnt)} / ${Number(assess30d[0].cnt)}</td></tr>
+    <tr><td style="color:#71717a;padding:4px 0;">Avg Daily Signups (7d / 30d)</td><td style="color:#e4e4e7;text-align:right;font-weight:bold;padding:4px 0;">${dailyAvg7} / ${dailyAvg30}</td></tr>
+    <tr><td style="color:#71717a;padding:4px 0;">Emails Sent / Failed (24h)</td><td style="color:#e4e4e7;text-align:right;font-weight:bold;padding:4px 0;">${emailsSent24h} / <span style="color:${emailsFailed24h>0?'#ef4444':'#22c55e'};">${emailsFailed24h}</span></td></tr>
+    <tr><td style="color:#71717a;padding:4px 0;">Active Coaching Sequences</td><td style="color:#e4e4e7;text-align:right;font-weight:bold;padding:4px 0;">${coachingActive} of ${coachingTotal}</td></tr>
+  </table>
+</td></tr>
+
+<tr><td style="height:16px;"></td></tr>
+
+<!-- RECOMMENDATIONS -->
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:28px 24px;">
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4A847;font-weight:bold;margin-bottom:12px;">Strategic Recommendations</div>
+  ${recRows}
+</td></tr>
+
+<tr><td style="height:16px;"></td></tr>
+
+<!-- CEO TODO LIST -->
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:28px 24px;">
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4A847;font-weight:bold;margin-bottom:12px;">Your Action Items <span style="color:#71717a;font-weight:normal;">(${pendingTodos.length} open)</span></div>
+  ${pendingTodos.length > 0 ? pendingTodos.map((t,i) => {
+    const pColor = {critical:'#ef4444',high:'#f97316',medium:'#D4A847',low:'#71717a'}[t.priority] || '#71717a';
+    const dueStr = t.due_date ? ' &mdash; Due ' + new Date(t.due_date).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+    return `<div style="background:#111118;border-left:3px solid ${pColor};padding:10px 14px;margin:6px 0;border-radius:0 6px 6px 0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="color:#e4e4e7;font-size:13px;line-height:1.4;">${i+1}. ${t.task}</span>
+        <span style="color:${pColor};font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;margin-left:8px;">${t.priority}${dueStr}</span>
+      </div>
+    </div>`;
+  }).join('') : '<div style="color:#71717a;font-size:13px;padding:12px 0;text-align:center;">No pending action items. Add todos via the admin API.</div>'}
+</td></tr>
+
+<tr><td style="height:16px;"></td></tr>
+
+<!-- NEW SIGNUPS -->
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:28px 24px;">
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4A847;font-weight:bold;margin-bottom:12px;">New Signups &mdash; Last 24 Hours <span style="color:#71717a;font-weight:normal;">(${recentSignups.length})</span></div>
+  <table width="100%" cellpadding="0" cellspacing="0">${signupRows}</table>
+</td></tr>
+
+<tr><td style="height:16px;"></td></tr>
+
+<!-- RECENT ASSESSMENTS -->
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:28px 24px;">
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4A847;font-weight:bold;margin-bottom:12px;">Assessment Activity &mdash; Last 24 Hours <span style="color:#71717a;font-weight:normal;">(${recentAssessments.length})</span></div>
+  <table width="100%" cellpadding="0" cellspacing="0">${assessmentRows}</table>
+</td></tr>
+
+<tr><td style="height:16px;"></td></tr>
+
+<!-- PILLAR HEALTH -->
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:28px 24px;">
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4A847;font-weight:bold;margin-bottom:12px;">Platform Pillar Averages</div>
+  <table width="100%" cellpadding="0" cellspacing="0">${pillarBars}</table>
+</td></tr>
+
+<tr><td style="height:16px;"></td></tr>
+
+<!-- SCORE DISTRIBUTION + TIERS -->
+<tr><td>
+<table width="100%" cellpadding="0" cellspacing="0"><tr>
+  <td width="50%" valign="top" style="padding-right:8px;">
+    <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:20px;">
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#D4A847;font-weight:bold;margin-bottom:10px;">Score Distribution</div>
+      <table width="100%" cellpadding="0" cellspacing="0">${distRows}</table>
+    </div>
+  </td>
+  <td width="50%" valign="top" style="padding-left:8px;">
+    <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:20px;">
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#D4A847;font-weight:bold;margin-bottom:10px;">Membership Tiers</div>
+      <table width="100%" cellpadding="0" cellspacing="0">${tierRows}</table>
+    </div>
+  </td>
+</tr></table>
+</td></tr>
+
+<!-- FOOTER -->
+<tr><td style="text-align:center;padding-top:24px;">
+  <a href="https://assessment.valuetovictory.com/admin/contacts" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;">Open Command Center</a>
+</td></tr>
+<tr><td style="text-align:center;padding-top:20px;">
+  <p style="color:#52525b;font-size:11px;margin:0;">Value to Victory &mdash; CEO Daily Briefing</p>
+  <p style="color:#3f3f46;font-size:10px;margin:6px 0 0;">Automated report generated at ${now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})} ET</p>
+</td></tr>
+
+</table></td></tr></table></body></html>`;
+
+        // Send email
+        if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+          return res.status(500).json({ error: 'Email credentials not configured' });
+        }
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+        });
+        await transporter.sendMail({
+          from: `"Value to Victory — Executive Brief" <${process.env.GMAIL_USER}>`,
+          to: ceoEmail,
+          subject: `CEO Briefing — ${todayStr} | ${n24} new signups, ${Number(assess24h[0].cnt)} assessments`,
+          html,
+        });
+
+        await logEmail(sql, { recipient: ceoEmail, emailType: 'ceo_briefing', subject: `CEO Briefing — ${todayStr}`, metadata: { signups24h: n24, assessments24h: Number(assess24h[0].cnt), totalClients: totalC, totalAssessments: totalA } });
+
+        return res.json({ sent: true, to: ceoEmail, date: todayStr, signups24h: n24, assessments24h: Number(assess24h[0].cnt) });
+      } catch (briefingErr) {
+        console.error('[ceo-briefing] Error:', briefingErr);
+        return res.status(500).json({ error: 'CEO briefing failed', details: briefingErr.message });
+      }
+    }
+
     // ========== STORY LINKS ==========
     // Ensure story_links table exists
     async function ensureStoryLinksTable() {
