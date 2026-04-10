@@ -1,5 +1,11 @@
 {
   "version": 2,
+  "crons": [
+    {
+      "path": "/api/ceo-briefing",
+      "schedule": "45 10 * * *"
+    }
+  ],
   "routes": [
     {
       "src": "/api/r/(.*)",
