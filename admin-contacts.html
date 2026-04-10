@@ -131,7 +131,10 @@
     <!-- CLIENTS PANEL -->
     <div class="panel" id="panel-clients">
       <input type="text" class="search" id="clientSearch" placeholder="Search by name or email..." oninput="filterClients()"/>
-      <div id="clientCount" style="font-size:12px;color:#71717a;margin-bottom:10px;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div id="clientCount" style="font-size:12px;color:#71717a;"></div>
+        <button onclick="deleteTestRecords()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;font-weight:bold;">Delete All Test Records</button>
+      </div>
       <div id="clientList"></div>
     </div>
 
@@ -379,7 +382,10 @@ function renderClients(list) {
     const name = [c.firstName,c.lastName].filter(Boolean).join(' ')||'No Name';
     const range = c.latestAssessment?.scoreRange;
     const score = c.latestAssessment?.masterScore;
-    return `<div class="card" style="cursor:pointer;" onclick="openContact(${c.id})">
+    return `<div class="card" style="cursor:pointer;position:relative;" onclick="openContact(${c.id})">
+      <div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;">
+        <button onclick="event.stopPropagation();deleteContact(${c.id},'${esc(name).replace(/'/g,"\\'")}')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;" title="Delete">X</button>
+      </div>
       <div class="name">${i+1}. ${esc(name)}</div>
       <div class="email">${esc(c.email||'')}</div>
       <div class="meta">
@@ -400,6 +406,35 @@ function filterClients() {
     (c.lastName||'').toLowerCase().includes(q) ||
     (c.email||'').toLowerCase().includes(q)
   ));
+}
+
+async function deleteContact(id, name) {
+  if (!confirm(`Delete "${name}" and all their assessments? This cannot be undone.`)) return;
+  try {
+    const r = await fetch(`/api/admin/contacts/${id}`, { method:'DELETE', headers:{'x-api-key':API_KEY} });
+    if (!r.ok) throw new Error(r.status);
+    DATA.contacts = DATA.contacts.filter(c=>c.id!==id);
+    renderClients(DATA.contacts);
+    closeDetail();
+  } catch(e) { alert('Delete failed: '+e.message); }
+}
+
+async function deleteTestRecords() {
+  const testContacts = DATA.contacts.filter(c =>
+    (c.email||'').toLowerCase().includes('test') ||
+    (c.firstName||'').toLowerCase()==='test' ||
+    (c.lastName||'').toLowerCase()==='test'
+  );
+  if (testContacts.length===0) return alert('No test records found.');
+  if (!confirm(`Delete ${testContacts.length} test record(s)? This cannot be undone.\n\n${testContacts.map(c=>(c.email||'no email')).join('\n')}`)) return;
+  try {
+    const ids = testContacts.map(c=>c.id);
+    const r = await fetch('/api/admin/contacts/bulk', { method:'DELETE', headers:{'Content-Type':'application/json','x-api-key':API_KEY}, body:JSON.stringify({ids}) });
+    if (!r.ok) throw new Error(r.status);
+    DATA.contacts = DATA.contacts.filter(c=>!ids.includes(c.id));
+    renderClients(DATA.contacts);
+    alert(`Deleted ${ids.length} test record(s).`);
+  } catch(e) { alert('Bulk delete failed: '+e.message); }
 }
 
 // ===== CLIENT DETAIL =====

@@ -2308,6 +2308,32 @@ Don't guess. Run the system.
       return res.json({ contact, assessments: ca.map(mapAssessment) });
     }
 
+    // DELETE /api/admin/contacts/:id
+    if (req.method === 'DELETE' && url.match(/^\/admin\/contacts\/\d+$/)) {
+      const id = parseInt(url.split('/').pop());
+      const rows = await sql`SELECT * FROM contacts WHERE id = ${id} LIMIT 1`;
+      if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+      // Delete related records first
+      await sql`DELETE FROM assessments WHERE contact_id = ${id}`;
+      await sql`DELETE FROM coaching_sequences WHERE contact_id = ${id}`;
+      await sql`DELETE FROM email_engagement WHERE contact_id = ${id}`;
+      await sql`DELETE FROM contacts WHERE id = ${id}`;
+      return res.json({ success: true, deleted: { email: rows[0].email, id } });
+    }
+
+    // DELETE /api/admin/contacts/bulk — body: { ids: [1,2,3] }
+    if (req.method === 'DELETE' && url === '/admin/contacts/bulk') {
+      const { ids } = req.body || {};
+      if (!ids || !Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'ids array required' });
+      for (const id of ids) {
+        await sql`DELETE FROM assessments WHERE contact_id = ${id}`;
+        await sql`DELETE FROM coaching_sequences WHERE contact_id = ${id}`;
+        await sql`DELETE FROM email_engagement WHERE contact_id = ${id}`;
+        await sql`DELETE FROM contacts WHERE id = ${id}`;
+      }
+      return res.json({ success: true, deleted: ids.length });
+    }
+
     // GET /api/admin/analytics
     if (req.method === 'GET' && url === '/admin/analytics') {
       const dist = await sql`SELECT score_range as range, COUNT(*) as count FROM assessments GROUP BY score_range`;
