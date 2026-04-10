@@ -2308,30 +2308,59 @@ Don't guess. Run the system.
       return res.json({ contact, assessments: ca.map(mapAssessment) });
     }
 
+    // Helper: cascade-delete a contact and all related data
+    async function cascadeDeleteContact(id) {
+      // Get assessment IDs for this contact first
+      const assessmentRows = await sql`SELECT id FROM assessments WHERE contact_id = ${id}`;
+      const aIds = assessmentRows.map(r => r.id);
+      // Delete tables that reference assessment_id
+      if (aIds.length > 0) {
+        for (const aId of aIds) {
+          await sql`DELETE FROM answer_history WHERE assessment_id = ${aId}`;
+          await sql`DELETE FROM feedback WHERE assessment_id = ${aId}`;
+        }
+      }
+      // Delete tables that reference contact_id (try each, ignore if table doesn't exist)
+      const contactTables = [
+        'assessment_progress', 'assessments', 'analytics_events', 'challenges',
+        'cherish_honor_matrix', 'coaching_requests', 'coaching_sequences',
+        'couple_challenge_responses', 'email_engagement', 'email_log',
+        'intimacy_results', 'love_language_results', 'partner_profiles',
+        'privacy_preferences', 'relationship_matrix', 'user_profiles',
+        'team_members', 'referrals'
+      ];
+      for (const t of contactTables) {
+        try { await sql.unsafe(`DELETE FROM ${t} WHERE contact_id = $1`, [id]); } catch(e) {}
+      }
+      // Handle couples (initiator or partner)
+      try { await sql`DELETE FROM couples WHERE initiator_contact_id = ${id} OR partner_contact_id = ${id}`; } catch(e) {}
+      // Finally delete the contact
+      await sql`DELETE FROM contacts WHERE id = ${id}`;
+    }
+
     // DELETE /api/admin/contacts/:id
     if (req.method === 'DELETE' && url.match(/^\/admin\/contacts\/\d+$/)) {
       const id = parseInt(url.split('/').pop());
       const rows = await sql`SELECT * FROM contacts WHERE id = ${id} LIMIT 1`;
       if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
-      // Delete related records first
-      await sql`DELETE FROM assessments WHERE contact_id = ${id}`;
-      await sql`DELETE FROM coaching_sequences WHERE contact_id = ${id}`;
-      await sql`DELETE FROM email_engagement WHERE contact_id = ${id}`;
-      await sql`DELETE FROM contacts WHERE id = ${id}`;
-      return res.json({ success: true, deleted: { email: rows[0].email, id } });
+      try {
+        await cascadeDeleteContact(id);
+        return res.json({ success: true, deleted: { email: rows[0].email, id } });
+      } catch(e) {
+        return res.status(500).json({ error: e.message });
+      }
     }
 
     // DELETE /api/admin/contacts/bulk — body: { ids: [1,2,3] }
     if (req.method === 'DELETE' && url === '/admin/contacts/bulk') {
       const { ids } = req.body || {};
       if (!ids || !Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'ids array required' });
-      for (const id of ids) {
-        await sql`DELETE FROM assessments WHERE contact_id = ${id}`;
-        await sql`DELETE FROM coaching_sequences WHERE contact_id = ${id}`;
-        await sql`DELETE FROM email_engagement WHERE contact_id = ${id}`;
-        await sql`DELETE FROM contacts WHERE id = ${id}`;
+      try {
+        for (const id of ids) { await cascadeDeleteContact(id); }
+        return res.json({ success: true, deleted: ids.length });
+      } catch(e) {
+        return res.status(500).json({ error: e.message });
       }
-      return res.json({ success: true, deleted: ids.length });
     }
 
     // GET /api/admin/analytics
