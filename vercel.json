@@ -56,6 +56,10 @@
       "dest": "/api/devotional-today.js"
     },
     {
+      "src": "/api/ai",
+      "dest": "/api/ai.js"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     },
