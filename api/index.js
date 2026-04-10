@@ -4097,9 +4097,9 @@ ${roadmapHtml}
                 isMember = true;
                 // Determine tier from subscription amount
                 const amount = subsData.data[0].items?.data?.[0]?.price?.unit_amount;
-                if (amount >= 49700) tier = 'Victory VIP';
-                else if (amount >= 4700) tier = 'Value Builder';
-                else tier = 'VictoryPath';
+                if (amount >= 49700) tier = 'premium';
+                else if (amount >= 4700) tier = 'couple';
+                else tier = 'individual';
                 break;
               }
             }

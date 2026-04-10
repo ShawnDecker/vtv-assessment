@@ -231,6 +231,10 @@
       "dest": "/relationship-hub.html"
     },
     {
+      "src": "/intimacy",
+      "dest": "/relationship-hub.html"
+    },
+    {
       "src": "/relationship-matrix",
       "dest": "/relationship-matrix.html"
     },

@@ -118,7 +118,8 @@ module.exports = async (req, res) => {
     // ============================================================
     if (req.method === 'POST' && url === '/profile') {
       const b = req.body || {};
-      const { contactId, dob, gender, membershipTier } = b;
+      const { contactId, dob, gender } = b;
+      // membershipTier is ignored from client — tier is only set by Stripe webhook or admin
 
       if (!contactId) return res.status(400).json({ error: 'contactId is required' });
       if (!dob) return res.status(400).json({ error: 'dob (date of birth) is required' });
@@ -133,7 +134,7 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Upsert user profile
+      // Upsert user profile — never allow client to set tier
       const existing = await sql`SELECT * FROM user_profiles WHERE contact_id = ${contactId} LIMIT 1`;
 
       let profile;
@@ -143,7 +144,6 @@ module.exports = async (req, res) => {
             date_of_birth = ${dob},
             age = ${age},
             gender = ${gender || existing[0].gender},
-            membership_tier = ${membershipTier || existing[0].membership_tier},
             updated_at = NOW()
           WHERE contact_id = ${contactId}
           RETURNING *
@@ -152,7 +152,7 @@ module.exports = async (req, res) => {
       } else {
         const rows = await sql`
           INSERT INTO user_profiles (contact_id, date_of_birth, age, gender, membership_tier)
-          VALUES (${contactId}, ${dob}, ${age}, ${gender || null}, ${membershipTier || 'free'})
+          VALUES (${contactId}, ${dob}, ${age}, ${gender || null}, 'free')
           RETURNING *
         `;
         profile = rows[0];

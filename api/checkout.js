@@ -68,7 +68,7 @@ module.exports = async (req, res) => {
       // Handle checkout.session.completed
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
-        const email = session.customer_email || session.customer_details?.email;
+        const email = (session.customer_email || session.customer_details?.email || '').toLowerCase().trim();
         const customerId = session.customer;
         const subscriptionId = session.subscription;
         const paymentIntentId = session.payment_intent;
@@ -118,7 +118,23 @@ module.exports = async (req, res) => {
         } else if (email && tier) {
           // Membership subscription purchase — upsert user_profiles
           // Find contact by email
-          const contacts = await sql`SELECT id FROM contacts WHERE email = ${email} LIMIT 1`;
+          // Case-insensitive contact lookup
+          let contacts = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+
+          // If no contact found, create one so the payment is never lost
+          if (contacts.length === 0) {
+            console.warn('[checkout] No contact found for', email, '— creating new contact');
+            const nameParts = (session.customer_details?.name || '').split(' ');
+            const firstName = nameParts[0] || 'New';
+            const lastName = nameParts.slice(1).join(' ') || 'Member';
+            contacts = await sql`
+              INSERT INTO contacts (email, first_name, last_name, created_at)
+              VALUES (${email}, ${firstName}, ${lastName}, NOW())
+              ON CONFLICT (email) DO UPDATE SET email = ${email}
+              RETURNING id
+            `;
+          }
+
           if (contacts.length > 0) {
             const contactId = contacts[0].id;
             // Upsert user_profiles
@@ -138,6 +154,7 @@ module.exports = async (req, res) => {
                 VALUES (${contactId}, ${tier}, ${customerId}, ${subscriptionId})
               `;
             }
+            console.log('[checkout] Tier updated:', email, '→', tier, 'contact:', contactId);
           }
         }
       }
