@@ -5520,8 +5520,12 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
       }
     }
 
-    // GET/POST /api/admin/send-blueprint — Email platform blueprint to recipients
-    if ((req.method === 'POST' || req.method === 'GET') && url.startsWith('/admin/send-blueprint')) {
+    // GET/POST /api/send-blueprint — Email platform blueprint to recipients
+    if ((req.method === 'POST' || req.method === 'GET') && url.startsWith('/send-blueprint')) {
+      // Auth: accept x-api-key header OR key query param
+      const apiKey = req.headers['x-api-key'] || new URL('http://x' + req.url).searchParams.get('key') || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!validKey || apiKey !== validKey) return res.status(401).json({ error: 'API key required. Add ?key=YOUR_KEY to the URL.' });
       let recipients;
       if (req.method === 'GET') {
         const params = new URL('http://x' + req.url).searchParams;
