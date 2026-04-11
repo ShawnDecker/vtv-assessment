@@ -142,8 +142,25 @@
 
   <script>
     var currentEmail = '';
-    try { var saved = localStorage.getItem('vtv_member_email'); if (saved) document.getElementById('email').value = saved; } catch(e) {}
+    try { var saved = localStorage.getItem('vtv_member_email') || localStorage.getItem('ve_email'); if (saved) document.getElementById('email').value = saved; } catch(e) {}
     document.getElementById('darkMode').checked = (localStorage.getItem('vtv_theme') || 'light') === 'dark';
+
+    // Auto-authenticate via JWT token if available
+    (function() {
+      try {
+        var token = localStorage.getItem('vtv_token');
+        if (token) {
+          var payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.email) {
+            currentEmail = payload.email;
+            document.getElementById('accountEmail').textContent = payload.email;
+            document.getElementById('authView').classList.add('hidden');
+            document.getElementById('settingsView').classList.remove('hidden');
+            loadPreferences();
+          }
+        }
+      } catch(e) { /* token invalid — fall through to PIN form */ }
+    })();
 
     async function authenticate() {
       var email = document.getElementById('email').value.trim().toLowerCase();
@@ -160,6 +177,7 @@
           document.getElementById('accountEmail').textContent = email;
           document.getElementById('authView').classList.add('hidden');
           document.getElementById('settingsView').classList.remove('hidden');
+          loadPreferences();
         } else {
           errEl.textContent = data.error || 'Incorrect PIN.'; errEl.classList.remove('hidden');
         }
@@ -196,20 +214,69 @@
 
     function savePref(key, value) {
       localStorage.setItem('vtv_pref_' + key, value ? '1' : '0');
-      // Future: POST to /api/member/preferences
+      if (!currentEmail) return;
+      var prefs = {
+        coachingEmails: document.getElementById('coachingEmails').checked,
+        progressReminders: document.getElementById('progressReminders').checked,
+        darkMode: document.getElementById('darkMode').checked
+      };
+      fetch('/api/member/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentEmail, preferences: prefs })
+      }).catch(function(e) { console.warn('Pref sync error:', e); });
     }
 
     function toggleDarkMode(on) {
       localStorage.setItem('vtv_theme', on ? 'dark' : 'light');
+      savePref('darkMode', on);
     }
 
-    function requestDelete() {
+    async function requestDelete() {
       var msgEl = document.getElementById('deleteMsg');
       if (!confirm('Are you sure? This will permanently delete your account and all assessment data.')) return;
-      msgEl.textContent = 'Deletion request sent. You will receive a confirmation email within 48 hours.';
-      msgEl.className = 'success';
+      if (!currentEmail) {
+        msgEl.textContent = 'No email found. Please log in first.';
+        msgEl.className = 'error';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+      try {
+        var resp = await fetch('/api/member/delete-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentEmail })
+        });
+        var data = await resp.json();
+        if (data.success) {
+          msgEl.textContent = 'Deletion request sent. You will receive a confirmation email within 48 hours.';
+          msgEl.className = 'success';
+        } else {
+          msgEl.textContent = data.error || 'Failed to submit request. Try again.';
+          msgEl.className = 'error';
+        }
+      } catch(e) {
+        msgEl.textContent = 'Connection error. Try again.';
+        msgEl.className = 'error';
+      }
       msgEl.classList.remove('hidden');
-      // Future: POST to /api/member/delete-request
+    }
+
+    // Load preferences from server on auth
+    async function loadPreferences() {
+      if (!currentEmail) return;
+      try {
+        var resp = await fetch('/api/member/preferences?email=' + encodeURIComponent(currentEmail));
+        var data = await resp.json();
+        if (data.preferences) {
+          if (typeof data.preferences.coachingEmails === 'boolean') document.getElementById('coachingEmails').checked = data.preferences.coachingEmails;
+          if (typeof data.preferences.progressReminders === 'boolean') document.getElementById('progressReminders').checked = data.preferences.progressReminders;
+          if (typeof data.preferences.darkMode === 'boolean') {
+            document.getElementById('darkMode').checked = data.preferences.darkMode;
+            localStorage.setItem('vtv_theme', data.preferences.darkMode ? 'dark' : 'light');
+          }
+        }
+      } catch(e) { console.warn('Could not load preferences:', e); }
     }
   </script>
 </body>

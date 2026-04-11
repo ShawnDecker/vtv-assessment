@@ -52,6 +52,31 @@
   th { text-align:left; color:#71717a; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; padding:8px 6px; border-bottom:1px solid #27272a; }
   td { padding:8px 6px; border-bottom:1px solid #1f1f23; color:#e4e4e7; }
 
+  .sys-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px; }
+  .sys-card { background:#18181b; border:1px solid #27272a; border-radius:10px; padding:12px; }
+  .sys-card .sys-name { font-size:12px; font-weight:bold; color:#e4e4e7; display:flex; align-items:center; gap:6px; }
+  .sys-card .sys-type { font-size:10px; color:#71717a; margin-top:2px; }
+  .sys-card .sys-meta { font-size:11px; color:#a1a1aa; margin-top:6px; line-height:1.4; }
+  .sys-card .sys-dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0; }
+  .sys-dot.s-running { background:#22c55e; }
+  .sys-dot.s-healthy { background:#22c55e; }
+  .sys-dot.s-unhealthy { background:#eab308; }
+  .sys-dot.s-restarting { background:#ef4444; animation:pulse 1.5s infinite; }
+  .sys-dot.s-exited { background:#ef4444; }
+  .sys-dot.s-stopped { background:#71717a; }
+  .sys-dot.s-created { background:#71717a; }
+  .sys-dot.s-unknown { background:#71717a; }
+  .sys-dot.s-loaded { background:#22c55e; }
+  .sys-dot.s-available { background:#3b82f6; }
+  .sys-dot.s-active { background:#22c55e; }
+  .sys-dot.s-degraded { background:#eab308; }
+  .sys-dot.s-down { background:#ef4444; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+  .cat-header { font-size:11px; color:#D4A847; font-weight:bold; letter-spacing:1px; text-transform:uppercase; margin:16px 0 8px; padding-bottom:4px; border-bottom:1px solid #27272a; }
+  .sys-summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .sys-summary .ss { font-size:12px; color:#a1a1aa; }
+  .sys-summary .ss b { color:#e4e4e7; }
+
   .refresh-btn { position:fixed; bottom:16px; right:16px; padding:12px 20px; background:linear-gradient(135deg,#D4A847,#b8942e); color:#0a0a0a; font-size:13px; font-weight:bold; border:none; border-radius:8px; cursor:pointer; z-index:100; }
   .quick-links { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:8px; margin-bottom:16px; }
   .quick-link { display:flex; flex-direction:column; align-items:center; gap:4px; background:#18181b; border:1px solid #27272a; border-radius:10px; padding:14px 8px; text-decoration:none; color:#e4e4e7; transition:border-color 0.2s; }
@@ -251,6 +276,77 @@ function render(data) {
     const decisions = d.decisions;
     const preview = JSON.stringify(decisions).substring(0, 200);
     html += `<div class="card"><div class="name">${d.agent_name.toUpperCase()}</div><div class="meta">${ago}</div><div class="detail">${preview}</div></div>`;
+  }
+
+  // === INFRASTRUCTURE SYSTEMS ===
+  const systems = data.systems || [];
+  if (systems.length) {
+    html += '<div class="section-title">Infrastructure Systems</div>';
+
+    // Summary counts
+    const running = systems.filter(s => ['running','healthy','active','loaded'].includes(s.status)).length;
+    const degraded = systems.filter(s => ['unhealthy','degraded','restarting'].includes(s.status)).length;
+    const down = systems.filter(s => ['exited','stopped','down','created'].includes(s.status)).length;
+    html += '<div class="sys-summary">';
+    html += `<div class="ss"><b style="color:#22c55e">${running}</b> Healthy</div>`;
+    if (degraded) html += `<div class="ss"><b style="color:#eab308">${degraded}</b> Degraded</div>`;
+    if (down) html += `<div class="ss"><b style="color:#ef4444">${down}</b> Down</div>`;
+    html += `<div class="ss"><b>${systems.length}</b> Total</div>`;
+    html += '</div>';
+
+    // Group by category
+    const cats = {};
+    for (const s of systems) {
+      const cat = s.category || 'other';
+      if (!cats[cat]) cats[cat] = [];
+      cats[cat].push(s);
+    }
+
+    const catLabels = { local: 'Local Services', cloud: 'Cloud Services', docker: 'Docker Containers', ollama: 'AI Models', infrastructure: 'Infrastructure' };
+
+    for (const [cat, items] of Object.entries(cats)) {
+      html += `<div class="cat-header">${catLabels[cat] || cat} (${items.length})</div>`;
+      html += '<div class="sys-grid">';
+      for (const s of items) {
+        const dotClass = 's-' + (s.status || 'unknown').toLowerCase().replace(/[^a-z]/g,'');
+        const meta = s.metadata || {};
+        let details = '';
+
+        // Docker containers
+        if (s.system_type === 'docker') {
+          if (meta.ports) details += `<div>Ports: ${meta.ports}</div>`;
+          if (meta.image) details += `<div>Image: ${meta.image}</div>`;
+          if (meta.uptime) details += `<div>${meta.uptime}</div>`;
+        }
+        // Ollama models
+        else if (s.system_type === 'ollama') {
+          if (meta.size) details += `<div>Size: ${meta.size}</div>`;
+          if (meta.quantization) details += `<div>Quant: ${meta.quantization}</div>`;
+          if (meta.parameters) details += `<div>Params: ${meta.parameters}</div>`;
+        }
+        // Cloud services
+        else if (s.system_type === 'cloud') {
+          if (meta.tier) details += `<div>Tier: ${meta.tier}</div>`;
+          if (meta.response_ms) details += `<div>Response: ${meta.response_ms}ms</div>`;
+        }
+        // Generic
+        else {
+          const keys = Object.keys(meta).slice(0, 3);
+          for (const k of keys) details += `<div>${k}: ${meta[k]}</div>`;
+        }
+
+        const endpoint = s.endpoint ? `<div style="font-size:10px;color:#71717a;margin-top:4px;word-break:break-all;">${s.endpoint}</div>` : '';
+        const reported = s.last_reported_at ? `<div style="font-size:9px;color:#52525b;margin-top:4px;">Updated ${timeAgo(s.last_reported_at)}</div>` : '';
+
+        html += `<div class="sys-card">
+          <div class="sys-name"><span class="sys-dot ${dotClass}"></span>${s.system_name}</div>
+          <div class="sys-type">${s.system_type}</div>
+          ${details ? '<div class="sys-meta">' + details + '</div>' : ''}
+          ${endpoint}${reported}
+        </div>`;
+      }
+      html += '</div>';
+    }
   }
 
   el.innerHTML = html;

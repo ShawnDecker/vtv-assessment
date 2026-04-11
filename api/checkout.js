@@ -240,6 +240,33 @@ module.exports = async (req, res) => {
 
       const config = TIER_CONFIG[tier];
 
+      // Subscription downgrade protection: check if user already has a higher tier
+      if (email) {
+        try {
+          const sql = neon(process.env.DATABASE_URL);
+          const TIER_RANK = { free: 0, individual: 1, couple: 2, premium: 3 };
+          const requestedRank = TIER_RANK[config.dbTier] || 0;
+          const contacts = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email.toLowerCase()} LIMIT 1`;
+          if (contacts.length > 0) {
+            const profiles = await sql`SELECT membership_tier FROM user_profiles WHERE contact_id = ${contacts[0].id} LIMIT 1`;
+            if (profiles.length > 0 && profiles[0].membership_tier) {
+              const currentRank = TIER_RANK[profiles[0].membership_tier] || 0;
+              if (currentRank >= requestedRank && currentRank > 0) {
+                return res.status(400).json({
+                  error: `You already have an active ${profiles[0].membership_tier} subscription. To change your plan, please use the billing portal in your Member Dashboard.`,
+                  currentTier: profiles[0].membership_tier,
+                  requestedTier: config.dbTier,
+                  billingPortalUrl: `${BASE_URL}/member`
+                });
+              }
+            }
+          }
+        } catch (tierCheckErr) {
+          // Non-blocking: if check fails, allow checkout to proceed
+          console.warn('[Checkout] Tier check failed (non-blocking):', tierCheckErr.message);
+        }
+      }
+
       // Use hardcoded active prices directly -- env vars were stale/inactive
       const priceId = ACTIVE_PRICES[config.priceKey];
       console.log(`[Checkout] Using price ${priceId} for ${config.name} (${config.dbTier})`);
@@ -247,7 +274,7 @@ module.exports = async (req, res) => {
       const sessionParams = {
         mode: 'subscription',
         line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${BASE_URL}/onboarding?tier=${config.dbTier}&session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${BASE_URL}/member?welcome=true&tier=${config.dbTier}`,
         cancel_url: `${BASE_URL}/pricing`,
         metadata: { tier: config.dbTier },
         allow_promotion_codes: true

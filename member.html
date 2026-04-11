@@ -1074,6 +1074,11 @@
   </div>
 </nav>
 
+<!-- ===== WELCOME BANNER ===== -->
+<div id="welcomeBanner" style="display:none;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;text-align:center;padding:0.875rem 1.25rem;font-weight:700;font-size:0.95rem;position:relative;z-index:10;">
+  <span id="welcomeText"></span>
+</div>
+
 <!-- ===== STATE 1: EMAIL ENTRY ===== -->
 <div id="stateEntry" class="state active">
   <div class="entry-wrap">
@@ -1317,6 +1322,28 @@
     if (saved) {
       document.getElementById('memberEmail').value = saved;
     }
+
+    // Show welcome banner after checkout success
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('welcome') === 'true') {
+      const tierNames = { individual: 'VictoryPath', couple: 'Value Builder', premium: 'Victory VIP' };
+      const tier = urlParams.get('tier') || '';
+      const tierLabel = tierNames[tier] || tier || 'your membership';
+      const banner = document.getElementById('welcomeBanner');
+      const bannerText = document.getElementById('welcomeText');
+      bannerText.textContent = 'Welcome to ' + tierLabel + '! Your membership is active.';
+      banner.style.display = 'block';
+      // Auto-dismiss after 5 seconds
+      setTimeout(function() {
+        banner.style.transition = 'opacity 0.5s';
+        banner.style.opacity = '0';
+        setTimeout(function() { banner.style.display = 'none'; }, 500);
+      }, 5000);
+      // Clean URL without reload
+      if (window.history.replaceState) {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
   });
 
   // ── Show State ─────────────────────────────────────────────────────────────
@@ -1505,6 +1532,7 @@
         return;
       }
       localStorage.setItem('vtv_member_email', currentEmail);
+      localStorage.setItem('ve_email', currentEmail);
       memberData = data;
       var contactId = data.contact?.id || data.id || '';
       try {

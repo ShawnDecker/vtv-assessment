@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>The Value Engine — Intimacy Assessment</title>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-TT6PYLPP31');gtag('config','G-MJ1SXZJ399');</script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
+    .container { max-width: 600px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .brand { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .subtitle { color: #a1a1aa; margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.5; }
+    .hidden { display: none !important; }
+    .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; color: #a1a1aa; font-size: 1.125rem; gap: 0.75rem; }
+    .loading-spinner { width: 32px; height: 32px; border: 3px solid #27272a; border-top-color: #D4A847; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-msg { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; }
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; margin-bottom: 1rem; font-weight: 700; }
+
+    /* Buttons */
+    .btn { width: 100%; padding: 0.875rem; background: #D4A847; color: #0a0a0a; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .btn:hover { background: #b8942e; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-outline { background: transparent; border: 1px solid #D4A847; color: #D4A847; padding: 0.875rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; width: 100%; text-align: center; text-decoration: none; display: block; transition: all 0.2s; }
+    .btn-outline:hover { background: rgba(212,168,71,0.1); }
+    .btn-blue { background: #3b82f6; color: #fff; }
+    .btn-blue:hover { background: #2563eb; }
+
+    /* Nav bar */
+    .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; font-size: 0.85rem; }
+    .nav-link { color: #D4A847; text-decoration: none; font-weight: 600; transition: color 0.2s; }
+    .nav-link:hover { color: #fff; }
+
+    /* Age gate */
+    .gate-card { text-align: center; padding: 3rem 2rem; }
+    .gate-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .gate-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .gate-text { color: #a1a1aa; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem; }
+
+    /* Progress bar */
+    .progress-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .progress-segment { flex: 1; height: 4px; background: #27272a; border-radius: 2px; transition: background 0.3s; }
+    .progress-segment.active { background: #D4A847; }
+    .progress-segment.done { background: #22c55e; }
+    .step-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .step-counter { font-size: 0.8rem; color: #71717a; }
+    .dimension-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; background: rgba(212,168,71,0.15); color: #D4A847; border: 1px solid rgba(212,168,71,0.3); }
+
+    /* Dimension header */
+    .dim-header { margin-bottom: 1.5rem; }
+    .dim-icon { font-size: 1.75rem; margin-bottom: 0.5rem; }
+    .dim-name { font-family: 'Instrument Serif', serif; font-size: 1.35rem; font-style: italic; color: #d4d4d8; margin-bottom: 0.25rem; }
+    .dim-desc { font-size: 0.8rem; color: #71717a; line-height: 1.5; }
+
+    /* Question block */
+    .q-block { margin-bottom: 1.75rem; }
+    .q-block:last-child { margin-bottom: 0; }
+    .q-number { font-size: 0.7rem; color: #D4A847; font-weight: 700; margin-bottom: 0.375rem; }
+    .q-text { font-size: 0.95rem; color: #d4d4d8; margin-bottom: 0.75rem; line-height: 1.5; }
+
+    /* Likert scale */
+    .likert { display: flex; gap: 0.375rem; }
+    .likert-option { flex: 1; text-align: center; cursor: pointer; }
+    .likert-option input { display: none; }
+    .likert-btn { display: block; padding: 0.5rem 0.25rem; background: #18181b; border: 1px solid #27272a; border-radius: 0.5rem; font-size: 0.65rem; font-family: inherit; color: #a1a1aa; transition: all 0.2s; line-height: 1.3; }
+    .likert-option input:checked + .likert-btn { border-color: #D4A847; background: rgba(212,168,71,0.15); color: #fff; }
+    .likert-option:hover .likert-btn { border-color: #D4A847; }
+    .likert-num { font-size: 1rem; font-weight: 700; display: block; margin-bottom: 0.125rem; }
+
+    /* Results */
+    .result-hero { text-align: center; padding: 1.5rem 0; }
+    .result-score { font-size: 3rem; font-weight: 900; color: #D4A847; }
+    .result-max { font-size: 1.25rem; color: #71717a; font-weight: 400; }
+    .result-label { font-size: 1rem; color: #a1a1aa; margin-top: 0.25rem; }
+
+    /* Bar visualization */
+    .dim-bar-row { margin-bottom: 1rem; }
+    .dim-bar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.375rem; }
+    .dim-bar-name { font-size: 0.85rem; font-weight: 600; color: #d4d4d8; }
+    .dim-bar-score { font-size: 0.85rem; font-weight: 700; color: #D4A847; }
+    .dim-bar-track { height: 20px; background: #27272a; border-radius: 0.25rem; overflow: hidden; }
+    .dim-bar-fill { height: 100%; border-radius: 0.25rem; transition: width 0.8s ease; background: linear-gradient(90deg, #D4A847, #b8942e); }
+
+    /* Partner comparison */
+    .compare-row { margin-bottom: 1.25rem; }
+    .compare-label { font-size: 0.85rem; font-weight: 600; color: #d4d4d8; margin-bottom: 0.5rem; }
+    .compare-bars { display: flex; flex-direction: column; gap: 0.375rem; }
+    .compare-bar-wrap { display: flex; align-items: center; gap: 0.75rem; }
+    .compare-who { font-size: 0.7rem; font-weight: 700; width: 40px; text-align: right; }
+    .compare-who.you { color: #D4A847; }
+    .compare-who.partner { color: #f472b6; }
+    .compare-track { flex: 1; height: 16px; background: #27272a; border-radius: 0.25rem; overflow: hidden; }
+    .compare-fill-you { height: 100%; border-radius: 0.25rem; background: linear-gradient(90deg, #D4A847, #b8942e); transition: width 0.8s ease; }
+    .compare-fill-partner { height: 100%; border-radius: 0.25rem; background: linear-gradient(90deg, #f472b6, #ec4899); transition: width 0.8s ease; }
+    .compare-val { font-size: 0.75rem; font-weight: 700; color: #a1a1aa; width: 30px; }
+
+    /* Strength/growth tags */
+    .tag-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+    .tag { display: inline-block; padding: 0.375rem 0.75rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 600; }
+    .tag-strength { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+    .tag-growth { background: rgba(234,179,8,0.15); color: #eab308; border: 1px solid rgba(234,179,8,0.3); }
+
+    /* Insight card */
+    .insight-card { background: linear-gradient(135deg, #1a1a2e 0%, #18181b 100%); border: 1px solid #27272a; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+    .insight-card p { font-size: 0.9rem; color: #d4d4d8; line-height: 1.6; }
+
+    /* CTA */
+    .cta-card { background: linear-gradient(135deg, #2a2210 0%, #18181b 100%); border: 1px solid #D4A847; border-radius: 0.75rem; padding: 1.5rem; text-align: center; margin-bottom: 1.5rem; }
+    .cta-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: #D4A847; }
+    .cta-card p { font-size: 0.85rem; color: #a1a1aa; margin-bottom: 1rem; line-height: 1.5; }
+
+    .footer { text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #27272a; font-size: 0.75rem; color: #71717a; }
+
+    /* Legend */
+    .bar-legend { display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 1.25rem; font-size: 0.8rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.375rem; color: #a1a1aa; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+    .legend-you { background: #D4A847; }
+    .legend-partner { background: #f472b6; }
+
+    @media (max-width: 480px) {
+      .container { padding: 1.5rem 1rem; }
+      h1 { font-size: 1.5rem; }
+      .likert { gap: 0.2rem; }
+      .likert-btn { font-size: 0.55rem; padding: 0.375rem 0.125rem; }
+      .likert-num { font-size: 0.85rem; }
+      .dim-name { font-size: 1.1rem; }
+      .result-score { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loadingView">
+    <div class="loading-spinner"></div>
+    Verifying access...
+  </div>
+
+  <!-- Age/Tier Gate -->
+  <div class="container hidden" id="gateView">
+    <div class="nav-bar">
+      <a href="/relationship-hub" class="nav-link">&larr; Relationship Hub</a>
+      <a href="/member" class="nav-link">Dashboard</a>
+    </div>
+    <div class="card gate-card">
+      <div class="gate-icon" id="gateIcon">&#128274;</div>
+      <div class="gate-title" id="gateTitle">Access Restricted</div>
+      <div class="gate-text" id="gateText">This assessment requires age 21+, a linked partner, and a Couple or Premium membership.</div>
+      <a href="/relationship-hub" class="btn-outline">Back to Relationship Hub</a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container hidden" id="mainView">
+    <div class="nav-bar">
+      <a href="/relationship-hub" class="nav-link">&larr; Relationship Hub</a>
+      <a href="/member" class="nav-link">Dashboard</a>
+    </div>
+    <div class="brand">THE VALUE ENGINE</div>
+    <h1>Intimacy Assessment</h1>
+    <p class="subtitle">A private, growth-focused tool for couples to explore emotional and relational connection across five key dimensions.</p>
+
+    <!-- Intro View -->
+    <div id="introView">
+      <div class="card">
+        <div class="section-title">Before You Begin</div>
+        <p style="font-size:0.9rem;color:#d4d4d8;line-height:1.7;margin-bottom:1rem;">
+          This assessment explores how you and your partner connect across five dimensions of intimacy. It is designed to be <strong style="color:#D4A847">thoughtful, respectful, and growth-focused</strong> — not clinical or explicit.
+        </p>
+        <p style="font-size:0.9rem;color:#d4d4d8;line-height:1.7;margin-bottom:1rem;">
+          There are no right or wrong answers. The goal is honest self-reflection that opens the door to better communication and deeper connection.
+        </p>
+        <p style="font-size:0.85rem;color:#71717a;line-height:1.6;">
+          25 questions across 5 dimensions. Takes about 5-7 minutes. Your results are private to you and your partner.
+        </p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <button class="btn" onclick="startAssessment()">Begin Assessment</button>
+        <div id="existingResultsNote" class="hidden" style="text-align:center;">
+          <button class="btn-outline" onclick="showExistingResults()" style="margin-bottom:0.5rem;">View Previous Results</button>
+          <p style="font-size:0.75rem;color:#71717a;">You have already completed this assessment. You can retake it or view your previous results.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assessment View -->
+    <div id="assessmentView" class="hidden">
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-segment active"></div>
+        <div class="progress-segment"></div>
+        <div class="progress-segment"></div>
+        <div class="progress-segment"></div>
+        <div class="progress-segment"></div>
+      </div>
+
+      <div id="dimContainer"></div>
+
+      <div style="display:flex;gap:0.75rem;margin-top:1.5rem;">
+        <button class="btn-outline" id="prevBtn" onclick="prevDim()" style="display:none;">Back</button>
+        <button class="btn" id="nextBtn" onclick="nextDim()">Next</button>
+      </div>
+      <div id="assessError" class="error-msg hidden"></div>
+    </div>
+
+    <!-- Results View -->
+    <div id="resultsView" class="hidden"></div>
+
+    <div class="footer">Value to Victory &mdash; Shawn E. Decker</div>
+  </div>
+
+  <script>
+    var profile = null;
+    var currentDim = 0;
+    var answers = {};
+    var existingResults = null;
+    var partnerResults = null;
+
+    var DIMENSIONS = [
+      {
+        key: 'comfortSafety',
+        dbKey: 'comfort_safety',
+        name: 'Comfort & Safety',
+        icon: '&#128156;',
+        desc: 'How safe and comfortable you feel being vulnerable with your partner.',
+        questions: [
+          'I feel safe expressing my needs and desires without fear of judgment.',
+          'My partner creates an environment where I can be fully myself.',
+          'I trust that my partner will respect my boundaries without resentment.',
+          'I can be emotionally vulnerable with my partner without feeling exposed.',
+          'When I share something personal, my partner responds with care and understanding.'
+        ]
+      },
+      {
+        key: 'touchPace',
+        dbKey: 'touch_pace',
+        name: 'Touch & Physical Connection',
+        icon: '&#129309;',
+        desc: 'Alignment on physical closeness, pace, and how affection is expressed.',
+        questions: [
+          'We are aligned on how we show physical affection in our relationship.',
+          'I feel comfortable with the pace of physical closeness in our relationship.',
+          'Non-verbal cues between us are understood and respected.',
+          'Physical affection in our relationship feels natural rather than forced.',
+          'We both feel valued through the way we express closeness physically.'
+        ]
+      },
+      {
+        key: 'initiationRoles',
+        dbKey: 'initiation_roles',
+        name: 'Initiation & Roles',
+        icon: '&#9878;',
+        desc: 'Who initiates connection and how roles are balanced between partners.',
+        questions: [
+          'Both partners feel empowered to initiate connection in our relationship.',
+          'There is a healthy balance in who reaches out and who responds.',
+          'I feel confident initiating closeness without fear of rejection.',
+          'We have talked openly about our expectations around roles in our relationship.',
+          'Neither partner carries an unfair burden of always being the one to initiate.'
+        ]
+      },
+      {
+        key: 'rhythmFrequency',
+        dbKey: 'rhythm_frequency',
+        name: 'Rhythm & Frequency',
+        icon: '&#9200;',
+        desc: 'Alignment on timing, frequency, and how you navigate different energy levels.',
+        questions: [
+          'We communicate openly about our needs and timing preferences.',
+          'I feel heard when I express that I need more or less connection.',
+          'We handle differences in energy and mood with grace rather than frustration.',
+          'Our relationship has a rhythm that feels sustainable and fulfilling for both of us.',
+          'We check in with each other regularly rather than making assumptions about what the other needs.'
+        ]
+      },
+      {
+        key: 'explorationFeedback',
+        dbKey: 'exploration_feedback',
+        name: 'Exploration & Feedback',
+        icon: '&#128172;',
+        desc: 'Openness to growth, trying new things, and giving or receiving honest feedback.',
+        questions: [
+          'I feel comfortable sharing feedback about what works well for us as a couple.',
+          'My partner receives feedback without becoming defensive or withdrawn.',
+          'We are both open to exploring new ways to connect and grow together.',
+          'I can express what I enjoy and what I would like more of without awkwardness.',
+          'We view feedback as a tool for growth rather than criticism.'
+        ]
+      }
+    ];
+
+    var LIKERT_LABELS = ['Strongly\nDisagree', 'Disagree', 'Neutral', 'Agree', 'Strongly\nAgree'];
+
+    // ── Init ──
+    async function init() {
+      var email = '';
+      try { email = localStorage.getItem('ve_email') || ''; } catch(e) {}
+      if (!email) { window.location.href = '/member'; return; }
+
+      try {
+        var resp = await fetch('/api/r/profile?email=' + encodeURIComponent(email));
+        if (!resp.ok) { window.location.href = '/member'; return; }
+        var data = await resp.json();
+        profile = data.profile;
+
+        // Gate checks
+        var age = profile.age || 0;
+        var hasPartner = !!profile.partner_id;
+        var tier = profile.membership_tier || 'free';
+        var isCoupleOrPremium = tier === 'couple' || tier === 'premium';
+
+        if (age < 21) {
+          showGate('&#128274;', 'Age Verification Required', 'This assessment is available to members aged 21 and older. Your current age group does not meet this requirement.');
+          return;
+        }
+        if (!hasPartner) {
+          showGate('&#128101;', 'Partner Required', 'This assessment is designed for couples. Please link your partner in the Relationship Hub before accessing this tool.');
+          return;
+        }
+        if (!isCoupleOrPremium) {
+          showGate('&#11088;', 'Upgrade Required', 'This assessment requires a Couple or Premium membership. Upgrade your plan to unlock all relationship tools.');
+          return;
+        }
+
+        // Check for existing results
+        try {
+          var existResp = await fetch('/api/r/intimacy?contactId=' + profile.contact_id);
+          if (existResp.ok) {
+            var existData = await existResp.json();
+            existingResults = existData.intimacy;
+            document.getElementById('existingResultsNote').classList.remove('hidden');
+
+            // Try to load partner results
+            if (existingResults.partner_contact_id) {
+              try {
+                var partnerResp = await fetch('/api/r/intimacy?contactId=' + existingResults.partner_contact_id);
+                if (partnerResp.ok) {
+                  var partnerData = await partnerResp.json();
+                  partnerResults = partnerData.intimacy;
+                }
+              } catch(e) {}
+            }
+          }
+        } catch(e) {}
+
+        // Initialize answers
+        DIMENSIONS.forEach(function(dim, di) {
+          for (var qi = 0; qi < 5; qi++) {
+            answers[di + '_' + qi] = 0;
+          }
+        });
+
+        document.getElementById('loadingView').classList.add('hidden');
+        document.getElementById('mainView').classList.remove('hidden');
+      } catch(e) {
+        window.location.href = '/member';
+      }
+    }
+
+    function showGate(icon, title, text) {
+      document.getElementById('gateIcon').innerHTML = icon;
+      document.getElementById('gateTitle').textContent = title;
+      document.getElementById('gateText').textContent = text;
+      document.getElementById('loadingView').classList.add('hidden');
+      document.getElementById('gateView').classList.remove('hidden');
+    }
+
+    // ── Assessment Flow ──
+    function startAssessment() {
+      document.getElementById('introView').classList.add('hidden');
+      document.getElementById('assessmentView').classList.remove('hidden');
+      renderDimension(0);
+    }
+
+    function showExistingResults() {
+      document.getElementById('introView').classList.add('hidden');
+      renderResults(existingResults, partnerResults);
+    }
+
+    function renderDimension(idx) {
+      var dim = DIMENSIONS[idx];
+      var html = '';
+
+      html += '<div class="step-info">';
+      html += '<span class="step-counter">Dimension ' + (idx + 1) + ' of 5</span>';
+      html += '<span class="dimension-badge">' + dim.name + '</span>';
+      html += '</div>';
+
+      html += '<div class="dim-header">';
+      html += '<div class="dim-icon">' + dim.icon + '</div>';
+      html += '<div class="dim-name">' + dim.name + '</div>';
+      html += '<div class="dim-desc">' + dim.desc + '</div>';
+      html += '</div>';
+
+      dim.questions.forEach(function(q, qi) {
+        var ansKey = idx + '_' + qi;
+        html += '<div class="q-block">';
+        html += '<div class="q-number">Question ' + (qi + 1) + '</div>';
+        html += '<div class="q-text">' + q + '</div>';
+        html += '<div class="likert">';
+        for (var v = 1; v <= 5; v++) {
+          var checked = answers[ansKey] === v ? 'checked' : '';
+          html += '<label class="likert-option">';
+          html += '<input type="radio" name="q_' + ansKey + '" value="' + v + '" ' + checked + ' onchange="setAnswer(\'' + ansKey + '\',' + v + ')">';
+          html += '<span class="likert-btn"><span class="likert-num">' + v + '</span>' + LIKERT_LABELS[v - 1].replace('\n', '<br>') + '</span>';
+          html += '</label>';
+        }
+        html += '</div></div>';
+      });
+
+      document.getElementById('dimContainer').innerHTML = html;
+
+      // Update progress bar
+      var segments = document.querySelectorAll('.progress-segment');
+      segments.forEach(function(seg, i) {
+        seg.className = 'progress-segment';
+        if (i < idx) seg.classList.add('done');
+        if (i === idx) seg.classList.add('active');
+      });
+
+      document.getElementById('prevBtn').style.display = idx === 0 ? 'none' : 'block';
+      document.getElementById('nextBtn').textContent = idx === 4 ? 'Submit Assessment' : 'Next Dimension';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setAnswer(key, value) {
+      answers[key] = value;
+    }
+
+    function validateDimension(idx) {
+      for (var qi = 0; qi < 5; qi++) {
+        if (!answers[idx + '_' + qi]) return false;
+      }
+      return true;
+    }
+
+    function nextDim() {
+      document.getElementById('assessError').classList.add('hidden');
+
+      if (!validateDimension(currentDim)) {
+        document.getElementById('assessError').textContent = 'Please answer all 5 questions before continuing.';
+        document.getElementById('assessError').classList.remove('hidden');
+        return;
+      }
+
+      if (currentDim < 4) {
+        currentDim++;
+        renderDimension(currentDim);
+      } else {
+        submitAssessment();
+      }
+    }
+
+    function prevDim() {
+      if (currentDim > 0) {
+        currentDim--;
+        renderDimension(currentDim);
+      }
+    }
+
+    // ── Submit ──
+    async function submitAssessment() {
+      var btn = document.getElementById('nextBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      // Sum each dimension (5 questions x 1-5 = range 5-25)
+      var scores = {};
+      DIMENSIONS.forEach(function(dim, di) {
+        var sum = 0;
+        for (var qi = 0; qi < 5; qi++) {
+          sum += answers[di + '_' + qi];
+        }
+        scores[dim.key] = sum;
+      });
+
+      try {
+        var resp = await fetch('/api/r/intimacy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contactId: profile.contact_id,
+            comfortSafety: scores.comfortSafety,
+            touchPace: scores.touchPace,
+            initiationRoles: scores.initiationRoles,
+            rhythmFrequency: scores.rhythmFrequency,
+            explorationFeedback: scores.explorationFeedback
+          })
+        });
+
+        var data = await resp.json();
+        if (!resp.ok) {
+          document.getElementById('assessError').textContent = data.error || 'Submission failed. Please try again.';
+          document.getElementById('assessError').classList.remove('hidden');
+          btn.disabled = false;
+          btn.textContent = 'Submit Assessment';
+          return;
+        }
+
+        existingResults = data.intimacy;
+
+        // Try to load partner results
+        if (existingResults.partner_contact_id) {
+          try {
+            var partnerResp = await fetch('/api/r/intimacy?contactId=' + existingResults.partner_contact_id);
+            if (partnerResp.ok) {
+              var partnerData = await partnerResp.json();
+              partnerResults = partnerData.intimacy;
+            }
+          } catch(e) {}
+        }
+
+        document.getElementById('assessmentView').classList.add('hidden');
+        renderResults(existingResults, partnerResults);
+      } catch(e) {
+        document.getElementById('assessError').textContent = 'Something went wrong. Please try again.';
+        document.getElementById('assessError').classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Submit Assessment';
+      }
+    }
+
+    // ── Results ──
+    function renderResults(results, partner) {
+      var rv = document.getElementById('resultsView');
+      rv.classList.remove('hidden');
+
+      var total = results.total_score || 0;
+      var tierLabel = getScoreTier(total);
+      var hasPartner = !!partner;
+
+      var html = '';
+
+      // Hero score
+      html += '<div class="result-hero">';
+      html += '<div class="result-score">' + total + '<span class="result-max"> / 125</span></div>';
+      html += '<div class="result-label">' + tierLabel + '</div>';
+      html += '</div>';
+
+      // Dimension breakdown
+      html += '<div class="card">';
+      html += '<div class="section-title">Your Scores by Dimension</div>';
+
+      DIMENSIONS.forEach(function(dim) {
+        var score = results[dim.dbKey] || 0;
+        var pct = (score / 25 * 100).toFixed(0);
+        html += '<div class="dim-bar-row">';
+        html += '<div class="dim-bar-header">';
+        html += '<span class="dim-bar-name">' + dim.name + '</span>';
+        html += '<span class="dim-bar-score">' + score + ' / 25</span>';
+        html += '</div>';
+        html += '<div class="dim-bar-track"><div class="dim-bar-fill" style="width:' + pct + '%"></div></div>';
+        html += '</div>';
+      });
+      html += '</div>';
+
+      // Strengths and growth areas
+      var dimScores = DIMENSIONS.map(function(dim) {
+        return { name: dim.name, score: results[dim.dbKey] || 0 };
+      }).sort(function(a, b) { return b.score - a.score; });
+
+      var strengths = dimScores.filter(function(d) { return d.score >= 20; });
+      var growth = dimScores.filter(function(d) { return d.score < 15; });
+
+      if (strengths.length > 0 || growth.length > 0) {
+        html += '<div class="card">';
+        html += '<div class="section-title">Strengths & Growth Areas</div>';
+
+        if (strengths.length > 0) {
+          html += '<p style="font-size:0.8rem;color:#71717a;margin-bottom:0.5rem;">Areas of strength:</p>';
+          html += '<div class="tag-row">';
+          strengths.forEach(function(s) {
+            html += '<span class="tag tag-strength">' + s.name + ' (' + s.score + ')</span>';
+          });
+          html += '</div>';
+        }
+        if (growth.length > 0) {
+          html += '<p style="font-size:0.8rem;color:#71717a;margin-bottom:0.5rem;">Opportunities for growth:</p>';
+          html += '<div class="tag-row">';
+          growth.forEach(function(g) {
+            html += '<span class="tag tag-growth">' + g.name + ' (' + g.score + ')</span>';
+          });
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+
+      // Insight message
+      html += '<div class="insight-card">';
+      if (total >= 100) {
+        html += '<p>Your responses reflect a strong foundation of connection and communication. Continue building on these strengths by staying curious about each other and maintaining open dialogue.</p>';
+      } else if (total >= 75) {
+        html += '<p>You have a solid base to build from. The areas where you scored lower are not weaknesses — they are invitations to grow closer. Consider starting a conversation about one growth area this week.</p>';
+      } else if (total >= 50) {
+        html += '<p>There is meaningful room for growth in your connection, and that is not a bad thing. Every couple has areas to strengthen. Start with the dimension where you scored highest and build outward from there.</p>';
+      } else {
+        html += '<p>Your scores suggest some areas where deeper conversation could make a real difference. Consider working through one dimension at a time together. A coaching session can provide structure and support for these conversations.</p>';
+      }
+      html += '</div>';
+
+      // Partner comparison
+      if (hasPartner) {
+        html += '<div class="card">';
+        html += '<div class="section-title">Partner Comparison</div>';
+        html += '<div class="bar-legend">';
+        html += '<div class="legend-item"><div class="legend-dot legend-you"></div> You</div>';
+        html += '<div class="legend-item"><div class="legend-dot legend-partner"></div> Partner</div>';
+        html += '</div>';
+
+        DIMENSIONS.forEach(function(dim) {
+          var yourScore = results[dim.dbKey] || 0;
+          var theirScore = partner[dim.dbKey] || 0;
+          var yourPct = (yourScore / 25 * 100).toFixed(0);
+          var theirPct = (theirScore / 25 * 100).toFixed(0);
+          var gap = Math.abs(yourScore - theirScore);
+
+          html += '<div class="compare-row">';
+          html += '<div class="compare-label">' + dim.name;
+          if (gap >= 8) html += ' <span style="color:#ef4444;font-size:0.7rem;font-weight:700;">GAP</span>';
+          else if (gap >= 4) html += ' <span style="color:#eab308;font-size:0.7rem;font-weight:700;">DISCUSS</span>';
+          else html += ' <span style="color:#22c55e;font-size:0.7rem;font-weight:700;">ALIGNED</span>';
+          html += '</div>';
+          html += '<div class="compare-bars">';
+          html += '<div class="compare-bar-wrap"><span class="compare-who you">You</span><div class="compare-track"><div class="compare-fill-you" style="width:' + yourPct + '%"></div></div><span class="compare-val">' + yourScore + '</span></div>';
+          html += '<div class="compare-bar-wrap"><span class="compare-who partner">Them</span><div class="compare-track"><div class="compare-fill-partner" style="width:' + theirPct + '%"></div></div><span class="compare-val">' + theirScore + '</span></div>';
+          html += '</div></div>';
+        });
+
+        // Overall alignment
+        var yourTotal = results.total_score || 0;
+        var theirTotal = partner.total_score || 0;
+        var alignPct = Math.round(100 - (Math.abs(yourTotal - theirTotal) / 125 * 100));
+
+        html += '<div style="text-align:center;padding:1rem 0 0.5rem;border-top:1px solid #27272a;margin-top:0.75rem;">';
+        html += '<div style="font-size:0.7rem;color:#71717a;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.25rem;">Overall Alignment</div>';
+        html += '<div style="font-size:1.75rem;font-weight:900;color:' + (alignPct >= 80 ? '#22c55e' : alignPct >= 60 ? '#eab308' : '#ef4444') + ';">' + alignPct + '%</div>';
+        html += '<div style="font-size:0.8rem;color:#a1a1aa;">' + (alignPct >= 80 ? 'Strong alignment — keep growing together.' : alignPct >= 60 ? 'Good foundation with room to explore.' : 'Some gaps to discuss — this is where growth happens.') + '</div>';
+        html += '</div>';
+
+        html += '</div>';
+      } else {
+        html += '<div class="card" style="text-align:center;">';
+        html += '<div class="section-title">Partner Comparison</div>';
+        html += '<p style="font-size:0.9rem;color:#a1a1aa;margin-bottom:0.5rem;">Your partner has not completed this assessment yet.</p>';
+        html += '<p style="font-size:0.8rem;color:#71717a;">Once they do, you will see a side-by-side comparison here.</p>';
+        html += '</div>';
+      }
+
+      // Coaching CTA
+      html += '<div class="cta-card">';
+      html += '<h3>Want to Go Deeper?</h3>';
+      html += '<p>A coaching session can help you and your partner explore these results together in a safe, structured conversation.</p>';
+      html += '<a href="https://calendly.com/valuetovictory/30min" target="_blank" rel="noopener" class="btn" style="display:inline-block;width:auto;padding:0.75rem 2rem;text-decoration:none;">Book a Coaching Session</a>';
+      html += '</div>';
+
+      // Action buttons
+      html += '<div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:1rem;">';
+      html += '<button class="btn" onclick="retakeAssessment()">Retake Assessment</button>';
+      html += '<a href="/relationship-hub" class="btn-outline">Back to Relationship Hub</a>';
+      html += '</div>';
+
+      rv.innerHTML = html;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function getScoreTier(score) {
+      if (score >= 105) return 'Deeply Connected';
+      if (score >= 85) return 'Growing Together';
+      if (score >= 65) return 'Building Foundations';
+      if (score >= 45) return 'Room to Explore';
+      return 'Starting Point';
+    }
+
+    function retakeAssessment() {
+      document.getElementById('resultsView').classList.add('hidden');
+      document.getElementById('resultsView').innerHTML = '';
+      currentDim = 0;
+      DIMENSIONS.forEach(function(dim, di) {
+        for (var qi = 0; qi < 5; qi++) {
+          answers[di + '_' + qi] = 0;
+        }
+      });
+      document.getElementById('assessmentView').classList.remove('hidden');
+      renderDimension(0);
+    }
+
+    init();
+  </script>
+</body>
+</html>

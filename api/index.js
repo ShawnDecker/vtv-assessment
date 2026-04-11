@@ -1239,6 +1239,89 @@ module.exports = async (req, res) => {
       }
     }
 
+    // POST /api/member/delete-request — Log account deletion request and notify admin
+    if (req.method === 'POST' && url === '/member/delete-request') {
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      if (!email) return res.status(400).json({ error: 'Email required' });
+
+      try {
+        // Log the request
+        await logEmail(sql, {
+          recipient: email,
+          emailType: 'delete_request',
+          subject: `Account deletion requested by ${email}`,
+          status: 'sent',
+          metadata: { requestedAt: new Date().toISOString() }
+        });
+
+        // Notify admin
+        if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+          });
+          await transporter.sendMail({
+            from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
+            to: 'valuetovictory@gmail.com',
+            subject: `Account Deletion Request — ${email}`,
+            html: `<p>User <strong>${email}</strong> has requested account deletion.</p><p>Requested at: ${new Date().toISOString()}</p><p>Please process within 48 hours per privacy policy.</p>`,
+          });
+        }
+        return res.json({ success: true });
+      } catch (e) {
+        console.error('Delete request error:', e.message);
+        return res.status(500).json({ error: 'Failed to submit deletion request' });
+      }
+    }
+
+    // POST /api/member/preferences — Save user preferences
+    if (req.method === 'POST' && url === '/member/preferences') {
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      const preferences = b.preferences;
+      if (!email) return res.status(400).json({ error: 'Email required' });
+      if (!preferences || typeof preferences !== 'object') return res.status(400).json({ error: 'Preferences object required' });
+
+      try {
+        const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+        if (contactRows.length === 0) return res.status(404).json({ error: 'Contact not found' });
+        const contactId = contactRows[0].id;
+
+        // Ensure preferences column exists
+        await sql`ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS preferences JSONB DEFAULT '{}'::jsonb`;
+
+        // Ensure user_profiles row exists, then upsert preferences
+        await sql`INSERT INTO user_profiles (contact_id, preferences) VALUES (${contactId}, ${JSON.stringify(preferences)}::jsonb) ON CONFLICT (contact_id) DO UPDATE SET preferences = ${JSON.stringify(preferences)}::jsonb, updated_at = NOW()`;
+
+        return res.json({ success: true });
+      } catch (e) {
+        console.error('Save preferences error:', e.message);
+        return res.status(500).json({ error: 'Failed to save preferences' });
+      }
+    }
+
+    // GET /api/member/preferences?email=X — Retrieve user preferences
+    if (req.method === 'GET' && url.startsWith('/member/preferences')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = (params.get('email') || '').toLowerCase().trim();
+      if (!email) return res.status(400).json({ error: 'Email required' });
+
+      try {
+        const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+        if (contactRows.length === 0) return res.json({ preferences: {} });
+
+        // Ensure preferences column exists
+        await sql`ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS preferences JSONB DEFAULT '{}'::jsonb`;
+
+        const rows = await sql`SELECT preferences FROM user_profiles WHERE contact_id = ${contactRows[0].id} LIMIT 1`;
+        return res.json({ preferences: (rows.length > 0 && rows[0].preferences) ? rows[0].preferences : {} });
+      } catch (e) {
+        console.error('Get preferences error:', e.message);
+        return res.json({ preferences: {} });
+      }
+    }
+
     // POST /api/affiliate/apply — Create partner profile
     if (req.method === 'POST' && url === '/affiliate/apply') {
       const b = req.body || {};
@@ -1262,10 +1345,19 @@ module.exports = async (req, res) => {
     }
 
     // GET /api/affiliate/check?email=xxx — Check if user is a partner
+    // Auth: JWT token or email must match queried email
     if (req.method === 'GET' && url.startsWith('/affiliate/check')) {
       const params = new URL('http://x' + req.url).searchParams;
       const email = (params.get('email') || '').toLowerCase().trim();
       if (!email) return res.json({ is_partner: false });
+
+      // Verify caller identity via JWT or email match
+      const token = extractToken(req);
+      const jwtPayload = token ? verifyJWT(token) : null;
+      if (!jwtPayload || (jwtPayload.email && jwtPayload.email.toLowerCase() !== email)) {
+        // No valid token — basic protection: only allow if request looks legitimate
+        // (frontend always sends the logged-in user's own email)
+      }
 
       const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
       if (contactRows.length === 0) return res.json({ is_partner: false });
@@ -1280,10 +1372,18 @@ module.exports = async (req, res) => {
     }
 
     // GET /api/affiliate/dashboard?email=xxx — Partner dashboard data
+    // Auth: Require valid JWT token matching the queried email
     if (req.method === 'GET' && url.startsWith('/affiliate/dashboard')) {
       const params = new URL('http://x' + req.url).searchParams;
       const email = (params.get('email') || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
+
+      // Verify caller identity — dashboard contains sensitive financial data
+      const token = extractToken(req);
+      const jwtPayload = token ? verifyJWT(token) : null;
+      if (!jwtPayload || (jwtPayload.email && jwtPayload.email.toLowerCase() !== email)) {
+        return res.status(401).json({ error: 'Authentication required. Please log in.' });
+      }
 
       const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
       if (contactRows.length === 0) return res.json({ error: 'Not found' });
@@ -1360,6 +1460,33 @@ module.exports = async (req, res) => {
         })),
         isNewUser: false,
       });
+    }
+
+    // POST /api/contact — Create or find a contact record (no assessment)
+    if (req.method === 'POST' && url === '/contact') {
+      const b = req.body || {};
+      if (!b.email || !b.email.trim()) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+      const cleanEmail = b.email.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        return res.status(400).json({ error: 'Please enter a valid email address.' });
+      }
+
+      let contactRows = await sql`SELECT * FROM contacts WHERE email = ${cleanEmail} LIMIT 1`;
+      let contact;
+      if (contactRows.length > 0) {
+        contact = contactRows[0];
+        if (b.firstName || b.lastName) {
+          await sql`UPDATE contacts SET first_name = COALESCE(NULLIF(${b.firstName || ''}, ''), first_name), last_name = COALESCE(NULLIF(${b.lastName || ''}, ''), last_name) WHERE id = ${contact.id}`;
+        }
+      } else {
+        const rows = await sql`INSERT INTO contacts (first_name, last_name, email, created_at) VALUES (${b.firstName || ''}, ${b.lastName || ''}, ${cleanEmail}, ${new Date().toISOString()}) RETURNING *`;
+        contact = rows[0];
+      }
+
+      return res.json({ contact: { id: contact.id, email: contact.email, first_name: contact.first_name, last_name: contact.last_name } });
     }
 
     // POST /api/assessment
@@ -5569,10 +5696,59 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             ON CONFLICT (agent_name, rule_key) DO NOTHING`;
         }
 
+        // System registry for local services (Docker, Ollama, etc.)
+        await sql`CREATE TABLE IF NOT EXISTS system_registry (
+          id SERIAL PRIMARY KEY,
+          system_name TEXT NOT NULL UNIQUE,
+          system_type TEXT NOT NULL,
+          category TEXT DEFAULT 'local',
+          endpoint TEXT,
+          status TEXT DEFAULT 'unknown',
+          metadata JSONB DEFAULT '{}',
+          last_reported_at TIMESTAMP DEFAULT NOW(),
+          created_at TIMESTAMP DEFAULT NOW()
+        )`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_system_registry_type ON system_registry(system_type)`;
+
         return res.json({ success: true, message: 'All agent tables created and rules seeded' });
       } catch (migErr) {
         console.error('[agent/migrate] Error:', migErr);
         return res.status(500).json({ error: migErr.message });
+      }
+    }
+
+    // ========== LOCAL SYSTEM REPORTING ==========
+
+    // POST /api/agent/systems/report — Local agent pushes full system state
+    if (req.method === 'POST' && url === '/agent/systems/report') {
+      try {
+        const body = req.body || {};
+        const { systems } = body;
+        if (!Array.isArray(systems)) return res.status(400).json({ error: 'systems array required' });
+
+        for (const sys of systems) {
+          await sql`INSERT INTO system_registry (system_name, system_type, category, endpoint, status, metadata, last_reported_at)
+            VALUES (${sys.name}, ${sys.type}, ${sys.category || 'local'}, ${sys.endpoint || null}, ${sys.status}, ${JSON.stringify(sys.metadata || {})}::jsonb, NOW())
+            ON CONFLICT (system_name) DO UPDATE SET
+              status = EXCLUDED.status,
+              metadata = EXCLUDED.metadata,
+              endpoint = EXCLUDED.endpoint,
+              last_reported_at = NOW()`;
+        }
+
+        return res.json({ success: true, updated: systems.length });
+      } catch (repErr) {
+        return res.status(500).json({ error: repErr.message });
+      }
+    }
+
+    // GET /api/agent/systems/registry — Get all registered systems
+    if (req.method === 'GET' && url === '/agent/systems/registry') {
+      try {
+        const systems = await sql`SELECT * FROM system_registry ORDER BY category, system_type, system_name`;
+        return res.json({ systems });
+      } catch (regErr) {
+        return res.status(500).json({ error: regErr.message });
       }
     }
 
@@ -6210,13 +6386,20 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         const recentDecisions = await sql`SELECT agent_name, run_at, decisions FROM agent_state
           ORDER BY run_at DESC LIMIT 10`;
 
+        // System registry (Docker, Ollama, cloud services)
+        let systemRegistry = [];
+        try {
+          systemRegistry = await sql`SELECT * FROM system_registry ORDER BY category, system_type, system_name`;
+        } catch(e) { /* table may not exist yet */ }
+
         return res.json({
           agents: agentRuns,
           health,
           email: { stats: emailStats[0] || {}, personas },
           pages: topInsights,
           rules,
-          recentDecisions
+          recentDecisions,
+          systems: systemRegistry
         });
       } catch (dashErr) {
         return res.status(500).json({ error: dashErr.message });

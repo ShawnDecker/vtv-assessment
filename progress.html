@@ -113,7 +113,33 @@
   </div>
 
   <script>
-    try { var saved = localStorage.getItem('ve_email'); if (saved) document.getElementById('email').value = saved; } catch(e) {}
+    // JWT auth check — require authentication through member portal
+    (function() {
+      try {
+        var token = localStorage.getItem('vtv_token');
+        if (token) {
+          var payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.email) {
+            document.getElementById('email').value = payload.email;
+            // Keep both localStorage keys in sync
+            localStorage.setItem('ve_email', payload.email);
+          }
+        } else {
+          // No token — redirect to member portal
+          window.location.href = '/member?msg=Please+log+in+to+view+your+progress';
+          return;
+        }
+      } catch(e) {
+        // Token decode failed — try localStorage fallback
+        var saved = localStorage.getItem('ve_email') || localStorage.getItem('vtv_member_email');
+        if (saved) {
+          document.getElementById('email').value = saved;
+        } else {
+          window.location.href = '/member?msg=Please+log+in+to+view+your+progress';
+          return;
+        }
+      }
+    })();
 
     async function loadProgress() {
       var email = document.getElementById('email').value.trim().toLowerCase();

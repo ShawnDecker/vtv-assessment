@@ -175,11 +175,35 @@
     var userEmail = '';
     var latestAssessmentId = null;
 
-    // Auto-fill from localStorage
-    try {
-      var saved = localStorage.getItem('ve_email');
-      if (saved) document.getElementById('email').value = saved;
-    } catch(e) {}
+    // JWT auth check — require authentication through member portal
+    (function() {
+      try {
+        var token = localStorage.getItem('vtv_token');
+        if (token) {
+          var payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.email) {
+            document.getElementById('email').value = payload.email;
+            userEmail = payload.email;
+            // Keep both localStorage keys in sync
+            localStorage.setItem('ve_email', payload.email);
+          }
+        } else {
+          // No token — redirect to member portal
+          window.location.href = '/member?msg=Please+log+in+to+view+your+challenge';
+          return;
+        }
+      } catch(e) {
+        // Token decode failed — try localStorage fallback
+        var saved = localStorage.getItem('ve_email') || localStorage.getItem('vtv_member_email');
+        if (saved) {
+          document.getElementById('email').value = saved;
+          userEmail = saved;
+        } else {
+          window.location.href = '/member?msg=Please+log+in+to+view+your+challenge';
+          return;
+        }
+      }
+    })();
 
     async function checkStatus() {
       var email = document.getElementById('email').value.trim().toLowerCase();
@@ -356,7 +380,7 @@
 <script>
 // Tier-aware upsell: hide VictoryPath CTA for paid members
 (function() {
-  var email = localStorage.getItem('ve_email');
+  var email = localStorage.getItem('ve_email') || localStorage.getItem('vtv_member_email');
   if (!email) return;
   fetch('/api/contacts?email=' + encodeURIComponent(email))
     .then(function(r) { return r.json(); })
