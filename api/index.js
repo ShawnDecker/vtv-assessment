@@ -5520,10 +5520,17 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
       }
     }
 
-    // POST /api/admin/send-blueprint — Email platform blueprint to recipients
-    if (req.method === 'POST' && url === '/admin/send-blueprint') {
-      const b = req.body || {};
-      const recipients = b.to || [];
+    // GET/POST /api/admin/send-blueprint — Email platform blueprint to recipients
+    if ((req.method === 'POST' || req.method === 'GET') && url.startsWith('/admin/send-blueprint')) {
+      let recipients;
+      if (req.method === 'GET') {
+        const params = new URL('http://x' + req.url).searchParams;
+        const toParam = params.get('to');
+        recipients = toParam ? toParam.split(',').map(e => e.trim()) : [];
+      } else {
+        const b = req.body || {};
+        recipients = b.to || [];
+      }
       if (!Array.isArray(recipients) || recipients.length === 0) return res.status(400).json({ error: 'to[] required' });
       if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return res.status(500).json({ error: 'Email not configured' });
       const todayStr = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
