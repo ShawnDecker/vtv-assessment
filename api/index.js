@@ -5662,8 +5662,11 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
       }
     }
 
-    // GET /api/admin/send-apology — Send apology email to all contacts
-    if (req.method === 'GET' && url === '/admin/send-apology') {
+    // GET /api/send-apology — Send apology email to all contacts (requires key param)
+    if (req.method === 'GET' && url.startsWith('/send-apology')) {
+      const apiKey = new URL('http://x' + req.url).searchParams.get('key') || req.headers['x-api-key'] || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!validKey || apiKey !== validKey) return res.status(401).json({ error: 'Add ?key=YOUR_API_KEY to the URL' });
       try {
         if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return res.status(500).json({ error: 'Email not configured' });
         const contacts = await sql`SELECT id, email, first_name FROM contacts WHERE email IS NOT NULL AND email != '' ORDER BY id`;
