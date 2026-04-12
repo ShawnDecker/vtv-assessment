@@ -5038,6 +5038,9 @@ This link expires in 24 hours.
             const unsubToken = Buffer.from(member.email).toString('base64');
             const unsubUrl = `https://assessment.valuetovictory.com/api/coaching/unsubscribe?email=${encodeURIComponent(member.email)}&token=${unsubToken}`;
 
+            const feedbackUrl = `https://assessment.valuetovictory.com/api/feedback/respond?email=${encodeURIComponent(member.email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('Can you tell us something the Value Engine helped you with today?')}`;
+            const bugUrl = `https://assessment.valuetovictory.com/api/feedback/respond?email=${encodeURIComponent(member.email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
+
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;"><tr><td align="center">
@@ -5053,19 +5056,26 @@ This link expires in 24 hours.
     <p style="color:#D4A847;font-size:15px;font-weight:bold;margin:0 0 8px;">What did you actually accomplish today?</p>
     <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">Not what you planned. Not what you wanted to do. What did you <em>do</em>? Write it down. Say it out loud. Own it &mdash; good or bad. That's where growth starts.</p>
   </div>
-  <hr style="border:none;border-top:1px solid #27272a;margin:28px 0;"/>
-  <p style="color:#e4e4e7;font-size:15px;font-weight:bold;margin:0 0 12px;">What's New on the Platform</p>
-  <p style="color:#a1a1aa;font-size:14px;line-height:1.5;margin:0 0 12px;">We've been building while you've been growing:</p>
-  <ul style="color:#a1a1aa;font-size:14px;line-height:1.8;margin:0 0 8px;padding-left:20px;">
-    ${platformUpdates.map(u => '<li>' + u + '</li>').join('')}
-  </ul>
-  <p style="color:#e4e4e7;font-size:15px;font-weight:bold;margin:20px 0 12px;">Bugs Squashed</p>
-  <ul style="color:#a1a1aa;font-size:14px;line-height:1.8;margin:0 0 8px;padding-left:20px;">
-    ${bugFixes.map(f => '<li>' + f + '</li>').join('')}
-  </ul>
-  <hr style="border:none;border-top:1px solid #27272a;margin:28px 0;"/>
-  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 16px;">Thank you for being so supportive and understanding during this launch. We're getting so much closer &mdash; and I'm genuinely looking forward to the great things we're going to be able to do together and all the people we're going to be able to help.</p>
-  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px 24px;margin:20px 0 0;">
+
+  <hr style="border:none;border-top:1px solid #27272a;margin:24px 0;"/>
+
+  <!-- FEEDBACK SECTION -->
+  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px 24px;margin:0 0 20px;">
+    <p style="color:#D4A847;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;">We Want to Hear From You</p>
+    <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0 0 16px;">Your feedback shapes everything we build. Tell us what's working, what's not, or what you wish existed.</p>
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td width="50%" style="padding-right:6px;">
+        <a href="${feedbackUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:12px 8px;border-radius:8px;">Share What Helped</a>
+      </td>
+      <td width="50%" style="padding-left:6px;">
+        <a href="${bugUrl}" style="display:block;text-align:center;background:#18181b;border:1px solid #ef4444;color:#ef4444;font-size:13px;font-weight:bold;text-decoration:none;padding:12px 8px;border-radius:8px;">Report an Issue</a>
+      </td>
+    </tr></table>
+  </div>
+
+  <hr style="border:none;border-top:1px solid #27272a;margin:20px 0;"/>
+
+  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px 24px;margin:0;">
     <p style="color:#D4A847;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;">A Note from Shawn</p>
     <p style="color:#e4e4e7;font-size:15px;line-height:1.7;margin:0 0 12px;font-style:italic;">Every single one of you taking this assessment and showing up every day &mdash; that matters. You're not just checking a box. You're choosing to look at yourself honestly, and that takes guts. I built this because I needed it first. Now I get to watch it help you too. That's the whole point.</p>
     <p style="color:#a1a1aa;font-size:14px;margin:0;">&mdash; Shawn Decker</p>
@@ -5102,6 +5112,133 @@ This link expires in 24 hours.
         console.error('[accountability/send] Error:', acctErr);
         return res.status(500).json({ error: 'Accountability send failed', details: acctErr.message });
       }
+    }
+
+    // ========== USER FEEDBACK & BUG REPORT SYSTEM ==========
+    let feedbackResponseTableReady = false;
+    async function ensureFeedbackResponseTable() {
+      if (feedbackResponseTableReady) return;
+      try {
+        await sql`CREATE TABLE IF NOT EXISTS user_feedback (
+          id SERIAL PRIMARY KEY, contact_id INTEGER, email TEXT NOT NULL, first_name TEXT,
+          category TEXT DEFAULT 'feedback', feedback_type TEXT DEFAULT 'evening_checkin',
+          question TEXT, response TEXT NOT NULL, severity TEXT DEFAULT 'low',
+          status TEXT DEFAULT 'new', page_url TEXT, device_info TEXT,
+          resolved_at TIMESTAMP, admin_notes TEXT, created_at TIMESTAMP DEFAULT NOW()
+        )`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_uf_email ON user_feedback(email)`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_uf_created ON user_feedback(created_at DESC)`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_uf_category ON user_feedback(category)`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_uf_status ON user_feedback(status)`;
+        feedbackResponseTableReady = true;
+      } catch(e) {}
+    }
+
+    // POST /api/feedback/respond — Submit feedback, bug report, or suggestion
+    if (req.method === 'POST' && url === '/feedback/respond') {
+      await ensureFeedbackResponseTable();
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      const response = (b.response || '').trim();
+      const category = b.category || 'feedback';
+      const severity = b.severity || (category === 'bug' ? 'medium' : 'low');
+      if (!email || !response) return res.status(400).json({ error: 'email and response required' });
+      let contactId = null, firstName = null;
+      try { const c = await sql`SELECT id, first_name FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`; if (c.length > 0) { contactId = c[0].id; firstName = c[0].first_name; } } catch(e) {}
+      const row = await sql`INSERT INTO user_feedback (contact_id, email, first_name, category, feedback_type, question, response, severity, page_url, device_info)
+        VALUES (${contactId}, ${email}, ${firstName}, ${category}, ${b.feedbackType||'evening_checkin'}, ${b.question||''}, ${response}, ${severity}, ${b.pageUrl||''}, ${b.deviceInfo||''}) RETURNING id`;
+      if (category === 'bug' && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        try {
+          const t = nodemailer.createTransport({ service:'gmail', auth:{user:process.env.GMAIL_USER,pass:process.env.GMAIL_APP_PASSWORD} });
+          await t.sendMail({ from:'"VTV Bug Report" <'+process.env.GMAIL_USER+'>', to:'valuetovictory@gmail.com',
+            subject:'[BUG #'+row[0].id+'] '+response.substring(0,60), text:'Bug #'+row[0].id+'\nFrom: '+(firstName||email)+'\nSeverity: '+severity+'\nPage: '+(b.pageUrl||'N/A')+'\n\n'+response });
+        } catch(e) {}
+      }
+      return res.json({ success:true, id:row[0].id, message: category==='bug'?'Bug report submitted. We are on it!':'Thank you for your feedback!' });
+    }
+
+    // GET /api/feedback/respond — Feedback & bug report form page
+    if (req.method === 'GET' && url.startsWith('/feedback/respond')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = params.get('email') || '';
+      const name = params.get('name') || 'Friend';
+      const mode = params.get('mode') || 'feedback';
+      const q = params.get('q') || 'Tell us something the Value Engine helped you with today.';
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Feedback — Value to Victory</title></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;min-height:100vh;">
+<div style="max-width:500px;margin:0 auto;padding:40px 20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="font-size:10px;letter-spacing:3px;color:#D4A847;text-transform:uppercase;margin-bottom:6px;">VALUE TO VICTORY</div>
+    <div style="font-family:Georgia,serif;font-size:22px;font-style:italic;color:#fff;" id="pageTitle">We Want to Hear From You</div>
+  </div>
+  <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:32px 24px;">
+    <p style="color:#e4e4e7;font-size:15px;margin:0 0 16px;">Hey ${name},</p>
+    <div style="display:flex;gap:6px;margin-bottom:20px;">
+      <button onclick="setMode('feedback')" id="tab-feedback" style="flex:1;padding:10px 8px;border-radius:8px;border:1px solid #27272a;background:#18181b;color:#a1a1aa;font-size:12px;font-weight:bold;cursor:pointer;">Share Feedback</button>
+      <button onclick="setMode('bug')" id="tab-bug" style="flex:1;padding:10px 8px;border-radius:8px;border:1px solid #27272a;background:#18181b;color:#a1a1aa;font-size:12px;font-weight:bold;cursor:pointer;">Report Issue</button>
+      <button onclick="setMode('idea')" id="tab-idea" style="flex:1;padding:10px 8px;border-radius:8px;border:1px solid #27272a;background:#18181b;color:#a1a1aa;font-size:12px;font-weight:bold;cursor:pointer;">Suggestion</button>
+    </div>
+    <div id="formArea">
+      <p style="color:#D4A847;font-size:14px;font-weight:bold;margin:0 0 12px;" id="qText">${q}</p>
+      <textarea id="resp" rows="5" style="width:100%;padding:14px;background:#111118;border:1px solid #27272a;border-radius:8px;color:#e4e4e7;font-size:15px;resize:vertical;box-sizing:border-box;outline:none;font-family:Arial,sans-serif;" placeholder="Share your thoughts..."></textarea>
+      <div id="bugFields" style="display:none;margin-top:10px;">
+        <select id="severity" style="width:100%;padding:12px;background:#111118;border:1px solid #27272a;border-radius:8px;color:#e4e4e7;font-size:14px;margin-bottom:8px;">
+          <option value="low">Low — Minor annoyance</option>
+          <option value="medium" selected>Medium — Something isn't working right</option>
+          <option value="high">High — Can't use a feature</option>
+          <option value="critical">Critical — Can't access my account</option>
+        </select>
+        <input id="pageUrl" type="text" placeholder="Which page were you on? (optional)" style="width:100%;padding:12px;background:#111118;border:1px solid #27272a;border-radius:8px;color:#e4e4e7;font-size:14px;box-sizing:border-box;"/>
+      </div>
+      <button onclick="submitFB()" id="subBtn" style="width:100%;margin-top:12px;padding:14px;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:15px;font-weight:bold;border:none;border-radius:8px;cursor:pointer;">Submit Feedback</button>
+    </div>
+    <div id="thankYou" style="display:none;text-align:center;padding:20px 0;">
+      <div style="font-size:36px;margin-bottom:8px;">&#10003;</div>
+      <p style="color:#22c55e;font-size:16px;font-weight:bold;margin:0 0 8px;" id="tyTitle">Thank you!</p>
+      <p style="color:#a1a1aa;font-size:14px;margin:0;" id="tyMsg">Your feedback helps us build something that truly matters.</p>
+    </div>
+  </div>
+  <p style="text-align:center;color:#52525b;font-size:11px;margin-top:20px;">&copy; 2026 Value to Victory</p>
+</div>
+<script>
+let cm='${mode}';
+function setMode(m){cm=m;document.querySelectorAll('[id^=tab-]').forEach(t=>{t.style.background='#18181b';t.style.color='#a1a1aa';});document.getElementById('tab-'+m).style.background='#D4A847';document.getElementById('tab-'+m).style.color='#0a0a0a';
+if(m==='bug'){document.getElementById('bugFields').style.display='block';document.getElementById('qText').textContent='What went wrong? Describe what happened.';document.getElementById('resp').placeholder='I was trying to... and then...';document.getElementById('subBtn').textContent='Submit Bug Report';document.getElementById('pageTitle').textContent='Report a Technical Issue';}
+else if(m==='idea'){document.getElementById('bugFields').style.display='none';document.getElementById('qText').textContent='What would make the Value Engine better?';document.getElementById('resp').placeholder='I wish it could...';document.getElementById('subBtn').textContent='Submit Suggestion';document.getElementById('pageTitle').textContent='Share a Suggestion';}
+else{document.getElementById('bugFields').style.display='none';document.getElementById('qText').textContent='${q}';document.getElementById('resp').placeholder='Share your thoughts...';document.getElementById('subBtn').textContent='Submit Feedback';document.getElementById('pageTitle').textContent='We Want to Hear From You';}}
+setMode(cm);
+function submitFB(){var r=document.getElementById('resp').value.trim();if(!r)return;
+fetch('/api/feedback/respond',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'${email}',response:r,category:cm,question:document.getElementById('qText').textContent,feedbackType:'evening_checkin',severity:cm==='bug'?document.getElementById('severity').value:'low',pageUrl:cm==='bug'?document.getElementById('pageUrl').value:'',deviceInfo:navigator.userAgent})})
+.then(function(r){return r.json()}).then(function(d){document.getElementById('formArea').style.display='none';document.getElementById('thankYou').style.display='block';
+if(cm==='bug'){document.getElementById('tyTitle').textContent='Bug Report Received!';document.getElementById('tyMsg').textContent='We have been notified. Report #'+(d.id||'');}
+else if(cm==='idea'){document.getElementById('tyTitle').textContent='Great Idea!';document.getElementById('tyMsg').textContent='We read every suggestion. Thank you!';}
+}).catch(function(){alert('Something went wrong. Please try again.');});}
+</script></body></html>`);
+    }
+
+    // GET /api/admin/user-feedback — View all feedback with filtering
+    if (req.method === 'GET' && url.startsWith('/admin/user-feedback') && !url.includes('/resolve')) {
+      await ensureFeedbackResponseTable();
+      const params = new URL('http://x' + req.url).searchParams;
+      const category = params.get('category');
+      const status = params.get('status');
+      let rows;
+      if (category && status) rows = await sql`SELECT * FROM user_feedback WHERE category=${category} AND status=${status} ORDER BY CASE severity WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END, created_at DESC LIMIT 200`;
+      else if (category) rows = await sql`SELECT * FROM user_feedback WHERE category=${category} ORDER BY created_at DESC LIMIT 200`;
+      else if (status) rows = await sql`SELECT * FROM user_feedback WHERE status=${status} ORDER BY created_at DESC LIMIT 200`;
+      else rows = await sql`SELECT * FROM user_feedback ORDER BY created_at DESC LIMIT 200`;
+      const stats = await sql`SELECT category, status, severity, COUNT(*) as cnt FROM user_feedback GROUP BY category, status, severity ORDER BY category`;
+      return res.json({ feedback: rows, stats });
+    }
+
+    // POST /api/admin/user-feedback/:id/resolve — Mark as resolved
+    if (req.method === 'POST' && url.match(/^\/admin\/user-feedback\/\d+\/resolve$/)) {
+      await ensureFeedbackResponseTable();
+      const fbId = parseInt(url.split('/')[3]);
+      const b = req.body || {};
+      await sql`UPDATE user_feedback SET status='resolved', resolved_at=NOW(), admin_notes=${b.notes||null} WHERE id=${fbId}`;
+      return res.json({ success: true });
     }
 
     // ========== CEO TODO LIST ==========
@@ -5523,6 +5660,76 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         console.error('[ceo-briefing] Error:', briefingErr);
         return res.status(500).json({ error: 'CEO briefing failed', details: briefingErr.message });
       }
+    }
+
+    // GET /api/admin/send-apology — Send apology email to all contacts
+    if (req.method === 'GET' && url === '/admin/send-apology') {
+      try {
+        if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return res.status(500).json({ error: 'Email not configured' });
+        const contacts = await sql`SELECT id, email, first_name FROM contacts WHERE email IS NOT NULL AND email != '' ORDER BY id`;
+        if (contacts.length === 0) return res.json({ sent: 0, message: 'No contacts' });
+        const transporter = nodemailer.createTransport({ service:'gmail', auth:{user:process.env.GMAIL_USER,pass:process.env.GMAIL_APP_PASSWORD} });
+        let sentCount = 0;
+        const results = [];
+        for (const c of contacts) {
+          try {
+            const firstName = c.first_name || 'Friend';
+            const feedbackUrl = `https://assessment.valuetovictory.com/api/feedback/respond?email=${encodeURIComponent(c.email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('Can you tell us something the Value Engine helped you with today?')}`;
+            const bugUrl = `https://assessment.valuetovictory.com/api/feedback/respond?email=${encodeURIComponent(c.email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;"><tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+<tr><td style="text-align:center;padding-bottom:24px;">
+  <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;margin-bottom:8px;">VALUE TO VICTORY</div>
+  <div style="font-family:Georgia,serif;font-size:26px;font-style:italic;color:#ffffff;">A Quick Note From Shawn</div>
+</td></tr>
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:40px 32px;">
+  <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 20px;">${firstName},</p>
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 16px;">I owe you an apology.</p>
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 16px;">Over the past few days, you may have received more emails than you should have. That's on us. We were upgrading the systems behind the Value Engine &mdash; improving security, adding new features, and building tools to serve you better &mdash; and during that process, some emails went out more than once or at the wrong times.</p>
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 16px;">That's not the experience I want for you. You trusted us with your inbox, and we take that seriously.</p>
+  <div style="background:#111118;border-left:3px solid #22c55e;padding:16px 20px;margin:20px 0;border-radius:0 8px 8px 0;">
+    <p style="color:#22c55e;font-size:14px;font-weight:bold;margin:0 0 8px;">What We Fixed</p>
+    <ul style="color:#a1a1aa;font-size:14px;line-height:1.8;margin:0;padding-left:16px;">
+      <li>Email scheduling is now locked to consistent daily times</li>
+      <li>Duplicate sends have been eliminated</li>
+      <li>Security upgrades are complete &mdash; your account is safer than ever</li>
+      <li>New feedback system so you can tell us exactly what's working (and what isn't)</li>
+    </ul>
+  </div>
+  <hr style="border:none;border-top:1px solid #27272a;margin:24px 0;"/>
+  <p style="color:#e4e4e7;font-size:15px;font-weight:bold;margin:0 0 12px;">Your Voice Matters</p>
+  <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0 0 16px;">We just built a new feedback system specifically so you can tell us what's helping, what's not, or if anything is broken. Every response goes directly to me.</p>
+  <table width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td width="50%" style="padding-right:6px;">
+      <a href="${feedbackUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:14px 8px;border-radius:8px;">Tell Us What Helped</a>
+    </td>
+    <td width="50%" style="padding-left:6px;">
+      <a href="${bugUrl}" style="display:block;text-align:center;background:#18181b;border:1px solid #ef4444;color:#ef4444;font-size:13px;font-weight:bold;text-decoration:none;padding:14px 8px;border-radius:8px;">Report an Issue</a>
+    </td>
+  </tr></table>
+  <hr style="border:none;border-top:1px solid #27272a;margin:24px 0;"/>
+  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px 24px;">
+    <p style="color:#e4e4e7;font-size:15px;line-height:1.7;margin:0 0 12px;font-style:italic;">I'm building this for people like you &mdash; people who want to stop guessing and start running the system. Every bug we fix, every feature we add, every email we send &mdash; it's all aimed at making this the most valuable tool you've ever used. Thank you for your patience while we get it right.</p>
+    <p style="color:#a1a1aa;font-size:14px;margin:0;">&mdash; Shawn Decker</p>
+  </div>
+</td></tr>
+<tr><td style="text-align:center;padding-top:24px;">
+  <a href="https://assessment.valuetovictory.com/member" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Open Your Dashboard</a>
+</td></tr>
+<tr><td style="text-align:center;padding-top:24px;">
+  <p style="color:#52525b;font-size:12px;margin:0;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p>
+</td></tr>
+</table></td></tr></table></body></html>`;
+            await transporter.sendMail({ from:'"Shawn @ Value Engine" <'+process.env.GMAIL_USER+'>', to:c.email, subject:firstName+', a quick apology and something new for you', html });
+            sentCount++;
+            results.push({ email:c.email, status:'sent' });
+            await logEmail(sql, { recipient:c.email, emailType:'apology', subject:'Apology + new feedback system', contactId:c.id });
+          } catch(e) { results.push({ email:c.email, status:'error', error:e.message }); }
+        }
+        return res.json({ sent:sentCount, total:contacts.length, results });
+      } catch(e) { return res.status(500).json({ error:e.message }); }
     }
 
     // GET/POST /api/send-blueprint — Email platform blueprint to recipients
