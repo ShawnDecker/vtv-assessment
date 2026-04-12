@@ -198,6 +198,7 @@
         <button class="btn btn-outline" onclick="sendCoachingEmails()">Send Coaching Emails (Cron)</button>
         <button class="btn btn-outline" onclick="sendAccountabilityEmails()">Send Accountability Emails</button>
         <button class="btn btn-outline" onclick="backfillEmailLog()">Backfill Email Log (One-Time)</button>
+        <button class="btn btn-outline" onclick="downloadBlueprint()">Download Platform Blueprint</button>
       </div>
       <div class="section-title">Quick Links</div>
       <div class="card" style="display:flex;flex-direction:column;gap:8px;">
@@ -769,6 +770,298 @@ function backfillEmailLog() {
     .then(d=>{ showToolResult(`Backfill complete: ${d.inserted} records added (total: ${d.afterCount})`); loadAll(); })
     .catch(e=>showToolResult('Backfill failed: '+e.message, true));
 }
+function downloadBlueprint() {
+  const txt = `================================================================================
+VTV ASSESSMENT PLATFORM — COMPLETE FILE MAP & BLUEPRINT
+Value to Victory | assessment.valuetovictory.com
+Generated: ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
+================================================================================
+
+TECH STACK
+----------
+Runtime:    Node.js (Vercel Serverless Functions)
+Database:   PostgreSQL (Neon Serverless)
+Email:      Gmail SMTP via Nodemailer
+Payments:   Stripe (subscriptions + one-time purchases)
+CRM:        HubSpot (optional contact sync)
+AI:         Claude API (via ai.js gateway)
+Auth:       PIN-based + JWT tokens (HS256, 7-day expiry)
+Frontend:   Vanilla HTML/JS/CSS (no framework — zero dependencies)
+Hosting:    Vercel (atomic deploys, built-in cron jobs)
+Domain:     assessment.valuetovictory.com
+
+================================================================================
+CORE CONFIGURATION (3 files)
+================================================================================
+
+package.json              — Dependencies & scripts
+vercel.json               — Route mappings + cron schedules:
+                             • 5:47 AM  — Coaching emails
+                             • 6:45 AM  — CEO daily briefing
+                             • 11:47 AM — Daily devotional
+                             • 7:47 PM  — Accountability emails
+.gitignore                — Protects .env files, node_modules, .vercel
+
+================================================================================
+API — BACKEND (12 files, ~9,400 lines of code)
+================================================================================
+
+api/index.js              — 6,550 lines — MAIN API HANDLER
+                             60+ endpoints covering:
+                             • Assessment submission + dynamic scoring
+                               (5 pillars x 10 sub-categories = 50 dimensions)
+                             • PIN authentication + JWT token generation
+                             • Member portal (profile, teams, assessments)
+                             • Team management (create, invite, import, reports)
+                             • Admin dashboard API (contacts, analytics, export)
+                             • Email log system (tracks every email sent)
+                             • CEO daily briefing (Fortune 500-style report)
+                             • Coaching email sequences (5-day automated drip)
+                             • Accountability emails (evening check-in)
+                             • Prescription engine (diagnosis + 30-day action plan)
+                             • Cross-pillar impact matrix (20 directional relationships)
+                             • Recommendations engine (per pillar + sub-category)
+                             • Challenge system (90-day enrollment + tracking)
+                             • Story links (media/news storage)
+                             • CEO TODO list (task management)
+                             • HubSpot CRM sync
+                             • Stripe billing portal
+                             • Affiliate system (apply, check, dashboard)
+                             • Privacy/data management (GDPR-style)
+                             • Benchmarks + percentile ranking
+
+api/relationships.js      — 976 lines — RELATIONSHIP ASSESSMENTS
+                             • User profiles (age, gender, membership tier)
+                             • Relationship matrix (5 domains x give/receive)
+                             • Love language assessment (5 languages x give/receive)
+                             • Couple challenges (daily prompts over N days)
+                             • Cherish & Honor matrix
+                             • Intimacy assessment
+                             • Partner linking + invitation system
+
+api/checkout.js           — 284 lines — Stripe checkout + webhook handler
+api/cart-checkout.js      —  91 lines — Multi-item cart checkout flow
+api/verify-email.js       — 263 lines — Email verification + PDF book delivery
+api/free-book-signup.js   — 156 lines — Free book lead capture + verification
+api/ai.js                 — 153 lines — AI gateway (Claude API proxy)
+api/migrate-analytics.js  — 114 lines — Analytics table migration
+api/entitlements.js       — 101 lines — Membership tier + purchase checks
+api/send-email.js         —  57 lines — Generic email sending API
+api/devotional-today.js   —  53 lines — Daily devotional (60-day cycle)
+api/migrate-digital-purchases.js — 48 lines — Purchases table migration
+api/health.js             —  23 lines — Health check endpoint
+
+================================================================================
+DATABASE MIGRATIONS (7 files)
+================================================================================
+
+migrations/setup-db.js                — Core tables:
+                                         contacts, teams, assessments,
+                                         peer_ratings, team_members
+
+migrations/migrate-question-system.js — Question/answer system:
+                                         question_bank (281+ questions),
+                                         answer_history, challenges, feedback
+
+migrations/migrate-relationships.js   — Relationship system:
+                                         user_profiles, relationship_matrix,
+                                         love_language_results,
+                                         couple_challenges,
+                                         couple_challenge_responses
+
+migrations/migrate-coaching.js        — coaching_requests table
+migrations/migrate-depth.js           — Assessment depth system
+migrations/setup-free-book-db.js      — free_book_signups table
+migrations/006-rfm-devotionals.sql    — Devotional content tables:
+                                         rfm_chapters, rfm_devotionals,
+                                         rfm_subscriber_progress
+
+================================================================================
+DATABASE TABLES (26 total)
+================================================================================
+
+contacts                    — Users (name, email, phone, PIN hash)
+assessments                 — 60+ columns (5 pillars x 10 sub-scores + meta)
+teams                       — Team/company management
+team_members                — Team membership with persistent numbering
+peer_ratings                — Peer review ratings (JSON)
+user_profiles               — Membership tier, Stripe IDs, partner links
+question_bank               — 281+ assessment questions with options
+answer_history              — Per-user answer tracking across sessions
+feedback                    — Weakest pillar/sub-category tracking
+challenges                  — 90-day challenge enrollment
+coaching_sequences          — 5-day email drip sequences
+coaching_requests           — Coaching intake form submissions
+free_book_signups           — Lead capture for free book
+digital_purchases           — Product entitlements
+analytics_events            — Platform event tracking
+relationship_matrix         — 5-domain give/receive scores
+love_language_results       — 5-language give/receive scores
+couple_challenges           — Partner challenge tracking
+couple_challenge_responses  — Daily challenge responses
+email_log                   — Every email sent (type, recipient, status)
+ceo_todos                   — CEO action items for daily briefing
+story_links                 — Media/news links storage
+devotional_progress         — Per-user devotional tracking
+rfm_chapters                — Book chapter content
+rfm_devotionals             — 60-day devotional content
+rfm_subscriber_progress     — Devotional subscription tracking
+
+================================================================================
+FRONTEND — PAGES (38 HTML files, ~20,000 lines)
+================================================================================
+
+— CORE —
+index.html                — 1,435 lines — Main assessment (question engine)
+member.html               — 2,597 lines — Member portal (PIN auth, dashboard)
+report.html               —   612 lines — Assessment report viewer
+admin-contacts.html       —   789 lines — Admin Command Center (8 tabs)
+agent-dashboard.html      —   275 lines — AI agent dashboard
+
+— ASSESSMENT & RESULTS —
+action-plan.html          —   410 lines — Personalized action plan
+counselor-report.html     —   421 lines — Professional counselor view
+compare.html              — Score comparison tool
+progress.html             —   199 lines — Progress tracking charts
+certificate.html          —   180 lines — Completion certificate
+returning.html            —   219 lines — Returning user flow
+onboarding.html           —   387 lines — New user onboarding
+
+— TEAMS —
+teams.html                — 1,312 lines — Team creation + management
+team-report.html          —   326 lines — Team aggregate report
+challenge.html            —   387 lines — 90-day challenge enrollment
+
+— RELATIONSHIPS —
+relationship-hub.html     —   334 lines — Relationship hub landing
+relationship-matrix.html  —   436 lines — 20-screen relationship matrix
+love-language.html        —   424 lines — Love language assessment
+couple-challenge.html     —   510 lines — Daily couple challenge hub
+couple-report.html        —   907 lines — Couple comparison report
+cherish-honor.html        —   304 lines — Cherish & Honor matrix
+partner-invite.html       —   366 lines — Partner invitation page
+dating.html               —   407 lines — Dating mode + shareable scorecards
+
+— COMMERCE —
+pricing.html              —   570 lines — Subscription tiers
+premium.html              —   375 lines — Premium features
+checkout-success.html     —   255 lines — Post-purchase confirmation
+realestate.html           — Real estate coaching vertical
+
+— CONTENT —
+audiobook.html            — 1,465 lines — 65-chapter audiobook player
+daily-word.html           —   279 lines — Daily devotional page
+coaching.html             —   457 lines — Coaching intake form
+coaching-history.html     — Coaching email history viewer
+free-book.html            —   376 lines — Free book landing page
+
+— SEO / FRAMEWORK PAGES —
+framework-time.html       —   223 lines — Time pillar deep-dive
+framework-people.html     —   222 lines — People pillar deep-dive
+framework-influence.html  —   222 lines — Influence pillar deep-dive
+framework-numbers.html    —   222 lines — Numbers pillar deep-dive
+framework-knowledge.html  —   222 lines — Knowledge pillar deep-dive
+about-pink.html           — P.I.N.K. assessment explanation
+
+— ACCOUNT & LEGAL —
+settings.html             —   216 lines — User settings
+refer.html                —   200 lines — Referral program
+faq.html                  — FAQ / help center
+privacy.html              —   201 lines — Privacy policy
+terms.html                —   185 lines — Terms of service
+testimonials.html         — Social proof / testimonials
+stuck.html                — "I'm stuck" landing page
+portfolio-links.html      —   398 lines — Portfolio / link hub
+
+================================================================================
+DATA & ASSETS
+================================================================================
+
+data/devotionals.json     — 60 devotionals (scripture, reflection, prayer,
+                             action step, podcast topic, social media post)
+running-from-miracles.pdf — Free book PDF (email attachment)
+og-image.png              — Default Open Graph image
+og-compare.png            — Compare page social image
+og-realestate.png         — Real estate social image
+og-stuck.png              — Stuck page social image
+og-teams.png              — Teams social image
+assets/index-*.css        — Compiled CSS bundle
+assets/index-*.js         — Compiled JS bundle
+
+================================================================================
+SCRIPTS & DOCUMENTATION
+================================================================================
+
+scripts/generate-devotionals.js    — Generates 60-day devotional JSON from chapters
+scripts/promote-to-production.sh   — Merge staging to master for deploy
+DEPLOYMENT.md                      — Zero-downtime deployment guide
+DB_SCHEMA.md                       — Database schema documentation
+
+================================================================================
+THE 5 PILLARS (Assessment Framework)
+================================================================================
+
+Each pillar has 10 sub-categories scored 1-5 (max 50 per pillar, 250 total):
+
+TIME:       Time Awareness, Time Allocation, Time Protection, Time Leverage,
+            Five-Hour Leak, Value Per Hour, Time Investment, Downtime Quality,
+            Foresight, Time Reallocation
+
+PEOPLE:     Trust Investment, Boundary Quality, Network Depth, Relational ROI,
+            People Audit, Alliance Building, Love Bank Deposits,
+            Communication Clarity, Restraint Practice, Value Replacement
+
+INFLUENCE:  Leadership Level, Integrity Alignment, Professional Credibility,
+            Empathetic Listening, Gravitational Center, Micro-Honesties,
+            Word Management, Personal Responsibility, Adaptive Influence,
+            Influence Multiplier
+
+NUMBERS:    Financial Awareness, Goal Specificity, Investment Logic,
+            Measurement Habit, Cost vs Value, Number One Clarity,
+            Small Improvements, Negative Math, Income Multiplier,
+            Negotiation Skill
+
+KNOWLEDGE:  Learning Hours, Application Rate, Bias Awareness,
+            Highest & Best Use, Supply & Demand, Substitution Risk,
+            Double Jeopardy, Knowledge Compounding, Weighted Analysis,
+            Perception vs Perspective
+
+SCORE RANGES:
+  Crisis:    < 20%
+  Survival:  20-40%
+  Growth:    40-60%
+  Momentum:  60-80%
+  Mastery:   80%+
+
+================================================================================
+AUTOMATED EMAIL SCHEDULE (EST)
+================================================================================
+
+  5:47 AM  — Coaching emails (5-day personalized series)
+  6:45 AM  — CEO daily briefing (metrics, top 3 signups, recommendations,
+              TODO list, devotional preview)
+ 11:47 AM  — Daily devotional (Running From Miracles, 60-day cycle)
+  7:47 PM  — Accountability check-in ("What did you accomplish today?")
+
+  On login — Sign-in notification with assessment snapshot
+  On assessment — Full report email with pillar breakdown + prescription
+
+================================================================================
+TOTAL: 88 files | ~30,000+ lines of code | 26 database tables | 60+ API endpoints
+================================================================================
+
+Built by Shawn E. Decker | Value to Victory | valuetovictory.com
+`;
+
+  const blob = new Blob([txt], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'VTV-Platform-Blueprint.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function emailReport(assessmentId, toEmail) {
   const sendTo = prompt('Send assessment report to:', toEmail);
   if (!sendTo) return;

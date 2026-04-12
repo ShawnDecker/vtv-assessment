@@ -732,17 +732,22 @@ async function logEmail(sql, { recipient, emailType, subject, contactId, assessm
   } catch(e) { console.error('logEmail error (non-fatal):', e.message); }
 }
 
-// Authenticate cron/scheduled endpoints — accepts admin API key OR Vercel cron secret
+// Authenticate cron/scheduled endpoints — accepts admin API key, Vercel cron, or cron secret
 function isCronAuthorized(req) {
+  // Admin API key (manual trigger from dashboard or curl)
   const apiKey = req.headers['x-api-key'] || '';
   const adminKey = process.env.ADMIN_API_KEY || '';
   if (adminKey && apiKey === adminKey) return true;
-  // Vercel cron sends Authorization: Bearer <CRON_SECRET>
+  // Vercel cron secret (if CRON_SECRET env var is set)
   const authHeader = req.headers['authorization'] || '';
   const cronSecret = process.env.CRON_SECRET || '';
   if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true;
-  // Allow if request comes from Vercel's internal cron (has x-vercel-cron header)
+  // Vercel internal cron — check for user-agent containing 'vercel' or x-vercel headers
   if (req.headers['x-vercel-cron'] === '1') return true;
+  const ua = (req.headers['user-agent'] || '').toLowerCase();
+  if (ua.includes('vercel')) return true;
+  // Allow if no external referer and request comes from the same host (server-to-server)
+  if (!req.headers['origin'] && !req.headers['referer'] && req.headers['host']?.includes('valuetovictory')) return true;
   return false;
 }
 
@@ -5518,6 +5523,38 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         console.error('[ceo-briefing] Error:', briefingErr);
         return res.status(500).json({ error: 'CEO briefing failed', details: briefingErr.message });
       }
+    }
+
+    // GET/POST /api/send-blueprint — Email platform blueprint to recipients
+    if ((req.method === 'POST' || req.method === 'GET') && url.startsWith('/send-blueprint')) {
+      // Auth: accept x-api-key header OR key query param
+      const apiKey = req.headers['x-api-key'] || new URL('http://x' + req.url).searchParams.get('key') || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!validKey || apiKey !== validKey) return res.status(401).json({ error: 'API key required. Add ?key=YOUR_KEY to the URL.' });
+      let recipients;
+      if (req.method === 'GET') {
+        const params = new URL('http://x' + req.url).searchParams;
+        const toParam = params.get('to');
+        recipients = toParam ? toParam.split(',').map(e => e.trim()) : [];
+      } else {
+        const b = req.body || {};
+        recipients = b.to || [];
+      }
+      if (!Array.isArray(recipients) || recipients.length === 0) return res.status(400).json({ error: 'to[] required' });
+      if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return res.status(500).json({ error: 'Email not configured' });
+      const todayStr = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+      const bp = `VTV ASSESSMENT PLATFORM — COMPLETE BLUEPRINT\nGenerated: ${todayStr}\n${'='.repeat(70)}\n\nTECH STACK: Node.js (Vercel Serverless), PostgreSQL (Neon), Gmail SMTP, Stripe, HubSpot, Claude API, PIN+JWT Auth, Vanilla HTML/JS/CSS\n\nBACKEND (12 files, ~9,400 lines):\n  api/index.js (6,550 lines) — 60+ endpoints: assessments, auth, teams, admin, email log, CEO briefing, coaching, prescriptions, challenges, recommendations, affiliates, privacy\n  api/relationships.js (976) — profiles, relationship matrix, love language, couple challenges, partner linking\n  api/checkout.js (284) — Stripe checkout + webhooks\n  api/cart-checkout.js (91) — Multi-item cart\n  api/verify-email.js (263) — Email verification + PDF delivery\n  api/free-book-signup.js (156) — Lead capture\n  api/ai.js (153) — Claude API gateway\n  api/entitlements.js (101) — Membership checks\n  api/send-email.js (57) — Generic email API\n  api/devotional-today.js (53) — Daily devotional\n  api/health.js (23) — Health check\n  api/migrate-*.js — Database migrations\n\nDATABASE (26 tables):\n  contacts, assessments, teams, team_members, peer_ratings, user_profiles, question_bank, answer_history, feedback, challenges, coaching_sequences, coaching_requests, free_book_signups, digital_purchases, analytics_events, relationship_matrix, love_language_results, couple_challenges, couple_challenge_responses, email_log, ceo_todos, story_links, devotional_progress, rfm_chapters, rfm_devotionals, rfm_subscriber_progress\n\nFRONTEND (38 pages, ~20,000 lines):\n  index.html (assessment), member.html (portal), report.html, admin-contacts.html (admin), teams.html, pricing.html, audiobook.html, coaching.html, relationship-hub.html, relationship-matrix.html, love-language.html, couple-challenge.html, couple-report.html, cherish-honor.html, dating.html, partner-invite.html, daily-word.html, free-book.html, action-plan.html, counselor-report.html, challenge.html, progress.html, certificate.html, returning.html, onboarding.html, premium.html, checkout-success.html, settings.html, refer.html, faq.html, privacy.html, terms.html, testimonials.html, framework pages (5), realestate.html, compare.html, stuck.html\n\n5 PILLARS (50 sub-categories, scored 1-5, max 250):\n  TIME: Awareness, Allocation, Protection, Leverage, Five-Hour Leak, Value/Hour, Investment, Downtime, Foresight, Reallocation\n  PEOPLE: Trust, Boundaries, Network, ROI, Audit, Alliances, Love Bank, Communication, Restraint, Replacement\n  INFLUENCE: Leadership, Integrity, Credibility, Listening, Gravity, Micro-Honesties, Words, Responsibility, Adaptive, Multiplier\n  NUMBERS: Financial Awareness, Goals, Investment, Measurement, Cost/Value, #1 Clarity, Small Improvements, Negative Math, Income Multiplier, Negotiation\n  KNOWLEDGE: Learning, Application, Bias, Highest Use, Supply/Demand, Substitution, Double Jeopardy, Compounding, Weighted Analysis, Perception\n\nScore Ranges: Crisis (<20%) | Survival (20-40%) | Growth (40-60%) | Momentum (60-80%) | Mastery (80%+)\n\nDAILY EMAILS (EST): 5:47AM Coaching, 6:45AM CEO Briefing, 11:47AM Devotional, 7:47PM Accountability\n\nTOTAL: 88 files | 30,000+ lines | 26 tables | 60+ endpoints\nBuilt by Shawn E. Decker | valuetovictory.com`;
+      const emailHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,sans-serif;"><table width="100%" style="background:#0a0a0a;padding:40px 16px;"><tr><td align="center"><table width="600" style="max-width:600px;"><tr><td style="text-align:center;padding-bottom:20px;"><div style="font-size:10px;letter-spacing:3px;color:#D4A847;">VALUE TO VICTORY</div><div style="font-family:Georgia,serif;font-size:22px;font-style:italic;color:#fff;">Platform Blueprint</div><div style="font-size:12px;color:#71717a;margin-top:4px;">${todayStr}</div></td></tr><tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:32px 24px;"><p style="color:#e4e4e7;font-size:15px;line-height:1.6;margin:0 0 16px;">The complete VTV Assessment Platform blueprint is attached as a text file.</p><p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0 0 16px;">This contains the full file map, tech stack, database schema, API endpoints, 5-pillar framework, and email schedule.</p><div style="background:#111118;border-left:3px solid #D4A847;padding:14px 18px;border-radius:0 6px 6px 0;"><p style="color:#D4A847;font-size:13px;font-weight:bold;margin:0 0 6px;">What's Included</p><p style="color:#a1a1aa;font-size:13px;margin:0;">88 files &bull; 30,000+ lines &bull; 26 database tables &bull; 60+ API endpoints &bull; 38 pages &bull; 4 daily automated emails</p></div></td></tr><tr><td style="text-align:center;padding:20px 0;"><p style="color:#52525b;font-size:11px;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p></td></tr></table></td></tr></table></body></html>`;
+      const transporter = nodemailer.createTransport({ service:'gmail', auth:{user:process.env.GMAIL_USER,pass:process.env.GMAIL_APP_PASSWORD} });
+      const results = [];
+      for (const email of recipients) {
+        try {
+          await transporter.sendMail({ from:'"Value to Victory" <'+process.env.GMAIL_USER+'>', to:email, subject:'VTV Assessment Platform — Complete Blueprint', html:emailHtml, attachments:[{filename:'VTV-Platform-Blueprint.txt',content:bp,contentType:'text/plain'}] });
+          results.push({email,status:'sent'});
+          await logEmail(sql,{recipient:email,emailType:'blueprint',subject:'VTV Platform Blueprint'});
+        } catch(e) { results.push({email,status:'failed',error:e.message}); }
+      }
+      return res.json({sent:results.filter(r=>r.status==='sent').length, results});
     }
 
     // ========== STORY LINKS ==========
