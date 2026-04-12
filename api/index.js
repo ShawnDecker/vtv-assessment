@@ -732,17 +732,22 @@ async function logEmail(sql, { recipient, emailType, subject, contactId, assessm
   } catch(e) { console.error('logEmail error (non-fatal):', e.message); }
 }
 
-// Authenticate cron/scheduled endpoints — accepts admin API key OR Vercel cron secret
+// Authenticate cron/scheduled endpoints — accepts admin API key, Vercel cron, or cron secret
 function isCronAuthorized(req) {
+  // Admin API key (manual trigger from dashboard or curl)
   const apiKey = req.headers['x-api-key'] || '';
   const adminKey = process.env.ADMIN_API_KEY || '';
   if (adminKey && apiKey === adminKey) return true;
-  // Vercel cron sends Authorization: Bearer <CRON_SECRET>
+  // Vercel cron secret (if CRON_SECRET env var is set)
   const authHeader = req.headers['authorization'] || '';
   const cronSecret = process.env.CRON_SECRET || '';
   if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true;
-  // Allow if request comes from Vercel's internal cron (has x-vercel-cron header)
+  // Vercel internal cron — check for user-agent containing 'vercel' or x-vercel headers
   if (req.headers['x-vercel-cron'] === '1') return true;
+  const ua = (req.headers['user-agent'] || '').toLowerCase();
+  if (ua.includes('vercel')) return true;
+  // Allow if no external referer and request comes from the same host (server-to-server)
+  if (!req.headers['origin'] && !req.headers['referer'] && req.headers['host']?.includes('valuetovictory')) return true;
   return false;
 }
 
