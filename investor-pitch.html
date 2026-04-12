@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Value to Victory — Investor Overview</title>
+  <meta name="description" content="Value to Victory: AI-powered personal and professional assessment platform. Investor overview and growth strategy." />
+  <meta property="og:title" content="Value to Victory — Investor Overview" />
+  <meta property="og:description" content="AI-powered assessment platform with privacy-first enterprise positioning." />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;line-height:1.6}
+    .container{max-width:760px;margin:0 auto;padding:2rem 1.5rem 4rem}
+    .brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    h1{font-family:'Instrument Serif',serif;font-size:2.5rem;font-weight:400;margin-bottom:.5rem}
+    h1 em{font-style:italic;color:#D4A847}
+    h2{font-family:'Instrument Serif',serif;font-size:1.5rem;font-weight:400;margin-bottom:.75rem;color:#fff}
+    h3{font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    .lead{color:#a1a1aa;font-size:1.05rem;margin-bottom:2.5rem;line-height:1.7}
+    .section{margin-bottom:3rem}
+    .card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.5rem;margin-bottom:1.25rem}
+    .section-label{font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.75rem}
+    .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.5rem}
+    .stat{text-align:center;background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.25rem .75rem}
+    .stat-num{font-size:1.75rem;font-weight:900;color:#D4A847}
+    .stat-label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#a1a1aa;margin-top:.25rem}
+    .highlight{background:linear-gradient(135deg,rgba(212,168,71,.08),rgba(212,168,71,.03));border:1px solid rgba(212,168,71,.25);border-radius:.75rem;padding:1.5rem;margin-bottom:1.25rem}
+    .highlight-title{font-weight:700;color:#D4A847;margin-bottom:.35rem;font-size:.95rem}
+    .tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.5rem}
+    .tier{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.25rem;text-align:center}
+    .tier-name{font-weight:700;font-size:.85rem;margin-bottom:.25rem}
+    .tier-price{font-size:1.25rem;font-weight:900;color:#D4A847}
+    .tier-period{font-size:.7rem;color:#71717a}
+    .tier-badge{display:inline-block;background:#D4A847;color:#0a0a0a;font-size:.6rem;font-weight:700;padding:.15rem .5rem;border-radius:1rem;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.35rem}
+    .timeline{position:relative;padding-left:2rem;margin-bottom:1.5rem}
+    .timeline::before{content:'';position:absolute;left:.45rem;top:.5rem;bottom:.5rem;width:2px;background:#27272a}
+    .timeline-item{position:relative;margin-bottom:1.25rem}
+    .timeline-item::before{content:'';position:absolute;left:-1.55rem;top:.45rem;width:10px;height:10px;border-radius:50%;background:#D4A847;border:2px solid #0a0a0a}
+    .timeline-phase{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:#D4A847;font-weight:700}
+    .timeline-desc{font-size:.9rem;color:#d4d4d8}
+    .metric-row{display:flex;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid #1e1e21}
+    .metric-row:last-child{border:none}
+    .metric-label{color:#a1a1aa;font-size:.85rem}
+    .metric-value{color:#fff;font-weight:700;font-size:.85rem}
+    .pillar-row{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin:1rem 0}
+    .pillar{text-align:center;background:#111;border:1px solid #27272a;border-radius:.5rem;padding:.75rem .25rem}
+    .pillar-letter{font-size:1.5rem;font-weight:900;color:#D4A847}
+    .pillar-word{font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:#a1a1aa;margin-top:.15rem}
+    .moat{display:flex;gap:1rem;margin-bottom:1rem;align-items:flex-start}
+    .moat-icon{width:32px;height:32px;background:rgba(212,168,71,.15);border:1px solid rgba(212,168,71,.3);border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.9rem}
+    .moat-text{flex:1}
+    .moat-title{font-weight:700;font-size:.85rem;margin-bottom:.15rem}
+    .moat-desc{font-size:.8rem;color:#a1a1aa;line-height:1.5}
+    .use-case{display:flex;gap:.75rem;margin-bottom:.75rem;align-items:flex-start}
+    .use-num{width:24px;height:24px;background:#D4A847;color:#0a0a0a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.7rem;flex-shrink:0;margin-top:.1rem}
+    .use-text{font-size:.85rem;color:#d4d4d8}
+    .use-text strong{color:#fff}
+    .cta-box{text-align:center;background:linear-gradient(135deg,rgba(212,168,71,.12),rgba(212,168,71,.04));border:1px solid rgba(212,168,71,.3);border-radius:1rem;padding:2.5rem 2rem;margin:2rem 0}
+    .cta-box h2{margin-bottom:.5rem}
+    .cta-box p{color:#a1a1aa;margin-bottom:1.5rem;font-size:.9rem}
+    .btn-gold{display:inline-block;padding:.875rem 2rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;border-radius:.5rem;text-decoration:none;font-size:.95rem;margin:.25rem}
+    .btn-ghost{display:inline-block;padding:.875rem 2rem;background:transparent;border:1px solid #D4A847;color:#D4A847;font-weight:700;border-radius:.5rem;text-decoration:none;font-size:.95rem;margin:.25rem}
+    .footer{text-align:center;padding:2rem 0;border-top:1px solid #27272a;font-size:.75rem;color:#71717a;margin-top:2rem}
+    .footer a{color:#D4A847;text-decoration:none}
+    .confidential{text-align:center;background:#1a1410;border:1px solid rgba(212,168,71,.2);border-radius:.5rem;padding:.75rem;font-size:.7rem;color:#D4A847;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:2rem}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+    .divider{border:none;border-top:1px solid #27272a;margin:2.5rem 0}
+    @media print{
+      body{background:#fff;color:#111}
+      .card,.stat,.tier,.pillar,.highlight{border-color:#ddd;background:#f9f9f9}
+      .stat-num,.pillar-letter,.tier-price,.highlight-title,.section-label,.brand,h3,.timeline-phase{color:#8B6914}
+      .lead,.moat-desc,.metric-label,.use-text,.pillar-word,.stat-label,.tier-period{color:#555}
+      .confidential{background:#fef7e0;border-color:#8B6914}
+      .cta-box{background:#fef7e0;border-color:#8B6914}
+      .btn-gold{background:#8B6914;color:#fff}
+      .btn-ghost{border-color:#8B6914;color:#8B6914}
+    }
+    @media(max-width:600px){
+      h1{font-size:1.75rem}
+      .stat-grid{grid-template-columns:repeat(2,1fr)}
+      .tier-grid{grid-template-columns:1fr}
+      .two-col{grid-template-columns:1fr}
+      .pillar-row{grid-template-columns:repeat(5,1fr);gap:.25rem}
+      .pillar{padding:.5rem .15rem}
+      .pillar-letter{font-size:1.1rem}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="confidential">Confidential Investor Overview &mdash; April 2026</div>
+
+  <div class="brand">Value to Victory</div>
+  <h1>The Assessment Platform <em>People Actually Trust</em></h1>
+  <p class="lead">Value to Victory is an AI-powered personal and professional development platform built on a proprietary assessment framework. We measure what matters &mdash; and give people a private, actionable path to improve.</p>
+
+  <!-- KEY METRICS -->
+  <div class="section">
+    <h3>Platform at a Glance</h3>
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-num">5</div><div class="stat-label">Life Pillars</div></div>
+      <div class="stat"><div class="stat-num">20</div><div class="stat-label">Cross-Pillar Impacts</div></div>
+      <div class="stat"><div class="stat-num">88</div><div class="stat-label">API Endpoints</div></div>
+      <div class="stat"><div class="stat-num">39</div><div class="stat-label">Database Tables</div></div>
+      <div class="stat"><div class="stat-num">7</div><div class="stat-label">Active Workflows</div></div>
+      <div class="stat"><div class="stat-num">3</div><div class="stat-label">Revenue Tiers</div></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- THE FRAMEWORK -->
+  <div class="section">
+    <h3>Proprietary IP</h3>
+    <h2>The P.I.N.K. Framework</h2>
+    <p style="color:#a1a1aa;font-size:.9rem;margin-bottom:1rem">Five pillars. One multiplier. A complete picture of personal and professional value &mdash; scored, tracked, and actionable.</p>
+    <div class="pillar-row">
+      <div class="pillar"><div class="pillar-letter">P</div><div class="pillar-word">People</div></div>
+      <div class="pillar"><div class="pillar-letter">I</div><div class="pillar-word">Influence</div></div>
+      <div class="pillar"><div class="pillar-letter">N</div><div class="pillar-word">Numbers</div></div>
+      <div class="pillar"><div class="pillar-letter">K</div><div class="pillar-word">Knowledge</div></div>
+      <div class="pillar"><div class="pillar-letter">T</div><div class="pillar-word">Time</div></div>
+    </div>
+    <div class="highlight">
+      <div class="highlight-title">The Time Multiplier &mdash; Defensible IP</div>
+      <p style="font-size:.85rem;color:#d4d4d8">Time is not just another pillar. It is a 0.1x&ndash;2.0x multiplier applied to every other score. Poor time management crushes everything else. No competing assessment framework uses this approach. It creates urgency that drives coaching conversions.</p>
+    </div>
+    <div class="highlight">
+      <div class="highlight-title">Cross-Pillar Impact Matrix</div>
+      <p style="font-size:.85rem;color:#d4d4d8">20 directional relationships between pillars generate prescriptive insights, not just scores. This is what separates VTV from generic diagnostics and justifies premium coaching rates.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- COMPETITIVE MOAT -->
+  <div class="section">
+    <h3>Competitive Position</h3>
+    <h2>Why We Win</h2>
+
+    <div class="moat">
+      <div class="moat-icon">1</div>
+      <div class="moat-text">
+        <div class="moat-title">Privacy-First Architecture</div>
+        <div class="moat-desc">Employees control pillar-level visibility. Employers see aggregate team insights without individual data. No competing platform (DiSC, StrengthsFinder, Gallup) offers this. It is the enterprise unlock.</div>
+      </div>
+    </div>
+    <div class="moat">
+      <div class="moat-icon">2</div>
+      <div class="moat-text">
+        <div class="moat-title">AI-Native Infrastructure</div>
+        <div class="moat-desc">Local LLM stack (7 models via Ollama), automated coaching sequences, intelligent report generation, and n8n workflow automation. Built for AI from day one, not retrofitted.</div>
+      </div>
+    </div>
+    <div class="moat">
+      <div class="moat-icon">3</div>
+      <div class="moat-text">
+        <div class="moat-title">Multi-Product Data Model</div>
+        <div class="moat-desc">Schema already supports individual assessments, team analytics, couple/dating mode, peer ratings, coaching sequences, daily devotionals, and couple challenges. Each is a standalone revenue stream.</div>
+      </div>
+    </div>
+    <div class="moat">
+      <div class="moat-icon">4</div>
+      <div class="moat-text">
+        <div class="moat-title">Content Engine</div>
+        <div class="moat-desc">65 chapters of published content indexed and ready for atomization into devotionals, podcast episodes, email sequences, social posts, and blog content. Months of output with zero new writing.</div>
+      </div>
+    </div>
+    <div class="moat">
+      <div class="moat-icon">5</div>
+      <div class="moat-text">
+        <div class="moat-title">Full-Stack Ownership</div>
+        <div class="moat-desc">No dependency on third-party assessment platforms. Custom-built from database to frontend. Total control over pricing, features, and data.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- REVENUE MODEL -->
+  <div class="section">
+    <h3>Revenue Model</h3>
+    <h2>Three Tiers, Multiple Upsells</h2>
+
+    <div class="tier-grid">
+      <div class="tier">
+        <div class="tier-name">VictoryPath</div>
+        <div class="tier-price">$29</div>
+        <div class="tier-period">/month</div>
+        <p style="font-size:.7rem;color:#71717a;margin-top:.5rem">Individual assessment, tracking, action plans, basic coaching</p>
+      </div>
+      <div class="tier">
+        <div class="tier-badge">Growth</div>
+        <div class="tier-name">Value Builder</div>
+        <div class="tier-price">$47</div>
+        <div class="tier-period">/month</div>
+        <p style="font-size:.7rem;color:#71717a;margin-top:.5rem">Couple/partner mode, relationship tools, advanced reports</p>
+      </div>
+      <div class="tier">
+        <div class="tier-name">Victory VIP</div>
+        <div class="tier-price">$497</div>
+        <div class="tier-period">/month</div>
+        <p style="font-size:.7rem;color:#71717a;margin-top:.5rem">Direct coaching access, priority support, all premium features</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Additional Revenue Streams</h3>
+      <div class="metric-row"><div class="metric-label">Digital Products (book, reports)</div><div class="metric-value">$1.99 &ndash; $17.77</div></div>
+      <div class="metric-row"><div class="metric-label">Personal Coaching (60 min)</div><div class="metric-value">$125 &ndash; $225</div></div>
+      <div class="metric-row"><div class="metric-label">RE Consulting (60 min)</div><div class="metric-value">$500</div></div>
+      <div class="metric-row"><div class="metric-label">Enterprise Team Seats</div><div class="metric-value">$8 &ndash; $15/seat</div></div>
+      <div class="metric-row"><div class="metric-label">Marriage Counselor Licenses</div><div class="metric-value">TBD</div></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- MARKET -->
+  <div class="section">
+    <h3>Market Opportunity</h3>
+    <h2>Where We Play</h2>
+    <div class="two-col">
+      <div class="card">
+        <h3>B2C: Personal Development</h3>
+        <p style="font-size:.85rem;color:#d4d4d8">$44B global market. Individuals seeking structured growth with privacy and faith-based values. Recurring subscription revenue.</p>
+      </div>
+      <div class="card">
+        <h3>B2B: Team Assessment</h3>
+        <p style="font-size:.85rem;color:#d4d4d8">$3.5B assessment tools market. Enterprise teams need engagement analytics without invading privacy. VTV is the only platform that delivers both.</p>
+      </div>
+      <div class="card">
+        <h3>Couples &amp; Family</h3>
+        <p style="font-size:.85rem;color:#d4d4d8">Relationship assessment and coaching. Dating compatibility mode, couple challenges, intimacy tracking. Underserved segment with high willingness to pay.</p>
+      </div>
+      <div class="card">
+        <h3>Faith-Based Communities</h3>
+        <p style="font-size:.85rem;color:#d4d4d8">Churches and ministries as distribution channels. Daily devotionals tied to assessment pillars. Group licenses for small group leaders.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- TECH STACK -->
+  <div class="section">
+    <h3>Technology</h3>
+    <h2>Built to Scale</h2>
+    <div class="card">
+      <div class="metric-row"><div class="metric-label">Frontend</div><div class="metric-value">React 19 + Vite + Tailwind</div></div>
+      <div class="metric-row"><div class="metric-label">Backend</div><div class="metric-value">Node.js Serverless (Vercel)</div></div>
+      <div class="metric-row"><div class="metric-label">Database</div><div class="metric-value">PostgreSQL (Neon, 39 tables)</div></div>
+      <div class="metric-row"><div class="metric-label">Payments</div><div class="metric-value">Stripe (subscriptions + one-time)</div></div>
+      <div class="metric-row"><div class="metric-label">CRM</div><div class="metric-value">HubSpot (auto-sync)</div></div>
+      <div class="metric-row"><div class="metric-label">Automation</div><div class="metric-value">n8n (7 active workflows)</div></div>
+      <div class="metric-row"><div class="metric-label">AI Layer</div><div class="metric-value">Ollama (7 local models) + Claude</div></div>
+      <div class="metric-row"><div class="metric-label">Auth</div><div class="metric-value">Email + PIN + JWT</div></div>
+      <div class="metric-row"><div class="metric-label">Monthly Infrastructure</div><div class="metric-value">~$538</div></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- USE OF FUNDS -->
+  <div class="section">
+    <h3>Growth Strategy</h3>
+    <h2>Use of Funds</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-phase">Phase 1 &mdash; Foundation (Now)</div>
+        <div class="timeline-desc">Platform live, payments active, team onboarding started, AI coaching sequences operational, content library indexed</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Phase 2 &mdash; Growth ($50K&ndash;$150K)</div>
+        <div class="timeline-desc">Targeted marketing, enterprise pilot program (5&ndash;10 companies), marriage counselor partnerships, mobile app development, SEO content engine</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Phase 3 &mdash; Scale ($250K&ndash;$500K)</div>
+        <div class="timeline-desc">Enterprise sales team, SSO and audit log compliance, white-label licensing for organizations, church and ministry distribution partnerships</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Phase 4 &mdash; Expand ($500K+)</div>
+        <div class="timeline-desc">International markets, API marketplace for third-party integrations, certification program for coaches, advanced AI personalization</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- FOUNDER -->
+  <div class="section">
+    <h3>Founder</h3>
+    <h2>Shawn E. Decker</h2>
+    <div class="card">
+      <div class="metric-row"><div class="metric-label">Background</div><div class="metric-value">U.S. Navy Veteran (1998&ndash;2002)</div></div>
+      <div class="metric-row"><div class="metric-label">Expertise</div><div class="metric-value">Licensed Real Estate Appraiser</div></div>
+      <div class="metric-row"><div class="metric-label">Published Work</div><div class="metric-value">Author, "Running From Miracles"</div></div>
+      <div class="metric-row"><div class="metric-label">Experience</div><div class="metric-value">23+ Years in Business</div></div>
+      <div class="metric-row"><div class="metric-label">Media</div><div class="metric-value">Featured on 7+ TV Networks</div></div>
+      <div class="metric-row"><div class="metric-label">Location</div><div class="metric-value">Roanoke, Virginia</div></div>
+    </div>
+    <p style="font-size:.9rem;color:#d4d4d8;margin-top:.75rem">Built the entire platform &mdash; database to deployment &mdash; with a lean AI-assisted development approach. Overcame personal crisis (house fire, debt, separation) using the same framework now powering VTV. The product is the proof.</p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- CTA -->
+  <div class="cta-box">
+    <h2>Ready to Talk?</h2>
+    <p>Schedule a conversation about the opportunity.</p>
+    <a href="mailto:valuetovictory@gmail.com?subject=Investor%20Inquiry%20%E2%80%94%20Value%20to%20Victory" class="btn-gold">Email Shawn</a>
+    <a href="https://valuetovictory.com" class="btn-ghost" target="_blank">Visit the Platform</a>
+  </div>
+
+  <!-- DOWNLOAD -->
+  <div style="text-align:center;margin:1.5rem 0">
+    <button onclick="window.print()" style="background:none;border:1px solid #27272a;color:#a1a1aa;padding:.6rem 1.5rem;border-radius:.5rem;font-family:inherit;font-size:.8rem;cursor:pointer">Print / Save as PDF</button>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2026 Value to Victory. All rights reserved.</p>
+    <p style="margin-top:.5rem"><a href="https://valuetovictory.com">valuetovictory.com</a> &middot; <a href="https://assessment.valuetovictory.com">assessment platform</a> &middot; <a href="https://shawnedecker.com">shawnedecker.com</a></p>
+    <p style="margin-top:.75rem;font-size:.65rem;color:#52525b">This document is confidential and intended for potential investors and strategic partners only.</p>
+  </div>
+
+</div>
+</body>
+</html>
