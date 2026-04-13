@@ -3,7 +3,7 @@ const { neon } = require('@neondatabase/serverless');
 module.exports = async (req, res) => {
   const ALLOWED = ['https://assessment.valuetovictory.com','http://localhost:3000'];
   const origin = req.headers.origin || '';
-  res.setHeader('Access-Control-Allow-Origin', ALLOWED.includes(origin) ? origin : ALLOWED[0]);
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED.includes(origin) ? origin : (origin.endsWith('.vercel.app') ? origin : ALLOWED[0]));
   res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') return res.status(200).end();
 

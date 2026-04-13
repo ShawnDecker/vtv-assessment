@@ -31,7 +31,7 @@ const TIER_CONFIG = {
   premium:     { amount: 49700, name: 'Victory VIP',           dbTier: 'premium',    priceKey: 'premium' }
 };
 
-const BASE_URL = 'https://assessment.valuetovictory.com';
+const BASE_URL = process.env.BASE_URL || 'https://assessment.valuetovictory.com';
 
 module.exports = async (req, res) => {
   // CORS — allow specific origins only

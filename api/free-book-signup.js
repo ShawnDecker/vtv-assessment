@@ -1,6 +1,7 @@
 const { neon } = require('@neondatabase/serverless');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const BASE_URL = process.env.BASE_URL || 'https://assessment.valuetovictory.com';
 
 // CORS allowed origins
 const ALLOWED_ORIGINS = ['https://valuetovictory.com','https://www.valuetovictory.com','https://assessment.valuetovictory.com','https://shawnedecker.com','https://www.shawnedecker.com','http://localhost:3000','http://localhost:5173'];
@@ -71,7 +72,7 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Email service not configured' });
     }
 
-    const verifyUrl = `https://assessment.valuetovictory.com/api/verify-email?token=${token}`;
+    const verifyUrl = `${BASE_URL}/api/verify-email?token=${token}`;
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',

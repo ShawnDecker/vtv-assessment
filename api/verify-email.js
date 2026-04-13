@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
+const BASE_URL = process.env.BASE_URL || 'https://assessment.valuetovictory.com';
 
 function escHtml(str) {
   if (!str) return '';
@@ -30,7 +31,7 @@ module.exports = async (req, res) => {
     `;
 
     if (rows.length === 0) {
-      return sendPage(res, 404, 'Link Expired or Invalid', 'This verification link is no longer valid. Please request a new one at <a href="https://assessment.valuetovictory.com/free-book" style="color:#D4A847;">our free book page</a>.');
+      return sendPage(res, 404, 'Link Expired or Invalid', `This verification link is no longer valid. Please request a new one at <a href="${BASE_URL}/free-book" style="color:#D4A847;">our free book page</a>.`);
     }
 
     const signup = rows[0];
@@ -39,7 +40,7 @@ module.exports = async (req, res) => {
     const createdAt = new Date(signup.created_at);
     const hoursSinceCreated = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
     if (hoursSinceCreated > 48) {
-      return sendPage(res, 410, 'Link Expired', 'This verification link has expired. Please request a new one at <a href="https://assessment.valuetovictory.com/free-book" style="color:#D4A847;">our free book page</a>.');
+      return sendPage(res, 410, 'Link Expired', `This verification link has expired. Please request a new one at <a href="${BASE_URL}/free-book" style="color:#D4A847;">our free book page</a>.`);
     }
 
     // Already verified
@@ -59,8 +60,8 @@ module.exports = async (req, res) => {
         auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
       });
 
-      const downloadUrl = 'https://assessment.valuetovictory.com/running-from-miracles.pdf';
-      const assessmentUrl = 'https://assessment.valuetovictory.com';
+      const downloadUrl = `${BASE_URL}/running-from-miracles.pdf`;
+      const assessmentUrl = BASE_URL;
 
       // Attach the PDF directly so it works on all devices/email clients
       const attachments = [];
@@ -212,17 +213,17 @@ module.exports = async (req, res) => {
       <p>Your free copy of <strong style="color:#D4A847;">Running From Miracles</strong> is on its way to <strong>${escHtml(signup.email)}</strong>.</p>
       <p style="margin-top:16px;">Check your inbox in the next few minutes. If you don't see it, check your spam or promotions folder.</p>
       <div style="margin-top:32px;">
-        <a href="${'https://assessment.valuetovictory.com/running-from-miracles.pdf'}" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:15px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Download Now</a>
+        <a href="${BASE_URL}/running-from-miracles.pdf" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:15px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Download Now</a>
       </div>
       <p style="margin-top:32px;color:#a1a1aa;">While you wait, why not take the free Value Engine Assessment?</p>
       <div style="margin-top:12px;">
-        <a href="https://assessment.valuetovictory.com" style="display:inline-block;background:#3b82f6;color:#fff;font-size:14px;font-weight:bold;text-decoration:none;padding:10px 28px;border-radius:8px;">Take the Free Assessment</a>
+        <a href="${BASE_URL}" style="display:inline-block;background:#3b82f6;color:#fff;font-size:14px;font-weight:bold;text-decoration:none;padding:10px 28px;border-radius:8px;">Take the Free Assessment</a>
       </div>
     `);
 
   } catch (err) {
     console.error('verify-email error:', err);
-    return sendPage(res, 500, 'Something Went Wrong', 'We hit a snag verifying your email. Please try again or request a new link at <a href="https://assessment.valuetovictory.com/free-book" style="color:#D4A847;">our free book page</a>.');
+    return sendPage(res, 500, 'Something Went Wrong', `We hit a snag verifying your email. Please try again or request a new link at <a href="${BASE_URL}/free-book" style="color:#D4A847;">our free book page</a>.`);
   }
 };
 

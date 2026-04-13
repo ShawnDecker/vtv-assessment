@@ -4,7 +4,7 @@ module.exports = async (req, res) => {
   // Lock to admin origins only (migration endpoint)
   const ALLOWED = ['https://assessment.valuetovictory.com','http://localhost:3000'];
   const origin = req.headers.origin || '';
-  res.setHeader('Access-Control-Allow-Origin', ALLOWED.includes(origin) ? origin : ALLOWED[0]);
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED.includes(origin) ? origin : (origin.endsWith('.vercel.app') ? origin : ALLOWED[0]));
   res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') return res.status(200).end();
 

@@ -1,4 +1,5 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const BASE_URL = process.env.BASE_URL || 'https://assessment.valuetovictory.com';
 
 // Map of product slugs to Stripe price IDs
 const PRICE_MAP = {
@@ -24,10 +25,9 @@ module.exports = async (req, res) => {
     'https://www.valuetovictory.com',
     'https://assessment.valuetovictory.com',
   ];
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
+  const origin = req.headers.origin || '';
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : (origin.endsWith('.vercel.app') ? origin : allowedOrigins[0]);
+  res.setHeader('Access-Control-Allow-Origin', corsOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
     const sessionParams = {
       mode,
       line_items: lineItems,
-      success_url: 'https://assessment.valuetovictory.com/checkout/success?session_id={CHECKOUT_SESSION_ID}',
+      success_url: `${BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: 'https://valuetovictory.com/#products',
       allow_promotion_codes: true,
     };

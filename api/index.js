@@ -1,6 +1,7 @@
 const { neon } = require('@neondatabase/serverless');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const BASE_URL = process.env.BASE_URL || 'https://assessment.valuetovictory.com';
 
 // ========== SECURITY: Rate Limiting ==========
 const rateLimitStore = new Map();
@@ -355,9 +356,9 @@ function generateCoachingEmail(day, assessmentData, prescription, email) {
   const targetScore = Math.min(50, Math.round(weakestScore * 1.5));
 
   const unsubToken = Buffer.from(email).toString('base64');
-  const unsubUrl = `https://assessment.valuetovictory.com/api/coaching/unsubscribe?email=${encodeURIComponent(email)}&token=${encodeURIComponent(unsubToken)}`;
-  const retakeUrl = 'https://assessment.valuetovictory.com';
-  const reportUrl = `https://assessment.valuetovictory.com/report/${a.id}`;
+  const unsubUrl = `${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(email)}&token=${encodeURIComponent(unsubToken)}`;
+  const retakeUrl = BASE_URL;
+  const reportUrl = `${BASE_URL}/report/${a.id}`;
 
   // Pillar-specific content for 8+8+8 rule (Day 2)
   const rule888 = {
@@ -1065,7 +1066,7 @@ module.exports = async (req, res) => {
                 </table>
                 <p style="color:#71717a;font-size:12px;margin:8px 0 0;">Weakest pillar: <span style="color:#ef4444;">${latest.weakest_pillar}</span></p>
                 <div style="text-align:center;margin-top:16px;">
-                  <a href="https://assessment.valuetovictory.com/report/${latest.id}" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:6px;">View Full Report</a>
+                  <a href="${BASE_URL}/report/${latest.id}" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:6px;">View Full Report</a>
                 </div>
               </div>`;
 
@@ -1091,7 +1092,7 @@ module.exports = async (req, res) => {
               assessmentRows = `
               <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:24px;margin:20px 0;text-align:center;">
                 <p style="color:#a1a1aa;font-size:14px;margin:0 0 12px;">You haven't taken an assessment yet.</p>
-                <a href="https://assessment.valuetovictory.com/" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:6px;">Take Your First Assessment</a>
+                <a href="${BASE_URL}/" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:6px;">Take Your First Assessment</a>
               </div>`;
             }
 
@@ -1120,7 +1121,7 @@ module.exports = async (req, res) => {
   ${assessmentRows}
 </td></tr>
 <tr><td style="text-align:center;padding-top:24px;">
-  <a href="https://assessment.valuetovictory.com/member" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Open Your Dashboard</a>
+  <a href="${BASE_URL}/member" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Open Your Dashboard</a>
 </td></tr>
 <tr><td style="text-align:center;padding-top:24px;">
   <p style="color:#52525b;font-size:12px;margin:0;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p>
@@ -1236,7 +1237,7 @@ module.exports = async (req, res) => {
         const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
         const session = await stripe.billingPortal.sessions.create({
           customer: profileRows[0].stripe_customer_id,
-          return_url: 'https://assessment.valuetovictory.com/member',
+          return_url: `${BASE_URL}/member`,
         });
         return res.json({ url: session.url });
       } catch (e) {
@@ -1342,10 +1343,10 @@ module.exports = async (req, res) => {
         await sql`INSERT INTO partner_profiles (contact_id, referral_code, status, created_at)
           VALUES (${contactRows[0].id}, ${code}, 'active', NOW())
           ON CONFLICT (contact_id) DO NOTHING`;
-        return res.json({ success: true, referral_code: code, referral_link: 'https://assessment.valuetovictory.com/?ref=' + code });
+        return res.json({ success: true, referral_code: code, referral_link: `${BASE_URL}/?ref=${code}` });
       } catch (e) {
         // Table may not exist
-        return res.json({ success: true, referral_code: code, referral_link: 'https://assessment.valuetovictory.com/?ref=' + code, note: 'Partner profile pending setup' });
+        return res.json({ success: true, referral_code: code, referral_link: `${BASE_URL}/?ref=${code}`, note: 'Partner profile pending setup' });
       }
     }
 
@@ -1737,7 +1738,7 @@ Pillar Breakdown:
 Your weakest pillar is ${eWeakestPillar}. ${prescription.diagnosis || ''}
 
 View your full diagnostic report:
-https://assessment.valuetovictory.com/report/${assessment.id}
+${BASE_URL}/report/${assessment.id}
 
 ${productRec}
 ${fitcarnaSection}
@@ -3035,7 +3036,7 @@ Pillar Breakdown:
 Your biggest opportunity for growth is ${weakestPillar}. ${prescription.diagnosis || ''}
 ${roadmapText}
 View your full diagnostic report:
-https://assessment.valuetovictory.com/report/${assessmentId}
+${BASE_URL}/report/${assessmentId}
 
 ${productRec}
 ${fitcarnaSection}
@@ -3206,16 +3207,16 @@ ${roadmapHtml}
 
 <!-- Coaching CTA -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h2 style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#ffffff;">${tier.cta}</h2><p style="margin:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#8888a8;line-height:1.6;">Get a free coaching preparation report \u2014 personalized to your exact scores.<br>Choose your track: Personal, Real Estate, or Company.</p>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;background:linear-gradient(135deg,#d4a853,#c89030);" align="center"><a href="https://assessment.valuetovictory.com/coaching?track=personal&amp;aid=${assessmentId}" target="_blank" style="display:inline-block;padding:16px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:800;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Get Your Free Coaching Report &rarr;</a></td></tr></table></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;background:linear-gradient(135deg,#d4a853,#c89030);" align="center"><a href="${BASE_URL}/coaching?track=personal&amp;aid=${assessmentId}" target="_blank" style="display:inline-block;padding:16px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:800;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Get Your Free Coaching Report &rarr;</a></td></tr></table></td></tr></table>
 
 <!-- Membership / Pricing CTA -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:16px 40px 32px 40px;text-align:center;">
 <div style="margin-bottom:16px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#6a6a84;text-decoration:line-through;">${tier.full}/mo</span> <span style="font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:800;color:#d4a853;margin-left:8px;">${tier.promo}</span><span style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#d4a853;">/mo</span></div>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;border:2px solid #d4a853;" align="center"><a href="https://assessment.valuetovictory.com/pricing" target="_blank" style="display:inline-block;padding:12px 36px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#d4a853;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Lock In ${tier.product} Promo Rate</a></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;border:2px solid #d4a853;" align="center"><a href="${BASE_URL}/pricing" target="_blank" style="display:inline-block;padding:12px 36px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#d4a853;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Lock In ${tier.product} Promo Rate</a></td></tr></table>
 <p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#4a4a64;">2026 promo pricing. Goes to ${tier.full}/mo in January 2027.</p></td></tr></table>
 
 <!-- View Full Report -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px 24px 40px;text-align:center;"><a href="https://assessment.valuetovictory.com/report/${assessmentId}" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#d4a853;text-decoration:underline;">View Your Full Interactive Report Online</a></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px 24px 40px;text-align:center;"><a href="${BASE_URL}/report/${assessmentId}" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#d4a853;text-decoration:underline;">View Your Full Interactive Report Online</a></td></tr></table>
 
 <!-- Divider -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
@@ -3231,7 +3232,7 @@ ${roadmapHtml}
 
       // Check if email credentials are configured
       if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-        return res.json({ sent: false, reason: 'Email credentials not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD environment variables.', subject, body: emailBody, reportUrl: `https://assessment.valuetovictory.com/report/${assessmentId}` });
+        return res.json({ sent: false, reason: 'Email credentials not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD environment variables.', subject, body: emailBody, reportUrl: `${BASE_URL}/report/${assessmentId}` });
       }
 
       try {
@@ -3247,10 +3248,10 @@ ${roadmapHtml}
           text: emailBody,
           html: htmlBody,
         });
-        return res.json({ sent: true, to: recipientEmail, reportUrl: `https://assessment.valuetovictory.com/report/${assessmentId}` });
+        return res.json({ sent: true, to: recipientEmail, reportUrl: `${BASE_URL}/report/${assessmentId}` });
       } catch (emailErr) {
         console.error('Email send error:', emailErr.message);
-        return res.json({ sent: false, reason: emailErr.message, reportUrl: `https://assessment.valuetovictory.com/report/${assessmentId}` });
+        return res.json({ sent: false, reason: emailErr.message, reportUrl: `${BASE_URL}/report/${assessmentId}` });
       }
     }
 
@@ -4353,7 +4354,7 @@ KEY RECOMMENDATIONS:
 - Use the specific action items in your full report
 
 View your full interactive Action Plan:
-https://assessment.valuetovictory.com/action-plan/${assessmentId}
+${BASE_URL}/action-plan/${assessmentId}
 
 This report includes personalized actions for every weakness, Value Engine tool references, a chapter-by-chapter reading plan, and a weekly accountability structure.
 
@@ -4384,7 +4385,7 @@ This report is designed for use by counselors, therapists, coaches, and mentors.
 - Suggested interventions (Value Engine + general)
 
 View the full interactive Counselor Report:
-https://assessment.valuetovictory.com/counselor-report/${assessmentId}
+${BASE_URL}/counselor-report/${assessmentId}
 
 DISCLAIMER: This is a self-assessment tool and should not be used as a clinical diagnosis.
 
@@ -4402,7 +4403,7 @@ This report includes anonymous, aggregated team data showing:
 - Team-specific improvement recommendations
 
 View the full interactive Team Report:
-https://assessment.valuetovictory.com/team-report/${assessmentId}
+${BASE_URL}/team-report/${assessmentId}
 
 No individual scores are disclosed in this report. All data is anonymous and aggregated.
 
@@ -4413,7 +4414,7 @@ No individual scores are disclosed in this report. All data is anonymous and agg
       }
 
       if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-        return res.json({ sent: false, reason: 'Email credentials not configured', reportUrl: `https://assessment.valuetovictory.com/${reportType === 'action-plan' ? 'action-plan' : reportType === 'counselor' ? 'counselor-report' : 'team-report'}/${assessmentId}` });
+        return res.json({ sent: false, reason: 'Email credentials not configured', reportUrl: `${BASE_URL}/${reportType === 'action-plan' ? 'action-plan' : reportType === 'counselor' ? 'counselor-report' : 'team-report'}/${assessmentId}` });
       }
 
       try {
@@ -4578,7 +4579,7 @@ No individual scores are disclosed in this report. All data is anonymous and agg
             service: 'gmail',
             auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
           });
-          const verifyUrl = `https://assessment.valuetovictory.com/api/coaching/verify?token=${verificationToken}`;
+          const verifyUrl = `${BASE_URL}/api/coaching/verify?token=${verificationToken}`;
           const trackLabel = track === 'real_estate' ? 'Real Estate' : track === 'company' ? 'Company' : 'Personal';
           await transporter.sendMail({
             from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
@@ -4621,20 +4622,20 @@ This link expires in 24 hours.
       // Look up the coaching request
       const rows = await sql`SELECT * FROM coaching_requests WHERE verification_token = ${token} LIMIT 1`;
       if (rows.length === 0) {
-        return res.status(404).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invalid Link</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#ef4444;">Invalid or Expired Link</h2><p style="color:#a1a1aa;">This verification link is invalid or has already been used.</p><p><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;">Go to Value Engine</a></p></div></body></html>');
+        return res.status(404).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invalid Link</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#ef4444;">Invalid or Expired Link</h2><p style="color:#a1a1aa;">This verification link is invalid or has already been used.</p><p><a href="${BASE_URL}" style="color:#3b82f6;">Go to Value Engine</a></p></div></body></html>');
       }
       const cr = rows[0];
 
       // Check if already verified
       if (cr.verified) {
-        return res.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Already Verified</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#D4A847;">Already Verified</h2><p style="color:#a1a1aa;">Your email has already been verified. Your coaching report has been sent.</p><p><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;">Go to Value Engine</a></p></div></body></html>');
+        return res.send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Already Verified</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#D4A847;">Already Verified</h2><p style="color:#a1a1aa;">Your email has already been verified. Your coaching report has been sent.</p><p><a href="${BASE_URL}" style="color:#3b82f6;">Go to Value Engine</a></p></div></body></html>');
       }
 
       // Check expiration (24 hours)
       const createdAt = new Date(cr.created_at);
       const now = new Date();
       if (now - createdAt > 24 * 60 * 60 * 1000) {
-        return res.status(410).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Link Expired</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#ef4444;">Link Expired</h2><p style="color:#a1a1aa;">This verification link has expired (24-hour limit). Please submit a new coaching request.</p><p><a href="https://assessment.valuetovictory.com/coaching" style="color:#3b82f6;">Request Again</a></p></div></body></html>');
+        return res.status(410).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Link Expired</title><style>body{font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style></head><body><div><h2 style="color:#ef4444;">Link Expired</h2><p style="color:#a1a1aa;">This verification link has expired (24-hour limit). Please submit a new coaching request.</p><p><a href="${BASE_URL}/coaching" style="color:#3b82f6;">Request Again</a></p></div></body></html>');
       }
 
       // Mark as verified
@@ -4808,7 +4809,7 @@ This link expires in 24 hours.
       const statusMsg = reportSent
         ? 'Your personalized coaching report has been sent to your email.'
         : 'Your email has been verified. Your coaching report will be sent shortly.';
-      return res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Email Verified</title><style>body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style><link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet"></head><body><div style="max-width:480px;padding:2rem;"><div style="font-size:3rem;margin-bottom:1rem;">&#10003;</div><h2 style="color:#D4A847;margin-bottom:0.75rem;">Email Verified!</h2><p style="color:#a1a1aa;margin-bottom:1.5rem;">${statusMsg}</p><p style="color:#71717a;font-size:0.85rem;">Check your inbox (and spam folder) for your coaching report.</p><p style="margin-top:1.5rem;"><a href="https://assessment.valuetovictory.com" style="color:#3b82f6;text-decoration:none;">Return to Value Engine &rarr;</a></p></div></body></html>`);
+      return res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Email Verified</title><style>body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}</style><link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet"></head><body><div style="max-width:480px;padding:2rem;"><div style="font-size:3rem;margin-bottom:1rem;">&#10003;</div><h2 style="color:#D4A847;margin-bottom:0.75rem;">Email Verified!</h2><p style="color:#a1a1aa;margin-bottom:1.5rem;">${statusMsg}</p><p style="color:#71717a;font-size:0.85rem;">Check your inbox (and spam folder) for your coaching report.</p><p style="margin-top:1.5rem;"><a href="${BASE_URL}" style="color:#3b82f6;text-decoration:none;">Return to Value Engine &rarr;</a></p></div></body></html>`);
     }
 
     // ============================
@@ -4998,7 +4999,7 @@ This link expires in 24 hours.
 <h2 style="margin:0 0 12px 0;font-size:20px;color:#d4a853;">You've been unsubscribed</h2>
 <p style="margin:0 0 20px 0;font-size:15px;color:#a0a0b8;line-height:1.6;">You'll no longer receive daily coaching emails from The Value Engine.</p>
 <p style="margin:0 0 24px 0;font-size:14px;color:#6a6a84;line-height:1.6;">If you ever want to restart, just retake the assessment and you'll be re-enrolled automatically.</p>
-<a href="https://assessment.valuetovictory.com" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#d4a853,#c89030);border-radius:6px;font-size:14px;font-weight:700;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Retake Assessment</a>
+<a href="${BASE_URL}" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#d4a853,#c89030);border-radius:6px;font-size:14px;font-weight:700;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Retake Assessment</a>
 </td></tr>
 </table>
 </body></html>`);
@@ -5081,10 +5082,10 @@ This link expires in 24 hours.
           try {
             const firstName = member.first_name || 'Friend';
             const unsubToken = Buffer.from(member.email).toString('base64');
-            const unsubUrl = `https://assessment.valuetovictory.com/api/coaching/unsubscribe?email=${encodeURIComponent(member.email)}&token=${unsubToken}`;
+            const unsubUrl = `${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(member.email)}&token=${unsubToken}`;
 
-            const feedbackUrl = `https://assessment.valuetovictory.com/api/feedback/respond?email=${encodeURIComponent(member.email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('Can you tell us something the Value Engine helped you with today?')}`;
-            const bugUrl = `https://assessment.valuetovictory.com/api/feedback/respond?email=${encodeURIComponent(member.email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
+            const feedbackUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(member.email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('Can you tell us something the Value Engine helped you with today?')}`;
+            const bugUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(member.email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
 
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
@@ -5127,7 +5128,7 @@ This link expires in 24 hours.
   </div>
 </td></tr>
 <tr><td style="text-align:center;padding-top:24px;">
-  <a href="https://assessment.valuetovictory.com/member" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Open Your Dashboard</a>
+  <a href="${BASE_URL}/member" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Open Your Dashboard</a>
 </td></tr>
 <tr><td style="text-align:center;padding-top:24px;">
   <p style="color:#52525b;font-size:12px;margin:0;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p>
@@ -5439,7 +5440,7 @@ else if(cm==='idea'){document.getElementById('tyTitle').textContent='Great Idea!
             email: s.email, phone: s.phone, joinedAt: s.created_at,
             assessments: Number(s.assessment_count), score: s.latest_score,
             range: s.score_range, weakest: s.weakest_pillar,
-            reportUrl: s.latest_assessment_id ? `https://assessment.valuetovictory.com/report/${s.latest_assessment_id}` : null
+            reportUrl: s.latest_assessment_id ? `${BASE_URL}/report/${s.latest_assessment_id}` : null
           });
         }
 
@@ -5674,7 +5675,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
 <!-- FOOTER -->
 <tr><td style="text-align:center;padding-top:24px;">
-  <a href="https://assessment.valuetovictory.com/admin/contacts" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;">Open Command Center</a>
+  <a href="${BASE_URL}/admin/contacts" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;">Open Command Center</a>
 </td></tr>
 <tr><td style="text-align:center;padding-top:20px;">
   <p style="color:#52525b;font-size:11px;margin:0;">Value to Victory &mdash; CEO Daily Briefing</p>
@@ -5722,8 +5723,8 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         for (const c of contacts) {
           try {
             const firstName = c.first_name || 'Friend';
-            const feedbackUrl = `https://assessment.valuetovictory.com/api/feedback/respond?email=${encodeURIComponent(c.email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('Can you tell us something the Value Engine helped you with today?')}`;
-            const bugUrl = `https://assessment.valuetovictory.com/api/feedback/respond?email=${encodeURIComponent(c.email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
+            const feedbackUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(c.email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('Can you tell us something the Value Engine helped you with today?')}`;
+            const bugUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(c.email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;"><tr><td align="center">
@@ -5764,7 +5765,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
   </div>
 </td></tr>
 <tr><td style="text-align:center;padding-top:24px;">
-  <a href="https://assessment.valuetovictory.com/member" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Open Your Dashboard</a>
+  <a href="${BASE_URL}/member" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Open Your Dashboard</a>
 </td></tr>
 <tr><td style="text-align:center;padding-top:24px;">
   <p style="color:#52525b;font-size:12px;margin:0;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p>
@@ -6382,7 +6383,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
     if (req.method === 'GET' && url.startsWith('/agent/email/track-click')) {
       const params = new URL('http://x' + req.url).searchParams;
       const engagementId = params.get('id');
-      const redirectUrl = params.get('url') || 'https://assessment.valuetovictory.com/member';
+      const redirectUrl = params.get('url') || `${BASE_URL}/member`;
       if (engagementId) {
         try {
           await sql`UPDATE email_engagement SET clicked_at = NOW() WHERE id = ${parseInt(engagementId)} AND clicked_at IS NULL`;
@@ -6555,7 +6556,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
           // Wrap links and add tracking pixel
           let html = emailContent.html || '';
-          const trackBase = 'https://assessment.valuetovictory.com/api/agent/email';
+          const trackBase = `${BASE_URL}/api/agent/email`;
           html = html.replace(/href="(https?:\/\/[^"]+)"/g, (match, url) => {
             return `href="${trackBase}/track-click?id=${engId}&url=${encodeURIComponent(url)}"`;
           });
@@ -6946,7 +6947,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
   </div>
 </td></tr>
 <tr><td style="text-align:center;padding-top:24px;">
-  <a href="https://assessment.valuetovictory.com/daily-word" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:8px;">Read Online</a>
+  <a href="${BASE_URL}/daily-word" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:8px;">Read Online</a>
 </td></tr>
 <tr><td style="text-align:center;padding-top:20px;">
   <p style="color:#52525b;font-size:11px;margin:0;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p>
