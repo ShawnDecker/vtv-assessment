@@ -726,31 +726,21 @@ async function doLogin() {
       ed = await ec.json();
     } catch {}
 
-    if (ed.eligible === false && ed.reason === 'no_assessment') {
-      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
-      return toast('Complete the P.I.N.K. assessment first');
-    }
-
-    // Check email verification for Faith Match
-    if (ed.eligible && !ed.emailVerified) {
-      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
-      await sendVerificationEmail(email);
-      return;
-    }
-
-    // Check lockout: 3 days without assessment
+    // Check lockout: 3 days without assessment (only if they already have a profile/trial)
     if (ed.lockedNoAssessment && !ed.isPaid) {
       if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
       showTrialExpired('locked_no_assessment');
       return;
     }
 
-    // Check trial expired
+    // Check trial expired (30 days up)
     if (ed.trialExpired && !ed.isPaid) {
       if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
       showTrialExpired('monthly');
       return;
     }
+
+    // Note: assessment NOT required to enter — they have 3 days after sign-up to complete it
 
     await checkProfile();
   } catch (e) {

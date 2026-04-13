@@ -246,10 +246,10 @@ module.exports = async (req, res) => {
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       const contact = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email.toLowerCase().trim()} LIMIT 1`;
-      if (!contact.length) return res.json({ eligible: false, reason: 'no_account', message: 'Take the assessment first' });
+      if (!contact.length) return res.json({ eligible: false, reason: 'no_account', message: 'Create an account first' });
 
+      // Assessment not required upfront — they have 3 days
       const assessment = await sql`SELECT id FROM assessments WHERE contact_id = ${contact[0].id} LIMIT 1`;
-      if (!assessment.length) return res.json({ eligible: false, reason: 'no_assessment', message: 'Complete the P.I.N.K. assessment first' });
 
       const verified = await sql`SELECT verified FROM dating_email_verify WHERE contact_id = ${contact[0].id} LIMIT 1`;
       const isVerified = verified.length && verified[0].verified;
@@ -294,22 +294,8 @@ module.exports = async (req, res) => {
     // ===== AUTH REQUIRED from here =====
     if (!user) return res.status(401).json({ error: 'Login required' });
 
-    // ===== CHECK: Must have completed assessment =====
-    const assessmentCheck = await sql`SELECT id FROM assessments WHERE contact_id = ${user.contactId} LIMIT 1`;
-    if (!assessmentCheck.length && path !== 'profile') {
-      return res.status(403).json({ error: 'Complete the P.I.N.K. assessment first', needsAssessment: true });
-    }
-
-    // ===== CHECK: Email verification for non-profile endpoints =====
-    if (path !== 'profile' && path !== 'toggle-active') {
-      const emailCheck = await sql`SELECT verified FROM dating_email_verify WHERE contact_id = ${user.contactId} LIMIT 1`;
-      if (!emailCheck.length || !emailCheck[0].verified) {
-        // Allow profile view but block discover/swipe/match until verified
-        if (!['profile'].includes(path)) {
-          // Soft check — still allow but flag it
-        }
-      }
-    }
+    // Assessment is NOT required upfront — users have 3 days to complete it
+    // The trial/lockout check below handles the enforcement
 
     // ===== CHECK: Access gating =====
     if (!['profile', 'toggle-active', 'location'].includes(path)) {
