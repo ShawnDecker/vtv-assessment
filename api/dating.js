@@ -227,7 +227,7 @@ module.exports = async (req, res) => {
       // Update or create dating profile trial
       const existing = await sql`SELECT id FROM dating_profiles WHERE contact_id = ${row[0].contact_id}`;
       if (existing.length) {
-        await sql`UPDATE dating_profiles SET email_verified = true, trial_start = now(), trial_ends = now() + interval '${TRIAL_DAYS} days' WHERE contact_id = ${row[0].contact_id}`;
+        await sql`UPDATE dating_profiles SET email_verified = true, trial_start = now(), trial_ends = now() + interval '30 days' WHERE contact_id = ${row[0].contact_id}`;
       }
 
       res.setHeader('Content-Type', 'text/html');
@@ -372,6 +372,10 @@ module.exports = async (req, res) => {
 
       if (existing.length) {
         // Update
+        const photoJson = b.photo_urls ? JSON.stringify(b.photo_urls) : null;
+        const recJson = b.recreation_interests ? JSON.stringify(b.recreation_interests) : null;
+        const intJson = b.general_interests ? JSON.stringify(b.general_interests) : null;
+
         await sql`
           UPDATE dating_profiles SET
             display_name = COALESCE(${b.display_name || null}, display_name),
@@ -386,9 +390,9 @@ module.exports = async (req, res) => {
             denomination = COALESCE(${b.denomination || null}, denomination),
             faith_importance = COALESCE(${b.faith_importance || null}, faith_importance),
             bio = COALESCE(${b.bio || null}, bio),
-            photo_urls = COALESCE(${JSON.stringify(b.photo_urls) || null}::jsonb, photo_urls),
-            recreation_interests = COALESCE(${JSON.stringify(b.recreation_interests) || null}::jsonb, recreation_interests),
-            general_interests = COALESCE(${JSON.stringify(b.general_interests) || null}::jsonb, general_interests),
+            photo_urls = COALESCE(${photoJson}::jsonb, photo_urls),
+            recreation_interests = COALESCE(${recJson}::jsonb, recreation_interests),
+            general_interests = COALESCE(${intJson}::jsonb, general_interests),
             location_lat = COALESCE(${b.location_lat || null}, location_lat),
             location_lng = COALESCE(${b.location_lng || null}, location_lng),
             location_city = COALESCE(${b.location_city || null}, location_city),
@@ -404,26 +408,28 @@ module.exports = async (req, res) => {
         return res.json({ ok: true, message: 'Profile updated' });
       } else {
         // Create
+        const photoJson = JSON.stringify(b.photo_urls || []);
+        const recJson = JSON.stringify(b.recreation_interests || []);
+        const intJson = JSON.stringify(b.general_interests || []);
+
         await sql`
           INSERT INTO dating_profiles (contact_id, display_name, gender, seeking, date_of_birth, age,
             height_inches, weight_lbs, body_type, faith, denomination, faith_importance, bio,
             photo_urls, recreation_interests, general_interests,
             location_lat, location_lng, location_city, location_state,
-            search_radius_miles, show_on_map, show_distance, age_min, age_max)
+            search_radius_miles, show_on_map, show_distance, age_min, age_max,
+            trial_start, trial_ends)
           VALUES (${user.contactId}, ${b.display_name}, ${b.gender}, ${b.seeking},
             ${b.date_of_birth || null}, ${b.age || null},
             ${b.height_inches || null}, ${b.weight_lbs || null}, ${b.body_type || null},
             ${b.faith || 'Christian'}, ${b.denomination || null}, ${b.faith_importance || 'very_important'},
             ${b.bio || null},
-            ${JSON.stringify(b.photo_urls || [])}::jsonb,
-            ${JSON.stringify(b.recreation_interests || [])}::jsonb,
-            ${JSON.stringify(b.general_interests || [])}::jsonb,
+            ${photoJson}::jsonb, ${recJson}::jsonb, ${intJson}::jsonb,
             ${b.location_lat || null}, ${b.location_lng || null},
             ${b.location_city || null}, ${b.location_state || null},
             ${b.search_radius_miles || 50}, ${b.show_on_map !== false}, ${b.show_distance !== false},
-            ${b.age_min || 18}, ${b.age_max || 65})`;
-        // Set trial dates
-        await sql`UPDATE dating_profiles SET trial_start = now(), trial_ends = now() + interval '30 days' WHERE contact_id = ${user.contactId} AND trial_ends IS NULL`;
+            ${b.age_min || 18}, ${b.age_max || 65},
+            now(), now() + interval '30 days')
         `;
         return res.json({ ok: true, message: 'Profile created' });
       }
