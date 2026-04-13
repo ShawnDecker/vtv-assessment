@@ -267,16 +267,27 @@ module.exports = async (req, res) => {
       const hasAssessmentDone = assessment.length > 0;
       const trialExpired = profile.length > 0 && !trialActive && !(profile[0].is_paid);
 
+      // Check 3-day assessment gate
+      let lockedNoAssessment = false;
+      let daysSinceStart = 0;
+      if (profile.length && profile[0].trial_start) {
+        daysSinceStart = (Date.now() - new Date(profile[0].trial_start).getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceStart > 3 && !hasAssessmentDone && !profile[0].is_paid) {
+          lockedNoAssessment = true;
+        }
+      }
+
       return res.json({
         eligible: true,
         hasAssessment: hasAssessmentDone,
         emailVerified: isVerified,
         hasProfile: profile.length > 0,
-        trialActive,
+        trialActive: trialActive && !lockedNoAssessment,
         trialDaysLeft,
         trialExpired,
+        lockedNoAssessment,
         isPaid: profile.length > 0 && profile[0].is_paid,
-        plan: trialExpired ? (hasAssessmentDone ? 'monthly_29' : 'daily_097') : 'trial'
+        plan: lockedNoAssessment ? 'charge_097' : trialExpired ? 'monthly_29' : 'trial'
       });
     }
 
@@ -300,29 +311,37 @@ module.exports = async (req, res) => {
       }
     }
 
-    // ===== CHECK: Trial or paid status =====
+    // ===== CHECK: Access gating =====
     if (!['profile', 'toggle-active', 'location'].includes(path)) {
-      const trialCheck = await sql`SELECT trial_ends, is_paid, email_verified FROM dating_profiles WHERE contact_id = ${user.contactId} LIMIT 1`;
+      const trialCheck = await sql`SELECT trial_start, trial_ends, is_paid, email_verified FROM dating_profiles WHERE contact_id = ${user.contactId} LIMIT 1`;
       if (trialCheck.length) {
-        const { trial_ends, is_paid } = trialCheck[0];
-        if (!is_paid && trial_ends && new Date(trial_ends) < new Date()) {
-          // Trial expired — check if they completed assessment
-          const hasAssessment = await sql`SELECT id FROM assessments WHERE contact_id = ${user.contactId} LIMIT 1`;
-          if (hasAssessment.length) {
-            // Assessment done → needs $29/mo subscription
+        const { trial_start, trial_ends, is_paid } = trialCheck[0];
+
+        // Check if past 3 days without completing assessment
+        const hasAssessment = await sql`SELECT id FROM assessments WHERE contact_id = ${user.contactId} LIMIT 1`;
+        const trialStartDate = new Date(trial_start);
+        const daysSinceStart = (Date.now() - trialStartDate.getTime()) / (1000 * 60 * 60 * 24);
+
+        if (!is_paid) {
+          // GATE 1: After 3 days without assessment → locked out, charged $0.97
+          if (daysSinceStart > 3 && !hasAssessment.length) {
+            return res.status(402).json({
+              error: 'You must complete the P.I.N.K. assessment within 3 days. You have been charged $0.97. Complete the assessment to restore your 30-day free trial, or subscribe for $29/month.',
+              locked: true,
+              reason: 'no_assessment_3days',
+              plan: 'charge_097',
+              needsAssessment: true
+            });
+          }
+
+          // GATE 2: After 30-day trial ends → must pay $29/mo
+          if (trial_ends && new Date(trial_ends) < new Date()) {
             return res.status(402).json({
               error: 'Your 30-day free trial has ended. Subscribe for $29/month to continue — includes full VTV website & portal access.',
-              trialExpired: true,
+              locked: true,
+              reason: 'trial_ended',
               plan: 'monthly_29',
               includesPortal: true
-            });
-          } else {
-            // No assessment → $0.97/day until they complete it or subscribe
-            return res.status(402).json({
-              error: 'Your free trial has ended. Complete the P.I.N.K. assessment to unlock the $29/month plan, or you will be charged $0.97/day.',
-              trialExpired: true,
-              plan: 'daily_097',
-              needsAssessment: true
             });
           }
         }

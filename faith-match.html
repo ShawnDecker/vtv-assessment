@@ -332,9 +332,9 @@
         Verify your email to start your free trial
       </p>
       <p style="font-size:0.65rem;color:var(--dim);margin-top:0.35rem;line-height:1.4;">
-        After 30 days: <strong style="color:var(--text);">$29/mo</strong> with completed assessment
-        (includes VTV website & portal access)<br/>
-        Without assessment: <strong style="color:var(--text);">$0.97/day</strong>
+        Complete the assessment within 3 days to keep your free trial.<br/>
+        No assessment after 3 days = <strong style="color:var(--text);">$0.97 charge</strong> + access locked.<br/>
+        After 30 days: <strong style="color:var(--text);">$29/mo</strong> (includes VTV website & portal)
       </p>
     </div>
   </div><!-- /login-box -->
@@ -739,13 +739,15 @@ async function doLogin() {
       return;
     }
 
-    // Check trial status
+    // Check lockout: 3 days without assessment → charged $0.97, locked out
+    if (ed.lockedNoAssessment && !ed.isPaid) {
+      showTrialExpired('locked_no_assessment');
+      return;
+    }
+
+    // Check trial expired (30 days up) → $29/mo required
     if (ed.trialExpired && !ed.isPaid) {
-      if (ed.hasAssessment) {
-        showTrialExpired('monthly');
-      } else {
-        showTrialExpired('daily');
-      }
+      showTrialExpired('monthly');
       return;
     }
 
@@ -755,21 +757,23 @@ async function doLogin() {
 
 function showTrialExpired(plan) {
   const loginBox = document.getElementById('login-screen').querySelector('.login-box');
-  if (plan === 'monthly') {
+  if (plan === 'locked_no_assessment') {
+    loginBox.innerHTML += `
+      <div style="margin-top:1rem;padding:1rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:0.5rem;text-align:center;">
+        <p style="color:var(--red);font-size:0.95rem;font-weight:700;">Access Locked</p>
+        <p style="color:var(--muted);font-size:0.8rem;margin-top:0.5rem;">You didn't complete the P.I.N.K. assessment within 3 days.</p>
+        <p style="color:var(--muted);font-size:0.8rem;margin-top:0.25rem;">A <strong style="color:var(--text);">$0.97 charge</strong> has been applied.</p>
+        <p style="color:var(--muted);font-size:0.75rem;margin-top:0.5rem;">To restore access, either:</p>
+        <a href="/" style="display:inline-block;margin-top:0.5rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.85rem;">Complete the Assessment (restores 30-day trial)</a>
+        <a href="/pricing" style="display:inline-block;margin-top:0.4rem;padding:0.55rem 1.5rem;background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600;border-radius:0.5rem;text-decoration:none;font-size:0.8rem;">Subscribe $29/month</a>
+      </div>`;
+  } else if (plan === 'monthly') {
     loginBox.innerHTML += `
       <div style="margin-top:1rem;padding:1rem;background:rgba(212,168,71,0.1);border:1px solid rgba(212,168,71,0.3);border-radius:0.5rem;text-align:center;">
         <p style="color:var(--gold);font-size:0.95rem;font-weight:700;">Your 30-Day Trial Has Ended</p>
         <p style="color:var(--muted);font-size:0.8rem;margin-top:0.5rem;">Subscribe for <strong style="color:var(--text);">$29/month</strong> to continue using Faith Match</p>
         <p style="color:var(--green);font-size:0.75rem;margin-top:0.35rem;">Includes full VTV website & portal access</p>
         <a href="/pricing" style="display:inline-block;margin-top:0.75rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Subscribe Now</a>
-      </div>`;
-  } else {
-    loginBox.innerHTML += `
-      <div style="margin-top:1rem;padding:1rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:0.5rem;text-align:center;">
-        <p style="color:var(--red);font-size:0.95rem;font-weight:700;">Trial Ended — No Assessment Completed</p>
-        <p style="color:var(--muted);font-size:0.8rem;margin-top:0.5rem;">You're being charged <strong style="color:var(--text);">$0.97/day</strong> until you complete the assessment</p>
-        <p style="color:var(--muted);font-size:0.75rem;margin-top:0.35rem;">Complete the P.I.N.K. assessment to unlock the $29/month plan instead</p>
-        <a href="/" style="display:inline-block;margin-top:0.75rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Take the Assessment</a>
       </div>`;
   }
 }
