@@ -675,28 +675,13 @@ async function doLogin() {
   if (btn) { btn.disabled = true; btn.textContent = 'Checking...'; }
 
   try {
-    // STEP 1: Check if email exists and has a PIN via the admin check endpoint
-    const checkR = await fetch(API + '/admin/verify-pin-check?email=' + encodeURIComponent(email));
-    const checkD = await checkR.json();
-
-    if (!checkD.found) {
-      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
-      return toast('No account found. Take the P.I.N.K. assessment first.');
-    }
-
-    // STEP 2: If no PIN set yet, show set-pin flow
-    if (!checkD.hasPin) {
-      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
-      return showSetPinFlow(email);
-    }
-
-    // STEP 3: PIN is set — need them to enter it
+    // STEP 1: Need PIN to proceed
     if (!pin) {
       if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
       return toast('Enter your PIN or password');
     }
 
-    // STEP 4: Verify PIN (same PIN as portal)
+    // STEP 2: Verify PIN via member endpoint (no admin key needed)
     const r = await fetch(API + '/member/verify-pin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -704,9 +689,22 @@ async function doLogin() {
     });
     const d = await r.json();
 
+    // No account found
+    if (d.error && d.error.includes('No account')) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+      return toast('No account found. Tap "Sign Up Free" below.');
+    }
+
+    // No PIN set yet — show set-pin flow
+    if (d.needsPin) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+      return showSetPinFlow(email);
+    }
+
+    // Wrong PIN
     if (!d.verified) {
       if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
-      return toast(d.error || 'Incorrect PIN');
+      return toast(d.error || 'Incorrect PIN or password');
     }
 
     // STEP 5: Logged in — save token
