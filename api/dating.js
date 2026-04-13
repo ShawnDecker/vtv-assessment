@@ -230,12 +230,18 @@ module.exports = async (req, res) => {
         await sql`UPDATE dating_profiles SET email_verified = true, trial_start = now(), trial_ends = now() + interval '30 days' WHERE contact_id = ${row[0].contact_id}`;
       }
 
+      // Get their email for the assessment redirect
+      const userEmail = row[0].email;
+
       res.setHeader('Content-Type', 'text/html');
       return res.send(`
-        <html><body style="font-family:sans-serif;text-align:center;padding:4rem;background:#0a0a0a;color:#fff;">
-        <h1 style="color:#D4A847;">Email Verified!</h1>
-        <p>Your 30-day free trial of Faith Match is now active.</p>
-        <a href="/faith-match" style="display:inline-block;padding:0.75rem 2rem;background:#D4A847;color:#000;text-decoration:none;font-weight:700;border-radius:0.5rem;margin-top:1rem;">Open Faith Match</a>
+        <html><body style="font-family:'Satoshi',sans-serif;text-align:center;padding:4rem;background:#0a0a0a;color:#fff;">
+        <h1 style="color:#D4A847;font-size:2rem;">Email Verified!</h1>
+        <p style="color:#a1a1aa;margin:1rem 0;">Your 30-day free trial of Faith Match is now active.</p>
+        <p style="color:#fff;font-size:1.1rem;font-weight:600;margin:1.5rem 0 0.5rem;">Next: Take Your Relationship Assessment</p>
+        <p style="color:#a1a1aa;font-size:0.85rem;margin-bottom:1.5rem;">This quick assessment powers your Faith Match profile and compatibility scores.</p>
+        <a href="/?email=${encodeURIComponent(userEmail)}&mode=relationship&depth=quick&from=faith-match#/mode-select" style="display:inline-block;padding:0.85rem 2.5rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#000;text-decoration:none;font-weight:800;border-radius:0.5rem;font-size:1.1rem;">Start My Assessment &rarr;</a>
+        <p style="color:#71717a;font-size:0.75rem;margin-top:1.5rem;">You have 3 days to complete it. After that, a $0.97 charge applies.</p>
         </body></html>
       `);
     }
