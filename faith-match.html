@@ -290,7 +290,7 @@
       <input type="password" id="login-pin" class="form-input" placeholder="PIN or password" minlength="4" maxlength="32" />
     </div>
     <button class="btn-gold" id="login-btn" onclick="doLogin()">Sign In</button>
-    <button class="btn-outline" onclick="window.location.href='/'">Take the Assessment First</button>
+    <button class="btn-outline" onclick="showSignUp()">New Here? Sign Up Free</button>
     <div style="margin-top:1rem;padding:0.75rem;background:rgba(212,168,71,0.08);border:1px solid rgba(212,168,71,0.2);border-radius:0.5rem;text-align:center;">
       <p style="font-size:0.8rem;color:var(--gold);font-weight:600;">Free for 30 Days</p>
       <p style="font-size:0.7rem;color:var(--dim);margin-top:0.25rem;">
@@ -759,6 +759,86 @@ async function doLogin() {
     console.error('Login error:', e);
     if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
     toast('Connection error — please try again');
+  }
+}
+
+function showSignUp() {
+  const loginBox = document.getElementById('login-screen').querySelector('.login-box');
+  loginBox.innerHTML = `
+    <h3>Create Your Account</h3>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">Sign up and you'll be taken straight to the P.I.N.K. assessment — it takes about 5 minutes.</p>
+    <div class="form-group">
+      <label>First Name</label>
+      <input type="text" id="signup-first" class="form-input" placeholder="First name" />
+    </div>
+    <div class="form-group">
+      <label>Last Name</label>
+      <input type="text" id="signup-last" class="form-input" placeholder="Last name" />
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="signup-email" class="form-input" placeholder="your@email.com" />
+    </div>
+    <div class="form-group">
+      <label>Create PIN or Password</label>
+      <input type="password" id="signup-pin" class="form-input" placeholder="4+ characters" minlength="4" maxlength="32" />
+    </div>
+    <div class="form-group">
+      <label>Confirm</label>
+      <input type="password" id="signup-pin-confirm" class="form-input" placeholder="Re-enter" minlength="4" maxlength="32" />
+    </div>
+    <button class="btn-gold" onclick="doSignUp()">Create Account & Start Assessment</button>
+    <button class="btn-outline" onclick="location.reload()">Already have an account? Sign In</button>
+  `;
+}
+
+async function doSignUp() {
+  const first = document.getElementById('signup-first').value.trim();
+  const last = document.getElementById('signup-last').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pin = document.getElementById('signup-pin').value.trim();
+  const pinConfirm = document.getElementById('signup-pin-confirm').value.trim();
+
+  if (!first) return toast('Enter your first name');
+  if (!email) return toast('Enter your email');
+  if (!pin || pin.length < 4) return toast('Password must be at least 4 characters');
+  if (pin !== pinConfirm) return toast('Passwords do not match');
+
+  try {
+    toast('Creating your account...');
+
+    // Step 1: Create contact
+    const cr = await fetch(API + '/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ firstName: first, lastName: last, email })
+    });
+    const cd = await cr.json();
+    if (cr.status === 400) return toast(cd.error || 'Invalid email');
+    if (!cd.contact) return toast('Failed to create account');
+
+    // Step 2: Set PIN/password
+    const pr = await fetch(API + '/member/set-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, pin })
+    });
+    const pd = await pr.json();
+    if (pd.error) return toast(pd.error);
+
+    // Step 3: Save email for returning
+    localStorage.setItem('ve_email', email);
+
+    // Step 4: Redirect straight to assessment with email pre-filled
+    toast('Account created! Starting your assessment...');
+    setTimeout(() => {
+      // Pass email to assessment so it auto-fills
+      window.location.href = '/?email=' + encodeURIComponent(email) + '&mode=individual&depth=quick&from=faith-match';
+    }, 800);
+
+  } catch (e) {
+    console.error('Signup error:', e);
+    toast('Something went wrong — try again');
   }
 }
 

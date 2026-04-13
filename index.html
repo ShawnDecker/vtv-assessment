@@ -284,6 +284,7 @@
           // Check if we're on results page — inject deep-dive CTAs
           if (window.location.hash === '#/results' || window.location.hash === '#/results/') {
             setTimeout(injectResultsDeepDive, 500);
+            setTimeout(injectFaithMatchReturn, 700);
           }
         });
 
@@ -297,10 +298,27 @@
         watchModeSelect();
       }
 
+      // Faith Match redirect after assessment
+      function injectFaithMatchReturn() {
+        var fromParam = new URLSearchParams(window.location.search).get('from');
+        if (fromParam !== 'faith-match') return;
+        var root = document.getElementById('root');
+        if (!root) return;
+        if (document.getElementById('faith-match-return')) return;
+        var resultsContainer = root.querySelector('[class*="min-h-screen"]');
+        if (!resultsContainer) return;
+        var div = document.createElement('div');
+        div.id = 'faith-match-return';
+        div.style.cssText = 'text-align:center;padding:1.5rem;margin:1rem auto;max-width:400px;background:linear-gradient(135deg,rgba(212,168,71,0.15),rgba(212,168,71,0.05));border:1px solid rgba(212,168,71,0.3);border-radius:0.75rem;';
+        div.innerHTML = '<p style="font-size:1.1rem;font-weight:700;color:#D4A847;margin-bottom:0.5rem;">Assessment Complete!</p><p style="font-size:0.85rem;color:#a1a1aa;margin-bottom:1rem;">Your P.I.N.K. scores are ready. Continue to set up your Faith Match profile.</p><a href="/faith-match" style="display:inline-block;padding:0.75rem 2rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:800;border-radius:0.5rem;text-decoration:none;font-size:1rem;">Continue to Faith Match &rarr;</a>';
+        resultsContainer.insertBefore(div, resultsContainer.firstChild);
+      }
+
       // Also watch hash changes
       window.addEventListener('hashchange', function() {
         if (window.location.hash === '#/results' || window.location.hash === '#/results/') {
           setTimeout(injectResultsDeepDive, 800);
+          setTimeout(injectFaithMatchReturn, 1000);
         }
         if (window.location.hash === '#/mode-select' || window.location.hash === '#/mode-select/') {
           watchModeSelect();
