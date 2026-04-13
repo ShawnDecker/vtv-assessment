@@ -289,7 +289,7 @@
       <label>PIN</label>
       <input type="password" id="login-pin" class="form-input" placeholder="6-digit PIN" maxlength="6" inputmode="numeric" />
     </div>
-    <button class="btn-gold" onclick="doLogin()">Sign In</button>
+    <button class="btn-gold" id="login-btn" onclick="doLogin()">Sign In</button>
     <button class="btn-outline" onclick="window.location.href='/'">Take the Assessment First</button>
     <div style="margin-top:1rem;padding:0.75rem;background:rgba(212,168,71,0.08);border:1px solid rgba(212,168,71,0.2);border-radius:0.5rem;text-align:center;">
       <p style="font-size:0.8rem;color:var(--gold);font-weight:600;">Free for 30 Days</p>
@@ -667,16 +667,36 @@ let photoUrls = ['','','','','',''];
 // ===== AUTH =====
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
-  const pin = document.getElementById('login-pin').value.trim();
+  const pinEl = document.getElementById('login-pin');
+  const pin = pinEl ? pinEl.value.trim() : '';
   if (!email) return toast('Enter your email');
 
+  const btn = document.getElementById('login-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking...'; }
+
   try {
-    // If no PIN entered, check if they need to set one
-    if (!pin) {
+    // STEP 1: Check if email exists and has a PIN via the admin check endpoint
+    const checkR = await fetch(API + '/admin/verify-pin-check?email=' + encodeURIComponent(email));
+    const checkD = await checkR.json();
+
+    if (!checkD.found) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+      return toast('No account found. Take the P.I.N.K. assessment first.');
+    }
+
+    // STEP 2: If no PIN set yet, show set-pin flow
+    if (!checkD.hasPin) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
       return showSetPinFlow(email);
     }
 
-    // Login via member verify-pin
+    // STEP 3: PIN is set — need them to enter it
+    if (!pin) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+      return toast('Enter your PIN');
+    }
+
+    // STEP 4: Verify PIN (same PIN as portal)
     const r = await fetch(API + '/member/verify-pin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -684,22 +704,21 @@ async function doLogin() {
     });
     const d = await r.json();
 
-    // Handle "no PIN set" — show set-pin flow
-    if (d.needsPin) {
-      return showSetPinFlow(email);
+    if (!d.verified) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+      return toast(d.error || 'Incorrect PIN');
     }
 
-    if (!d.verified) return toast(d.error || d.message || 'Login failed');
-
+    // STEP 5: Logged in — save token
     token = d.token;
     userEmail = email;
     localStorage.setItem('ve_token', token);
     localStorage.setItem('ve_email', email);
 
-    // Init dating tables (safe to call multiple times)
+    // Init dating tables
     try { await fetch(API + '/dating/init', { method: 'POST', headers: authHeaders() }); } catch {}
 
-    // Check eligibility
+    // STEP 6: Check eligibility
     let ed = {};
     try {
       const ec = await fetch(API + '/dating/check-eligible', {
@@ -709,26 +728,28 @@ async function doLogin() {
       ed = await ec.json();
     } catch {}
 
-    if (ed.eligible === false) {
-      if (ed.reason === 'no_assessment') {
-        return toast('Complete the P.I.N.K. assessment first');
-      }
+    if (ed.eligible === false && ed.reason === 'no_assessment') {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+      return toast('Complete the P.I.N.K. assessment first');
     }
 
-    // Check if email verified for Faith Match
+    // Check email verification for Faith Match
     if (ed.eligible && !ed.emailVerified) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
       await sendVerificationEmail(email);
       return;
     }
 
     // Check lockout: 3 days without assessment
     if (ed.lockedNoAssessment && !ed.isPaid) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
       showTrialExpired('locked_no_assessment');
       return;
     }
 
-    // Check trial expired (30 days up)
+    // Check trial expired
     if (ed.trialExpired && !ed.isPaid) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
       showTrialExpired('monthly');
       return;
     }
@@ -736,6 +757,7 @@ async function doLogin() {
     await checkProfile();
   } catch (e) {
     console.error('Login error:', e);
+    if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
     toast('Connection error — please try again');
   }
 }
