@@ -941,7 +941,7 @@ module.exports = async (req, res) => {
       const pin = (b.pin || '').trim();
       const oldPin = (b.oldPin || '').trim();
       if (!email || !pin) return res.status(400).json({ error: 'Email and PIN required' });
-      if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) return res.status(400).json({ error: 'PIN must be 4-6 digits' });
+      if (pin.length < 4 || pin.length > 32) return res.status(400).json({ error: 'PIN/password must be 4-32 characters' });
 
       // Look up existing contact
       const existing = await sql`SELECT id, pin_hash FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;

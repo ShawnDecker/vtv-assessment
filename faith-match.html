@@ -286,8 +286,8 @@
       <input type="email" id="login-email" class="form-input" placeholder="your@email.com" />
     </div>
     <div class="form-group">
-      <label>PIN</label>
-      <input type="password" id="login-pin" class="form-input" placeholder="4-6 digit PIN" maxlength="6" minlength="4" inputmode="numeric" />
+      <label>PIN / PASSWORD</label>
+      <input type="password" id="login-pin" class="form-input" placeholder="PIN or password" minlength="4" maxlength="32" />
     </div>
     <button class="btn-gold" id="login-btn" onclick="doLogin()">Sign In</button>
     <button class="btn-outline" onclick="window.location.href='/'">Take the Assessment First</button>
@@ -693,7 +693,7 @@ async function doLogin() {
     // STEP 3: PIN is set — need them to enter it
     if (!pin) {
       if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
-      return toast('Enter your PIN');
+      return toast('Enter your PIN or password');
     }
 
     // STEP 4: Verify PIN (same PIN as portal)
@@ -765,19 +765,19 @@ async function doLogin() {
 function showSetPinFlow(email) {
   const loginBox = document.getElementById('login-screen').querySelector('.login-box');
   loginBox.innerHTML = `
-    <h3>Set Your PIN</h3>
-    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">Create a 4-6 digit PIN to secure your Faith Match account.</p>
+    <h3>Set Your Password</h3>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">Create a PIN (4+ digits) or password (letters, numbers, symbols) to secure your account.</p>
     <div class="form-group">
       <label>Email</label>
       <input type="email" class="form-input" value="${email}" readonly style="opacity:0.7;" />
     </div>
     <div class="form-group">
-      <label>Create PIN (4-6 digits)</label>
-      <input type="password" id="new-pin" class="form-input" placeholder="e.g. 1234" maxlength="6" minlength="4" inputmode="numeric" />
+      <label>Create PIN or Password</label>
+      <input type="password" id="new-pin" class="form-input" placeholder="e.g. 1234 or MyPassword1" minlength="4" maxlength="32" />
     </div>
     <div class="form-group">
-      <label>Confirm PIN</label>
-      <input type="password" id="confirm-pin" class="form-input" placeholder="Re-enter PIN" maxlength="6" minlength="4" inputmode="numeric" />
+      <label>Confirm</label>
+      <input type="password" id="confirm-pin" class="form-input" placeholder="Re-enter PIN or password" minlength="4" maxlength="32" />
     </div>
     <button class="btn-gold" onclick="submitNewPin('${email}')">Set PIN & Sign In</button>
     <button class="btn-outline" onclick="location.reload()">Back</button>
@@ -787,9 +787,9 @@ function showSetPinFlow(email) {
 async function submitNewPin(email) {
   const pin = document.getElementById('new-pin').value.trim();
   const confirm = document.getElementById('confirm-pin').value.trim();
-  if (!pin || pin.length < 4) return toast('PIN must be 4-6 digits');
-  if (pin !== confirm) return toast('PINs do not match');
-  if (!/^\d+$/.test(pin)) return toast('PIN must be numbers only');
+  if (!pin || pin.length < 4) return toast('Must be at least 4 characters');
+  if (pin.length > 32) return toast('Must be 32 characters or less');
+  if (pin !== confirm) return toast('Passwords do not match');
 
   try {
     const r = await fetch(API + '/member/set-pin', {
