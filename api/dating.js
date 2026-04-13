@@ -184,17 +184,17 @@ module.exports = async (req, res) => {
       });
 
       await transporter.sendMail({
-        from: '"Faith Match by VTV" <' + process.env.GMAIL_USER + '>',
+        from: '"Aligned Hearts by VTV" <' + process.env.GMAIL_USER + '>',
         to: email,
-        subject: 'Verify Your Email — Faith Match',
+        subject: 'Verify Your Email — Aligned Hearts',
         html: `
           <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:2rem;">
-            <h1 style="color:#D4A847;font-size:1.5rem;">Faith Match Email Verification</h1>
-            <p>Click the button below to verify your email and activate your <strong>free 30-day trial</strong> of Faith Match.</p>
+            <h1 style="color:#D4A847;font-size:1.5rem;">Aligned Hearts Email Verification</h1>
+            <p>Click the button below to verify your email and activate your <strong>free 30-day trial</strong> of Aligned Hearts.</p>
             <a href="${verifyUrl}" style="display:inline-block;padding:0.75rem 2rem;background:#D4A847;color:#000;text-decoration:none;font-weight:700;border-radius:0.5rem;margin:1rem 0;">Verify My Email</a>
             <p style="color:#666;font-size:0.85rem;">This link expires in 24 hours.</p>
             <hr style="border:none;border-top:1px solid #eee;margin:1.5rem 0;" />
-            <p style="color:#999;font-size:0.75rem;">Faith Match by Value To Victory — Values-Based Dating powered by the P.I.N.K. Value Engine</p>
+            <p style="color:#999;font-size:0.75rem;">Aligned Hearts by Value To Victory — Values-Based Dating powered by the P.I.N.K. Value Engine</p>
           </div>
         `
       });
@@ -210,14 +210,14 @@ module.exports = async (req, res) => {
       const row = await sql`SELECT * FROM dating_email_verify WHERE token = ${verifyToken} AND verified = false LIMIT 1`;
       if (!row.length) {
         res.setHeader('Content-Type', 'text/html');
-        return res.status(400).send('<html><body style="font-family:sans-serif;text-align:center;padding:4rem;"><h1>Link Expired or Already Used</h1><p>This verification link is no longer valid.</p><a href="/faith-match">Go to Faith Match</a></body></html>');
+        return res.status(400).send('<html><body style="font-family:sans-serif;text-align:center;padding:4rem;"><h1>Link Expired or Already Used</h1><p>This verification link is no longer valid.</p><a href="/faith-match">Go to Aligned Hearts</a></body></html>');
       }
 
       // Check if link is less than 24 hours old
       const created = new Date(row[0].created_at);
       if (Date.now() - created.getTime() > 24 * 60 * 60 * 1000) {
         res.setHeader('Content-Type', 'text/html');
-        return res.status(400).send('<html><body style="font-family:sans-serif;text-align:center;padding:4rem;"><h1>Link Expired</h1><p>This link has expired. Please request a new one.</p><a href="/faith-match">Go to Faith Match</a></body></html>');
+        return res.status(400).send('<html><body style="font-family:sans-serif;text-align:center;padding:4rem;"><h1>Link Expired</h1><p>This link has expired. Please request a new one.</p><a href="/faith-match">Go to Aligned Hearts</a></body></html>');
       }
 
       // Mark as verified
@@ -236,9 +236,9 @@ module.exports = async (req, res) => {
       return res.send(`
         <html><body style="font-family:'Satoshi',sans-serif;text-align:center;padding:4rem;background:#0a0a0a;color:#fff;">
         <h1 style="color:#D4A847;font-size:2rem;">Email Verified!</h1>
-        <p style="color:#a1a1aa;margin:1rem 0;">Your 30-day free trial of Faith Match is now active.</p>
+        <p style="color:#a1a1aa;margin:1rem 0;">Your 30-day free trial of Aligned Hearts is now active.</p>
         <p style="color:#fff;font-size:1.1rem;font-weight:600;margin:1.5rem 0 0.5rem;">Next: Take Your Relationship Assessment</p>
-        <p style="color:#a1a1aa;font-size:0.85rem;margin-bottom:1.5rem;">This quick assessment powers your Faith Match profile and compatibility scores.</p>
+        <p style="color:#a1a1aa;font-size:0.85rem;margin-bottom:1.5rem;">This quick assessment powers your Aligned Hearts profile and compatibility scores.</p>
         <a href="/?email=${encodeURIComponent(userEmail)}&mode=relationship&depth=quick&from=faith-match#/mode-select" style="display:inline-block;padding:0.85rem 2.5rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#000;text-decoration:none;font-weight:800;border-radius:0.5rem;font-size:1.1rem;">Start My Assessment &rarr;</a>
         <p style="color:#71717a;font-size:0.75rem;margin-top:1.5rem;">You have 3 days to complete it. After that, a $0.97 charge applies.</p>
         </body></html>

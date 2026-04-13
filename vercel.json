@@ -111,6 +111,10 @@
       "dest": "/faith-match.html"
     },
     {
+      "src": "/aligned-hearts",
+      "dest": "/faith-match.html"
+    },
+    {
       "src": "/about-pink",
       "dest": "/about-pink.html"
     },

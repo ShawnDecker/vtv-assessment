@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
-  <title>VTV Faith Match — Values-Based Dating</title>
-  <meta name="description" content="Faith-based dating powered by the P.I.N.K. Value Engine. Know your worth before you swipe." />
+  <title>VTV Aligned Hearts — Love · Values · Purpose</title>
+  <meta name="description" content="Values-based dating powered by the P.I.N.K. Value Engine. Love · Values · Purpose." />
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
@@ -48,43 +48,28 @@
     #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
                     padding: 0 1rem 2rem; position: relative; overflow: hidden; min-height: 100vh; }
 
-    /* Photo collage background */
+    /* Hero background */
     .login-hero-bg { position: absolute; inset: 0; z-index: 0; }
-    .photo-collage { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 0; }
-    .photo-cell { position: relative; overflow: hidden; }
-    .photo-cell img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.85) saturate(0.9); transition: transform 8s ease; }
-    .photo-cell:nth-child(odd) img { transform: scale(1.05); }
-    .photo-cell:nth-child(even) img { transform: scale(1.0); }
-    /* Warm gold tint overlay on all photos */
-    .photo-cell::after { content: ''; position: absolute; inset: 0;
-                         background: linear-gradient(135deg, rgba(212,168,71,0.12) 0%, rgba(26,16,51,0.2) 100%); }
-    /* Fade: top vignette + bottom solid fade into dark */
+    .login-hero-bg .hero-img { position: absolute; inset: 0; background: url('/aligned-hearts-bg.jpg') center top / cover no-repeat; }
     .login-hero-bg .hero-overlay { position: absolute; inset: 0; z-index: 1;
       background: linear-gradient(180deg,
         rgba(10,10,10,0.1) 0%,
-        rgba(10,10,10,0.0) 10%,
-        rgba(10,10,10,0.0) 30%,
-        rgba(10,10,10,0.15) 42%,
-        rgba(10,10,10,0.5) 55%,
-        rgba(10,10,10,0.85) 68%,
-        #0a0a0a 80%
+        rgba(10,10,10,0.0) 15%,
+        rgba(10,10,10,0.0) 35%,
+        rgba(10,10,10,0.3) 50%,
+        rgba(10,10,10,0.7) 62%,
+        rgba(10,10,10,0.92) 72%,
+        #0a0a0a 82%
       );
     }
-    /* Side vignette for depth */
     .login-hero-bg .hero-vignette { position: absolute; inset: 0; z-index: 1;
-      background: radial-gradient(ellipse at center 30%, transparent 50%, rgba(10,10,10,0.35) 100%); }
-    /* Soft glow behind form */
+      background: radial-gradient(ellipse at center 30%, transparent 50%, rgba(10,10,10,0.3) 100%); }
     .login-hero-bg .hero-glow { position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
       width: 500px; height: 400px; z-index: 1;
-      background: radial-gradient(ellipse, rgba(212,168,71,0.06) 0%, transparent 70%); }
+      background: radial-gradient(ellipse, rgba(212,168,71,0.08) 0%, transparent 70%); }
+    .login-logo-img { display: block; width: 180px; height: auto; margin: 0 auto 0.5rem; }
 
     .login-content { position: relative; z-index: 2; width: 100%; max-width: 400px; }
-
-    /* Mobile: 2-column collage */
-    @media (max-width: 500px) {
-      .photo-collage { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr); }
-      .photo-cell:nth-child(7) { grid-column: span 2; }
-    }
     .login-logo { font-family: 'Instrument Serif', serif; font-size: 2.8rem; margin-bottom: 0.25rem; text-align: center;
                   text-shadow: 0 2px 20px rgba(0,0,0,0.5); }
     .login-logo em { color: var(--gold); font-style: italic; }
@@ -254,22 +239,9 @@
 
 <!-- ===== LOGIN SCREEN ===== -->
 <div id="login-screen" class="screen active">
-  <!-- Photo collage background -->
+  <!-- Hero background -->
   <div class="login-hero-bg">
-    <div class="photo-collage">
-      <!-- Row 1: Community, Couple, Family -->
-      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80&fit=crop" alt="Friends gathering" loading="eager" /></div>
-      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=600&q=80&fit=crop" alt="Couple sunset" loading="eager" /></div>
-      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&q=80&fit=crop" alt="Family together" loading="eager" /></div>
-      <!-- Row 2: Church community, Married couple, Group outdoors -->
-      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1609234656388-0ff363383899?w=600&q=80&fit=crop" alt="Church community" loading="lazy" /></div>
-      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=600&q=80&fit=crop" alt="Couple walking" loading="lazy" /></div>
-      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1543807535-eceef0bc6599?w=600&q=80&fit=crop" alt="Community group" loading="lazy" /></div>
-      <!-- Row 3: Elderly couple, Young couple, Family park -->
-      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1447005497901-b3e9ee359928?w=600&q=80&fit=crop" alt="Elderly couple" loading="lazy" /></div>
-      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1523438885200-e635ba2c371e?w=600&q=80&fit=crop" alt="Young couple" loading="lazy" /></div>
-      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1478071735433-4e04cbea0ac1?w=600&q=80&fit=crop" alt="Family outdoors" loading="lazy" /></div>
-    </div>
+    <div class="hero-img"></div>
     <div class="hero-vignette"></div>
     <div class="hero-overlay"></div>
     <div class="hero-glow"></div>
@@ -277,8 +249,8 @@
 
   <!-- Login content overlaid on scene -->
   <div class="login-content">
-  <div class="login-logo">Faith <em>Match</em></div>
-  <p class="login-sub">Values-Based Dating by P.I.N.K.T</p>
+  <img class="login-logo-img" src="/aligned-hearts-logo.png" alt="VTV Aligned Hearts" />
+  <p class="login-sub">Love · Values · Purpose</p>
   <div class="login-box">
     <h3>Sign In with Your VTV Account</h3>
     <div class="form-group">
@@ -522,7 +494,7 @@
 <!-- ===== DISCOVER / SWIPE SCREEN ===== -->
 <div id="discover-screen" class="screen">
   <div class="screen-header">
-    <div class="screen-title">Faith <span>Match</span></div>
+    <div class="screen-title">Aligned <span>Hearts</span></div>
     <div style="display:flex;gap:0.5rem;">
       <button onclick="loadDiscover()" style="background:none;color:var(--muted);font-size:1.2rem;" title="Refresh">&#8635;</button>
     </div>
@@ -623,7 +595,7 @@
     <button class="btn-outline" style="margin-top:0.5rem;" onclick="localStorage.removeItem('ve_token');localStorage.removeItem('ve_email');location.reload();">Log Out</button>
   </div>
   <div style="text-align:center;padding:1rem;font-size:0.65rem;color:var(--dim);">
-    Faith Match by Value To Victory<br/>Powered by P.I.N.K.T
+    Aligned Hearts by Value To Victory<br/>Love · Values · Purpose
   </div>
 </div>
 
@@ -906,7 +878,7 @@ function showTrialExpired(plan) {
     loginBox.innerHTML += `
       <div style="margin-top:1rem;padding:1rem;background:rgba(212,168,71,0.1);border:1px solid rgba(212,168,71,0.3);border-radius:0.5rem;text-align:center;">
         <p style="color:var(--gold);font-size:0.95rem;font-weight:700;">Your 30-Day Trial Has Ended</p>
-        <p style="color:var(--muted);font-size:0.8rem;margin-top:0.5rem;">Subscribe for <strong style="color:var(--text);">$29/month</strong> to continue using Faith Match</p>
+        <p style="color:var(--muted);font-size:0.8rem;margin-top:0.5rem;">Subscribe for <strong style="color:var(--text);">$29/month</strong> to continue using Aligned Hearts</p>
         <p style="color:var(--green);font-size:0.75rem;margin-top:0.35rem;">Includes full VTV website & portal access</p>
         <a href="/pricing" style="display:inline-block;margin-top:0.75rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Subscribe Now</a>
       </div>`;
@@ -1460,7 +1432,7 @@ async function openChat(matchId, profileId, name, photo) {
   currentChatPartner = { id: profileId, name, photo };
   document.getElementById('chat-name').textContent = name;
   document.getElementById('chat-avatar').src = photo || '';
-  document.getElementById('chat-status').textContent = 'Faith Match';
+  document.getElementById('chat-status').textContent = 'Aligned Hearts';
   showScreen('chat-screen');
   await loadMessages();
 }
