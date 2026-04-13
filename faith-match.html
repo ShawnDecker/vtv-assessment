@@ -47,16 +47,45 @@
     /* ===== LOGIN SCREEN ===== */
     #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
                     padding: 0 1rem 2rem; position: relative; overflow: hidden; min-height: 100vh; }
+
+    /* Photo collage background */
     .login-hero-bg { position: absolute; inset: 0; z-index: 0; }
-    .login-hero-bg .layer { position: absolute; inset: 0; background-size: cover; background-position: center; }
-    .login-hero-bg .layer-sky { background: linear-gradient(180deg, #1a1033 0%, #2d1b4e 20%, #4a2c6e 35%, #d4785a 55%, #f0a050 70%, #f7c87a 80%, #fde8b0 90%); }
-    .login-hero-bg .layer-town { position: absolute; bottom: 38%; left: 0; right: 0; height: 120px; }
-    .login-hero-bg .layer-town svg { width: 100%; height: 100%; }
-    .login-hero-bg .layer-people { position: absolute; bottom: 30%; left: 0; right: 0; height: 200px; }
-    .login-hero-bg .layer-people svg { width: 100%; height: 100%; }
-    .login-hero-bg .layer-fade { position: absolute; bottom: 0; left: 0; right: 0; height: 65%;
-                                  background: linear-gradient(180deg, transparent 0%, rgba(10,10,10,0.3) 15%, rgba(10,10,10,0.7) 35%, rgba(10,10,10,0.95) 55%, #0a0a0a 70%); }
+    .photo-collage { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 0; }
+    .photo-cell { position: relative; overflow: hidden; }
+    .photo-cell img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.7) saturate(0.85); transition: transform 8s ease; }
+    .photo-cell:nth-child(odd) img { transform: scale(1.05); }
+    .photo-cell:nth-child(even) img { transform: scale(1.0); }
+    /* Warm gold tint overlay on all photos */
+    .photo-cell::after { content: ''; position: absolute; inset: 0;
+                         background: linear-gradient(135deg, rgba(212,168,71,0.12) 0%, rgba(26,16,51,0.2) 100%); }
+    /* Fade: top vignette + bottom solid fade into dark */
+    .login-hero-bg .hero-overlay { position: absolute; inset: 0; z-index: 1;
+      background: linear-gradient(180deg,
+        rgba(10,10,10,0.3) 0%,
+        rgba(10,10,10,0.05) 15%,
+        rgba(10,10,10,0.0) 25%,
+        rgba(10,10,10,0.05) 35%,
+        rgba(10,10,10,0.35) 50%,
+        rgba(10,10,10,0.75) 62%,
+        rgba(10,10,10,0.92) 72%,
+        #0a0a0a 82%
+      );
+    }
+    /* Side vignette for depth */
+    .login-hero-bg .hero-vignette { position: absolute; inset: 0; z-index: 1;
+      background: radial-gradient(ellipse at center 30%, transparent 40%, rgba(10,10,10,0.5) 100%); }
+    /* Soft glow behind form */
+    .login-hero-bg .hero-glow { position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
+      width: 500px; height: 400px; z-index: 1;
+      background: radial-gradient(ellipse, rgba(212,168,71,0.06) 0%, transparent 70%); }
+
     .login-content { position: relative; z-index: 2; width: 100%; max-width: 400px; }
+
+    /* Mobile: 2-column collage */
+    @media (max-width: 500px) {
+      .photo-collage { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr); }
+      .photo-cell:nth-child(7) { grid-column: span 2; }
+    }
     .login-logo { font-family: 'Instrument Serif', serif; font-size: 2.8rem; margin-bottom: 0.25rem; text-align: center;
                   text-shadow: 0 2px 20px rgba(0,0,0,0.5); }
     .login-logo em { color: var(--gold); font-style: italic; }
@@ -226,88 +255,25 @@
 
 <!-- ===== LOGIN SCREEN ===== -->
 <div id="login-screen" class="screen active">
-  <!-- Layered background scene -->
+  <!-- Photo collage background -->
   <div class="login-hero-bg">
-    <div class="layer layer-sky"></div>
-    <!-- Town silhouette -->
-    <div class="layer-town">
-      <svg viewBox="0 0 1200 120" preserveAspectRatio="none" fill="#1a1033" opacity="0.7">
-        <path d="M0,120 L0,80 L30,80 L30,60 L35,60 L35,55 L40,55 L40,60 L45,60 L45,80 L70,80 L70,50 L75,50 L75,45 L80,40 L85,45 L85,50 L90,50 L90,80 L120,80 L120,65 L125,65 L125,60 L130,60 L130,65 L135,65 L135,80 L160,80 L160,70 L180,70 L180,55 L185,50 L190,55 L190,70 L200,70 L200,80 L230,80 L230,45 L235,45 L235,30 L237,25 L239,30 L239,45 L244,45 L244,80 L280,80 L280,60 L285,60 L290,55 L295,60 L300,60 L300,80 L340,80 L340,70 L345,70 L345,50 L350,45 L355,50 L355,70 L360,70 L360,80 L400,80 L400,55 L410,55 L410,40 L413,35 L416,40 L416,55 L420,55 L420,80 L460,80 L460,65 L480,65 L480,80 L520,80 L520,50 L525,50 L525,35 L530,30 L535,35 L535,50 L540,50 L540,80 L580,80 L580,60 L585,55 L590,60 L590,80 L630,80 L630,70 L640,70 L640,45 L645,40 L650,45 L650,70 L660,70 L660,80 L700,80 L700,55 L710,55 L715,35 L718,25 L721,35 L725,55 L730,55 L730,80 L770,80 L770,65 L790,65 L790,80 L830,80 L830,50 L835,45 L840,50 L840,80 L880,80 L880,60 L885,55 L890,50 L895,55 L900,60 L900,80 L940,80 L940,70 L950,70 L950,55 L955,50 L960,55 L960,70 L970,70 L970,80 L1010,80 L1010,45 L1015,40 L1020,35 L1023,25 L1026,35 L1030,40 L1035,45 L1035,80 L1070,80 L1070,60 L1090,60 L1090,80 L1130,80 L1130,55 L1135,50 L1140,55 L1140,80 L1170,80 L1170,65 L1190,65 L1190,80 L1200,80 L1200,120 Z"/>
-        <!-- Church steeples -->
-        <path d="M237,25 L237,15 L238,8 L239,15 L239,25 Z" fill="#2d1b4e"/>
-        <path d="M718,25 L718,12 L719,4 L720,12 L720,25 Z" fill="#2d1b4e"/>
-        <path d="M1023,25 L1023,10 L1024,3 L1025,10 L1025,25 Z" fill="#2d1b4e"/>
-        <!-- Cross on steeple -->
-        <rect x="237" y="6" width="2" height="6" fill="#D4A847" opacity="0.8"/>
-        <rect x="235.5" y="8" width="5" height="1.5" fill="#D4A847" opacity="0.8"/>
-        <rect x="718" y="2" width="2" height="6" fill="#D4A847" opacity="0.8"/>
-        <rect x="716.5" y="4" width="5" height="1.5" fill="#D4A847" opacity="0.8"/>
-      </svg>
+    <div class="photo-collage">
+      <!-- Row 1: Community, Couple, Family -->
+      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80&fit=crop" alt="Friends gathering" loading="eager" /></div>
+      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=600&q=80&fit=crop" alt="Couple sunset" loading="eager" /></div>
+      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&q=80&fit=crop" alt="Family together" loading="eager" /></div>
+      <!-- Row 2: Church community, Married couple, Group outdoors -->
+      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1609234656388-0ff363383899?w=600&q=80&fit=crop" alt="Church community" loading="lazy" /></div>
+      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=600&q=80&fit=crop" alt="Couple walking" loading="lazy" /></div>
+      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1543807535-eceef0bc6599?w=600&q=80&fit=crop" alt="Community group" loading="lazy" /></div>
+      <!-- Row 3: Elderly couple, Young couple, Family park -->
+      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1447005497901-b3e9ee359928?w=600&q=80&fit=crop" alt="Elderly couple" loading="lazy" /></div>
+      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1523438885200-e635ba2c371e?w=600&q=80&fit=crop" alt="Young couple" loading="lazy" /></div>
+      <div class="photo-cell"><img src="https://images.unsplash.com/photo-1478071735433-4e04cbea0ac1?w=600&q=80&fit=crop" alt="Family outdoors" loading="lazy" /></div>
     </div>
-    <!-- People silhouettes - couples, singles, families overlapping layers -->
-    <div class="layer-people">
-      <svg viewBox="0 0 1200 200" preserveAspectRatio="none" opacity="0.85">
-        <!-- Back row - community/groups looking at sunset over town -->
-        <g fill="#1a0e2e" transform="translate(0,20)">
-          <!-- Elderly couple holding hands -->
-          <ellipse cx="80" cy="95" rx="8" ry="9"/><rect x="73" y="104" width="14" height="35" rx="4"/>
-          <ellipse cx="100" cy="92" rx="7" ry="8"/><rect x="94" y="100" width="12" height="32" rx="4"/>
-          <line x1="87" y1="115" x2="94" y2="112" stroke="#1a0e2e" stroke-width="3"/>
-          <!-- Family with child -->
-          <ellipse cx="220" cy="90" rx="9" ry="10"/><rect x="212" y="100" width="16" height="38" rx="5"/>
-          <ellipse cx="245" cy="93" rx="7" ry="8"/><rect x="239" y="101" width="12" height="33" rx="4"/>
-          <ellipse cx="232" cy="108" rx="5" ry="6"/><rect x="228" y="114" width="8" height="22" rx="3"/>
-          <!-- Group of friends -->
-          <ellipse cx="400" cy="92" rx="8" ry="9"/><rect x="393" y="101" width="14" height="36" rx="4"/>
-          <ellipse cx="420" cy="95" rx="7" ry="8"/><rect x="414" y="103" width="12" height="33" rx="4"/>
-          <ellipse cx="438" cy="90" rx="8" ry="9"/><rect x="431" y="99" width="14" height="38" rx="4"/>
-          <!-- Couple with arm around -->
-          <ellipse cx="600" cy="88" rx="9" ry="10"/><rect x="592" y="98" width="16" height="40" rx="5"/>
-          <ellipse cx="622" cy="92" rx="7" ry="8"/><rect x="616" y="100" width="12" height="36" rx="4"/>
-          <!-- Older couple -->
-          <ellipse cx="800" cy="93" rx="8" ry="9"/><rect x="793" y="102" width="14" height="34" rx="4"/>
-          <ellipse cx="820" cy="90" rx="9" ry="10"/><rect x="812" y="100" width="16" height="38" rx="5"/>
-          <!-- Singles group -->
-          <ellipse cx="950" cy="91" rx="7" ry="8"/><rect x="944" y="99" width="12" height="35" rx="4"/>
-          <ellipse cx="970" cy="88" rx="8" ry="9"/><rect x="963" y="97" width="14" height="38" rx="5"/>
-          <ellipse cx="990" cy="93" rx="7" ry="8"/><rect x="984" y="101" width="12" height="33" rx="4"/>
-          <ellipse cx="1100" cy="90" rx="8" ry="9"/><rect x="1093" y="99" width="14" height="36" rx="4"/>
-          <ellipse cx="1120" cy="94" rx="7" ry="8"/><rect x="1114" y="102" width="12" height="32" rx="4"/>
-        </g>
-        <!-- Front row - closer, darker silhouettes -->
-        <g fill="#0d0818" transform="translate(0,40)">
-          <!-- Young couple close together -->
-          <ellipse cx="150" cy="95" rx="10" ry="11"/><rect x="141" y="106" width="18" height="55" rx="6"/>
-          <ellipse cx="175" cy="98" rx="8" ry="9"/><rect x="168" y="107" width="14" height="50" rx="5"/>
-          <!-- Single woman -->
-          <ellipse cx="340" cy="97" rx="8" ry="9"/><rect x="333" y="106" width="14" height="50" rx="5"/>
-          <!-- Couple with kid on shoulders -->
-          <ellipse cx="520" cy="92" rx="10" ry="11"/><rect x="511" y="103" width="18" height="55" rx="6"/>
-          <ellipse cx="520" cy="72" rx="6" ry="7"/><rect x="515" y="79" width="10" height="14" rx="3"/>
-          <ellipse cx="548" cy="98" rx="8" ry="9"/><rect x="541" y="107" width="14" height="48" rx="5"/>
-          <!-- Single man -->
-          <ellipse cx="700" cy="93" rx="9" ry="10"/><rect x="692" y="103" width="16" height="52" rx="5"/>
-          <!-- Married couple holding hands -->
-          <ellipse cx="880" cy="95" rx="9" ry="10"/><rect x="872" y="105" width="16" height="52" rx="5"/>
-          <ellipse cx="905" cy="98" rx="8" ry="9"/><rect x="898" y="107" width="14" height="48" rx="5"/>
-          <line x1="888" y1="125" x2="898" y2="122" stroke="#0d0818" stroke-width="4"/>
-          <!-- Group at edge -->
-          <ellipse cx="1050" cy="96" rx="9" ry="10"/><rect x="1042" y="106" width="16" height="50" rx="5"/>
-          <ellipse cx="1075" cy="93" rx="8" ry="9"/><rect x="1068" y="102" width="14" height="52" rx="5"/>
-        </g>
-        <!-- Stars/sparkles in sky -->
-        <circle cx="100" cy="15" r="1" fill="#fff" opacity="0.6"/>
-        <circle cx="300" cy="8" r="1.5" fill="#fff" opacity="0.4"/>
-        <circle cx="500" cy="20" r="1" fill="#fff" opacity="0.5"/>
-        <circle cx="750" cy="10" r="1.5" fill="#fff" opacity="0.3"/>
-        <circle cx="900" cy="25" r="1" fill="#fff" opacity="0.6"/>
-        <circle cx="1100" cy="12" r="1" fill="#fff" opacity="0.5"/>
-        <circle cx="200" cy="30" r="0.8" fill="#fff" opacity="0.4"/>
-        <circle cx="650" cy="5" r="1.2" fill="#fff" opacity="0.3"/>
-        <circle cx="1000" cy="18" r="0.8" fill="#fff" opacity="0.5"/>
-      </svg>
-    </div>
-    <div class="layer layer-fade"></div>
+    <div class="hero-vignette"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-glow"></div>
   </div>
 
   <!-- Login content overlaid on scene -->
