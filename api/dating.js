@@ -166,8 +166,7 @@ module.exports = async (req, res) => {
       if (!contact.length) return res.status(404).json({ error: 'No account found. Take the P.I.N.K. assessment first.', needsAssessment: true });
 
       const contactId = contact[0].id;
-      const assessment = await sql`SELECT id FROM assessments WHERE contact_id = ${contactId} LIMIT 1`;
-      if (!assessment.length) return res.status(403).json({ error: 'You must complete the P.I.N.K. assessment before using Faith Match.', needsAssessment: true });
+      // Assessment not required for email verification — 3-day grace period
 
       // Generate verification token
       const verifyToken = crypto.randomBytes(32).toString('hex');
@@ -354,6 +353,7 @@ module.exports = async (req, res) => {
         WHERE dp.contact_id = ${user.contactId}
       `;
       if (!rows.length) return res.status(404).json({ error: 'No dating profile', hasProfile: false });
+      await sql`UPDATE dating_profiles SET last_active = now() WHERE contact_id = ${user.contactId}`;
       return res.json({ profile: rows[0], hasProfile: true });
     }
 
@@ -367,6 +367,12 @@ module.exports = async (req, res) => {
         const photoJson = b.photo_urls ? JSON.stringify(b.photo_urls) : null;
         const recJson = b.recreation_interests ? JSON.stringify(b.recreation_interests) : null;
         const intJson = b.general_interests ? JSON.stringify(b.general_interests) : null;
+
+        // Validate total photo payload size
+        const totalPhotoSize = photoJson ? photoJson.length : 0;
+        if (totalPhotoSize > 3000000) { // ~3MB of base64
+          return res.status(413).json({ error: 'Photos too large. Try uploading fewer or smaller photos.' });
+        }
 
         await sql`
           UPDATE dating_profiles SET
@@ -403,6 +409,12 @@ module.exports = async (req, res) => {
         const photoJson = JSON.stringify(b.photo_urls || []);
         const recJson = JSON.stringify(b.recreation_interests || []);
         const intJson = JSON.stringify(b.general_interests || []);
+
+        // Validate total photo payload size
+        const totalPhotoSize = photoJson.length;
+        if (totalPhotoSize > 3000000) { // ~3MB of base64
+          return res.status(413).json({ error: 'Photos too large. Try uploading fewer or smaller photos.' });
+        }
 
         await sql`
           INSERT INTO dating_profiles (contact_id, display_name, gender, seeking, date_of_birth, age,
@@ -455,8 +467,8 @@ module.exports = async (req, res) => {
           AND dp.is_active = true
           AND dp.gender = ${me.seeking}
           AND dp.seeking = ${me.gender}
-          AND dp.age >= COALESCE(${me.age_min}, 18)
-          AND dp.age <= COALESCE(${me.age_max}, 99)
+          AND (dp.age IS NULL OR dp.age >= COALESCE(${me.age_min}, 18))
+          AND (dp.age IS NULL OR dp.age <= COALESCE(${me.age_max}, 99))
           AND dp.id NOT IN (SELECT swiped_id FROM dating_swipes WHERE swiper_id = ${me.id})
           AND dp.id NOT IN (SELECT blocked_id FROM dating_blocks WHERE blocker_id = ${me.id})
           AND dp.id NOT IN (SELECT blocker_id FROM dating_blocks WHERE blocked_id = ${me.id})

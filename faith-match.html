@@ -527,6 +527,11 @@
       <button onclick="loadDiscover()" style="background:none;color:var(--muted);font-size:1.2rem;" title="Refresh">&#8635;</button>
     </div>
   </div>
+  <div id="assessment-reminder" class="hidden" style="background:rgba(212,168,71,0.1);border:1px solid rgba(212,168,71,0.3);border-radius:0.5rem;padding:0.65rem;margin-bottom:0.75rem;text-align:center;">
+      <p style="font-size:0.8rem;color:var(--gold);font-weight:600;">Complete your P.I.N.K. assessment</p>
+      <p style="font-size:0.7rem;color:var(--muted);">You have 3 days to complete it or access will be locked.</p>
+      <a href="/?mode=relationship&depth=quick&from=faith-match#/mode-select" style="display:inline-block;margin-top:0.4rem;padding:0.4rem 1rem;background:var(--gold);color:var(--bg);font-weight:700;border-radius:0.35rem;text-decoration:none;font-size:0.75rem;">Take Assessment Now</a>
+    </div>
   <div id="card-container">
     <div class="card-stack" id="card-stack"></div>
     <div class="swipe-actions" id="swipe-actions">
@@ -570,7 +575,7 @@
     </div>
   </div>
   <div class="chat-messages" id="chat-messages"></div>
-  <div class="chat-input-bar" id="chat-input-bar">
+  <div class="chat-input-bar hidden" id="chat-input-bar">
     <input type="text" id="chat-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()" />
     <button onclick="sendMessage()">Send</button>
   </div>
@@ -609,12 +614,13 @@
       <div style="font-size:2.5rem;font-weight:900;color:var(--gold);" id="my-score">--</div>
       <div style="font-size:0.75rem;color:var(--dim);">Master Score</div>
     </div>
-    <button class="btn-outline" onclick="window.open('/','_blank')">Retake Assessment</button>
+    <button class="btn-outline" onclick="window.open('/?mode=relationship&depth=quick&from=faith-match#/mode-select','_blank')">Retake Assessment</button>
   </div>
   <div class="settings-section">
     <h4>Account</h4>
     <button class="btn-outline" onclick="showScreen('setup-screen');currentSetupStep=1;showSetupStep();">Edit Profile</button>
     <button class="btn-danger" onclick="if(confirm('Deactivate your dating profile?')){toggleActive(false);toast('Profile deactivated')}">Deactivate Profile</button>
+    <button class="btn-outline" style="margin-top:0.5rem;" onclick="localStorage.removeItem('ve_token');localStorage.removeItem('ve_email');location.reload();">Log Out</button>
   </div>
   <div style="text-align:center;padding:1rem;font-size:0.65rem;color:var(--dim);">
     Faith Match by Value To Victory<br/>Powered by P.I.N.K.T
@@ -741,6 +747,11 @@ async function doLogin() {
     }
 
     // Note: assessment NOT required to enter — they have 3 days after sign-up to complete it
+
+    // Send email verification if not verified yet
+    if (ed.eligible && !ed.emailVerified && !ed.hasProfile) {
+      await sendVerificationEmail(email);
+    }
 
     await checkProfile();
   } catch (e) {
@@ -939,6 +950,11 @@ async function checkProfile() {
       showScreen('discover-screen');
       loadDiscover();
       loadMyScore();
+      // Show assessment reminder if no assessment yet
+      if (!d.profile.master_score && !d.profile.time_total) {
+        const reminder = document.getElementById('assessment-reminder');
+        if (reminder) reminder.classList.remove('hidden');
+      }
     } else {
       showScreen('setup-screen');
       currentSetupStep = 1;
@@ -1054,7 +1070,7 @@ function addPhoto(idx) {
         slots[idx].innerHTML = `<img src="${dataUrl}" alt="Photo ${idx+1}" /><div class="remove" onclick="event.stopPropagation();removePhoto(${idx})">x</div>`;
 
         // Upload to server if user has a token (profile exists)
-        const tk = localStorage.getItem('vtv_token');
+        const tk = localStorage.getItem('ve_token');
         if (tk) {
           try {
             const resp = await fetch('/api/dating/upload-photo', {
@@ -1089,7 +1105,7 @@ function removePhoto(idx) {
   slots[idx].innerHTML = '+';
 
   // Remove from server if user has a token
-  const tk = localStorage.getItem('vtv_token');
+  const tk = localStorage.getItem('ve_token');
   if (tk) {
     fetch('/api/dating/remove-photo', {
       method: 'POST',
@@ -1165,6 +1181,10 @@ async function submitProfile() {
 // ===== DISCOVER / SWIPE =====
 async function loadDiscover() {
   try {
+    const stack = document.getElementById('card-stack');
+    stack.innerHTML = '<div style="text-align:center;padding:4rem;color:var(--dim);">Loading profiles...</div>';
+    document.getElementById('empty-discover').classList.add('hidden');
+    document.getElementById('swipe-actions').classList.add('hidden');
     const r = await fetch(API + '/dating/discover', { headers: authHeaders() });
     const d = await r.json();
     if (!r.ok) {
@@ -1280,6 +1300,10 @@ function createCard(p, isTop) {
 // ===== SWIPE GESTURE =====
 function setupSwipeGesture(card) {
   if (!card) return;
+
+  // Clean up previous global listeners
+  if (window._swipeCleanup) window._swipeCleanup();
+
   let startX = 0, startY = 0, currentX = 0, isDragging = false;
 
   const onStart = (e) => {
@@ -1329,6 +1353,13 @@ function setupSwipeGesture(card) {
   document.addEventListener('touchmove', onMove, { passive: true });
   document.addEventListener('mouseup', onEnd);
   document.addEventListener('touchend', onEnd);
+
+  window._swipeCleanup = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('mouseup', onEnd);
+    document.removeEventListener('touchend', onEnd);
+  };
 }
 
 function doSwipe(direction) {
@@ -1409,7 +1440,7 @@ async function loadMatches() {
       const photo = (m.photo_urls || [])[0] || '';
       const initial = (m.display_name || '?')[0];
       return `
-        <div class="match-item" onclick="openChat(${m.match_id}, ${m.profile_id}, '${m.display_name}', '${photo}')">
+        <div class="match-item" data-match="${m.match_id}" data-profile="${m.profile_id}" data-name="${escapeHtml(m.display_name)}" data-photo="${escapeHtml(photo)}" onclick="openChat(+this.dataset.match, +this.dataset.profile, this.dataset.name, this.dataset.photo)">
           ${photo ? `<img class="match-avatar" src="${photo}" alt="${m.display_name}" />` :
             `<div class="match-avatar" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:var(--gold);">${initial}</div>`}
           <div class="match-info">

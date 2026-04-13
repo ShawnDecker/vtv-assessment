@@ -233,6 +233,17 @@ module.exports = async (req, res) => {
         }
       } catch (e) { /* analytics table may not exist yet — non-fatal */ }
 
+      // Forward Stripe events to n8n webhook (fire-and-forget, non-blocking)
+      try {
+        const n8nWebhookUrl = 'https://n8n.srv1138119.hstgr.cloud/webhook/stripe-webhook';
+        fetch(n8nWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: event.type, data: event.data.object }),
+          signal: AbortSignal.timeout(5000)
+        }).catch(() => {}); // Silent fail — n8n may be unreachable
+      } catch (e) { /* n8n forward is best-effort */ }
+
       return res.json({ received: true });
     }
 
