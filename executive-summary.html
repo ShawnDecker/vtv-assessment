@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Executive Summary — Value to Victory, LLC</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;line-height:1.6}
+    .container{max-width:780px;margin:0 auto;padding:2rem 1.5rem 4rem}
+    .brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    h1{font-family:'Instrument Serif',serif;font-size:2.5rem;font-weight:400;margin-bottom:.5rem}
+    h1 em{font-style:italic;color:#D4A847}
+    h2{font-family:'Instrument Serif',serif;font-size:1.5rem;font-weight:400;margin-bottom:.75rem;color:#fff}
+    h3{font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    .lead{color:#a1a1aa;font-size:1rem;margin-bottom:2rem;line-height:1.7}
+    .section{margin-bottom:2.5rem}
+    .card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.25rem;margin-bottom:1rem}
+    .confidential{text-align:center;background:#1a1410;border:1px solid rgba(212,168,71,.2);border-radius:.5rem;padding:.6rem;font-size:.65rem;color:#D4A847;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:1.5rem}
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1.25rem}
+    .stat{text-align:center;background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1rem .5rem}
+    .stat-num{font-size:1.4rem;font-weight:900;color:#D4A847}
+    .stat-label{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:#a1a1aa;margin-top:.2rem}
+    .highlight{background:linear-gradient(135deg,rgba(212,168,71,.08),rgba(212,168,71,.03));border:1px solid rgba(212,168,71,.25);border-radius:.75rem;padding:1.25rem;margin-bottom:1rem}
+    .highlight-title{font-weight:700;color:#D4A847;margin-bottom:.3rem;font-size:.9rem}
+    .metric-row{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #1e1e21}
+    .metric-row:last-child{border:none}
+    .metric-label{color:#a1a1aa;font-size:.8rem}
+    .metric-value{color:#fff;font-weight:700;font-size:.8rem}
+    .metric-value.green{color:#4ade80}
+    .metric-value.gold{color:#D4A847}
+    .tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1rem}
+    .tier{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1rem;text-align:center}
+    .tier-name{font-weight:700;font-size:.82rem;margin-bottom:.2rem}
+    .tier-price{font-size:1.15rem;font-weight:900;color:#D4A847}
+    .tier-period{font-size:.65rem;color:#71717a}
+    .tier-badge{display:inline-block;background:#D4A847;color:#0a0a0a;font-size:.55rem;font-weight:700;padding:.12rem .4rem;border-radius:1rem;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.3rem}
+    .pillar-row{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin:.75rem 0}
+    .pillar{text-align:center;background:#111;border:1px solid #27272a;border-radius:.5rem;padding:.6rem .2rem}
+    .pillar-letter{font-size:1.3rem;font-weight:900;color:#D4A847}
+    .pillar-word{font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:#a1a1aa;margin-top:.1rem}
+    .moat{display:flex;gap:.75rem;margin-bottom:.75rem;align-items:flex-start}
+    .moat-icon{width:28px;height:28px;background:rgba(212,168,71,.15);border:1px solid rgba(212,168,71,.3);border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.8rem}
+    .moat-text{flex:1}
+    .moat-title{font-weight:700;font-size:.8rem;margin-bottom:.1rem}
+    .moat-desc{font-size:.75rem;color:#a1a1aa;line-height:1.5}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+    .fund-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem}
+    .fund-label{width:140px;font-size:.75rem;color:#a1a1aa;flex-shrink:0}
+    .fund-track{flex:1;height:20px;background:#1e1e21;border-radius:4px;overflow:hidden}
+    .fund-fill{height:100%;background:linear-gradient(90deg,#D4A847,#b8942e);border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:.4rem;font-size:.6rem;font-weight:700;color:#0a0a0a;min-width:35px}
+    .fund-amount{font-size:.75rem;font-weight:700;color:#fff;width:70px;text-align:right;flex-shrink:0}
+    .proj-table{width:100%;border-collapse:collapse;font-size:.75rem;margin:.5rem 0}
+    .proj-table th{text-align:left;color:#D4A847;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:.4rem .5rem;border-bottom:1px solid #27272a}
+    .proj-table td{padding:.45rem .5rem;border-bottom:1px solid #1e1e21;color:#d4d4d8}
+    .proj-table td:not(:first-child){text-align:right}
+    .equity-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .equity-block{text-align:center;padding:1.25rem;background:#18181b;border:1px solid #27272a;border-radius:.75rem}
+    .equity-pct{font-size:2.2rem;font-weight:900;color:#D4A847;line-height:1}
+    .equity-label{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:#a1a1aa;margin-top:.3rem}
+    .equity-sub{font-size:.75rem;color:#71717a;margin-top:.2rem}
+    .deal-box{background:linear-gradient(135deg,rgba(212,168,71,.1),rgba(212,168,71,.03));border:1px solid rgba(212,168,71,.3);border-radius:1rem;padding:1.5rem;margin:1.25rem 0}
+    .deal-headline{font-family:'Instrument Serif',serif;font-size:1.8rem;text-align:center;margin-bottom:.4rem}
+    .deal-sub{text-align:center;color:#a1a1aa;font-size:.85rem;margin-bottom:1.25rem}
+    .exit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin:.6rem 0}
+    .exit-card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:.85rem;text-align:center}
+    .exit-mult{font-size:1.3rem;font-weight:900;color:#D4A847}
+    .exit-ret{font-size:.65rem;color:#4ade80;margin-top:.1rem}
+    .exit-label{font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin-top:.25rem}
+    .divider{border:none;border-top:1px solid #27272a;margin:2rem 0}
+    .cta-box{text-align:center;background:linear-gradient(135deg,rgba(212,168,71,.12),rgba(212,168,71,.04));border:1px solid rgba(212,168,71,.3);border-radius:1rem;padding:2rem 1.5rem;margin:1.5rem 0}
+    .cta-box h2{margin-bottom:.4rem}
+    .cta-box p{color:#a1a1aa;margin-bottom:1.25rem;font-size:.85rem}
+    .btn-gold{display:inline-block;padding:.75rem 1.75rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;border-radius:.5rem;text-decoration:none;font-size:.9rem;margin:.25rem}
+    .btn-ghost{display:inline-block;padding:.75rem 1.75rem;background:transparent;border:1px solid #D4A847;color:#D4A847;font-weight:700;border-radius:.5rem;text-decoration:none;font-size:.9rem;margin:.25rem}
+    .footer{text-align:center;padding:1.5rem 0;border-top:1px solid #27272a;font-size:.7rem;color:#71717a;margin-top:1.5rem}
+    .footer a{color:#D4A847;text-decoration:none}
+    .page-break{page-break-before:always}
+    .page-label{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:#52525b;text-align:right;margin-bottom:.5rem}
+    .link-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+    .link-card{display:block;background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1rem;text-decoration:none;transition:border-color .2s,transform .15s}
+    .link-card:hover{border-color:#D4A847;transform:translateY(-2px)}
+    .link-label{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.3rem}
+    .link-title{font-size:.85rem;font-weight:700;color:#fff;margin-bottom:.2rem}
+    .link-url{font-size:.7rem;color:#71717a;word-break:break-all}
+    .badge{display:inline-block;font-size:.5rem;font-weight:700;padding:.15rem .4rem;border-radius:1rem;letter-spacing:.05em;text-transform:uppercase;margin-left:.4rem;vertical-align:middle}
+    .badge-live{background:#166534;color:#4ade80}
+    .badge-doc{background:#713f12;color:#fbbf24}
+    @media print{
+      body{background:#fff;color:#111;font-size:9pt}
+      .container{max-width:100%;padding:.75rem}
+      .card,.stat,.tier,.pillar,.highlight,.equity-block,.exit-card,.deal-box,.link-card{border-color:#ddd;background:#f9f9f9}
+      .stat-num,.pillar-letter,.tier-price,.highlight-title,.brand,h3,.equity-pct,.exit-mult,.deal-headline,.link-label{color:#8B6914}
+      .lead,.moat-desc,.metric-label,.pillar-word,.stat-label,.tier-period,.fund-label,.link-url{color:#555}
+      .metric-value{color:#111}
+      .metric-value.green,.exit-ret{color:#16a34a}
+      .confidential,.cta-box,.deal-box{background:#fef7e0;border-color:#8B6914}
+      .btn-gold{background:#8B6914;color:#fff}
+      .btn-ghost{border-color:#8B6914;color:#8B6914}
+      .fund-track{background:#e5e5e5}
+      .fund-fill{background:#8B6914}
+      .no-print{display:none}
+    }
+    @media(max-width:600px){
+      h1{font-size:1.75rem}
+      .stat-grid{grid-template-columns:repeat(2,1fr)}
+      .tier-grid,.exit-grid{grid-template-columns:1fr}
+      .two-col,.equity-grid,.link-grid{grid-template-columns:1fr}
+      .pillar-row{gap:.2rem}
+      .pillar{padding:.4rem .15rem}
+      .pillar-letter{font-size:1rem}
+      .deal-headline{font-size:1.4rem}
+      .fund-label{width:110px;font-size:.65rem}
+      .fund-amount{width:60px;font-size:.65rem}
+      .proj-table{font-size:.65rem}
+    }
+  </style>
+</head>
+<body>
+<button onclick="window.print()" style="position:fixed;top:1rem;right:1rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;border:none;padding:.6rem 1.5rem;font-size:.85rem;font-weight:700;border-radius:.5rem;cursor:pointer;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3);font-family:'Satoshi',sans-serif" class="no-print">Print / Save PDF</button>
+<div class="container">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PAGE 1: COVER + COMPANY + DEAL             -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="confidential">Confidential Executive Summary &mdash; April 2026</div>
+  <div class="page-label">Page 1 of 4</div>
+
+  <div class="brand">Value to Victory, LLC</div>
+  <h1>Executive <em>Summary</em></h1>
+  <p class="lead">Dating, fitness, and life assessment &mdash; three consumer markets generating revenue from Day 1. Paying users fund the backend expansion into enterprise, licensing, and 14 total verticals. Live product, active revenue, lean capital model.</p>
+
+  <!-- DEAL BOX -->
+  <div class="deal-box">
+    <div class="deal-headline">$350,000 <em>Phase 1</em> &mdash; 12-Month Deploy</div>
+    <div class="deal-sub">Lean launch &rarr; user revenue funds Phase 2 &nbsp;|&nbsp; Full raise: $1.75M for 25% equity</div>
+    <div class="equity-grid">
+      <div class="equity-block">
+        <div class="equity-pct">75%</div>
+        <div class="equity-label">Founder Equity</div>
+        <div class="equity-sub">Shawn E. Decker</div>
+      </div>
+      <div class="equity-block">
+        <div class="equity-pct">25%</div>
+        <div class="equity-label">Investor Equity</div>
+        <div class="equity-sub">$1.75M total &mdash; $350K deployed first</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEAD: DATING + FITNESS + ASSESSMENT -->
+  <div class="section">
+    <h3>The Strategy: Revenue-First Launch</h3>
+    <h2>Dating + Fitness + Assessment = Paying Users Before Backend Build</h2>
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-num">$9.6B</div><div class="stat-label">Dating TAM</div></div>
+      <div class="stat"><div class="stat-num">$15.2B</div><div class="stat-label">Coaching TAM</div></div>
+      <div class="stat"><div class="stat-num">300+</div><div class="stat-label">Clients / 12K+ Lbs Lost</div></div>
+      <div class="stat"><div class="stat-num">$8&ndash;10K</div><div class="stat-label">Monthly Infra</div></div>
+    </div>
+    <div class="highlight">
+      <div class="highlight-title">Why These Three First</div>
+      <p style="font-size:.82rem;color:#d4d4d8;margin-bottom:.5rem"><strong style="color:#fff">Assessment</strong> is live today &mdash; 88 API endpoints, 39 database tables, AI coaching, autonomous AM/PM emails. Users take the free P.I.N.K. Assessment and convert to subscriptions at $29&ndash;$497/mo. This is the engine.</p>
+      <p style="font-size:.82rem;color:#d4d4d8;margin-bottom:.5rem"><strong style="color:#fff">Fitness (FitCarna)</strong> brings 300+ existing clients, 12K+ lbs lost, a custom training app, 8-Week Challenges, and in-person gym operations from Day 1. Assessment auto-refers low-fitness scorers into the closed loop: assess &rarr; coach &rarr; data back &rarr; scores improve. $12K+/mo immediately, scaling to $65K/mo by adding affiliate coaching to gyms and expanding partnerships.</p>
+      <p style="font-size:.82rem;color:#d4d4d8"><strong style="color:#fff">Dating</strong> is the viral growth lever. Standards-based matching (not photo swiping) using P.I.N.K. compatibility scores. Group privacy controls, 30-day challenges, community-based discovery. The $9.6B dating market is actively rejecting swipe culture &mdash; VTV rides the anti-swipe wave at $19&ndash;$79/mo premium.</p>
+    </div>
+    <div class="card">
+      <h3 style="font-size:.65rem">The Flywheel</h3>
+      <div class="metric-row"><div class="metric-label">Step 1</div><div class="metric-value">Free assessment &rarr; score &rarr; coaching recommendations</div></div>
+      <div class="metric-row"><div class="metric-label">Step 2</div><div class="metric-value">Low fitness score &rarr; FitCarna referral &rarr; paying client</div></div>
+      <div class="metric-row"><div class="metric-label">Step 3</div><div class="metric-value">Couples/singles &rarr; dating mode &rarr; $19&ndash;$79/mo premium</div></div>
+      <div class="metric-row"><div class="metric-label">Step 4</div><div class="metric-value">User data + revenue &rarr; fund enterprise &amp; licensing backend</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Step 5</div><div class="metric-value gold">Phase 2 capital from proven traction, not projections</div></div>
+    </div>
+  </div>
+
+  <!-- KEY STATS -->
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-num">88</div><div class="stat-label">API Endpoints</div></div>
+    <div class="stat"><div class="stat-num">39</div><div class="stat-label">Database Tables</div></div>
+    <div class="stat"><div class="stat-num">14</div><div class="stat-label">Market Verticals</div></div>
+    <div class="stat"><div class="stat-num">$350K</div><div class="stat-label">Phase 1 Capital</div></div>
+  </div>
+
+  <!-- COMPANY DESCRIPTION -->
+  <div class="section">
+    <h3>Company Description</h3>
+    <p style="font-size:.85rem;color:#d4d4d8;margin-bottom:.75rem">Value to Victory, LLC is an AI-powered personal development platform built on the proprietary P.I.N.K. Framework (People, Influence, Numbers, Knowledge, with Time as a 0.1x&ndash;2.0x multiplier). The platform launches with three consumer-facing verticals &mdash; life assessment, fitness coaching, and standards-based dating &mdash; that generate immediate revenue while the enterprise and licensing backend scales behind them.</p>
+    <p style="font-size:.85rem;color:#d4d4d8">VTV is the only platform combining multi-dimensional life assessment, AI-generated coaching, couples/dating compatibility, fitness integration (via FitCarna merger), and a Book-to-System conversion pipeline. Founded by U.S. Navy veteran and licensed real estate appraiser Shawn E. Decker. Infrastructure cost: $8&ndash;10K/mo. Already live and collecting users.</p>
+  </div>
+
+  <!-- P.I.N.K. FRAMEWORK -->
+  <div class="section">
+    <h3>Proprietary IP: The P.I.N.K. Framework</h3>
+    <div class="pillar-row">
+      <div class="pillar"><div class="pillar-letter">P</div><div class="pillar-word">People</div></div>
+      <div class="pillar"><div class="pillar-letter">I</div><div class="pillar-word">Influence</div></div>
+      <div class="pillar"><div class="pillar-letter">N</div><div class="pillar-word">Numbers</div></div>
+      <div class="pillar"><div class="pillar-letter">K</div><div class="pillar-word">Knowledge</div></div>
+      <div class="pillar"><div class="pillar-letter">T</div><div class="pillar-word">Time</div></div>
+    </div>
+    <div class="two-col">
+      <div class="highlight" style="margin-bottom:0">
+        <div class="highlight-title">Time Multiplier (0.1x&ndash;2.0x)</div>
+        <p style="font-size:.75rem;color:#d4d4d8">Proprietary algorithm that collapses all scores when time management fails. Creates urgency, drives coaching conversions. Provisional patent filed. 6+ vertical competitors exist — none connects all five pillars.</p>
+      </div>
+      <div class="highlight" style="margin-bottom:0">
+        <div class="highlight-title">20 Cross-Pillar Impacts</div>
+        <p style="font-size:.75rem;color:#d4d4d8">Each pillar impacts the other four, generating 20 prescriptive recommendations. Turns a score into a roadmap. Enterprise customers pay premium for this.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PAGE 2: PROBLEM + SOLUTION + REVENUE        -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="page-label">Page 2 of 4</div>
+    <h3>Problem / Opportunity</h3>
+    <h2>Three Broken Markets, One Platform Fix</h2>
+    <div class="two-col" style="margin-bottom:1rem">
+      <div class="card" style="margin-bottom:0;border-color:rgba(212,168,71,.3)">
+        <h3 style="font-size:.65rem">Dating is Broken</h3>
+        <p style="font-size:.78rem;color:#d4d4d8">$9.6B market actively rejecting swipe culture. 79% of users report dating app fatigue. No platform matches on life values, goals, and standards &mdash; just photos. VTV offers whole-life compatibility scoring through P.I.N.K. pillars.</p>
+      </div>
+      <div class="card" style="margin-bottom:0;border-color:rgba(74,222,128,.3)">
+        <h3 style="font-size:.65rem;color:#4ade80">Fitness is Siloed</h3>
+        <p style="font-size:.78rem;color:#d4d4d8">$15.2B coaching market treats fitness in isolation. Peloton ($1.97B) and Noom ($4.0B) address only physical health. VTV + FitCarna connects physical fitness to 4 other life pillars &mdash; creating sticky, measurable outcomes.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:.65rem">Assessments Have No Action Plan</h3>
+      <p style="font-size:.78rem;color:#d4d4d8">Gallup ($500M+) gives you 34 static themes and walks away. DiSC ($1.97B) gives 4 dimensions with no coaching. VTV scores 5 dynamic pillars, applies the Time Multiplier, generates 20 cross-pillar recommendations, then delivers autonomous AI coaching morning and evening &mdash; at $29/mo vs. BetterUp&rsquo;s $500/session.</p>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-num">$9.6B</div><div class="stat-label">Dating Market</div></div>
+      <div class="stat"><div class="stat-num">$15.2B</div><div class="stat-label">Coaching Market</div></div>
+      <div class="stat"><div class="stat-num">$61B</div><div class="stat-label">Wellness (Phase 2)</div></div>
+      <div class="stat"><div class="stat-num">0</div><div class="stat-label">Direct Competitors</div></div>
+    </div>
+  </div>
+
+  <!-- SOLUTION -->
+  <div class="section">
+    <h3>Our Solution</h3>
+    <div class="card">
+      <p style="font-size:.82rem;color:#d4d4d8;margin-bottom:.5rem"><strong style="color:#D4A847">Phase 1 (live now + $350K):</strong> Free P.I.N.K. Assessment scores users across 5 life pillars (80&ndash;120 data points). Low fitness scores auto-refer to FitCarna coaching (300+ clients, Day 1 revenue). Singles and couples enter dating mode with standards-based matching. AI coaching runs autonomously &mdash; zero marginal cost at scale.</p>
+      <p style="font-size:.82rem;color:#d4d4d8"><strong style="color:#D4A847">Phase 2 (funded by traction):</strong> Enterprise licensing, Book-to-System conversion pipeline, coach certification, white-label church programs, RE appraisal API &mdash; 14 total verticals built on the same assessment engine that Phase 1 users are already paying for.</p>
+    </div>
+  </div>
+
+  <!-- REVENUE MODEL -->
+  <div class="section">
+    <h3>Revenue Model</h3>
+    <h2>12 Revenue Streams, Compounding</h2>
+    <div class="tier-grid">
+      <div class="tier">
+        <div class="tier-name">VictoryPath</div>
+        <div class="tier-price">$29</div>
+        <div class="tier-period">/mo &middot; $290/yr</div>
+      </div>
+      <div class="tier">
+        <div class="tier-badge">Growth</div>
+        <div class="tier-name">Value Builder</div>
+        <div class="tier-price">$47</div>
+        <div class="tier-period">/mo &middot; $470/yr</div>
+      </div>
+      <div class="tier">
+        <div class="tier-name">Victory VIP</div>
+        <div class="tier-price">$497</div>
+        <div class="tier-period">/mo &middot; $4,970/yr</div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="card" style="margin-bottom:0">
+        <h3 style="font-size:.65rem">Platform &amp; Licensing (B2B)</h3>
+        <div class="metric-row"><div class="metric-label">Book-to-System License</div><div class="metric-value gold">$2.5K&ndash;$10K + $200&ndash;500/mo</div></div>
+        <div class="metric-row"><div class="metric-label">Enterprise Seats</div><div class="metric-value">$8&ndash;$15/seat/mo</div></div>
+        <div class="metric-row"><div class="metric-label">Coach Certification</div><div class="metric-value">$2,500&ndash;$5,000</div></div>
+        <div class="metric-row"><div class="metric-label">RE Appraisal API</div><div class="metric-value">$0.10&ndash;$0.50/query</div></div>
+        <div class="metric-row" style="border:none"><div class="metric-label">White-Label / Church</div><div class="metric-value">$5&ndash;$500/mo</div></div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <h3 style="font-size:.65rem">FitCarna Coaching</h3>
+        <div class="metric-row"><div class="metric-label">1:1 Coaching (Carna Method)</div><div class="metric-value green">$200&ndash;$500/mo</div></div>
+        <div class="metric-row"><div class="metric-label">8-Week Challenge</div><div class="metric-value green">$100/participant</div></div>
+        <div class="metric-row"><div class="metric-label">PowerHour Classes</div><div class="metric-value green">$50&ndash;$100/mo</div></div>
+        <div class="metric-row"><div class="metric-label">Personal Coaching</div><div class="metric-value">$125&ndash;$500/hr</div></div>
+        <div class="metric-row" style="border:none"><div class="metric-label">Dating Premium</div><div class="metric-value">$19&ndash;$79/mo</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TARGET CLIENTS -->
+  <div class="section">
+    <h3>Target Clients</h3>
+    <div class="card">
+      <div class="metric-row"><div class="metric-label">Growth Professionals (28&ndash;55)</div><div class="metric-value">$60K&ndash;$150K earners, priced out of premium coaching &rarr; $29/mo</div></div>
+      <div class="metric-row"><div class="metric-label">Couples &amp; Families</div><div class="metric-value">Compatibility insights, shared dashboards &rarr; $47/mo</div></div>
+      <div class="metric-row"><div class="metric-label">Faith-Based Communities</div><div class="metric-value">Churches, small groups, Scripture-integrated growth &rarr; membership</div></div>
+      <div class="metric-row"><div class="metric-label">Enterprise HR / L&amp;D</div><div class="metric-value">Privacy-controlled employee development &rarr; $8&ndash;$15/seat</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Authors &amp; Coaches</div><div class="metric-value">Book-to-System license &rarr; $2.5K&ndash;$10K + recurring</div></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PAGE 3: COMPETITIVE + FINANCIALS + FUNDING  -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="page-label">Page 3 of 4</div>
+    <h3>Competitive Landscape</h3>
+    <h2>Competitors in Every Vertical &mdash; VTV Connects Them</h2>
+    <div class="card" style="overflow-x:auto">
+      <table class="proj-table">
+        <thead>
+          <tr><th>Company</th><th>Value</th><th>What They Do</th><th>VTV Advantage</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Wiley/DiSC (WLY)</td><td>$1.97B</td><td>4-dim assessments</td><td style="color:#4ade80;font-weight:700;text-align:left">5 pillars + AI + coaching + couples</td></tr>
+          <tr><td>BetterUp</td><td>$4.7B</td><td>Human coaches $500+/hr</td><td style="color:#4ade80;font-weight:700;text-align:left">AI coaching at $29/mo, infinite scale</td></tr>
+          <tr><td>Match Group (MTCH)</td><td>$8.3B</td><td>Photo swiping</td><td style="color:#4ade80;font-weight:700;text-align:left">Whole-life scoring + group privacy</td></tr>
+          <tr><td>Gallup</td><td>$500M+</td><td>34 static themes</td><td style="color:#4ade80;font-weight:700;text-align:left">Dynamic scoring + Time Multiplier</td></tr>
+          <tr><td>Peloton (PTON)</td><td>$1.97B</td><td>Fitness only</td><td style="color:#4ade80;font-weight:700;text-align:left">FitCarna + 4 non-physical pillars</td></tr>
+          <tr><td>Noom</td><td>$4.0B</td><td>Weight loss only</td><td style="color:#4ade80;font-weight:700;text-align:left">5 pillars, not just physical</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FIVE-LAYER MOAT -->
+  <div class="section">
+    <div class="card">
+      <h3>Five-Layer Competitive Moat</h3>
+      <div class="moat">
+        <div class="moat-icon">1</div>
+        <div class="moat-text"><div class="moat-title">Privacy-First Architecture</div><div class="moat-desc">Users control employer visibility per pillar. The enterprise sales unlock.</div></div>
+      </div>
+      <div class="moat">
+        <div class="moat-icon">2</div>
+        <div class="moat-text"><div class="moat-title">Cross-Pillar Impact Matrix</div><div class="moat-desc">20 directional algorithms generating prescriptive roadmaps.</div></div>
+      </div>
+      <div class="moat">
+        <div class="moat-icon">3</div>
+        <div class="moat-text"><div class="moat-title">Time Multiplier + Data Moat</div><div class="moat-desc">Provisional patent filed. 0.1x&ndash;2.0x formula with zero prior art. Every assessment trains the model &mdash; data advantage compounds.</div></div>
+      </div>
+      <div class="moat">
+        <div class="moat-icon">4</div>
+        <div class="moat-text"><div class="moat-title">Zero-Cost AI Coaching</div><div class="moat-desc">Autonomous AM/PM emails. BetterUp: $500/session. VTV: $29/mo.</div></div>
+      </div>
+      <div class="moat" style="margin-bottom:0">
+        <div class="moat-icon">5</div>
+        <div class="moat-text"><div class="moat-title">Relationship + Faith + Fitness</div><div class="moat-desc">Couples mode, dating, devotionals, FitCarna. No platform touches all three.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 1 FINANCIAL PROJECTIONS -->
+  <div class="section">
+    <h3>Phase 1 Revenue Projections &mdash; $350K Capital</h3>
+    <h2>Dating + Fitness + Assessment First 12 Months</h2>
+    <div class="card" style="overflow-x:auto">
+      <table class="proj-table">
+        <thead>
+          <tr><th>Revenue Stream</th><th>Mo 3</th><th>Mo 6</th><th>Mo 9</th><th>Mo 12</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>B2C Subscriptions ($29&ndash;$497)</td><td>$4,200</td><td>$16,800</td><td>$32,000</td><td>$50,400</td></tr>
+          <tr><td>FitCarna Coaching (Day 1)</td><td>$12,000</td><td>$22,000</td><td>$42,000</td><td>$65,000</td></tr>
+          <tr><td>Dating Premium ($19&ndash;$79)</td><td>$0</td><td>$3,500</td><td>$9,000</td><td>$18,000</td></tr>
+          <tr><td>1:1 Coaching + Products</td><td>$6,000</td><td>$10,000</td><td>$15,000</td><td>$22,000</td></tr>
+          <tr><td style="color:#71717a;font-style:italic">Enterprise / Licensing (Phase 2)</td><td style="color:#71717a">$0</td><td style="color:#71717a">$0</td><td style="color:#71717a">$0</td><td style="color:#71717a">$0</td></tr>
+          <tr style="border-top:2px solid #D4A847"><td style="font-weight:700;color:#D4A847">Total MRR</td><td style="font-weight:700;color:#D4A847">$22,200</td><td style="font-weight:700;color:#D4A847">$52,300</td><td style="font-weight:700;color:#D4A847">$98,000</td><td style="font-weight:700;color:#D4A847">$155,400</td></tr>
+          <tr><td style="color:#D4A847">Annualized Run Rate</td><td style="color:#D4A847">$266,400</td><td style="color:#D4A847">$627,600</td><td style="color:#D4A847">$1,176,000</td><td style="color:#D4A847">$1,864,800</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="highlight">
+      <div class="highlight-title">Phase 1 Proves the Model &mdash; Phase 2 Scales It</div>
+      <p style="font-size:.78rem;color:#d4d4d8">$350K gets to $155K MRR ($1.86M ARR) by Month 12 using only consumer-facing verticals (dating, fitness, assessments, coaching). FitCarna alone delivers $12K+/mo from Day 1, scaling to $65K/mo via gym affiliate partnerships. Enterprise licensing, Book-to-System, and B2B seats activate in Phase 2 &mdash; funded by proven traction, not projections.</p>
+    </div>
+  </div>
+
+  <!-- PHASE 1: USE OF FUNDS — $350K -->
+  <div class="section">
+    <h3>Phase 1: Use of Funds &mdash; $350,000 (Months 1&ndash;12)</h3>
+    <div class="fund-bar">
+      <div class="fund-label">Dating &amp; App Dev</div>
+      <div class="fund-track"><div class="fund-fill" style="width:31%">31%</div></div>
+      <div class="fund-amount">$110K</div>
+    </div>
+    <div class="fund-bar">
+      <div class="fund-label">User Acquisition</div>
+      <div class="fund-track"><div class="fund-fill" style="width:26%">26%</div></div>
+      <div class="fund-amount">$90K</div>
+    </div>
+    <div class="fund-bar">
+      <div class="fund-label">FitCarna Scale-Up</div>
+      <div class="fund-track"><div class="fund-fill" style="width:17%">17%</div></div>
+      <div class="fund-amount">$60K</div>
+    </div>
+    <div class="fund-bar">
+      <div class="fund-label">Operations &amp; Infra</div>
+      <div class="fund-track"><div class="fund-fill" style="width:14%">14%</div></div>
+      <div class="fund-amount">$50K</div>
+    </div>
+    <div class="fund-bar">
+      <div class="fund-label">Legal / IP / Reserve</div>
+      <div class="fund-track"><div class="fund-fill" style="width:11%">11%</div></div>
+      <div class="fund-amount">$40K</div>
+    </div>
+    <div class="card" style="margin-top:.75rem">
+      <h3 style="font-size:.65rem">What Each Dollar Buys</h3>
+      <div class="metric-row"><div class="metric-label">Dating &amp; App ($110K)</div><div class="metric-value">Dating mode UI, matching algorithm, mobile app (React Native), push notifications</div></div>
+      <div class="metric-row"><div class="metric-label">User Acquisition ($90K)</div><div class="metric-value">Paid social, content production, influencer partnerships, assessment funnel optimization</div></div>
+      <div class="metric-row"><div class="metric-label">FitCarna ($60K)</div><div class="metric-value">Scale from 300 to 500+ clients, 12K+ lbs lost, affiliate coaching to gyms, hire trainers, 8-Week Challenge expansion</div></div>
+      <div class="metric-row"><div class="metric-label">Ops &amp; Infra ($50K)</div><div class="metric-value">DevOps hardening, monitoring, security audit, scale Neon DB, n8n workflow expansion</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Legal / IP ($40K)</div><div class="metric-value">2&ndash;3 provisional patents (Tier 1), entity structuring, operating reserve</div></div>
+    </div>
+  </div>
+
+  <!-- PHASE 2 PREVIEW -->
+  <div class="section">
+    <h3>Phase 2: Scale Capital &mdash; $1,400,000 (Months 13&ndash;24)</h3>
+    <p style="font-size:.82rem;color:#a1a1aa;margin-bottom:.75rem">Deployed only after Phase 1 proves traction. User revenue + investor capital unlocks the full platform:</p>
+    <div class="two-col">
+      <div class="card" style="margin-bottom:0">
+        <h3 style="font-size:.65rem">Phase 2 Unlocks</h3>
+        <div class="metric-row"><div class="metric-label">Enterprise Sales Team</div><div class="metric-value">$8&ndash;$15/seat B2B</div></div>
+        <div class="metric-row"><div class="metric-label">Book-to-System Pipeline</div><div class="metric-value">$2.5K&ndash;$10K/license</div></div>
+        <div class="metric-row"><div class="metric-label">Coach Certification</div><div class="metric-value">$2,500&ndash;$5,000/cohort</div></div>
+        <div class="metric-row"><div class="metric-label">RE Appraisal API</div><div class="metric-value">$0.10&ndash;$0.50/query</div></div>
+        <div class="metric-row" style="border:none"><div class="metric-label">White-Label / Church</div><div class="metric-value">$5&ndash;$500/mo</div></div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <h3 style="font-size:.65rem">Phase 2 Targets (Mo 24)</h3>
+        <div class="metric-row"><div class="metric-label">MRR</div><div class="metric-value gold">$720K ($8.6M ARR)</div></div>
+        <div class="metric-row"><div class="metric-label">Enterprise Clients</div><div class="metric-value">10+ with 1,000+ seats</div></div>
+        <div class="metric-row"><div class="metric-label">Certified Coaches</div><div class="metric-value">50+ in program</div></div>
+        <div class="metric-row"><div class="metric-label">Series A Ready</div><div class="metric-value">$30&ndash;$50M valuation</div></div>
+        <div class="metric-row" style="border:none"><div class="metric-label">Total Verticals</div><div class="metric-value">8&ndash;10 active</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVESTOR PROTECTIONS -->
+  <div class="section">
+    <div class="card" style="border-color:rgba(74,222,128,.3)">
+      <h3 style="color:#4ade80">Investor Protections</h3>
+      <div class="metric-row"><div class="metric-label">Preferred Return</div><div class="metric-value gold">8% annually on deployed capital</div></div>
+      <div class="metric-row"><div class="metric-label">Quarterly Distributions</div><div class="metric-value gold">25% of net operating income</div></div>
+      <div class="metric-row"><div class="metric-label">Revenue Participation</div><div class="metric-value gold">25% of all licensing &amp; cert fees</div></div>
+      <div class="metric-row"><div class="metric-label">Liquidation Preference</div><div class="metric-value">1x non-participating</div></div>
+      <div class="metric-row"><div class="metric-label">Anti-Dilution</div><div class="metric-value">Weighted-average through Series A</div></div>
+      <div class="metric-row"><div class="metric-label">Board Seat</div><div class="metric-value">1 seat + quarterly reporting</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Pro-Rata Rights</div><div class="metric-value">Maintain 25% in future rounds</div></div>
+    </div>
+  </div>
+
+  <!-- EXIT — PROBABILITY WEIGHTED -->
+  <div class="section">
+    <h3>Exit Strategy &mdash; Scenario-Weighted Returns</h3>
+    <div class="card" style="overflow-x:auto">
+      <table class="proj-table">
+        <thead>
+          <tr><th>Scenario</th><th>Probability</th><th>Mo 24 ARR</th><th>Exit Multiple</th><th>Investor Return</th></tr>
+        </thead>
+        <tbody>
+          <tr><td style="color:#ef4444">Downside (50% miss)</td><td>25%</td><td>$750K</td><td>4x</td><td style="color:#ef4444">$750K (0.4x)</td></tr>
+          <tr><td>Base (70% hit)</td><td>40%</td><td>$2.5M</td><td>6x</td><td>$3.75M (2.1x)</td></tr>
+          <tr><td style="color:#4ade80">Upside (full plan)</td><td>25%</td><td>$8.6M</td><td>10x</td><td style="color:#4ade80">$21.5M (12.3x)</td></tr>
+          <tr><td style="color:#D4A847">Breakout (viral)</td><td>10%</td><td>$15M+</td><td>15x</td><td style="color:#D4A847">$56M+ (32x)</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:.7rem;color:#71717a;margin-top:.5rem">Even in the downside, 1x liquidation preference returns investor capital first. Revenue-sharing provides cash along the way &mdash; not a single exit-or-nothing bet.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PAGE 4: TEAM + VALIDATION + GOALS + LINKS   -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="page-label">Page 4 of 4</div>
+    <h3>Our Team</h3>
+    <div class="card">
+      <div class="metric-row"><div class="metric-label">Shawn E. Decker &mdash; Founder &amp; CEO</div><div class="metric-value">U.S. Navy Veteran &bull; Licensed Appraiser 23+ yrs &bull; Published Author</div></div>
+      <div class="metric-row"><div class="metric-label">Cameron Decker &mdash; VP Fitness</div><div class="metric-value">FitCarna / Carna Method &bull; 300+ clients &bull; 12K+ lbs lost &bull; Gym affiliates</div></div>
+      <div class="metric-row"><div class="metric-label">Kyle Hegstrum &mdash; Operations</div><div class="metric-value">Business development &bull; Client onboarding &bull; Partnerships</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Sandra Aldridge &mdash; Client Success</div><div class="metric-value">Scored 171 &bull; Gained 10+ hrs/week in 90 days</div></div>
+    </div>
+  </div>
+
+  <!-- THIRD-PARTY VALIDATION -->
+  <div class="section">
+    <div class="card" style="border-color:rgba(74,222,128,.3)">
+      <h3 style="color:#4ade80">Third-Party Validation</h3>
+      <div class="metric-row"><div class="metric-label">Companies helped launch</div><div class="metric-value gold">4&ndash;5 independent businesses (details on request)</div></div>
+      <div class="metric-row"><div class="metric-label">Sandra Aldridge (Client)</div><div class="metric-value green">Scored 171 &bull; Gained 10+ hrs/week in 90 days</div></div>
+      <div class="metric-row"><div class="metric-label">FitCarna (Closed-Loop Proof)</div><div class="metric-value green">300+ clients &bull; 12K+ lbs lost &bull; $12K+/mo Day 1</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Platform pre-investment value</div><div class="metric-value gold">$300&ndash;500K equivalent dev cost (sweat equity)</div></div>
+    </div>
+  </div>
+
+  <!-- GOALS -->
+  <div class="section">
+    <h3>What We Want to Achieve</h3>
+    <div class="two-col">
+      <div class="card" style="margin-bottom:0">
+        <h3 style="font-size:.65rem;color:#4ade80">Phase 1 Goals (Months 1&ndash;12, $350K)</h3>
+        <div class="metric-row"><div class="metric-label">MRR Target</div><div class="metric-value gold">$155K ($1.86M ARR)</div></div>
+        <div class="metric-row"><div class="metric-label">Dating Launch</div><div class="metric-value">Standards-based matching live</div></div>
+        <div class="metric-row"><div class="metric-label">Mobile App</div><div class="metric-value">iOS + Android (React Native)</div></div>
+        <div class="metric-row"><div class="metric-label">FitCarna Scale</div><div class="metric-value">300 &rarr; 500+ active clients</div></div>
+        <div class="metric-row"><div class="metric-label">Patent Filings</div><div class="metric-value">2&ndash;3 provisionals (Tier 1)</div></div>
+        <div class="metric-row" style="border:none"><div class="metric-label">Breakeven</div><div class="metric-value green">Month 8&ndash;10 on $350K spend</div></div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <h3 style="font-size:.65rem;color:#D4A847">Phase 2 Goals (Months 13&ndash;24, $1.4M)</h3>
+        <div class="metric-row"><div class="metric-label">MRR Target</div><div class="metric-value gold">$720K ($8.6M ARR)</div></div>
+        <div class="metric-row"><div class="metric-label">Series A</div><div class="metric-value">$30&ndash;$50M valuation</div></div>
+        <div class="metric-row"><div class="metric-label">Enterprise Seats</div><div class="metric-value">1,000+ across 10+ clients</div></div>
+        <div class="metric-row"><div class="metric-label">Book-to-System</div><div class="metric-value">3+ author licenses active</div></div>
+        <div class="metric-row"><div class="metric-label">Certified Coaches</div><div class="metric-value">50+ in program</div></div>
+        <div class="metric-row" style="border:none"><div class="metric-label">Total Verticals</div><div class="metric-value">8&ndash;10 active</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARKETING & SALES -->
+  <div class="section">
+    <h3>Marketing &amp; Sales Channels</h3>
+    <div class="two-col">
+      <div class="card" style="margin-bottom:0">
+        <h3 style="font-size:.65rem">Digital Distribution</h3>
+        <div class="metric-row"><div class="metric-label">Primary Funnel</div><div class="metric-value">Free assessment &rarr; subscription</div></div>
+        <div class="metric-row"><div class="metric-label">Social</div><div class="metric-value">FB, IG, YouTube, LinkedIn, X</div></div>
+        <div class="metric-row"><div class="metric-label">Email Automation</div><div class="metric-value">AM/PM coaching sequences</div></div>
+        <div class="metric-row" style="border:none"><div class="metric-label">CRM</div><div class="metric-value">HubSpot + n8n (7 workflows)</div></div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <h3 style="font-size:.65rem">Direct &amp; Strategic</h3>
+        <div class="metric-row"><div class="metric-label">Coaching</div><div class="metric-value">Calendly booking &rarr; 1:1</div></div>
+        <div class="metric-row"><div class="metric-label">Enterprise</div><div class="metric-value">Pilot programs &rarr; seats</div></div>
+        <div class="metric-row"><div class="metric-label">Licensing</div><div class="metric-value">Book-to-System partnerships</div></div>
+        <div class="metric-row" style="border:none"><div class="metric-label">Cross-Referral</div><div class="metric-value">Assessment &rarr; FitCarna loop</div></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LIVE PLATFORM LINKS -->
+  <div class="section">
+    <h3>Live Platform Links</h3>
+    <h2>See Everything That Exists Today</h2>
+    <div class="link-grid">
+      <a href="https://valuetovictory.com" target="_blank" class="link-card">
+        <div class="link-label">Main Website <span class="badge badge-live">Live</span></div>
+        <div class="link-title">valuetovictory.com</div>
+        <div class="link-url">Marketing site, subscription tiers, book sales</div>
+      </a>
+      <a href="https://assessment.valuetovictory.com" target="_blank" class="link-card">
+        <div class="link-label">Assessment Platform <span class="badge badge-live">Live</span></div>
+        <div class="link-title">assessment.valuetovictory.com</div>
+        <div class="link-url">88 API endpoints, 39 DB tables, AI coaching</div>
+      </a>
+      <a href="https://assessment.valuetovictory.com/member" target="_blank" class="link-card">
+        <div class="link-label">Member Portal <span class="badge badge-live">Live</span></div>
+        <div class="link-title">Member Dashboard</div>
+        <div class="link-url">Score tracking, coaching, couples mode, dating</div>
+      </a>
+      <a href="https://assessment.valuetovictory.com/assessment" target="_blank" class="link-card">
+        <div class="link-label">Free Assessment <span class="badge badge-live">Live</span></div>
+        <div class="link-title">P.I.N.K. Assessment</div>
+        <div class="link-url">80&ndash;120 data points, 5 pillars, Time Multiplier</div>
+      </a>
+      <a href="https://shawnedecker.com" target="_blank" class="link-card">
+        <div class="link-label">Founder Website <span class="badge badge-live">Live</span></div>
+        <div class="link-title">shawnedecker.com</div>
+        <div class="link-url">Author site, speaking, media, credentials</div>
+      </a>
+      <a href="https://shawnedecker.com/speaking" target="_blank" class="link-card">
+        <div class="link-label">Speaking &amp; Media <span class="badge badge-live">Live</span></div>
+        <div class="link-title">Book Shawn to Speak</div>
+        <div class="link-url">Keynotes, workshops, media appearances</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-box">
+    <h2>Ready to Build the Future of Personal Development?</h2>
+    <p>$1.75M Seed Round &mdash; 25% Equity &mdash; Live Product &mdash; 14 Verticals &mdash; 6+ Vertical Competitors, One Connector</p>
+    <a href="mailto:valuetovictory@gmail.com?subject=VTV%20Investment%20Inquiry" class="btn-gold">Contact Shawn Decker</a>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <p>Value to Victory, LLC &mdash; Confidential &mdash; Do not distribute without written permission</p>
+    <p style="margin-top:.3rem"><a href="mailto:valuetovictory@gmail.com">valuetovictory@gmail.com</a> &nbsp;&bull;&nbsp; <a href="https://valuetovictory.com">valuetovictory.com</a></p>
+  </div>
+
+</div>
+</body>
+</html>

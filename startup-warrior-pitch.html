@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Value to Victory — Startup Warrior Pitch Deck</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;line-height:1.6}
+    .container{max-width:780px;margin:0 auto;padding:2rem 1.5rem 4rem}
+    .brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    h1{font-family:'Instrument Serif',serif;font-size:2.4rem;font-weight:400;margin-bottom:.5rem}
+    h1 em{font-style:italic;color:#D4A847}
+    h2{font-family:'Instrument Serif',serif;font-size:1.5rem;font-weight:400;margin-bottom:.75rem;color:#fff}
+    h3{font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    .lead{color:#a1a1aa;font-size:1rem;margin-bottom:2rem;line-height:1.7}
+    .section{margin-bottom:2.5rem}
+    .card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.25rem;margin-bottom:1rem}
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1.25rem}
+    .stat{text-align:center;background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1rem .5rem}
+    .stat-num{font-size:1.4rem;font-weight:900;color:#D4A847}
+    .stat-label{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:#a1a1aa;margin-top:.2rem}
+    .highlight{background:linear-gradient(135deg,rgba(212,168,71,.08),rgba(212,168,71,.03));border:1px solid rgba(212,168,71,.25);border-radius:.75rem;padding:1.25rem;margin-bottom:1rem}
+    .highlight-title{font-weight:700;color:#D4A847;margin-bottom:.3rem;font-size:.9rem}
+    .metric-row{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #1e1e21}
+    .metric-row:last-child{border:none}
+    .metric-label{color:#a1a1aa;font-size:.8rem}
+    .metric-value{color:#fff;font-weight:700;font-size:.8rem}
+    .metric-value.green{color:#4ade80}
+    .metric-value.gold{color:#D4A847}
+    .pillar-row{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin:.75rem 0}
+    .pillar{text-align:center;background:#111;border:1px solid #27272a;border-radius:.5rem;padding:.6rem .2rem}
+    .pillar-letter{font-size:1.3rem;font-weight:900;color:#D4A847}
+    .pillar-word{font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:#a1a1aa;margin-top:.1rem}
+    .fund-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem}
+    .fund-label{width:160px;font-size:.75rem;color:#a1a1aa;flex-shrink:0}
+    .fund-track{flex:1;height:20px;background:#1e1e21;border-radius:4px;overflow:hidden}
+    .fund-fill{height:100%;background:linear-gradient(90deg,#D4A847,#b8942e);border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:.4rem;font-size:.6rem;font-weight:700;color:#0a0a0a;min-width:35px}
+    .fund-amount{font-size:.75rem;font-weight:700;color:#fff;width:70px;text-align:right;flex-shrink:0}
+    .proj-table{width:100%;border-collapse:collapse;font-size:.75rem;margin:.5rem 0}
+    .proj-table th{text-align:left;color:#D4A847;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:.4rem .5rem;border-bottom:1px solid #27272a}
+    .proj-table td{padding:.45rem .5rem;border-bottom:1px solid #1e1e21;color:#d4d4d8}
+    .proj-table td:not(:first-child){text-align:right}
+    .proj-table tr:last-child td{border:none;font-weight:700;color:#D4A847}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+    .tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1rem}
+    .tier{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1rem;text-align:center}
+    .tier-name{font-weight:700;font-size:.82rem;margin-bottom:.2rem}
+    .tier-price{font-size:1.15rem;font-weight:900;color:#D4A847}
+    .tier-period{font-size:.65rem;color:#71717a}
+    .tier-badge{display:inline-block;background:#D4A847;color:#0a0a0a;font-size:.55rem;font-weight:700;padding:.12rem .4rem;border-radius:1rem;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.3rem}
+    .link-row{display:flex;justify-content:space-between;align-items:center;padding:.55rem 0;border-bottom:1px solid #1e1e21}
+    .link-row:last-child{border:none}
+    .link-name{font-size:.8rem;font-weight:600}
+    .link-url{font-size:.72rem;color:#D4A847;text-decoration:none;word-break:break-all}
+    .link-url:hover{text-decoration:underline}
+    .link-badge{display:inline-block;font-size:.55rem;font-weight:700;padding:.15rem .4rem;border-radius:.3rem;letter-spacing:.05em;text-transform:uppercase;margin-left:.5rem}
+    .badge-live{background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3)}
+    .badge-test{background:rgba(212,168,71,.15);color:#D4A847;border:1px solid rgba(212,168,71,.3)}
+    .badge-demo{background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
+    .exit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin:.6rem 0}
+    .exit-card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:.85rem;text-align:center}
+    .exit-mult{font-size:1.3rem;font-weight:900;color:#D4A847}
+    .exit-val{font-size:.8rem;font-weight:700;color:#fff;margin-top:.1rem}
+    .exit-ret{font-size:.65rem;color:#4ade80;margin-top:.1rem}
+    .exit-label{font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin-top:.25rem}
+    .moat{display:flex;gap:.75rem;margin-bottom:.75rem;align-items:flex-start}
+    .moat-icon{width:28px;height:28px;background:rgba(212,168,71,.15);border:1px solid rgba(212,168,71,.3);border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.8rem}
+    .moat-text{flex:1}
+    .moat-title{font-weight:700;font-size:.8rem;margin-bottom:.1rem}
+    .moat-desc{font-size:.75rem;color:#a1a1aa;line-height:1.5}
+    .cta-box{text-align:center;background:linear-gradient(135deg,rgba(212,168,71,.12),rgba(212,168,71,.04));border:1px solid rgba(212,168,71,.3);border-radius:1rem;padding:2rem 1.5rem;margin:1.5rem 0}
+    .btn-gold{display:inline-block;padding:.75rem 1.75rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;border-radius:.5rem;text-decoration:none;font-size:.9rem;margin:.25rem}
+    .btn-ghost{display:inline-block;padding:.75rem 1.75rem;background:transparent;border:1px solid #D4A847;color:#D4A847;font-weight:700;border-radius:.5rem;text-decoration:none;font-size:.9rem;margin:.25rem}
+    .footer{text-align:center;padding:1.5rem 0;border-top:1px solid #27272a;font-size:.7rem;color:#71717a;margin-top:1.5rem}
+    .footer a{color:#D4A847;text-decoration:none}
+    .confidential{text-align:center;background:#1a1410;border:1px solid rgba(212,168,71,.2);border-radius:.5rem;padding:.6rem;font-size:.65rem;color:#D4A847;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:1.5rem}
+    .divider{border:none;border-top:1px solid #27272a;margin:2rem 0}
+    .disclaimer{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1rem;font-size:.65rem;color:#71717a;line-height:1.6;margin:1.5rem 0}
+    .disclaimer strong{color:#a1a1aa}
+    .page-break{page-break-before:always;margin-top:2.5rem}
+    .risk-list{list-style:none;padding:0;margin:.4rem 0}
+    .risk-list li{font-size:.75rem;color:#a1a1aa;padding:.35rem 0 .35rem 1.1rem;position:relative;border-bottom:1px solid #1e1e21}
+    .risk-list li:last-child{border:none}
+    .risk-list li::before{content:'';position:absolute;left:0;top:.65rem;width:5px;height:5px;background:#D4A847;border-radius:50%}
+    @media print{
+      body{background:#fff;color:#111;font-size:9pt}
+      .container{max-width:100%;padding:.75rem}
+      .card,.stat,.tier,.pillar,.highlight,.exit-card{border-color:#ddd;background:#f9f9f9}
+      .stat-num,.pillar-letter,.tier-price,.highlight-title,.brand,h3,.exit-mult{color:#8B6914}
+      .lead,.moat-desc,.metric-label,.pillar-word,.stat-label,.tier-period,.fund-label{color:#555}
+      .metric-value,.exit-ret{color:#111}
+      .metric-value.green,.exit-ret{color:#16a34a}
+      .confidential,.cta-box{background:#fef7e0;border-color:#8B6914}
+      .btn-gold{background:#8B6914;color:#fff}
+      .btn-ghost{border-color:#8B6914;color:#8B6914}
+      .fund-track{background:#e5e5e5}
+      .fund-fill{background:#8B6914}
+      .disclaimer{background:#f5f5f5;border-color:#ddd}
+      .no-print{display:none}
+    }
+    @media(max-width:600px){
+      h1{font-size:1.75rem}
+      .stat-grid{grid-template-columns:repeat(2,1fr)}
+      .tier-grid,.exit-grid{grid-template-columns:1fr}
+      .two-col{grid-template-columns:1fr}
+      .pillar-row{gap:.2rem}
+      .pillar{padding:.4rem .15rem}
+      .pillar-letter{font-size:1rem}
+      .fund-label{width:120px;font-size:.65rem}
+      .fund-amount{width:55px;font-size:.65rem}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SLIDE 1: COVER + PROBLEM/SOLUTION          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="confidential">Confidential &mdash; Prepared for Startup Warrior Founder Cohort &mdash; April 2026</div>
+
+  <div class="brand">Value to Victory, LLC</div>
+  <h1>The Assessment Engine <em>Nobody Else Has</em></h1>
+  <p class="lead">AI-powered whole-life assessment platform that scores, coaches, and monetizes across 14 market verticals &mdash; with live product, active users, revenue, and 10 innovations (provisional patents filed). Built. Running. Ready to scale.</p>
+
+  <!-- LIVE STATS -->
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-num">88</div><div class="stat-label">API Endpoints</div></div>
+    <div class="stat"><div class="stat-num">39</div><div class="stat-label">DB Tables</div></div>
+    <div class="stat"><div class="stat-num">14</div><div class="stat-label">Market Verticals</div></div>
+    <div class="stat"><div class="stat-num">10</div><div class="stat-label">Patentable IPs</div></div>
+  </div>
+
+  <!-- PROBLEM / SOLUTION -->
+  <div class="two-col">
+    <div class="card">
+      <h3 style="color:#ef4444">The Problem</h3>
+      <ul class="risk-list">
+        <li>Assessment tools measure one thing (personality, fitness, skills) in isolation</li>
+        <li>No platform connects how your finances affect your relationships, health affects your career, or time management multiplies everything</li>
+        <li>Coaching is expensive, generic, and manual</li>
+        <li>Employers get surveillance or nothing &mdash; no privacy-first insights</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:#4ade80">Our Solution</h3>
+      <ul class="risk-list">
+        <li><strong>P.I.N.K. Framework:</strong> Score 5 life pillars with Time as a force multiplier</li>
+        <li><strong>Cross-pillar AI:</strong> 20 directional relationships generate prescriptive coaching</li>
+        <li><strong>Autonomous delivery:</strong> Morning + evening coaching emails, zero human touch</li>
+        <li><strong>Privacy-first:</strong> Users control what employers see, per pillar</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- P.I.N.K. FRAMEWORK -->
+  <div class="card">
+    <h3>The P.I.N.K. Framework &mdash; Our Core IP</h3>
+    <div class="pillar-row">
+      <div class="pillar"><div class="pillar-letter">P</div><div class="pillar-word">People</div></div>
+      <div class="pillar"><div class="pillar-letter">I</div><div class="pillar-word">Influence</div></div>
+      <div class="pillar"><div class="pillar-letter">N</div><div class="pillar-word">Numbers</div></div>
+      <div class="pillar"><div class="pillar-letter">K</div><div class="pillar-word">Knowledge</div></div>
+      <div class="pillar" style="border-color:rgba(212,168,71,.5)"><div class="pillar-letter" style="color:#4ade80">T</div><div class="pillar-word" style="color:#4ade80">Time &times;</div></div>
+    </div>
+    <p style="font-size:.78rem;color:#a1a1aa;text-align:center">Time operates as a 0.1x&ndash;2.0x <strong style="color:#D4A847">multiplier</strong> on all other pillars &mdash; not an additive score. This is architecturally unique. No prior art exists.</p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SLIDE 2: TRACTION + REVENUE MODEL           -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section page-break">
+    <h3>Traction &amp; Revenue Model</h3>
+    <h2>What&rsquo;s Live Right Now</h2>
+
+    <div class="card">
+      <div class="metric-row"><div class="metric-label">Assessment Platform</div><div class="metric-value green">Live &mdash; 34+ scored users, AI coaching active</div></div>
+      <div class="metric-row"><div class="metric-label">Subscription Tiers</div><div class="metric-value green">3 tiers processing payments via Stripe</div></div>
+      <div class="metric-row"><div class="metric-label">Coaching Automation</div><div class="metric-value green">Autonomous morning/evening emails running</div></div>
+      <div class="metric-row"><div class="metric-label">Partner Integration</div><div class="metric-value green">FitCarna merger &mdash; 300+ clients, 12K+ lbs lost, $12K+/mo Day 1 revenue</div></div>
+      <div class="metric-row"><div class="metric-label">Published Book</div><div class="metric-value green">&ldquo;Running From Miracles&rdquo; &mdash; content pipeline asset</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Infrastructure</div><div class="metric-value green">88 endpoints, 39 tables, 12 microservices &mdash; $8&ndash;10K/mo at scale</div></div>
+    </div>
+
+    <h3 style="margin-top:1rem">12 Revenue Streams</h3>
+    <div class="two-col">
+      <div class="card">
+        <h3 style="font-size:.6rem">Platform &amp; Services</h3>
+        <ul class="risk-list">
+          <li>B2C subscriptions ($29&ndash;$497/mo)</li>
+          <li>Enterprise team assessments ($2,500&ndash;$15K/yr)</li>
+          <li>Coaching services ($300&ndash;$500/hr)</li>
+          <li>Book-to-system licensing ($5K&ndash;$25K per book)</li>
+          <li>White-label SaaS ($500&ndash;$2K/mo)</li>
+          <li>API marketplace access</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.6rem">Growth Engines</h3>
+        <ul class="risk-list">
+          <li>Coach certification program ($2,500/cert)</li>
+          <li>Church/nonprofit partnerships</li>
+          <li>Dating platform (whole-life matching)</li>
+          <li>Real estate appraisal index</li>
+          <li>FitCarna fitness &mdash; scaling to $65K/mo via gym affiliate coaching partnerships</li>
+          <li>Data licensing (anonymized insights)</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:1rem">Subscription Pricing (Live)</h3>
+    <div class="tier-grid">
+      <div class="tier">
+        <div class="tier-name">VictoryPath</div>
+        <div class="tier-price">$29</div>
+        <div class="tier-period">/month</div>
+      </div>
+      <div class="tier" style="border-color:rgba(212,168,71,.4)">
+        <div class="tier-badge">Most Popular</div>
+        <div class="tier-name">Value Builder</div>
+        <div class="tier-price">$47</div>
+        <div class="tier-period">/month</div>
+      </div>
+      <div class="tier">
+        <div class="tier-name">Victory VIP</div>
+        <div class="tier-price">$497</div>
+        <div class="tier-period">/month</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SLIDE 3: FUNDING — GRANULAR ALLOCATION      -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section page-break">
+    <h3>Use of Funds &mdash; Granular Deployment</h3>
+    <h2>Every Dollar Mapped From Day 1</h2>
+
+    <!-- TRANCHE 1: IMMEDIATE -->
+    <div class="highlight">
+      <div class="highlight-title">Tranche 1: First $50,000 &mdash; Immediate (Days 1&ndash;30)</div>
+      <p style="font-size:.75rem;color:#a1a1aa;margin-bottom:.6rem">Deploy within 30 days. Covers critical patent protection, mobile development kickoff, and initial marketing.</p>
+    </div>
+    <div class="card">
+      <div class="fund-bar">
+        <div class="fund-label">Patent Provisionals (5x)</div>
+        <div class="fund-track"><div class="fund-fill" style="width:35%">35%</div></div>
+        <div class="fund-amount">$17,500</div>
+      </div>
+      <div class="fund-bar">
+        <div class="fund-label">Mobile App Dev (Sprint 1)</div>
+        <div class="fund-track"><div class="fund-fill" style="width:30%">30%</div></div>
+        <div class="fund-amount">$15,000</div>
+      </div>
+      <div class="fund-bar">
+        <div class="fund-label">Paid Ads + Landing Pages</div>
+        <div class="fund-track"><div class="fund-fill" style="width:15%">15%</div></div>
+        <div class="fund-amount">$7,500</div>
+      </div>
+      <div class="fund-bar">
+        <div class="fund-label">Legal (Corp Governance)</div>
+        <div class="fund-track"><div class="fund-fill" style="width:10%">10%</div></div>
+        <div class="fund-amount">$5,000</div>
+      </div>
+      <div class="fund-bar">
+        <div class="fund-label">Infrastructure Scaling</div>
+        <div class="fund-track"><div class="fund-fill" style="width:10%">10%</div></div>
+        <div class="fund-amount">$5,000</div>
+      </div>
+    </div>
+
+    <!-- TRANCHE 2 -->
+    <div class="highlight">
+      <div class="highlight-title">Tranche 2: Next $100,000 &mdash; Growth (Months 2&ndash;4)</div>
+    </div>
+    <div class="card">
+      <div class="fund-bar">
+        <div class="fund-label">Mobile App Dev (Sprints 2&ndash;4)</div>
+        <div class="fund-track"><div class="fund-fill" style="width:35%">35%</div></div>
+        <div class="fund-amount">$35,000</div>
+      </div>
+      <div class="fund-bar">
+        <div class="fund-label">First 2 Hires (Part-Time)</div>
+        <div class="fund-track"><div class="fund-fill" style="width:25%">25%</div></div>
+        <div class="fund-amount">$25,000</div>
+      </div>
+      <div class="fund-bar">
+        <div class="fund-label">Enterprise Pilot Sales</div>
+        <div class="fund-track"><div class="fund-fill" style="width:15%">15%</div></div>
+        <div class="fund-amount">$15,000</div>
+      </div>
+      <div class="fund-bar">
+        <div class="fund-label">Content + Coaching Launch</div>
+        <div class="fund-track"><div class="fund-fill" style="width:15%">15%</div></div>
+        <div class="fund-amount">$15,000</div>
+      </div>
+      <div class="fund-bar">
+        <div class="fund-label">SOC 2 Prep + Security</div>
+        <div class="fund-track"><div class="fund-fill" style="width:10%">10%</div></div>
+        <div class="fund-amount">$10,000</div>
+      </div>
+    </div>
+
+    <!-- TRANCHE 3 -->
+    <div class="highlight">
+      <div class="highlight-title">Tranche 3: Scale Capital $1,600,000 &mdash; Months 5&ndash;18</div>
+      <p style="font-size:.75rem;color:#a1a1aa">Raised via syndicated investors through warm introductions. Startup Warrior initial capital proves the model.</p>
+    </div>
+    <div class="card">
+      <table class="proj-table">
+        <tr><th>Category</th><th>Amount</th><th>% of Tranche</th></tr>
+        <tr><td>Engineering Team (4 FTEs)</td><td>$480,000</td><td>30%</td></tr>
+        <tr><td>Sales + BD (Enterprise)</td><td>$320,000</td><td>20%</td></tr>
+        <tr><td>Marketing + User Acquisition</td><td>$256,000</td><td>16%</td></tr>
+        <tr><td>Patent Portfolio (Utility)</td><td>$80,000</td><td>5%</td></tr>
+        <tr><td>Coach Certification Program</td><td>$128,000</td><td>8%</td></tr>
+        <tr><td>Dating/Matching MVP</td><td>$160,000</td><td>10%</td></tr>
+        <tr><td>RE Appraisal Index Beta</td><td>$96,000</td><td>6%</td></tr>
+        <tr><td>Operating Reserve</td><td>$80,000</td><td>5%</td></tr>
+        <tr><td style="color:#D4A847;font-weight:700">Total Raise</td><td style="color:#D4A847;font-weight:700">$1,750,000</td><td style="color:#D4A847;font-weight:700">100%</td></tr>
+      </table>
+    </div>
+
+    <div class="card" style="border-color:rgba(74,222,128,.3)">
+      <h3 style="color:#4ade80">Path to Revenue with Just $50K</h3>
+      <div class="metric-row"><div class="metric-label">Month 1</div><div class="metric-value green">Provisional patent filed + mobile dev started</div></div>
+      <div class="metric-row"><div class="metric-label">Month 2</div><div class="metric-value green">First paid enterprise pilot ($2,500)</div></div>
+      <div class="metric-row"><div class="metric-label">Month 3</div><div class="metric-value green">100 B2C subscribers ($4,700 MRR)</div></div>
+      <div class="metric-row"><div class="metric-label">Month 4</div><div class="metric-value green">Coach certification opens ($2,500/cert)</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Month 6</div><div class="metric-value gold">Breakeven on $50K with $8K+ MRR</div></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SLIDE 4: MARKET + COMPETITIVE EDGE          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section page-break">
+    <h3>Market Opportunity</h3>
+    <h2>$243B+ Addressable Market Across 14 Verticals</h2>
+
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-num">$87B</div><div class="stat-label">Fitness</div></div>
+      <div class="stat"><div class="stat-num">$45B</div><div class="stat-label">Real Estate</div></div>
+      <div class="stat"><div class="stat-num">$22B</div><div class="stat-label">Corporate HR</div></div>
+      <div class="stat"><div class="stat-num">$9.6B</div><div class="stat-label">Dating</div></div>
+    </div>
+
+    <div class="card">
+      <h3>Why We Win</h3>
+      <div class="moat">
+        <div class="moat-icon">1</div>
+        <div class="moat-text">
+          <div class="moat-title">Multi-Pillar with Multiplier + Data Moat</div>
+          <div class="moat-desc">Every competitor scores one dimension. We score five and multiply them. No prior art exists for this architecture. User data compounds over time &mdash; every reassessment deepens the moat, making the platform more valuable and harder to replicate.</div>
+        </div>
+      </div>
+      <div class="moat">
+        <div class="moat-icon">2</div>
+        <div class="moat-text">
+          <div class="moat-title">Privacy-First Enterprise</div>
+          <div class="moat-desc">Users control per-pillar visibility. Employers get aggregate insights only. No competitor offers this granularity.</div>
+        </div>
+      </div>
+      <div class="moat">
+        <div class="moat-icon">3</div>
+        <div class="moat-text">
+          <div class="moat-title">Book-to-System Engine</div>
+          <div class="moat-desc">Any published book becomes a full coaching system. Zero prior art. Unlimited licensing potential.</div>
+        </div>
+      </div>
+      <div class="moat">
+        <div class="moat-icon">4</div>
+        <div class="moat-text">
+          <div class="moat-title">Cross-Vertical Data Moat (Compounding)</div>
+          <div class="moat-desc">Every user generates 80&ndash;120 scored data points across all life domains. At 100K users = 10M+ cross-dimensional data points that exist nowhere else. This data compounds with each reassessment cycle &mdash; longitudinal life-score data is the true defensible asset, not just IP.</div>
+        </div>
+      </div>
+      <div class="moat">
+        <div class="moat-icon">5</div>
+        <div class="moat-text">
+          <div class="moat-title">Autonomous AI Coaching</div>
+          <div class="moat-desc">Morning motivation + evening accountability delivered automatically from assessment scores. Zero marginal cost per user.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPETITIVE TABLE -->
+    <div class="card">
+      <h3>6+ Vertical Competitors &mdash; VTV Connects Them All</h3>
+      <p style="font-size:.75rem;color:#a1a1aa;margin-bottom:.6rem">Competitors exist in every vertical (BetterHelp, Noom, Hinge, etc.) but none connects assessment &rarr; coaching &rarr; dating &rarr; fitness in one platform.</p>
+      <table class="proj-table">
+        <tr><th>Company</th><th>Multi-Pillar</th><th>AI Coach</th><th>Privacy</th><th>Cross-Vertical</th></tr>
+        <tr><td>Gallup (CliftonStrengths)</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+        <tr><td>BetterUp</td><td>No</td><td>Partial</td><td>No</td><td>No</td></tr>
+        <tr><td>Noom</td><td>No</td><td>Partial</td><td>No</td><td>No</td></tr>
+        <tr><td>eHarmony</td><td>No</td><td>No</td><td>Partial</td><td>No</td></tr>
+        <tr><td>Culture Amp</td><td>Partial</td><td>No</td><td>No</td><td>No</td></tr>
+        <tr><td style="color:#D4A847;font-weight:700">Value to Victory</td><td style="color:#4ade80;font-weight:700">Yes (5+T)</td><td style="color:#4ade80;font-weight:700">Full Auto</td><td style="color:#4ade80;font-weight:700">Per-Pillar</td><td style="color:#4ade80;font-weight:700">14 Verticals</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SLIDE 5: LIVE DEMO LINKS — TEST MODE        -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section page-break">
+    <h3>Live Platform &mdash; Test Access</h3>
+    <h2>See Everything Running &mdash; Test Mode Templates</h2>
+    <p style="font-size:.78rem;color:#a1a1aa;margin-bottom:1rem">All links below are live production or test-mode dashboards. These demonstrate active infrastructure, not mockups.</p>
+
+    <div class="card">
+      <h3 style="font-size:.65rem;margin-bottom:.5rem">Public-Facing Sites</h3>
+      <div class="link-row">
+        <div><span class="link-name">Main Website</span><span class="link-badge badge-live">Live</span></div>
+        <a href="https://valuetovictory.com" class="link-url" target="_blank">valuetovictory.com</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">Assessment Platform</span><span class="link-badge badge-live">Live</span></div>
+        <a href="https://assessment.valuetovictory.com" class="link-url" target="_blank">assessment.valuetovictory.com</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">Founder Bio / Personal</span><span class="link-badge badge-live">Live</span></div>
+        <a href="https://shawnedecker.com" class="link-url" target="_blank">shawnedecker.com</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">FitCarna (Merger Partner)</span><span class="link-badge badge-live">Live</span></div>
+        <a href="https://fitcarna.com" class="link-url" target="_blank">fitcarna.com</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:.65rem;margin-bottom:.5rem">Assessment Flow (Test)</h3>
+      <div class="link-row">
+        <div><span class="link-name">Take Assessment</span><span class="link-badge badge-test">Test</span></div>
+        <a href="https://assessment.valuetovictory.com/assessment" class="link-url" target="_blank">assessment.valuetovictory.com/assessment</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">Member Dashboard</span><span class="link-badge badge-test">Test</span></div>
+        <a href="https://assessment.valuetovictory.com/member" class="link-url" target="_blank">assessment.valuetovictory.com/member</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">Score Visualization</span><span class="link-badge badge-test">Test</span></div>
+        <a href="https://assessment.valuetovictory.com/results" class="link-url" target="_blank">assessment.valuetovictory.com/results</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">Partner Portal</span><span class="link-badge badge-test">Test</span></div>
+        <a href="https://assessment.valuetovictory.com/partner" class="link-url" target="_blank">assessment.valuetovictory.com/partner</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:.65rem;margin-bottom:.5rem">Dashboards &amp; Admin (Demo Access)</h3>
+      <div class="link-row">
+        <div><span class="link-name">Admin Dashboard</span><span class="link-badge badge-demo">Demo</span></div>
+        <a href="https://assessment.valuetovictory.com/admin" class="link-url" target="_blank">assessment.valuetovictory.com/admin</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">Agent Dashboard</span><span class="link-badge badge-demo">Demo</span></div>
+        <a href="https://assessment.valuetovictory.com/agent-dashboard" class="link-url" target="_blank">assessment.valuetovictory.com/agent-dashboard</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">Analytics &amp; Reports</span><span class="link-badge badge-demo">Demo</span></div>
+        <a href="https://assessment.valuetovictory.com/analytics" class="link-url" target="_blank">assessment.valuetovictory.com/analytics</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">Couples/Dating Mode</span><span class="link-badge badge-demo">Demo</span></div>
+        <a href="https://assessment.valuetovictory.com/couples" class="link-url" target="_blank">assessment.valuetovictory.com/couples</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:.65rem;margin-bottom:.5rem">Payment Infrastructure (Stripe Live)</h3>
+      <div class="link-row">
+        <div><span class="link-name">VictoryPath ($29/mo)</span><span class="link-badge badge-live">Stripe</span></div>
+        <a href="https://buy.stripe.com/3cIfZgeIY9ecdND7g86oo0h" class="link-url" target="_blank">Stripe Checkout</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">Value Builder ($47/mo)</span><span class="link-badge badge-live">Stripe</span></div>
+        <a href="https://buy.stripe.com/3cIaEW6cs4XW24Vbwo6oo0i" class="link-url" target="_blank">Stripe Checkout</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">Victory VIP ($497/mo)</span><span class="link-badge badge-live">Stripe</span></div>
+        <a href="https://buy.stripe.com/28E8wO44kbmkdNDbwo6oo09" class="link-url" target="_blank">Stripe Checkout</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:.65rem;margin-bottom:.5rem">API &amp; Infrastructure</h3>
+      <div class="link-row">
+        <div><span class="link-name">API Health Check</span><span class="link-badge badge-live">Live</span></div>
+        <a href="https://assessment.valuetovictory.com/api/health" class="link-url" target="_blank">assessment.valuetovictory.com/api/health</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">Privacy Policy</span><span class="link-badge badge-live">Live</span></div>
+        <a href="https://valuetovictory.com/privacy" class="link-url" target="_blank">valuetovictory.com/privacy</a>
+      </div>
+      <div class="link-row">
+        <div><span class="link-name">Terms of Service</span><span class="link-badge badge-live">Live</span></div>
+        <a href="https://valuetovictory.com/terms" class="link-url" target="_blank">valuetovictory.com/terms</a>
+      </div>
+    </div>
+
+    <div class="highlight">
+      <div class="highlight-title">For Due Diligence Review</div>
+      <p style="font-size:.78rem;color:#d4d4d8">Full investor data room including cap table, financial projections, patent analysis, competitive research, architecture documentation, and NDA-protected technical details available upon request. Contact <a href="mailto:valuetovictory@gmail.com" style="color:#D4A847">valuetovictory@gmail.com</a> for access.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SLIDE 6: PROJECTIONS + EXIT                 -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section page-break">
+    <h3>Financial Projections</h3>
+    <h2>24-Month Revenue Forecast</h2>
+
+    <div class="card">
+      <table class="proj-table">
+        <tr><th>Metric</th><th>Month 6</th><th>Month 12</th><th>Month 18</th><th>Month 24</th></tr>
+        <tr><td>B2C Subscribers</td><td>250</td><td>1,000</td><td>3,000</td><td>7,500</td></tr>
+        <tr><td>Enterprise Seats</td><td>50</td><td>250</td><td>750</td><td>2,500</td></tr>
+        <tr><td>MRR</td><td>$18K</td><td>$85K</td><td>$280K</td><td>$720K</td></tr>
+        <tr><td style="color:#D4A847">ARR</td><td style="color:#D4A847">$216K</td><td style="color:#D4A847">$1.02M</td><td style="color:#D4A847">$3.36M</td><td style="color:#D4A847">$8.63M</td></tr>
+      </table>
+    </div>
+
+    <div class="highlight">
+      <div class="highlight-title">Bottom-Up Math (Not Top-Down Fantasy)</div>
+      <p style="font-size:.75rem;color:#d4d4d8;margin-bottom:.4rem">Projections built from unit economics, not TAM percentages:</p>
+      <div class="metric-row"><div class="metric-label">CAC (Blended)</div><div class="metric-value">$35&ndash;$60 via content + paid ads + referrals</div></div>
+      <div class="metric-row"><div class="metric-label">ARPU (B2C)</div><div class="metric-value">$42/mo blended across 3 tiers</div></div>
+      <div class="metric-row"><div class="metric-label">ARPU (Enterprise)</div><div class="metric-value">$208/seat/yr ($2,500&ndash;$15K contracts)</div></div>
+      <div class="metric-row"><div class="metric-label">Retention</div><div class="metric-value">Target 85%+ (coaching + reassessment loops drive stickiness)</div></div>
+      <div class="metric-row"><div class="metric-label">LTV:CAC Ratio</div><div class="metric-value gold">Target 6:1+ (industry benchmark 3:1)</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Infrastructure</div><div class="metric-value">$8&ndash;10K/mo at scale (Vercel, Neon DB, n8n, AI APIs)</div></div>
+    </div>
+
+    <h3 style="margin-top:1rem">Exit Scenarios &mdash; Probability-Weighted (Month 24&ndash;36)</h3>
+    <div class="card">
+      <table class="proj-table">
+        <tr><th>Scenario</th><th>Weight</th><th>Multiple</th><th>Investor Return ($350K raise)</th></tr>
+        <tr><td>Downside</td><td>25%</td><td>2&ndash;3x</td><td>$700K&ndash;$1.05M</td></tr>
+        <tr><td>Base</td><td>40%</td><td>5&ndash;8x</td><td>$1.75M&ndash;$2.8M</td></tr>
+        <tr><td>Upside</td><td>25%</td><td>10&ndash;15x</td><td>$3.5M&ndash;$5.25M</td></tr>
+        <tr><td style="color:#D4A847">Breakout</td><td style="color:#D4A847">10%</td><td style="color:#D4A847">20x+</td><td style="color:#D4A847">$7M+</td></tr>
+      </table>
+    </div>
+    <div class="highlight">
+      <div class="highlight-title">Downside Protection</div>
+      <p style="font-size:.78rem;color:#d4d4d8">Even in the downside scenario, FitCarna&rsquo;s $12K+/mo live revenue, existing platform infrastructure ($300&ndash;$500K replacement value), and 10 patentable innovations provide tangible asset backing. Revenue-sharing distributions begin pre-exit.</p>
+    </div>
+
+    <div class="card" style="border-color:rgba(74,222,128,.3)">
+      <h3 style="color:#4ade80">Investor Returns at Seed Check ($50K&ndash;$150K)</h3>
+      <table class="proj-table">
+        <tr><th>Investment</th><th>Equity</th><th>Downside (2&ndash;3x)</th><th>Base (5&ndash;8x)</th><th>Upside (10&ndash;15x)</th></tr>
+        <tr><td>$50,000</td><td>~0.71%</td><td>$100K&ndash;$150K</td><td>$250K&ndash;$400K</td><td>$500K&ndash;$750K</td></tr>
+        <tr><td>$100,000</td><td>~1.43%</td><td>$200K&ndash;$300K</td><td>$500K&ndash;$800K</td><td>$1M&ndash;$1.5M</td></tr>
+        <tr><td style="color:#D4A847">$150,000</td><td style="color:#D4A847">~2.14%</td><td style="color:#D4A847">$300K&ndash;$450K</td><td style="color:#D4A847">$750K&ndash;$1.2M</td><td style="color:#D4A847">$1.5M&ndash;$2.25M</td></tr>
+      </table>
+      <p style="font-size:.7rem;color:#71717a;margin-top:.4rem">Based on $7M post-money valuation. Plus revenue sharing distributions received pre-exit. Downside scenario still returns capital due to tangible asset backing.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SLIDE 7: TEAM + CTA                         -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section page-break">
+    <h3>The Team</h3>
+
+    <div class="card">
+      <div style="font-weight:700;font-size:1rem;margin-bottom:.2rem">Shawn E. Decker</div>
+      <div style="font-size:.8rem;color:#D4A847;margin-bottom:.5rem">Founder &amp; CEO</div>
+      <div class="metric-row"><div class="metric-label">Military</div><div class="metric-value">U.S. Navy Veteran &mdash; Aviation Maintenance (1998&ndash;2002)</div></div>
+      <div class="metric-row"><div class="metric-label">Professional</div><div class="metric-value">Licensed Real Estate Appraiser &mdash; 23+ years</div></div>
+      <div class="metric-row"><div class="metric-label">Author</div><div class="metric-value">&ldquo;Running From Miracles&rdquo; &mdash; published author</div></div>
+      <div class="metric-row"><div class="metric-label">Technical</div><div class="metric-value">Built entire platform &mdash; 88 endpoints, 39 tables, 12 microservices</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Domain</div><div class="metric-value">7+ TV networks, crisis-to-breakthrough lived experience</div></div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700;font-size:.85rem;margin-bottom:.2rem">Cameron Decker &mdash; Strategic Partner (FitCarna)</div>
+      <div style="font-size:.75rem;color:#a1a1aa">Fitness assessment integration, Carna Coaching platform &mdash; 300+ clients, 12K+ lbs lost, $12K+/mo revenue, scaling to $65K/mo via gym affiliate partnerships</div>
+    </div>
+
+    <div class="card">
+      <h3>IP Protection + Data Moat</h3>
+      <div class="metric-row"><div class="metric-label">Patentable Innovations</div><div class="metric-value gold">10 identified, 5 Tier 1 (strong novelty) &mdash; provisional patents filed</div></div>
+      <div class="metric-row"><div class="metric-label">Top Priority</div><div class="metric-value green">Book-to-System Pipeline &mdash; zero prior art</div></div>
+      <div class="metric-row"><div class="metric-label">Filing Budget</div><div class="metric-value">$17,500 (5 provisionals) &rarr; $87.5K full portfolio</div></div>
+      <div class="metric-row"><div class="metric-label">True Defensibility</div><div class="metric-value gold">Compounding cross-pillar user data is the primary moat &mdash; patents protect, data defends</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Valuation Impact</div><div class="metric-value gold">Patents + data moat = 2&ndash;3x higher startup valuation vs. IP alone</div></div>
+    </div>
+
+    <!-- THIRD-PARTY VALIDATION -->
+    <div class="card" style="border-color:rgba(74,222,128,.3);margin-top:1rem">
+      <h3 style="color:#4ade80">Third-Party Validation</h3>
+      <div class="metric-row"><div class="metric-label">External Launches</div><div class="metric-value green">4&ndash;5 companies building on VTV assessment engine</div></div>
+      <div class="metric-row"><div class="metric-label">Case Study</div><div class="metric-value green">Sandra Aldridge &mdash; live coaching client, assessment-driven transformation</div></div>
+      <div class="metric-row"><div class="metric-label">Live Revenue Proof</div><div class="metric-value green">FitCarna: 300+ clients, 12K+ lbs lost, $12K+/mo active revenue</div></div>
+      <div class="metric-row"><div class="metric-label">Pre-Investment Platform Value</div><div class="metric-value gold">$300K&ndash;$500K replacement cost (88 endpoints, 39 tables, 12 microservices)</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Data Moat</div><div class="metric-value gold">Cross-pillar user data compounds with every assessment &mdash; no competitor has this dataset</div></div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-box">
+      <h2>Ready for Due Diligence</h2>
+      <p>Live product. Active revenue. 10 innovations (provisional patents filed). 14 market verticals. Compounding data moat. Built by the founder, ready to scale with capital.</p>
+      <a href="mailto:valuetovictory@gmail.com?subject=Startup%20Warrior%20-%20Investment%20Interest" class="btn-gold">Request Data Room Access</a>
+      <a href="https://assessment.valuetovictory.com/assessment" class="btn-ghost" target="_blank">Try the Assessment</a>
+    </div>
+
+    <div class="disclaimer">
+      <strong>Important Legal Notice:</strong> This document is provided for informational purposes only and does not constitute an offer to sell or a solicitation of an offer to buy any securities. Any investment in Value to Victory, LLC involves significant risks including the potential loss of the entire investment. Past performance is not indicative of future results. Financial projections are forward-looking statements based on current assumptions and are not guarantees. Prospective investors should conduct their own due diligence and consult with legal, financial, and tax advisors before making any investment decision. This document is confidential and intended solely for the named recipient.
+    </div>
+  </div>
+
+  <!-- PRINT BUTTON + FOOTER -->
+  <div style="text-align:center;margin:1.5rem 0" class="no-print">
+    <button onclick="window.print()" style="background:none;border:1px solid #27272a;color:#a1a1aa;padding:.6rem 1.5rem;border-radius:.5rem;font-family:inherit;font-size:.8rem;cursor:pointer;margin:.25rem">Print / Save as PDF</button>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2026 Value to Victory, LLC. All rights reserved.</p>
+    <p style="margin-top:.4rem"><a href="https://valuetovictory.com">valuetovictory.com</a> &middot; <a href="https://assessment.valuetovictory.com">assessment platform</a> &middot; <a href="https://shawnedecker.com">shawnedecker.com</a></p>
+    <p style="margin-top:.6rem;font-size:.6rem;color:#52525b">Prepared for Startup Warrior Founder Cohort. Confidential.</p>
+  </div>
+
+</div>
+</body>
+</html>
