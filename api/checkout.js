@@ -155,6 +155,11 @@ module.exports = async (req, res) => {
               `;
             }
             console.log('[checkout] Tier updated:', email, '→', tier, 'contact:', contactId);
+
+            // Sync dating profile payment status
+            try {
+              await sql`UPDATE dating_profiles SET is_paid = true, stripe_subscription_id = ${subscriptionId} WHERE contact_id = ${contactId}`;
+            } catch(e) { /* dating_profiles may not exist yet — that's OK */ }
           }
         }
       }
@@ -171,6 +176,11 @@ module.exports = async (req, res) => {
             updated_at = NOW()
           WHERE stripe_subscription_id = ${subscriptionId}
         `;
+
+        // Sync dating profile payment status on cancellation
+        try {
+          await sql`UPDATE dating_profiles SET is_paid = false, stripe_subscription_id = NULL WHERE stripe_subscription_id = ${subscriptionId}`;
+        } catch(e) {}
       }
 
       // Handle subscription updated (tier change)

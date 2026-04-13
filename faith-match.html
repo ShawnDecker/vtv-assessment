@@ -1038,7 +1038,7 @@ function addPhoto(idx) {
     reader.onload = (ev) => {
       // Resize to max 800px wide for storage efficiency
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         const canvas = document.createElement('canvas');
         const maxW = 800, maxH = 1200;
         let w = img.width, h = img.height;
@@ -1047,9 +1047,35 @@ function addPhoto(idx) {
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+        // Update UI immediately
         photoUrls[idx] = dataUrl;
         const slots = document.querySelectorAll('#photo-grid .photo-slot');
         slots[idx].innerHTML = `<img src="${dataUrl}" alt="Photo ${idx+1}" /><div class="remove" onclick="event.stopPropagation();removePhoto(${idx})">x</div>`;
+
+        // Upload to server if user has a token (profile exists)
+        const tk = localStorage.getItem('vtv_token');
+        if (tk) {
+          try {
+            const resp = await fetch('/api/dating/upload-photo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk },
+              body: JSON.stringify({ photoBase64: dataUrl, photoIndex: idx })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              toast(data.error || 'Photo upload failed');
+            } else {
+              // Sync server photos back to local array
+              if (data.photos) {
+                data.photos.forEach((p, i) => { photoUrls[i] = p || ''; });
+              }
+            }
+          } catch (err) {
+            console.error('Photo upload error:', err);
+            toast('Photo saved locally — will sync when profile is saved');
+          }
+        }
       };
       img.src = ev.target.result;
     };
@@ -1061,6 +1087,16 @@ function removePhoto(idx) {
   photoUrls[idx] = '';
   const slots = document.querySelectorAll('#photo-grid .photo-slot');
   slots[idx].innerHTML = '+';
+
+  // Remove from server if user has a token
+  const tk = localStorage.getItem('vtv_token');
+  if (tk) {
+    fetch('/api/dating/remove-photo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk },
+      body: JSON.stringify({ photoIndex: idx })
+    }).catch(err => console.error('Photo remove error:', err));
+  }
 }
 
 async function submitProfile() {
@@ -1195,10 +1231,18 @@ function createCard(p, isTop) {
   const sharedInt = p.shared_interests || [];
   const sharedCount = sharedRec.length + sharedInt.length;
 
+  const compat = p.compatibility != null ? p.compatibility : null;
+  const cb = p.compatibilityBreakdown || {};
+  const compatColor = compat >= 75 ? '#22c55e' : compat >= 50 ? '#D4A847' : compat >= 25 ? '#f97316' : '#ef4444';
+
   card.innerHTML = `
     <div class="card-photo ${isBlurred ? 'blurred' : ''}">
       <img src="${mainPhoto}" alt="${p.display_name}" onerror="this.src='data:image/svg+xml,${encodeURIComponent('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"400\" height=\"400\"><rect fill=\"#27272a\" width=\"400\" height=\"400\"/><text x=\"200\" y=\"210\" text-anchor=\"middle\" fill=\"#71717a\" font-size=\"48\">?</text></svg>')}'" />
       ${isBlurred ? '<div class="blur-badge">Match on interests to reveal photos</div>' : ''}
+      ${compat !== null ? `<div style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.75);border:2px solid ${compatColor};border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:5;">
+        <span style="font-size:1.1rem;font-weight:800;color:${compatColor};line-height:1;">${compat}%</span>
+        <span style="font-size:0.5rem;color:#a1a1aa;line-height:1;">match</span>
+      </div>` : ''}
       <div class="card-overlay">
         <div class="swipe-label like" id="label-like-${p.id}">LIKE</div>
         <div class="swipe-label nope" id="label-nope-${p.id}">NOPE</div>
@@ -1212,6 +1256,13 @@ function createCard(p, isTop) {
         ${p.location_city ? `<span class="card-tag">${p.location_city}${p.show_distance && p.distance_miles !== null ? ' · ' + p.distance_miles + 'mi' : ''}</span>` : ''}
         ${sharedCount > 0 ? `<span class="shared-badge">${sharedCount} shared interest${sharedCount > 1 ? 's' : ''}</span>` : ''}
       </div>
+      ${compat !== null ? `<div style="display:flex;gap:0.4rem;margin:0.4rem 0;font-size:0.65rem;color:var(--muted);">
+        <span title="P.I.N.K. Pillar Alignment">Values ${cb.pillarAlignment || 0}%</span>
+        <span>·</span>
+        <span title="Shared Interest Overlap">Interests ${cb.interestOverlap || 0}%</span>
+        <span>·</span>
+        <span title="Preference Match (faith, age, distance)">Prefs ${cb.preferenceMatch || 0}%</span>
+      </div>` : ''}
       ${p.bio ? `<div class="card-bio">${p.bio}</div>` : ''}
     </div>
     <div class="pink-bar" title="P.I.N.K. Assessment">

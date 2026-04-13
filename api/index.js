@@ -883,8 +883,8 @@ module.exports = async (req, res) => {
         selectedQuestions.push(...shuffle(picked));
       }
 
-      // Handle overlay questions for relationship/leadership modes (extensive only)
-      if (depth === 'extensive' && (mode === 'relationship' || mode === 'leadership')) {
+      // Handle overlay questions for relationship/leadership/dating modes (extensive only)
+      if (depth === 'extensive' && (mode === 'relationship' || mode === 'leadership' || mode === 'dating')) {
         const modeOverlays = overlayQuestions.filter(q => q.overlay_type === mode);
         const unansweredOverlays = shuffle(modeOverlays.filter(q => !answeredIds.includes(q.id)));
         const answeredOverlays = shuffle(modeOverlays.filter(q => answeredIds.includes(q.id)));
@@ -2713,6 +2713,51 @@ Don't guess. Run the system.
         }
       }
       return res.json({ results, added: results.filter(r => r.success).length, failed: results.filter(r => r.error).length });
+    }
+
+    // POST /api/admin/seed-dating-questions — One-time seeder for dating overlay questions
+    if (req.method === 'POST' && url === '/admin/seed-dating-questions') {
+      const datingQuestions = [
+        { id: 'dating_overlay_1', pillar: 'people', sub: 'faith_alignment', fieldName: 'datingFaithAlignment', question: 'How important is shared faith or spiritual values when choosing a partner?' },
+        { id: 'dating_overlay_2', pillar: 'people', sub: 'dating_communication', fieldName: 'datingCommunication', question: 'I communicate my relationship expectations clearly and early.' },
+        { id: 'dating_overlay_3', pillar: 'influence', sub: 'dating_discernment', fieldName: 'datingDiscernment', question: "I can identify red flags in a potential partner's values before getting emotionally invested." },
+        { id: 'dating_overlay_4', pillar: 'time', sub: 'dating_lifestyle', fieldName: 'datingLifestyle', question: "How aligned are your daily habits with the lifestyle you'd want in a shared home?" },
+        { id: 'dating_overlay_5', pillar: 'numbers', sub: 'dating_financial_honesty', fieldName: 'datingFinancialHonesty', question: 'I am financially transparent about my situation when dating gets serious.' },
+        { id: 'dating_overlay_6', pillar: 'time', sub: 'dating_patience', fieldName: 'datingPatience', question: "I invest time getting to know someone's character before committing." },
+        { id: 'dating_overlay_7', pillar: 'knowledge', sub: 'dating_wisdom', fieldName: 'datingWisdom', question: 'I understand the difference between attraction and long-term compatibility.' },
+        { id: 'dating_overlay_8', pillar: 'people', sub: 'dating_boundaries', fieldName: 'datingBoundaries', question: 'I have clear, non-negotiable standards for how a partner treats me.' },
+        { id: 'dating_overlay_9', pillar: 'influence', sub: 'dating_independence', fieldName: 'datingIndependence', question: 'I can maintain my personal growth goals while pursuing a relationship.' },
+        { id: 'dating_overlay_10', pillar: 'numbers', sub: 'dating_financial_values', fieldName: 'datingFinancialValues', question: "I evaluate a potential partner's relationship with money, not just their income." },
+      ];
+
+      const opts = JSON.stringify([
+        { value: 1, label: 'Strongly Disagree' },
+        { value: 2, label: 'Disagree' },
+        { value: 3, label: 'Neutral' },
+        { value: 4, label: 'Agree' },
+        { value: 5, label: 'Strongly Agree' },
+      ]);
+
+      const results = [];
+      for (const q of datingQuestions) {
+        try {
+          await sql`INSERT INTO question_bank (id, pillar, sub_category, field_name, question, description, options, is_overlay, overlay_type, is_active, sort_order)
+            VALUES (${q.id}, ${q.pillar}, ${q.sub}, ${q.fieldName}, ${q.question}, '', ${opts}::jsonb, true, 'dating', true, 0)
+            ON CONFLICT (id) DO UPDATE SET
+              question = EXCLUDED.question,
+              pillar = EXCLUDED.pillar,
+              sub_category = EXCLUDED.sub_category,
+              field_name = EXCLUDED.field_name,
+              options = EXCLUDED.options,
+              is_overlay = true,
+              overlay_type = 'dating',
+              is_active = true`;
+          results.push({ id: q.id, success: true });
+        } catch (e) {
+          results.push({ id: q.id, error: e.message });
+        }
+      }
+      return res.json({ message: 'Dating overlay questions seeded', results, added: results.filter(r => r.success).length, failed: results.filter(r => r.error).length });
     }
 
     // GET /api/benchmarks?assessmentId={id}

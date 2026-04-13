@@ -137,9 +137,13 @@ module.exports = async (req, res) => {
         status TEXT DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed', 'expired')),
         baseline_matrix_a INTEGER REFERENCES relationship_matrix(id),
         baseline_matrix_b INTEGER REFERENCES relationship_matrix(id),
+        challenge_mode TEXT DEFAULT 'couple' CHECK (challenge_mode IN ('couple', 'dating')),
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
+
+    // Add challenge_mode column if table already exists without it
+    await sql`ALTER TABLE couple_challenges ADD COLUMN IF NOT EXISTS challenge_mode TEXT DEFAULT 'couple' CHECK (challenge_mode IN ('couple', 'dating'))`;
 
     await sql`CREATE INDEX IF NOT EXISTS idx_couple_challenges_profile_a ON couple_challenges(couple_profile_id_a)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_couple_challenges_profile_b ON couple_challenges(couple_profile_id_b)`;

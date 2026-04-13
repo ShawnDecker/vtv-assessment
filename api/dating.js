@@ -304,7 +304,7 @@ module.exports = async (req, res) => {
     // The trial/lockout check below handles the enforcement
 
     // ===== CHECK: Access gating =====
-    if (!['profile', 'toggle-active', 'location'].includes(path)) {
+    if (!['profile', 'toggle-active', 'location', 'upload-photo', 'remove-photo'].includes(path)) {
       const trialCheck = await sql`SELECT trial_start, trial_ends, is_paid, email_verified FROM dating_profiles WHERE contact_id = ${user.contactId} LIMIT 1`;
       if (trialCheck.length) {
         const { trial_start, trial_ends, is_paid } = trialCheck[0];
@@ -433,12 +433,17 @@ module.exports = async (req, res) => {
       if (!myProfile.length) return res.status(404).json({ error: 'Create a profile first' });
       const me = myProfile[0];
 
+      // Fetch my latest assessment scores for compatibility
+      const myAssessment = await sql`SELECT time_total, people_total, influence_total, numbers_total, knowledge_total FROM assessments WHERE contact_id = ${user.contactId} ORDER BY id DESC LIMIT 1`;
+      const myScores = myAssessment.length ? myAssessment[0] : null;
+
       const profiles = await sql`
         SELECT dp.id, dp.display_name, dp.age, dp.gender, dp.faith, dp.denomination,
                dp.faith_importance, dp.bio, dp.photo_urls, dp.body_type,
                dp.height_inches, dp.recreation_interests, dp.general_interests,
                dp.location_city, dp.location_state, dp.location_lat, dp.location_lng,
                dp.show_on_map, dp.show_distance, dp.last_active,
+               dp.age_min, dp.age_max, dp.search_radius_miles,
                a.time_total, a.people_total, a.influence_total, a.numbers_total, a.knowledge_total,
                a.master_score, a.score_range
         FROM dating_profiles dp
@@ -455,11 +460,10 @@ module.exports = async (req, res) => {
           AND dp.id NOT IN (SELECT swiped_id FROM dating_swipes WHERE swiper_id = ${me.id})
           AND dp.id NOT IN (SELECT blocked_id FROM dating_blocks WHERE blocker_id = ${me.id})
           AND dp.id NOT IN (SELECT blocker_id FROM dating_blocks WHERE blocked_id = ${me.id})
-        ORDER BY dp.last_active DESC
-        LIMIT 20
+        LIMIT 50
       `;
 
-      // Calculate shared interests for blur logic
+      // Calculate shared interests, distance, and compatibility
       const enriched = profiles.map(p => {
         const myRec = me.recreation_interests || [];
         const theirRec = p.recreation_interests || [];
@@ -479,6 +483,59 @@ module.exports = async (req, res) => {
           distance = Math.round(R * 2 * Math.atan2(Math.sqrt(a2), Math.sqrt(1-a2)));
         }
 
+        // === COMPATIBILITY SCORING ===
+        let pillarScore = 0;
+        let interestScore = 0;
+        let preferenceScore = 0;
+
+        // 1. Pillar Alignment (0-100): how close are the 5 P.I.N.K. pillar scores
+        if (myScores && p.time_total != null) {
+          const pillars = ['time_total', 'people_total', 'influence_total', 'numbers_total', 'knowledge_total'];
+          let pillarSum = 0;
+          for (const pillar of pillars) {
+            const diff = Math.abs((myScores[pillar] || 0) - (p[pillar] || 0));
+            pillarSum += Math.max(0, 100 - diff * 2);
+          }
+          pillarScore = Math.round(pillarSum / 5);
+        } else {
+          pillarScore = 50; // neutral if no assessment data
+        }
+
+        // 2. Interest Overlap (0-100): shared interests / total unique interests
+        const allMyInterests = [...myRec, ...myGen];
+        const allTheirInterests = [...theirRec, ...theirGen];
+        const allShared = [...sharedRec, ...sharedGen];
+        const uniqueSet = new Set([...allMyInterests, ...allTheirInterests]);
+        if (uniqueSet.size > 0) {
+          interestScore = Math.round((allShared.length / uniqueSet.size) * 100);
+        } else {
+          interestScore = 0;
+        }
+
+        // 3. Preference Match (0-100): faith + age range + distance
+        // +40 if same faith
+        if (me.faith && p.faith && me.faith.toLowerCase() === p.faith.toLowerCase()) {
+          preferenceScore += 40;
+        }
+        // +30 if age within their preference range
+        if (me.age && p.age_min != null && p.age_max != null) {
+          if (me.age >= p.age_min && me.age <= p.age_max) {
+            preferenceScore += 30;
+          }
+        } else {
+          preferenceScore += 15; // partial credit if no age prefs set
+        }
+        // +30 if within search radius
+        if (distance !== null && me.search_radius_miles) {
+          if (distance <= me.search_radius_miles) {
+            preferenceScore += 30;
+          }
+        } else {
+          preferenceScore += 15; // partial credit if no location data
+        }
+
+        const compatibility = Math.round(pillarScore * 0.4 + interestScore * 0.3 + preferenceScore * 0.3);
+
         return {
           ...p,
           shared_recreation: sharedRec,
@@ -486,7 +543,13 @@ module.exports = async (req, res) => {
           has_interest_match: hasInterestMatch,
           photos_blurred: !hasInterestMatch, // blur until interest match
           distance_miles: distance,
-          show_distance: p.show_distance
+          show_distance: p.show_distance,
+          compatibility,
+          compatibilityBreakdown: {
+            pillarAlignment: pillarScore,
+            interestOverlap: interestScore,
+            preferenceMatch: preferenceScore
+          }
         };
       }).filter(p => {
         // Filter by search radius if location set
@@ -496,7 +559,13 @@ module.exports = async (req, res) => {
         return true;
       });
 
-      return res.json({ profiles: enriched, count: enriched.length });
+      // Sort by compatibility DESC (best matches first)
+      enriched.sort((a, b) => b.compatibility - a.compatibility);
+
+      // Return top 20
+      const results = enriched.slice(0, 20);
+
+      return res.json({ profiles: results, count: results.length });
     }
 
     // ===== SWIPE =====
@@ -681,6 +750,74 @@ module.exports = async (req, res) => {
         WHERE contact_id = ${user.contactId}
       `;
       return res.json({ ok: true });
+    }
+
+    // ===== UPLOAD PHOTO =====
+    if (path === 'upload-photo' && req.method === 'POST') {
+      const { photoBase64, photoIndex } = req.body;
+      if (photoBase64 === undefined || photoIndex === undefined) {
+        return res.status(400).json({ error: 'photoBase64 and photoIndex required' });
+      }
+      if (typeof photoIndex !== 'number' || photoIndex < 0 || photoIndex > 5) {
+        return res.status(400).json({ error: 'photoIndex must be 0-5' });
+      }
+
+      // Validate base64 image — must start with data:image/
+      if (!photoBase64.startsWith('data:image/')) {
+        return res.status(400).json({ error: 'Invalid image format. Must be a base64 data URL (data:image/...)' });
+      }
+
+      // Check size — base64 is ~33% larger than binary, so 2MB binary ~ 2.67MB base64
+      const sizeBytes = Math.ceil((photoBase64.length - photoBase64.indexOf(',') - 1) * 0.75);
+      if (sizeBytes > 2 * 1024 * 1024) {
+        return res.status(400).json({ error: 'Photo must be under 2MB' });
+      }
+
+      // Get current profile
+      const profile = await sql`SELECT id, photo_urls FROM dating_profiles WHERE contact_id = ${user.contactId}`;
+      if (!profile.length) return res.status(404).json({ error: 'No dating profile found' });
+
+      // Build photos array (up to 6 slots)
+      let photos = profile[0].photo_urls || [];
+      if (!Array.isArray(photos)) photos = [];
+      // Ensure array is at least photoIndex+1 long
+      while (photos.length <= photoIndex) photos.push('');
+      // Cap at 6
+      photos = photos.slice(0, 6);
+      photos[photoIndex] = photoBase64;
+
+      const photosJson = JSON.stringify(photos);
+      await sql`
+        UPDATE dating_profiles SET photo_urls = ${photosJson}::jsonb, updated_at = now()
+        WHERE contact_id = ${user.contactId}
+      `;
+
+      return res.json({ ok: true, photos, message: 'Photo uploaded' });
+    }
+
+    // ===== REMOVE PHOTO =====
+    if (path === 'remove-photo' && req.method === 'POST') {
+      const { photoIndex } = req.body;
+      if (typeof photoIndex !== 'number' || photoIndex < 0 || photoIndex > 5) {
+        return res.status(400).json({ error: 'photoIndex must be 0-5' });
+      }
+
+      const profile = await sql`SELECT id, photo_urls FROM dating_profiles WHERE contact_id = ${user.contactId}`;
+      if (!profile.length) return res.status(404).json({ error: 'No dating profile found' });
+
+      let photos = profile[0].photo_urls || [];
+      if (!Array.isArray(photos)) photos = [];
+      if (photoIndex < photos.length) {
+        photos[photoIndex] = '';
+      }
+
+      const photosJson = JSON.stringify(photos);
+      await sql`
+        UPDATE dating_profiles SET photo_urls = ${photosJson}::jsonb, updated_at = now()
+        WHERE contact_id = ${user.contactId}
+      `;
+
+      return res.json({ ok: true, photos, message: 'Photo removed' });
     }
 
     return res.status(404).json({ error: 'Not found' });

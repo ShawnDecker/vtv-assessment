@@ -705,24 +705,31 @@ module.exports = async (req, res) => {
 
       const partnerProfileId = partnerProfile.length > 0 ? partnerProfile[0].id : null;
 
+      // Ensure challenge_mode column exists (safe for existing DBs)
+      await sql`ALTER TABLE couple_challenges ADD COLUMN IF NOT EXISTS challenge_mode TEXT DEFAULT 'couple'`;
+
       const rows = await sql`
         INSERT INTO couple_challenges (
           couple_profile_id_a, couple_profile_id_b,
           start_date, end_date,
-          baseline_matrix_a, baseline_matrix_b
+          baseline_matrix_a, baseline_matrix_b,
+          challenge_mode
         ) VALUES (
           ${profile[0].id}, ${partnerProfileId},
           ${startDate}, ${endDate},
           ${baselineA.length > 0 ? baselineA[0].id : null},
-          ${baselineB.length > 0 ? baselineB[0].id : null}
+          ${baselineB.length > 0 ? baselineB[0].id : null},
+          ${mode}
         ) RETURNING *
       `;
 
+      const promptSet = mode === 'dating' ? DATING_CHALLENGE_PROMPTS : COUPLE_CHALLENGE_PROMPTS;
       return res.json({
         success: true,
         challenge: rows[0],
+        challengeMode: mode,
         durationDays: days,
-        totalPrompts: COUPLE_CHALLENGE_PROMPTS.length
+        totalPrompts: promptSet.length
       });
     }
 
@@ -758,13 +765,16 @@ module.exports = async (req, res) => {
         WHERE challenge_id = ${ch.id} AND contact_id = ${contactId} AND completed = true
       `;
 
+      const statusMode = ch.challenge_mode || 'couple';
+      const statusPromptSet = statusMode === 'dating' ? DATING_CHALLENGE_PROMPTS : COUPLE_CHALLENGE_PROMPTS;
       return res.json({
         active: true,
         challenge: ch,
+        challengeMode: statusMode,
         currentDay,
         daysElapsed,
         completedResponses: Number(completedCount[0]?.cnt || 0),
-        totalPrompts: COUPLE_CHALLENGE_PROMPTS.length
+        totalPrompts: statusPromptSet.length
       });
     }
 
@@ -782,7 +792,11 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'dayNumber must be between 1 and 30' });
       }
 
-      const promptText = COUPLE_CHALLENGE_PROMPTS[dayNumber - 1];
+      // Look up challenge mode to use correct prompt set
+      const respondChallenge = await sql`SELECT challenge_mode FROM couple_challenges WHERE id = ${challengeId} LIMIT 1`;
+      const respondMode = respondChallenge.length > 0 && respondChallenge[0].challenge_mode === 'dating' ? 'dating' : 'couple';
+      const respondPromptSet = respondMode === 'dating' ? DATING_CHALLENGE_PROMPTS : COUPLE_CHALLENGE_PROMPTS;
+      const promptText = respondPromptSet[dayNumber - 1];
 
       const rows = await sql`
         INSERT INTO couple_challenge_responses (challenge_id, contact_id, day_number, prompt_text, response_text, completed, completed_at)
@@ -802,7 +816,15 @@ module.exports = async (req, res) => {
       const params = new URL('http://x' + req.url).searchParams;
       const challengeId = params.get('challengeId');
       const contactId = params.get('contactId');
+      const modeParam = params.get('mode');
       if (!challengeId || !contactId) return res.status(400).json({ error: 'challengeId and contactId are required' });
+
+      // Look up challenge mode from DB, fall back to query param, then default to 'couple'
+      const challengeRow = await sql`SELECT challenge_mode FROM couple_challenges WHERE id = ${challengeId} LIMIT 1`;
+      const promptMode = challengeRow.length > 0 && challengeRow[0].challenge_mode
+        ? challengeRow[0].challenge_mode
+        : (modeParam === 'dating' ? 'dating' : 'couple');
+      const promptSet = promptMode === 'dating' ? DATING_CHALLENGE_PROMPTS : COUPLE_CHALLENGE_PROMPTS;
 
       const responses = await sql`
         SELECT * FROM couple_challenge_responses
@@ -815,7 +837,7 @@ module.exports = async (req, res) => {
         responseMap[r.day_number] = r;
       }
 
-      const prompts = COUPLE_CHALLENGE_PROMPTS.map((prompt, i) => {
+      const prompts = promptSet.map((prompt, i) => {
         const dayNum = i + 1;
         const existing = responseMap[dayNum];
         return {
@@ -827,7 +849,7 @@ module.exports = async (req, res) => {
         };
       });
 
-      return res.json({ prompts });
+      return res.json({ challengeMode: promptMode, prompts });
     }
 
     // ============================================================
