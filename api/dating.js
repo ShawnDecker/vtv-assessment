@@ -264,14 +264,19 @@ module.exports = async (req, res) => {
         trialDaysLeft = Math.max(0, Math.ceil((endsAt - new Date()) / (1000 * 60 * 60 * 24)));
       }
 
+      const hasAssessmentDone = assessment.length > 0;
+      const trialExpired = profile.length > 0 && !trialActive && !(profile[0].is_paid);
+
       return res.json({
         eligible: true,
-        hasAssessment: true,
+        hasAssessment: hasAssessmentDone,
         emailVerified: isVerified,
         hasProfile: profile.length > 0,
         trialActive,
         trialDaysLeft,
-        isPaid: profile.length > 0 && profile[0].is_paid
+        trialExpired,
+        isPaid: profile.length > 0 && profile[0].is_paid,
+        plan: trialExpired ? (hasAssessmentDone ? 'monthly_29' : 'daily_097') : 'trial'
       });
     }
 
@@ -297,11 +302,29 @@ module.exports = async (req, res) => {
 
     // ===== CHECK: Trial or paid status =====
     if (!['profile', 'toggle-active', 'location'].includes(path)) {
-      const trialCheck = await sql`SELECT trial_ends, is_paid FROM dating_profiles WHERE contact_id = ${user.contactId} LIMIT 1`;
+      const trialCheck = await sql`SELECT trial_ends, is_paid, email_verified FROM dating_profiles WHERE contact_id = ${user.contactId} LIMIT 1`;
       if (trialCheck.length) {
         const { trial_ends, is_paid } = trialCheck[0];
         if (!is_paid && trial_ends && new Date(trial_ends) < new Date()) {
-          return res.status(402).json({ error: 'Your 30-day free trial has ended. Upgrade to continue.', trialExpired: true });
+          // Trial expired — check if they completed assessment
+          const hasAssessment = await sql`SELECT id FROM assessments WHERE contact_id = ${user.contactId} LIMIT 1`;
+          if (hasAssessment.length) {
+            // Assessment done → needs $29/mo subscription
+            return res.status(402).json({
+              error: 'Your 30-day free trial has ended. Subscribe for $29/month to continue — includes full VTV website & portal access.',
+              trialExpired: true,
+              plan: 'monthly_29',
+              includesPortal: true
+            });
+          } else {
+            // No assessment → $0.97/day until they complete it or subscribe
+            return res.status(402).json({
+              error: 'Your free trial has ended. Complete the P.I.N.K. assessment to unlock the $29/month plan, or you will be charged $0.97/day.',
+              trialExpired: true,
+              plan: 'daily_097',
+              needsAssessment: true
+            });
+          }
         }
       }
     }
