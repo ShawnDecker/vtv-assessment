@@ -831,7 +831,7 @@ async function doSignUp() {
     toast('Account created! Starting your assessment...');
     setTimeout(() => {
       // Pass email to assessment so it auto-fills
-      window.location.href = '/?email=' + encodeURIComponent(email) + '&mode=individual&depth=quick&from=faith-match';
+      window.location.href = '/?email=' + encodeURIComponent(email) + '&mode=relationship&depth=quick&from=faith-match#/mode-select';
     }, 800);
 
   } catch (e) {
