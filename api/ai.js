@@ -114,15 +114,39 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
       return res.status(400).json({ error: `Unknown action: ${action}. Valid: coaching-insight, assessment-summary, email-draft, content-generate, devotional-generate` });
     }
 
-    // Call Vercel AI Gateway (OpenAI-compatible)
-    const aiResponse = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions', {
-      method: 'POST',
-      headers: {
+    // Determine AI provider: 'local' (Ollama) or 'cloud' (Vercel AI Gateway)
+    const provider = process.env.AI_PROVIDER || 'cloud';
+    let aiUrl, aiHeaders, aiModel;
+
+    if (provider === 'local') {
+      // Local AI via Ollama (OpenAI-compatible API)
+      const ollamaHost = process.env.OLLAMA_HOST || 'http://localhost:11434';
+      aiUrl = `${ollamaHost}/v1/chat/completions`;
+      aiHeaders = { 'Content-Type': 'application/json' };
+      // Use smaller models for faster local inference
+      const localModels = {
+        'coaching-insight':    process.env.LOCAL_MODEL_COACHING    || 'llama3.1:8b',
+        'assessment-summary':  process.env.LOCAL_MODEL_SUMMARY     || 'llama3.1:8b',
+        'email-draft':         process.env.LOCAL_MODEL_EMAIL       || 'llama3.1:8b',
+        'content-generate':    process.env.LOCAL_MODEL_CONTENT     || 'llama3.1:8b',
+        'devotional-generate': process.env.LOCAL_MODEL_DEVOTIONAL  || 'llama3.1:8b',
+      };
+      aiModel = localModels[action] || 'llama3.1:8b';
+    } else {
+      // Cloud AI via Vercel AI Gateway
+      aiUrl = 'https://ai-gateway.vercel.sh/v1/chat/completions';
+      aiHeaders = {
         'Authorization': `Bearer ${AI_KEY}`,
         'Content-Type': 'application/json',
-      },
+      };
+      aiModel = process.env.CLOUD_AI_MODEL || 'anthropic/claude-sonnet-4.5';
+    }
+
+    const aiResponse = await fetch(aiUrl, {
+      method: 'POST',
+      headers: aiHeaders,
       body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4.5',
+        model: aiModel,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -134,7 +158,12 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
-      return res.status(502).json({ error: 'AI Gateway error', detail: errText });
+      return res.status(502).json({
+        error: `AI ${provider} error`,
+        detail: errText,
+        provider,
+        model: aiModel,
+      });
     }
 
     const aiData = await aiResponse.json();
@@ -143,7 +172,8 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
     return res.json({
       action,
       content,
-      model: aiData.model || 'claude-sonnet',
+      provider,
+      model: aiData.model || aiModel,
       usage: aiData.usage || {},
     });
 

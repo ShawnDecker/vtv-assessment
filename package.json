@@ -1,10 +1,17 @@
 {
   "name": "vtv-assessment",
   "private": true,
+  "scripts": {
+    "dev": "node scripts/dev-server.js",
+    "dev:local-ai": "AI_PROVIDER=local node scripts/dev-server.js"
+  },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
     "dotenv": "^17.4.2",
     "nodemailer": "^8.0.5",
     "stripe": "^22.0.1"
+  },
+  "devDependencies": {
+    "express": "^5.1.0"
   }
 }
