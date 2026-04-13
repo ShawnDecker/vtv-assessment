@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>VTV Faith Match — Values-Based Dating</title>
+  <meta name="description" content="Faith-based dating powered by the P.I.N.K. Value Engine. Know your worth before you swipe." />
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-TT6PYLPP31');</script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --gold: #D4A847; --gold-dark: #b8942e; --bg: #0a0a0a; --card: #18181b;
+      --border: #27272a; --text: #fff; --muted: #a1a1aa; --dim: #71717a;
+      --green: #22c55e; --red: #ef4444; --blue: #3b82f6;
+      --pink-t: #D4A847; --pink-p: #3b82f6; --pink-i: #a855f7; --pink-n: #22c55e; --pink-k: #f97316;
+    }
+    body { font-family: 'Satoshi', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+    .hidden { display: none !important; }
+    button { font-family: inherit; cursor: pointer; border: none; }
+    input, select, textarea { font-family: inherit; }
+
+    /* ===== NAV BAR ===== */
+    .nav { position: fixed; bottom: 0; left: 0; right: 0; background: #111; border-top: 1px solid var(--border);
+           display: flex; justify-content: space-around; padding: 0.5rem 0; z-index: 100; }
+    .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; background: none;
+               color: var(--dim); font-size: 0.6rem; padding: 0.4rem 0.75rem; border-radius: 0.5rem; transition: all 0.2s; }
+    .nav-btn.active { color: var(--gold); }
+    .nav-btn svg { width: 22px; height: 22px; }
+    .nav-badge { position: absolute; top: 2px; right: 8px; background: var(--red); color: #fff;
+                 font-size: 0.55rem; padding: 1px 4px; border-radius: 6px; font-weight: 700; }
+
+    /* ===== SCREENS ===== */
+    .screen { display: none; padding: 1rem 1rem 5rem; max-width: 500px; margin: 0 auto; min-height: 100vh; }
+    .screen.active { display: block; }
+
+    /* ===== HEADER ===== */
+    .screen-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0 1rem; }
+    .screen-title { font-size: 1.25rem; font-weight: 700; }
+    .screen-title span { color: var(--gold); }
+
+    /* ===== LOGIN SCREEN ===== */
+    #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+                    padding: 0 1rem 2rem; position: relative; overflow: hidden; min-height: 100vh; }
+    .login-hero-bg { position: absolute; inset: 0; z-index: 0; }
+    .login-hero-bg .layer { position: absolute; inset: 0; background-size: cover; background-position: center; }
+    .login-hero-bg .layer-sky { background: linear-gradient(180deg, #1a1033 0%, #2d1b4e 20%, #4a2c6e 35%, #d4785a 55%, #f0a050 70%, #f7c87a 80%, #fde8b0 90%); }
+    .login-hero-bg .layer-town { position: absolute; bottom: 38%; left: 0; right: 0; height: 120px; }
+    .login-hero-bg .layer-town svg { width: 100%; height: 100%; }
+    .login-hero-bg .layer-people { position: absolute; bottom: 30%; left: 0; right: 0; height: 200px; }
+    .login-hero-bg .layer-people svg { width: 100%; height: 100%; }
+    .login-hero-bg .layer-fade { position: absolute; bottom: 0; left: 0; right: 0; height: 65%;
+                                  background: linear-gradient(180deg, transparent 0%, rgba(10,10,10,0.3) 15%, rgba(10,10,10,0.7) 35%, rgba(10,10,10,0.95) 55%, #0a0a0a 70%); }
+    .login-content { position: relative; z-index: 2; width: 100%; max-width: 400px; }
+    .login-logo { font-family: 'Instrument Serif', serif; font-size: 2.8rem; margin-bottom: 0.25rem; text-align: center;
+                  text-shadow: 0 2px 20px rgba(0,0,0,0.5); }
+    .login-logo em { color: var(--gold); font-style: italic; }
+    .login-sub { color: #d4d4d8; font-size: 0.9rem; margin-bottom: 1.5rem; text-align: center;
+                 text-shadow: 0 1px 10px rgba(0,0,0,0.5); }
+    .login-box { background: var(--card); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.5rem; width: 100%; max-width: 360px; }
+    .login-box h3 { font-size: 1rem; margin-bottom: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.75rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.35rem; }
+    .form-input { width: 100%; padding: 0.7rem 0.85rem; background: var(--bg); border: 1px solid var(--border);
+                  border-radius: 0.5rem; color: var(--text); font-size: 0.9rem; outline: none; }
+    .form-input:focus { border-color: var(--gold); }
+    .btn-gold { display: block; width: 100%; padding: 0.85rem; background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+                color: var(--bg); font-weight: 800; font-size: 1rem; border-radius: 0.5rem; text-align: center; }
+    .btn-gold:hover { opacity: 0.9; }
+    .btn-outline { display: block; width: 100%; padding: 0.75rem; background: transparent; border: 1px solid var(--border);
+                   color: var(--text); font-weight: 600; font-size: 0.9rem; border-radius: 0.5rem; text-align: center; margin-top: 0.75rem; }
+
+    /* ===== PROFILE SETUP ===== */
+    .setup-step { display: none; }
+    .setup-step.active { display: block; }
+    .setup-progress { display: flex; gap: 0.25rem; margin-bottom: 1.5rem; }
+    .setup-dot { flex: 1; height: 3px; background: var(--border); border-radius: 2px; }
+    .setup-dot.done { background: var(--gold); }
+    .setup-dot.current { background: var(--gold); opacity: 0.6; }
+    .chip-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .chip { padding: 0.5rem 1rem; background: var(--card); border: 1px solid var(--border); border-radius: 2rem;
+            font-size: 0.8rem; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+    .chip.selected { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 700; }
+    .range-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
+    .range-row label { flex: 0 0 80px; font-size: 0.8rem; color: var(--muted); }
+    .range-row input[type=range] { flex: 1; accent-color: var(--gold); }
+    .range-val { font-size: 0.85rem; font-weight: 700; min-width: 40px; text-align: right; }
+    .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
+    .photo-slot { aspect-ratio: 3/4; background: var(--card); border: 2px dashed var(--border); border-radius: 0.5rem;
+                  display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 2rem; color: var(--dim); position: relative; overflow: hidden; }
+    .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-slot .remove { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: rgba(0,0,0,0.7);
+                          border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #fff; }
+
+    /* ===== SWIPE CARD ===== */
+    .card-stack { position: relative; width: 100%; max-width: 380px; margin: 0 auto; height: 520px; perspective: 1000px; }
+    .swipe-card { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--card);
+                  border-radius: 1rem; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+                  transition: transform 0.4s ease, opacity 0.4s ease; touch-action: none; user-select: none; }
+    .swipe-card.swiping { transition: none; }
+    .swipe-card.exit-left { transform: translateX(-150%) rotate(-30deg); opacity: 0; }
+    .swipe-card.exit-right { transform: translateX(150%) rotate(30deg); opacity: 0; }
+
+    .card-photo { width: 100%; height: 60%; position: relative; background: #1a1a2e; overflow: hidden; }
+    .card-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .card-photo.blurred img { filter: blur(20px); }
+    .blur-badge { position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+                  padding: 0.4rem 0.75rem; border-radius: 0.5rem; font-size: 0.7rem; color: var(--gold); font-weight: 600; }
+    .card-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; pointer-events: none; }
+    .swipe-label { font-size: 2rem; font-weight: 900; padding: 0.5rem 1.5rem; border: 3px solid; border-radius: 0.75rem;
+                   transform: rotate(-15deg); opacity: 0; transition: opacity 0.2s; }
+    .swipe-label.like { color: var(--green); border-color: var(--green); }
+    .swipe-label.nope { color: var(--red); border-color: var(--red); transform: rotate(15deg); }
+    .swipe-label.visible { opacity: 1; }
+    .card-info { padding: 0.75rem 1rem 0.5rem; }
+    .card-name { font-size: 1.3rem; font-weight: 800; }
+    .card-name span { color: var(--muted); font-weight: 400; font-size: 1.1rem; }
+    .card-details { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.35rem; }
+    .card-tag { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: rgba(212,168,71,0.15); color: var(--gold);
+                border-radius: 1rem; font-weight: 600; }
+    .card-bio { font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; display: -webkit-box;
+                -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .shared-badge { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: rgba(59,130,246,0.15); color: var(--blue);
+                    border-radius: 1rem; font-weight: 600; }
+
+    /* ===== P.I.N.K. BAR ===== */
+    .pink-bar { display: flex; gap: 3px; padding: 0.5rem 1rem 0.75rem; align-items: flex-end; height: 52px; }
+    .pink-segment { flex: 1; border-radius: 3px 3px 0 0; position: relative; min-height: 4px; transition: height 0.5s ease; }
+    .pink-segment .label { position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%);
+                            font-size: 0.5rem; font-weight: 800; letter-spacing: 0.05em; }
+    .pink-segment.time { background: var(--pink-t); }
+    .pink-segment.people { background: var(--pink-p); }
+    .pink-segment.influence { background: var(--pink-i); }
+    .pink-segment.numbers { background: var(--pink-n); }
+    .pink-segment.knowledge { background: var(--pink-k); }
+
+    /* ===== SWIPE BUTTONS ===== */
+    .swipe-actions { display: flex; justify-content: center; gap: 1.5rem; margin-top: 1rem; }
+    .swipe-btn { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                 box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
+    .swipe-btn:active { transform: scale(0.9); }
+    .swipe-btn.pass { background: var(--card); border: 2px solid var(--red); }
+    .swipe-btn.pass svg { color: var(--red); }
+    .swipe-btn.like { background: var(--card); border: 2px solid var(--green); }
+    .swipe-btn.like svg { color: var(--green); }
+    .swipe-btn.super { background: var(--card); border: 2px solid var(--blue); }
+    .swipe-btn.super svg { color: var(--blue); }
+
+    .empty-state { text-align: center; padding: 4rem 2rem; }
+    .empty-state h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+    .empty-state p { color: var(--muted); font-size: 0.9rem; }
+
+    /* ===== MATCHES LIST ===== */
+    .match-item { display: flex; gap: 0.75rem; padding: 0.75rem; background: var(--card); border: 1px solid var(--border);
+                  border-radius: 0.75rem; margin-bottom: 0.5rem; cursor: pointer; transition: border-color 0.2s; align-items: center; }
+    .match-item:hover { border-color: var(--gold); }
+    .match-avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; background: var(--border); flex-shrink: 0; }
+    .match-info { flex: 1; min-width: 0; }
+    .match-name { font-weight: 700; font-size: 0.95rem; }
+    .match-preview { font-size: 0.8rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .match-time { font-size: 0.65rem; color: var(--dim); }
+    .match-new { width: 8px; height: 8px; background: var(--gold); border-radius: 50%; flex-shrink: 0; }
+
+    /* ===== MATCH POPUP ===== */
+    .match-popup { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center;
+                   justify-content: center; z-index: 200; }
+    .match-popup-content { text-align: center; padding: 2rem; }
+    .match-popup h2 { font-family: 'Instrument Serif', serif; font-size: 2.5rem; color: var(--gold); margin-bottom: 0.5rem; }
+    .match-popup p { color: var(--muted); margin-bottom: 1.5rem; }
+    .match-avatars { display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem; }
+    .match-avatars img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--gold); }
+
+    /* ===== CHAT ===== */
+    .chat-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); margin-bottom: 0.75rem; }
+    .chat-back { background: none; color: var(--text); font-size: 1.2rem; padding: 0.25rem; }
+    .chat-messages { flex: 1; overflow-y: auto; padding-bottom: 4rem; }
+    .msg { max-width: 80%; padding: 0.6rem 0.85rem; border-radius: 1rem; margin-bottom: 0.35rem; font-size: 0.85rem; line-height: 1.4; }
+    .msg.sent { background: var(--gold); color: var(--bg); margin-left: auto; border-bottom-right-radius: 0.25rem; }
+    .msg.received { background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 0.25rem; }
+    .chat-input-bar { position: fixed; bottom: 60px; left: 0; right: 0; background: #111; border-top: 1px solid var(--border);
+                      padding: 0.5rem; display: flex; gap: 0.5rem; }
+    .chat-input-bar input { flex: 1; padding: 0.65rem 0.85rem; background: var(--card); border: 1px solid var(--border);
+                            border-radius: 1.5rem; color: var(--text); font-size: 0.9rem; outline: none; }
+    .chat-input-bar button { padding: 0 1rem; background: var(--gold); color: var(--bg); border-radius: 1.5rem; font-weight: 700; }
+
+    /* ===== SETTINGS ===== */
+    .settings-section { background: var(--card); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem; }
+    .settings-section h4 { font-size: 0.85rem; color: var(--gold); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; }
+    .toggle-row label { font-size: 0.85rem; }
+    .toggle { position: relative; width: 44px; height: 24px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle .slider { position: absolute; inset: 0; background: var(--border); border-radius: 12px; cursor: pointer; transition: 0.3s; }
+    .toggle .slider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px;
+                              background: #fff; border-radius: 50%; transition: 0.3s; }
+    .toggle input:checked + .slider { background: var(--gold); }
+    .toggle input:checked + .slider:before { transform: translateX(20px); }
+    .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3);
+                  padding: 0.65rem; border-radius: 0.5rem; width: 100%; font-weight: 600; font-size: 0.85rem; margin-top: 0.5rem; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 400px) {
+      .card-stack { height: 480px; }
+      .card-photo { height: 55%; }
+    }
+
+    /* Animations */
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .animate-in { animation: slideUp 0.3s ease; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    .pulse { animation: pulse 0.5s ease; }
+
+    /* Toast */
+    .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border);
+             padding: 0.65rem 1.25rem; border-radius: 0.75rem; font-size: 0.85rem; z-index: 300; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+             animation: slideDown 0.3s ease; }
+    @keyframes slideDown { from { transform: translate(-50%, -20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen" class="screen active">
+  <!-- Layered background scene -->
+  <div class="login-hero-bg">
+    <div class="layer layer-sky"></div>
+    <!-- Town silhouette -->
+    <div class="layer-town">
+      <svg viewBox="0 0 1200 120" preserveAspectRatio="none" fill="#1a1033" opacity="0.7">
+        <path d="M0,120 L0,80 L30,80 L30,60 L35,60 L35,55 L40,55 L40,60 L45,60 L45,80 L70,80 L70,50 L75,50 L75,45 L80,40 L85,45 L85,50 L90,50 L90,80 L120,80 L120,65 L125,65 L125,60 L130,60 L130,65 L135,65 L135,80 L160,80 L160,70 L180,70 L180,55 L185,50 L190,55 L190,70 L200,70 L200,80 L230,80 L230,45 L235,45 L235,30 L237,25 L239,30 L239,45 L244,45 L244,80 L280,80 L280,60 L285,60 L290,55 L295,60 L300,60 L300,80 L340,80 L340,70 L345,70 L345,50 L350,45 L355,50 L355,70 L360,70 L360,80 L400,80 L400,55 L410,55 L410,40 L413,35 L416,40 L416,55 L420,55 L420,80 L460,80 L460,65 L480,65 L480,80 L520,80 L520,50 L525,50 L525,35 L530,30 L535,35 L535,50 L540,50 L540,80 L580,80 L580,60 L585,55 L590,60 L590,80 L630,80 L630,70 L640,70 L640,45 L645,40 L650,45 L650,70 L660,70 L660,80 L700,80 L700,55 L710,55 L715,35 L718,25 L721,35 L725,55 L730,55 L730,80 L770,80 L770,65 L790,65 L790,80 L830,80 L830,50 L835,45 L840,50 L840,80 L880,80 L880,60 L885,55 L890,50 L895,55 L900,60 L900,80 L940,80 L940,70 L950,70 L950,55 L955,50 L960,55 L960,70 L970,70 L970,80 L1010,80 L1010,45 L1015,40 L1020,35 L1023,25 L1026,35 L1030,40 L1035,45 L1035,80 L1070,80 L1070,60 L1090,60 L1090,80 L1130,80 L1130,55 L1135,50 L1140,55 L1140,80 L1170,80 L1170,65 L1190,65 L1190,80 L1200,80 L1200,120 Z"/>
+        <!-- Church steeples -->
+        <path d="M237,25 L237,15 L238,8 L239,15 L239,25 Z" fill="#2d1b4e"/>
+        <path d="M718,25 L718,12 L719,4 L720,12 L720,25 Z" fill="#2d1b4e"/>
+        <path d="M1023,25 L1023,10 L1024,3 L1025,10 L1025,25 Z" fill="#2d1b4e"/>
+        <!-- Cross on steeple -->
+        <rect x="237" y="6" width="2" height="6" fill="#D4A847" opacity="0.8"/>
+        <rect x="235.5" y="8" width="5" height="1.5" fill="#D4A847" opacity="0.8"/>
+        <rect x="718" y="2" width="2" height="6" fill="#D4A847" opacity="0.8"/>
+        <rect x="716.5" y="4" width="5" height="1.5" fill="#D4A847" opacity="0.8"/>
+      </svg>
+    </div>
+    <!-- People silhouettes - couples, singles, families overlapping layers -->
+    <div class="layer-people">
+      <svg viewBox="0 0 1200 200" preserveAspectRatio="none" opacity="0.85">
+        <!-- Back row - community/groups looking at sunset over town -->
+        <g fill="#1a0e2e" transform="translate(0,20)">
+          <!-- Elderly couple holding hands -->
+          <ellipse cx="80" cy="95" rx="8" ry="9"/><rect x="73" y="104" width="14" height="35" rx="4"/>
+          <ellipse cx="100" cy="92" rx="7" ry="8"/><rect x="94" y="100" width="12" height="32" rx="4"/>
+          <line x1="87" y1="115" x2="94" y2="112" stroke="#1a0e2e" stroke-width="3"/>
+          <!-- Family with child -->
+          <ellipse cx="220" cy="90" rx="9" ry="10"/><rect x="212" y="100" width="16" height="38" rx="5"/>
+          <ellipse cx="245" cy="93" rx="7" ry="8"/><rect x="239" y="101" width="12" height="33" rx="4"/>
+          <ellipse cx="232" cy="108" rx="5" ry="6"/><rect x="228" y="114" width="8" height="22" rx="3"/>
+          <!-- Group of friends -->
+          <ellipse cx="400" cy="92" rx="8" ry="9"/><rect x="393" y="101" width="14" height="36" rx="4"/>
+          <ellipse cx="420" cy="95" rx="7" ry="8"/><rect x="414" y="103" width="12" height="33" rx="4"/>
+          <ellipse cx="438" cy="90" rx="8" ry="9"/><rect x="431" y="99" width="14" height="38" rx="4"/>
+          <!-- Couple with arm around -->
+          <ellipse cx="600" cy="88" rx="9" ry="10"/><rect x="592" y="98" width="16" height="40" rx="5"/>
+          <ellipse cx="622" cy="92" rx="7" ry="8"/><rect x="616" y="100" width="12" height="36" rx="4"/>
+          <!-- Older couple -->
+          <ellipse cx="800" cy="93" rx="8" ry="9"/><rect x="793" y="102" width="14" height="34" rx="4"/>
+          <ellipse cx="820" cy="90" rx="9" ry="10"/><rect x="812" y="100" width="16" height="38" rx="5"/>
+          <!-- Singles group -->
+          <ellipse cx="950" cy="91" rx="7" ry="8"/><rect x="944" y="99" width="12" height="35" rx="4"/>
+          <ellipse cx="970" cy="88" rx="8" ry="9"/><rect x="963" y="97" width="14" height="38" rx="5"/>
+          <ellipse cx="990" cy="93" rx="7" ry="8"/><rect x="984" y="101" width="12" height="33" rx="4"/>
+          <ellipse cx="1100" cy="90" rx="8" ry="9"/><rect x="1093" y="99" width="14" height="36" rx="4"/>
+          <ellipse cx="1120" cy="94" rx="7" ry="8"/><rect x="1114" y="102" width="12" height="32" rx="4"/>
+        </g>
+        <!-- Front row - closer, darker silhouettes -->
+        <g fill="#0d0818" transform="translate(0,40)">
+          <!-- Young couple close together -->
+          <ellipse cx="150" cy="95" rx="10" ry="11"/><rect x="141" y="106" width="18" height="55" rx="6"/>
+          <ellipse cx="175" cy="98" rx="8" ry="9"/><rect x="168" y="107" width="14" height="50" rx="5"/>
+          <!-- Single woman -->
+          <ellipse cx="340" cy="97" rx="8" ry="9"/><rect x="333" y="106" width="14" height="50" rx="5"/>
+          <!-- Couple with kid on shoulders -->
+          <ellipse cx="520" cy="92" rx="10" ry="11"/><rect x="511" y="103" width="18" height="55" rx="6"/>
+          <ellipse cx="520" cy="72" rx="6" ry="7"/><rect x="515" y="79" width="10" height="14" rx="3"/>
+          <ellipse cx="548" cy="98" rx="8" ry="9"/><rect x="541" y="107" width="14" height="48" rx="5"/>
+          <!-- Single man -->
+          <ellipse cx="700" cy="93" rx="9" ry="10"/><rect x="692" y="103" width="16" height="52" rx="5"/>
+          <!-- Married couple holding hands -->
+          <ellipse cx="880" cy="95" rx="9" ry="10"/><rect x="872" y="105" width="16" height="52" rx="5"/>
+          <ellipse cx="905" cy="98" rx="8" ry="9"/><rect x="898" y="107" width="14" height="48" rx="5"/>
+          <line x1="888" y1="125" x2="898" y2="122" stroke="#0d0818" stroke-width="4"/>
+          <!-- Group at edge -->
+          <ellipse cx="1050" cy="96" rx="9" ry="10"/><rect x="1042" y="106" width="16" height="50" rx="5"/>
+          <ellipse cx="1075" cy="93" rx="8" ry="9"/><rect x="1068" y="102" width="14" height="52" rx="5"/>
+        </g>
+        <!-- Stars/sparkles in sky -->
+        <circle cx="100" cy="15" r="1" fill="#fff" opacity="0.6"/>
+        <circle cx="300" cy="8" r="1.5" fill="#fff" opacity="0.4"/>
+        <circle cx="500" cy="20" r="1" fill="#fff" opacity="0.5"/>
+        <circle cx="750" cy="10" r="1.5" fill="#fff" opacity="0.3"/>
+        <circle cx="900" cy="25" r="1" fill="#fff" opacity="0.6"/>
+        <circle cx="1100" cy="12" r="1" fill="#fff" opacity="0.5"/>
+        <circle cx="200" cy="30" r="0.8" fill="#fff" opacity="0.4"/>
+        <circle cx="650" cy="5" r="1.2" fill="#fff" opacity="0.3"/>
+        <circle cx="1000" cy="18" r="0.8" fill="#fff" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="layer layer-fade"></div>
+  </div>
+
+  <!-- Login content overlaid on scene -->
+  <div class="login-content">
+  <div class="login-logo">Faith <em>Match</em></div>
+  <p class="login-sub">Values-Based Dating by P.I.N.K.T</p>
+  <div class="login-box">
+    <h3>Sign In with Your VTV Account</h3>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" class="form-input" placeholder="your@email.com" />
+    </div>
+    <div class="form-group">
+      <label>PIN</label>
+      <input type="password" id="login-pin" class="form-input" placeholder="6-digit PIN" maxlength="6" inputmode="numeric" />
+    </div>
+    <button class="btn-gold" onclick="doLogin()">Sign In</button>
+    <button class="btn-outline" onclick="window.location.href='/'">Take the Assessment First</button>
+    <div style="margin-top:1rem;padding:0.75rem;background:rgba(212,168,71,0.08);border:1px solid rgba(212,168,71,0.2);border-radius:0.5rem;text-align:center;">
+      <p style="font-size:0.8rem;color:var(--gold);font-weight:600;">Free for 30 Days</p>
+      <p style="font-size:0.7rem;color:var(--dim);margin-top:0.25rem;">
+        Complete the P.I.N.K. assessment + verify your email to start your free trial
+      </p>
+    </div>
+  </div><!-- /login-box -->
+  </div><!-- /login-content -->
+</div>
+
+<!-- ===== PROFILE SETUP SCREEN ===== -->
+<div id="setup-screen" class="screen">
+  <div class="screen-header">
+    <div class="screen-title">Create Your <span>Profile</span></div>
+  </div>
+  <div class="setup-progress" id="setup-progress"></div>
+
+  <!-- Step 1: Basics -->
+  <div class="setup-step active" data-step="1">
+    <h3 style="margin-bottom:1rem;">The Basics</h3>
+    <div class="form-group">
+      <label>Display Name</label>
+      <input type="text" id="setup-name" class="form-input" placeholder="First name or nickname" />
+    </div>
+    <div class="form-group">
+      <label>I Am</label>
+      <div class="chip-grid" id="gender-chips">
+        <div class="chip" data-val="male" onclick="selectChip(this,'gender-chips')">Male</div>
+        <div class="chip" data-val="female" onclick="selectChip(this,'gender-chips')">Female</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Looking For</label>
+      <div class="chip-grid" id="seeking-chips">
+        <div class="chip" data-val="female" onclick="selectChip(this,'seeking-chips')">Female</div>
+        <div class="chip" data-val="male" onclick="selectChip(this,'seeking-chips')">Male</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Date of Birth</label>
+      <input type="date" id="setup-dob" class="form-input" />
+    </div>
+    <button class="btn-gold" onclick="nextSetupStep()">Continue</button>
+  </div>
+
+  <!-- Step 2: Physical & Faith -->
+  <div class="setup-step" data-step="2">
+    <h3 style="margin-bottom:1rem;">About You</h3>
+    <div class="form-group">
+      <label>Height</label>
+      <div style="display:flex;gap:0.5rem;">
+        <select id="setup-height-ft" class="form-input" style="flex:1;">
+          <option value="">Feet</option>
+          <option value="4">4'</option><option value="5">5'</option><option value="6">6'</option><option value="7">7'</option>
+        </select>
+        <select id="setup-height-in" class="form-input" style="flex:1;">
+          <option value="">Inches</option>
+          <option value="0">0"</option><option value="1">1"</option><option value="2">2"</option><option value="3">3"</option>
+          <option value="4">4"</option><option value="5">5"</option><option value="6">6"</option><option value="7">7"</option>
+          <option value="8">8"</option><option value="9">9"</option><option value="10">10"</option><option value="11">11"</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Body Type</label>
+      <div class="chip-grid" id="body-chips">
+        <div class="chip" data-val="slim" onclick="selectChip(this,'body-chips')">Slim</div>
+        <div class="chip" data-val="athletic" onclick="selectChip(this,'body-chips')">Athletic</div>
+        <div class="chip" data-val="average" onclick="selectChip(this,'body-chips')">Average</div>
+        <div class="chip" data-val="curvy" onclick="selectChip(this,'body-chips')">Curvy</div>
+        <div class="chip" data-val="heavyset" onclick="selectChip(this,'body-chips')">Heavyset</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Faith</label>
+      <select id="setup-faith" class="form-input">
+        <option value="Christian">Christian</option>
+        <option value="Catholic">Catholic</option>
+        <option value="Protestant">Protestant</option>
+        <option value="Non-denominational">Non-denominational</option>
+        <option value="Baptist">Baptist</option>
+        <option value="Methodist">Methodist</option>
+        <option value="Lutheran">Lutheran</option>
+        <option value="Presbyterian">Presbyterian</option>
+        <option value="Pentecostal">Pentecostal</option>
+        <option value="Evangelical">Evangelical</option>
+        <option value="Orthodox">Orthodox</option>
+        <option value="Other Christian">Other Christian</option>
+        <option value="Exploring Faith">Exploring Faith</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>How important is faith in your partner?</label>
+      <div class="chip-grid" id="faith-imp-chips">
+        <div class="chip selected" data-val="very_important" onclick="selectChip(this,'faith-imp-chips')">Very Important</div>
+        <div class="chip" data-val="important" onclick="selectChip(this,'faith-imp-chips')">Important</div>
+        <div class="chip" data-val="somewhat" onclick="selectChip(this,'faith-imp-chips')">Somewhat</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.5rem;">
+      <button class="btn-outline" onclick="prevSetupStep()" style="flex:1;">Back</button>
+      <button class="btn-gold" onclick="nextSetupStep()" style="flex:1;">Continue</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Interests -->
+  <div class="setup-step" data-step="3">
+    <h3 style="margin-bottom:0.5rem;">Recreation & Interests</h3>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">Photos stay blurred until you match on interests</p>
+    <div class="form-group">
+      <label>Recreation (select all that apply)</label>
+      <div class="chip-grid" id="rec-chips">
+        <div class="chip" data-val="hiking" onclick="toggleChip(this)">Hiking</div>
+        <div class="chip" data-val="fishing" onclick="toggleChip(this)">Fishing</div>
+        <div class="chip" data-val="camping" onclick="toggleChip(this)">Camping</div>
+        <div class="chip" data-val="running" onclick="toggleChip(this)">Running</div>
+        <div class="chip" data-val="cycling" onclick="toggleChip(this)">Cycling</div>
+        <div class="chip" data-val="swimming" onclick="toggleChip(this)">Swimming</div>
+        <div class="chip" data-val="gym" onclick="toggleChip(this)">Gym/Fitness</div>
+        <div class="chip" data-val="yoga" onclick="toggleChip(this)">Yoga</div>
+        <div class="chip" data-val="sports" onclick="toggleChip(this)">Team Sports</div>
+        <div class="chip" data-val="golf" onclick="toggleChip(this)">Golf</div>
+        <div class="chip" data-val="hunting" onclick="toggleChip(this)">Hunting</div>
+        <div class="chip" data-val="kayaking" onclick="toggleChip(this)">Kayaking</div>
+        <div class="chip" data-val="skiing" onclick="toggleChip(this)">Skiing</div>
+        <div class="chip" data-val="dancing" onclick="toggleChip(this)">Dancing</div>
+        <div class="chip" data-val="horseback" onclick="toggleChip(this)">Horseback</div>
+        <div class="chip" data-val="gardening" onclick="toggleChip(this)">Gardening</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>General Interests</label>
+      <div class="chip-grid" id="int-chips">
+        <div class="chip" data-val="cooking" onclick="toggleChip(this)">Cooking</div>
+        <div class="chip" data-val="reading" onclick="toggleChip(this)">Reading</div>
+        <div class="chip" data-val="travel" onclick="toggleChip(this)">Travel</div>
+        <div class="chip" data-val="music" onclick="toggleChip(this)">Music</div>
+        <div class="chip" data-val="movies" onclick="toggleChip(this)">Movies</div>
+        <div class="chip" data-val="photography" onclick="toggleChip(this)">Photography</div>
+        <div class="chip" data-val="art" onclick="toggleChip(this)">Art</div>
+        <div class="chip" data-val="volunteering" onclick="toggleChip(this)">Volunteering</div>
+        <div class="chip" data-val="bible_study" onclick="toggleChip(this)">Bible Study</div>
+        <div class="chip" data-val="worship" onclick="toggleChip(this)">Worship</div>
+        <div class="chip" data-val="mission_trips" onclick="toggleChip(this)">Mission Trips</div>
+        <div class="chip" data-val="small_groups" onclick="toggleChip(this)">Small Groups</div>
+        <div class="chip" data-val="pets" onclick="toggleChip(this)">Pets/Animals</div>
+        <div class="chip" data-val="gaming" onclick="toggleChip(this)">Gaming</div>
+        <div class="chip" data-val="diy" onclick="toggleChip(this)">DIY/Crafts</div>
+        <div class="chip" data-val="podcasts" onclick="toggleChip(this)">Podcasts</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.5rem;">
+      <button class="btn-outline" onclick="prevSetupStep()" style="flex:1;">Back</button>
+      <button class="btn-gold" onclick="nextSetupStep()" style="flex:1;">Continue</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Bio & Photos -->
+  <div class="setup-step" data-step="4">
+    <h3 style="margin-bottom:1rem;">Photos & Bio</h3>
+    <div class="form-group">
+      <label>Photos (first photo is your main)</label>
+      <div class="photo-grid" id="photo-grid">
+        <div class="photo-slot" onclick="addPhoto(0)">+</div>
+        <div class="photo-slot" onclick="addPhoto(1)">+</div>
+        <div class="photo-slot" onclick="addPhoto(2)">+</div>
+        <div class="photo-slot" onclick="addPhoto(3)">+</div>
+        <div class="photo-slot" onclick="addPhoto(4)">+</div>
+        <div class="photo-slot" onclick="addPhoto(5)">+</div>
+      </div>
+      <p style="font-size:0.7rem;color:var(--red);">Minimum 2 photos required</p>
+    </div>
+    <div class="form-group">
+      <label>Bio (max 300 chars)</label>
+      <textarea id="setup-bio" class="form-input" rows="3" maxlength="300" placeholder="Tell them about yourself..."></textarea>
+    </div>
+    <div style="display:flex;gap:0.5rem;">
+      <button class="btn-outline" onclick="prevSetupStep()" style="flex:1;">Back</button>
+      <button class="btn-gold" onclick="nextSetupStep()" style="flex:1;">Continue</button>
+    </div>
+  </div>
+
+  <!-- Step 5: Location & Preferences -->
+  <div class="setup-step" data-step="5">
+    <h3 style="margin-bottom:1rem;">Location & Preferences</h3>
+    <div class="form-group">
+      <label>City</label>
+      <input type="text" id="setup-city" class="form-input" placeholder="e.g. Roanoke" />
+    </div>
+    <div class="form-group">
+      <label>State</label>
+      <input type="text" id="setup-state" class="form-input" placeholder="e.g. Virginia" />
+    </div>
+    <div class="form-group">
+      <label>Search Radius</label>
+      <div class="range-row">
+        <input type="range" id="setup-radius" min="5" max="200" value="50" oninput="document.getElementById('radius-val').textContent=this.value+'mi'" />
+        <span class="range-val" id="radius-val">50mi</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Age Range</label>
+      <div style="display:flex;gap:0.5rem;">
+        <input type="number" id="setup-age-min" class="form-input" value="21" min="18" max="99" style="flex:1;" />
+        <span style="padding-top:0.7rem;color:var(--dim);">to</span>
+        <input type="number" id="setup-age-max" class="form-input" value="55" min="18" max="99" style="flex:1;" />
+      </div>
+    </div>
+    <div class="toggle-row">
+      <label>Show me on map</label>
+      <label class="toggle"><input type="checkbox" id="setup-map" checked /><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <label>Show distance to others</label>
+      <label class="toggle"><input type="checkbox" id="setup-distance" checked /><span class="slider"></span></label>
+    </div>
+    <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+      <button class="btn-outline" onclick="prevSetupStep()" style="flex:1;">Back</button>
+      <button class="btn-gold" onclick="submitProfile()" style="flex:1;">Launch Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DISCOVER / SWIPE SCREEN ===== -->
+<div id="discover-screen" class="screen">
+  <div class="screen-header">
+    <div class="screen-title">Faith <span>Match</span></div>
+    <div style="display:flex;gap:0.5rem;">
+      <button onclick="loadDiscover()" style="background:none;color:var(--muted);font-size:1.2rem;" title="Refresh">&#8635;</button>
+    </div>
+  </div>
+  <div id="card-container">
+    <div class="card-stack" id="card-stack"></div>
+    <div class="swipe-actions" id="swipe-actions">
+      <button class="swipe-btn pass" onclick="doSwipe('left')" title="Pass">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <button class="swipe-btn super" onclick="showFullProfile()" title="View Profile">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      </button>
+      <button class="swipe-btn like" onclick="doSwipe('right')" title="Like">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div id="empty-discover" class="empty-state hidden">
+    <h3>No more profiles</h3>
+    <p>Check back later or expand your search radius in settings</p>
+  </div>
+</div>
+
+<!-- ===== MATCHES SCREEN ===== -->
+<div id="matches-screen" class="screen">
+  <div class="screen-header">
+    <div class="screen-title">Your <span>Matches</span></div>
+  </div>
+  <div id="matches-list"></div>
+  <div id="empty-matches" class="empty-state hidden">
+    <h3>No matches yet</h3>
+    <p>Keep swiping to find your person</p>
+  </div>
+</div>
+
+<!-- ===== CHAT SCREEN ===== -->
+<div id="chat-screen" class="screen" style="padding-bottom:7rem;">
+  <div class="chat-header">
+    <button class="chat-back" onclick="showScreen('matches-screen')">&larr;</button>
+    <img class="match-avatar" id="chat-avatar" src="" alt="" />
+    <div>
+      <div class="match-name" id="chat-name"></div>
+      <div class="match-preview" id="chat-status" style="font-size:0.7rem;"></div>
+    </div>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-bar" id="chat-input-bar">
+    <input type="text" id="chat-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()" />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<!-- ===== SETTINGS SCREEN ===== -->
+<div id="settings-screen" class="screen">
+  <div class="screen-header">
+    <div class="screen-title"><span>Settings</span></div>
+  </div>
+  <div class="settings-section">
+    <h4>Discovery</h4>
+    <div class="toggle-row">
+      <label>Active Profile</label>
+      <label class="toggle"><input type="checkbox" id="set-active" checked onchange="toggleActive(this.checked)" /><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <label>Show on Map</label>
+      <label class="toggle"><input type="checkbox" id="set-map" checked onchange="updateSetting('show_on_map',this.checked)" /><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <label>Show Distance</label>
+      <label class="toggle"><input type="checkbox" id="set-distance" checked onchange="updateSetting('show_distance',this.checked)" /><span class="slider"></span></label>
+    </div>
+    <div class="form-group" style="margin-top:0.75rem;">
+      <label>Search Radius</label>
+      <div class="range-row">
+        <input type="range" id="set-radius" min="5" max="200" value="50" onchange="updateSetting('search_radius_miles',parseInt(this.value))" oninput="this.nextElementSibling.textContent=this.value+'mi'" />
+        <span class="range-val">50mi</span>
+      </div>
+    </div>
+  </div>
+  <div class="settings-section">
+    <h4>Your P.I.N.K. Score</h4>
+    <div id="settings-score" style="text-align:center;padding:0.5rem 0;">
+      <div style="font-size:2.5rem;font-weight:900;color:var(--gold);" id="my-score">--</div>
+      <div style="font-size:0.75rem;color:var(--dim);">Master Score</div>
+    </div>
+    <button class="btn-outline" onclick="window.open('/','_blank')">Retake Assessment</button>
+  </div>
+  <div class="settings-section">
+    <h4>Account</h4>
+    <button class="btn-outline" onclick="showScreen('setup-screen');currentSetupStep=1;showSetupStep();">Edit Profile</button>
+    <button class="btn-danger" onclick="if(confirm('Deactivate your dating profile?')){toggleActive(false);toast('Profile deactivated')}">Deactivate Profile</button>
+  </div>
+  <div style="text-align:center;padding:1rem;font-size:0.65rem;color:var(--dim);">
+    Faith Match by Value To Victory<br/>Powered by P.I.N.K.T
+  </div>
+</div>
+
+<!-- ===== MATCH POPUP ===== -->
+<div id="match-popup" class="match-popup hidden">
+  <div class="match-popup-content">
+    <h2>It's a Match!</h2>
+    <p id="match-popup-text">You and someone like each other</p>
+    <div class="match-avatars" id="match-avatars"></div>
+    <button class="btn-gold" style="display:inline-block;width:auto;padding:0.75rem 2rem;" onclick="document.getElementById('match-popup').classList.add('hidden');showScreen('matches-screen');loadMatches();">Send a Message</button>
+    <br/>
+    <button class="btn-outline" style="display:inline-block;width:auto;margin-top:0.5rem;padding:0.5rem 1.5rem;" onclick="document.getElementById('match-popup').classList.add('hidden')">Keep Swiping</button>
+  </div>
+</div>
+
+<!-- ===== NAV BAR ===== -->
+<nav class="nav hidden" id="main-nav">
+  <button class="nav-btn active" data-screen="discover-screen" onclick="navTo(this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Discover
+  </button>
+  <button class="nav-btn" data-screen="matches-screen" onclick="navTo(this)" style="position:relative;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Matches
+    <span class="nav-badge hidden" id="match-badge">0</span>
+  </button>
+  <button class="nav-btn" data-screen="settings-screen" onclick="navTo(this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </button>
+</nav>
+
+<script>
+// ===== STATE =====
+const API = '/api';
+let token = localStorage.getItem('ve_token');
+let userEmail = localStorage.getItem('ve_email');
+let myProfile = null;
+let discoverProfiles = [];
+let currentCardIndex = 0;
+let currentSetupStep = 1;
+const totalSetupSteps = 5;
+let currentMatchId = null;
+let currentChatPartner = null;
+let photoUrls = ['','','','','',''];
+
+// ===== AUTH =====
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pin = document.getElementById('login-pin').value.trim();
+  if (!email || !pin) return toast('Enter email and PIN');
+
+  try {
+    // First check eligibility (assessment required)
+    const ec = await fetch(API + '/dating/check-eligible', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const ed = await ec.json();
+    if (!ed.eligible) {
+      if (ed.reason === 'no_account' || ed.reason === 'no_assessment') {
+        return toast(ed.message || 'Complete the P.I.N.K. assessment first');
+      }
+    }
+
+    // Login via member verify-pin
+    const r = await fetch(API + '/member/verify-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, pin })
+    });
+    const d = await r.json();
+    if (!d.verified) return toast(d.error || d.message || 'Login failed');
+
+    token = d.token;
+    userEmail = email;
+    localStorage.setItem('ve_token', token);
+    localStorage.setItem('ve_email', email);
+
+    // Check if email verified for Faith Match
+    if (!ed.emailVerified) {
+      await sendVerificationEmail(email);
+      return;
+    }
+
+    // Check trial status
+    if (ed.trialExpired && !ed.isPaid) {
+      toast('Your 30-day free trial has ended. Upgrade to continue.');
+      return;
+    }
+
+    await checkProfile();
+  } catch (e) { toast('Connection error'); }
+}
+
+async function sendVerificationEmail(email) {
+  try {
+    toast('Sending verification email...');
+    const r = await fetch(API + '/dating/send-verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const d = await r.json();
+    if (d.needsAssessment) return toast('Complete the P.I.N.K. assessment first');
+    if (d.ok) {
+      toast('Verification email sent! Check your inbox.');
+      document.getElementById('login-screen').querySelector('.login-box').innerHTML += `
+        <div style="margin-top:1rem;padding:1rem;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:0.5rem;text-align:center;">
+          <p style="color:var(--green);font-size:0.85rem;font-weight:600;">Check your email!</p>
+          <p style="color:var(--muted);font-size:0.8rem;margin-top:0.25rem;">Click the verification link to activate your free 30-day trial, then sign in again.</p>
+        </div>
+      `;
+    } else {
+      toast(d.error || 'Failed to send verification email');
+    }
+  } catch { toast('Failed to send verification email'); }
+}
+
+async function checkProfile() {
+  try {
+    const r = await fetch(API + '/dating/profile', { headers: authHeaders() });
+    const d = await r.json();
+    if (d.hasProfile) {
+      myProfile = d.profile;
+      document.getElementById('main-nav').classList.remove('hidden');
+      showScreen('discover-screen');
+      loadDiscover();
+      loadMyScore();
+    } else {
+      showScreen('setup-screen');
+      currentSetupStep = 1;
+      showSetupStep();
+    }
+  } catch {
+    showScreen('setup-screen');
+    currentSetupStep = 1;
+    showSetupStep();
+  }
+}
+
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+}
+
+// ===== INIT DB =====
+async function initDB() {
+  try { await fetch(API + '/dating/init', { method: 'POST', headers: authHeaders() }); } catch {}
+}
+
+// ===== NAVIGATION =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'chat-screen') {
+    document.getElementById('chat-input-bar').classList.remove('hidden');
+  } else {
+    const bar = document.getElementById('chat-input-bar');
+    if (bar) bar.classList.add('hidden');
+  }
+}
+
+function navTo(btn) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const screen = btn.dataset.screen;
+  showScreen(screen);
+  if (screen === 'matches-screen') loadMatches();
+  if (screen === 'discover-screen') { if (!discoverProfiles.length) loadDiscover(); }
+}
+
+// ===== PROFILE SETUP =====
+function showSetupStep() {
+  document.querySelectorAll('.setup-step').forEach(s => s.classList.remove('active'));
+  const step = document.querySelector(`.setup-step[data-step="${currentSetupStep}"]`);
+  if (step) step.classList.add('active');
+
+  const prog = document.getElementById('setup-progress');
+  prog.innerHTML = '';
+  for (let i = 1; i <= totalSetupSteps; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'setup-dot' + (i < currentSetupStep ? ' done' : i === currentSetupStep ? ' current' : '');
+    prog.appendChild(dot);
+  }
+}
+
+function nextSetupStep() {
+  if (currentSetupStep === 1) {
+    if (!document.getElementById('setup-name').value.trim()) return toast('Enter a display name');
+    if (!getChipVal('gender-chips')) return toast('Select your gender');
+    if (!getChipVal('seeking-chips')) return toast('Select who you are looking for');
+  }
+  if (currentSetupStep === 3) {
+    if (getMultiChips('rec-chips').length === 0 && getMultiChips('int-chips').length === 0) return toast('Select at least one interest');
+  }
+  if (currentSetupStep === 4) {
+    const filledPhotos = photoUrls.filter(u => u).length;
+    if (filledPhotos < 2) return toast('At least 2 photos are required');
+  }
+  if (currentSetupStep < totalSetupSteps) { currentSetupStep++; showSetupStep(); }
+}
+function prevSetupStep() { if (currentSetupStep > 1) { currentSetupStep--; showSetupStep(); } }
+
+function selectChip(el, groupId) {
+  document.querySelectorAll(`#${groupId} .chip`).forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function toggleChip(el) { el.classList.toggle('selected'); }
+function getChipVal(groupId) {
+  const sel = document.querySelector(`#${groupId} .chip.selected`);
+  return sel ? sel.dataset.val : null;
+}
+function getMultiChips(groupId) {
+  return [...document.querySelectorAll(`#${groupId} .chip.selected`)].map(c => c.dataset.val);
+}
+
+function addPhoto(idx) {
+  const url = prompt('Paste image URL:');
+  if (url) {
+    photoUrls[idx] = url;
+    const slots = document.querySelectorAll('#photo-grid .photo-slot');
+    slots[idx].innerHTML = `<img src="${url}" alt="Photo ${idx+1}" /><div class="remove" onclick="event.stopPropagation();removePhoto(${idx})">x</div>`;
+  }
+}
+function removePhoto(idx) {
+  photoUrls[idx] = '';
+  const slots = document.querySelectorAll('#photo-grid .photo-slot');
+  slots[idx].innerHTML = '+';
+}
+
+async function submitProfile() {
+  const dob = document.getElementById('setup-dob').value;
+  let age = null;
+  if (dob) { age = Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000); }
+
+  const ft = parseInt(document.getElementById('setup-height-ft').value) || 0;
+  const inches = parseInt(document.getElementById('setup-height-in').value) || 0;
+  const heightInches = ft * 12 + inches;
+
+  // Get location via browser geolocation
+  let lat = null, lng = null;
+  try {
+    const pos = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 }));
+    lat = pos.coords.latitude;
+    lng = pos.coords.longitude;
+  } catch {}
+
+  const filledPhotos = photoUrls.filter(u => u).length;
+  if (filledPhotos < 2) return toast('At least 2 photos are required');
+
+  const profile = {
+    display_name: document.getElementById('setup-name').value.trim(),
+    gender: getChipVal('gender-chips'),
+    seeking: getChipVal('seeking-chips'),
+    date_of_birth: dob || null,
+    age,
+    height_inches: heightInches || null,
+    body_type: getChipVal('body-chips'),
+    faith: document.getElementById('setup-faith').value,
+    faith_importance: getChipVal('faith-imp-chips') || 'very_important',
+    bio: document.getElementById('setup-bio').value.trim(),
+    photo_urls: photoUrls.filter(u => u),
+    recreation_interests: getMultiChips('rec-chips'),
+    general_interests: getMultiChips('int-chips'),
+    location_lat: lat,
+    location_lng: lng,
+    location_city: document.getElementById('setup-city').value.trim(),
+    location_state: document.getElementById('setup-state').value.trim(),
+    search_radius_miles: parseInt(document.getElementById('setup-radius').value),
+    show_on_map: document.getElementById('setup-map').checked,
+    show_distance: document.getElementById('setup-distance').checked,
+    age_min: parseInt(document.getElementById('setup-age-min').value) || 18,
+    age_max: parseInt(document.getElementById('setup-age-max').value) || 65
+  };
+
+  try {
+    // Init tables first
+    await initDB();
+    const r = await fetch(API + '/dating/profile', {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify(profile)
+    });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error || 'Failed to save');
+
+    toast('Profile created!');
+    myProfile = profile;
+    document.getElementById('main-nav').classList.remove('hidden');
+    showScreen('discover-screen');
+    loadDiscover();
+    loadMyScore();
+  } catch (e) { toast('Error saving profile'); }
+}
+
+// ===== DISCOVER / SWIPE =====
+async function loadDiscover() {
+  try {
+    const r = await fetch(API + '/dating/discover', { headers: authHeaders() });
+    const d = await r.json();
+    if (!r.ok) {
+      if (d.error === 'Create a profile first') { showScreen('setup-screen'); return; }
+      return toast(d.error);
+    }
+    discoverProfiles = d.profiles;
+    currentCardIndex = 0;
+    renderCards();
+  } catch (e) { toast('Failed to load profiles'); }
+}
+
+function renderCards() {
+  const stack = document.getElementById('card-stack');
+  const empty = document.getElementById('empty-discover');
+  const actions = document.getElementById('swipe-actions');
+
+  if (!discoverProfiles.length || currentCardIndex >= discoverProfiles.length) {
+    stack.innerHTML = '';
+    empty.classList.remove('hidden');
+    actions.classList.add('hidden');
+    return;
+  }
+
+  empty.classList.add('hidden');
+  actions.classList.remove('hidden');
+  stack.innerHTML = '';
+
+  // Show up to 3 cards stacked
+  const end = Math.min(currentCardIndex + 3, discoverProfiles.length);
+  for (let i = end - 1; i >= currentCardIndex; i--) {
+    const p = discoverProfiles[i];
+    const card = createCard(p, i === currentCardIndex);
+    const offset = i - currentCardIndex;
+    card.style.transform = `scale(${1 - offset * 0.05}) translateY(${offset * 8}px)`;
+    card.style.zIndex = 10 - offset;
+    stack.appendChild(card);
+  }
+
+  // Add touch/drag to top card
+  setupSwipeGesture(stack.lastChild);
+}
+
+function createCard(p, isTop) {
+  const card = document.createElement('div');
+  card.className = 'swipe-card';
+  card.dataset.profileId = p.id;
+
+  const photos = p.photo_urls || [];
+  const mainPhoto = photos[0] || 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect fill="#27272a" width="400" height="400"/><text x="200" y="210" text-anchor="middle" fill="#71717a" font-size="48" font-family="sans-serif">No Photo</text></svg>');
+
+  const isBlurred = p.photos_blurred;
+  const heightStr = p.height_inches ? `${Math.floor(p.height_inches/12)}'${p.height_inches%12}"` : '';
+
+  // P.I.N.K. bar data
+  const maxPillar = 50;
+  const tPct = ((p.time_total || 0) / maxPillar * 100);
+  const pPct = ((p.people_total || 0) / maxPillar * 100);
+  const iPct = ((p.influence_total || 0) / maxPillar * 100);
+  const nPct = ((p.numbers_total || 0) / maxPillar * 100);
+  const kPct = ((p.knowledge_total || 0) / maxPillar * 100);
+
+  const sharedRec = p.shared_recreation || [];
+  const sharedInt = p.shared_interests || [];
+  const sharedCount = sharedRec.length + sharedInt.length;
+
+  card.innerHTML = `
+    <div class="card-photo ${isBlurred ? 'blurred' : ''}">
+      <img src="${mainPhoto}" alt="${p.display_name}" onerror="this.src='data:image/svg+xml,${encodeURIComponent('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"400\" height=\"400\"><rect fill=\"#27272a\" width=\"400\" height=\"400\"/><text x=\"200\" y=\"210\" text-anchor=\"middle\" fill=\"#71717a\" font-size=\"48\">?</text></svg>')}'" />
+      ${isBlurred ? '<div class="blur-badge">Match on interests to reveal photos</div>' : ''}
+      <div class="card-overlay">
+        <div class="swipe-label like" id="label-like-${p.id}">LIKE</div>
+        <div class="swipe-label nope" id="label-nope-${p.id}">NOPE</div>
+      </div>
+    </div>
+    <div class="card-info">
+      <div class="card-name">${p.display_name} <span>${p.age || ''}</span></div>
+      <div class="card-details">
+        <span class="card-tag">${p.faith || 'Christian'}</span>
+        ${heightStr ? `<span class="card-tag">${heightStr}</span>` : ''}
+        ${p.location_city ? `<span class="card-tag">${p.location_city}${p.show_distance && p.distance_miles !== null ? ' · ' + p.distance_miles + 'mi' : ''}</span>` : ''}
+        ${sharedCount > 0 ? `<span class="shared-badge">${sharedCount} shared interest${sharedCount > 1 ? 's' : ''}</span>` : ''}
+      </div>
+      ${p.bio ? `<div class="card-bio">${p.bio}</div>` : ''}
+    </div>
+    <div class="pink-bar" title="P.I.N.K. Assessment">
+      <div class="pink-segment time" style="height:${Math.max(8, tPct * 0.36)}px;"><span class="label" style="color:var(--pink-t);">T</span></div>
+      <div class="pink-segment people" style="height:${Math.max(8, pPct * 0.36)}px;"><span class="label" style="color:var(--pink-p);">P</span></div>
+      <div class="pink-segment influence" style="height:${Math.max(8, iPct * 0.36)}px;"><span class="label" style="color:var(--pink-i);">I</span></div>
+      <div class="pink-segment numbers" style="height:${Math.max(8, nPct * 0.36)}px;"><span class="label" style="color:var(--pink-n);">N</span></div>
+      <div class="pink-segment knowledge" style="height:${Math.max(8, kPct * 0.36)}px;"><span class="label" style="color:var(--pink-k);">K</span></div>
+    </div>
+  `;
+
+  return card;
+}
+
+// ===== SWIPE GESTURE =====
+function setupSwipeGesture(card) {
+  if (!card) return;
+  let startX = 0, startY = 0, currentX = 0, isDragging = false;
+
+  const onStart = (e) => {
+    isDragging = true;
+    startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    card.classList.add('swiping');
+  };
+
+  const onMove = (e) => {
+    if (!isDragging) return;
+    const x = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    currentX = x - startX;
+    const rotation = currentX * 0.1;
+    card.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
+
+    const profileId = card.dataset.profileId;
+    const likeLabel = document.getElementById(`label-like-${profileId}`);
+    const nopeLabel = document.getElementById(`label-nope-${profileId}`);
+    if (likeLabel) likeLabel.classList.toggle('visible', currentX > 50);
+    if (nopeLabel) nopeLabel.classList.toggle('visible', currentX < -50);
+  };
+
+  const onEnd = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    card.classList.remove('swiping');
+
+    if (Math.abs(currentX) > 100) {
+      const direction = currentX > 0 ? 'right' : 'left';
+      card.classList.add(direction === 'right' ? 'exit-right' : 'exit-left');
+      setTimeout(() => executeSwipe(direction), 300);
+    } else {
+      card.style.transform = '';
+      const profileId = card.dataset.profileId;
+      const likeLabel = document.getElementById(`label-like-${profileId}`);
+      const nopeLabel = document.getElementById(`label-nope-${profileId}`);
+      if (likeLabel) likeLabel.classList.remove('visible');
+      if (nopeLabel) nopeLabel.classList.remove('visible');
+    }
+    currentX = 0;
+  };
+
+  card.addEventListener('mousedown', onStart);
+  card.addEventListener('touchstart', onStart, { passive: true });
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, { passive: true });
+  document.addEventListener('mouseup', onEnd);
+  document.addEventListener('touchend', onEnd);
+}
+
+function doSwipe(direction) {
+  const stack = document.getElementById('card-stack');
+  const topCard = stack.lastChild;
+  if (!topCard) return;
+  topCard.classList.add(direction === 'right' ? 'exit-right' : 'exit-left');
+  setTimeout(() => executeSwipe(direction), 300);
+}
+
+async function executeSwipe(direction) {
+  if (currentCardIndex >= discoverProfiles.length) return;
+  const p = discoverProfiles[currentCardIndex];
+
+  try {
+    const r = await fetch(API + '/dating/swipe', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ profile_id: p.id, direction })
+    });
+    const d = await r.json();
+
+    if (d.matched) {
+      // Show match popup
+      showMatchPopup(p);
+    }
+  } catch {}
+
+  currentCardIndex++;
+  renderCards();
+}
+
+function showMatchPopup(p) {
+  const popup = document.getElementById('match-popup');
+  document.getElementById('match-popup-text').textContent = `You and ${p.display_name} like each other!`;
+  const avatars = document.getElementById('match-avatars');
+  const myPhoto = (myProfile?.photo_urls || [])[0] || '';
+  const theirPhoto = (p.photo_urls || [])[0] || '';
+  avatars.innerHTML = `
+    ${myPhoto ? `<img src="${myPhoto}" alt="You" />` : '<div style="width:80px;height:80px;border-radius:50%;background:var(--border);border:3px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:2rem;">You</div>'}
+    ${theirPhoto ? `<img src="${theirPhoto}" alt="${p.display_name}" />` : `<div style="width:80px;height:80px;border-radius:50%;background:var(--border);border:3px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.5rem;">${p.display_name[0]}</div>`}
+  `;
+  popup.classList.remove('hidden');
+}
+
+function showFullProfile() {
+  if (currentCardIndex >= discoverProfiles.length) return;
+  const p = discoverProfiles[currentCardIndex];
+  const details = [
+    p.faith, p.denomination, p.body_type,
+    p.height_inches ? `${Math.floor(p.height_inches/12)}'${p.height_inches%12}"` : '',
+    p.location_city, p.location_state
+  ].filter(Boolean).join(' · ');
+
+  const rec = (p.recreation_interests || []).join(', ');
+  const gen = (p.general_interests || []).join(', ');
+
+  alert(`${p.display_name}, ${p.age}\n${details}\n\n${p.bio || 'No bio'}\n\nRecreation: ${rec || 'None listed'}\nInterests: ${gen || 'None listed'}\n\nP.I.N.K.: T:${p.time_total||0} P:${p.people_total||0} I:${p.influence_total||0} N:${p.numbers_total||0} K:${p.knowledge_total||0}\nMaster Score: ${p.master_score || 'N/A'}`);
+}
+
+// ===== MATCHES =====
+async function loadMatches() {
+  try {
+    const r = await fetch(API + '/dating/matches', { headers: authHeaders() });
+    const d = await r.json();
+    if (!r.ok) return;
+
+    const list = document.getElementById('matches-list');
+    const empty = document.getElementById('empty-matches');
+
+    if (!d.matches.length) {
+      list.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+
+    empty.classList.add('hidden');
+    list.innerHTML = d.matches.map(m => {
+      const photo = (m.photo_urls || [])[0] || '';
+      const initial = (m.display_name || '?')[0];
+      return `
+        <div class="match-item" onclick="openChat(${m.match_id}, ${m.profile_id}, '${m.display_name}', '${photo}')">
+          ${photo ? `<img class="match-avatar" src="${photo}" alt="${m.display_name}" />` :
+            `<div class="match-avatar" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:var(--gold);">${initial}</div>`}
+          <div class="match-info">
+            <div class="match-name">${m.display_name} <span style="color:var(--muted);font-weight:400;">${m.age || ''}</span></div>
+            <div class="match-preview">${m.faith || ''} · ${m.location_city || ''}</div>
+            <div class="match-time">Matched ${new Date(m.matched_at).toLocaleDateString()}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) { toast('Failed to load matches'); }
+}
+
+// ===== CHAT =====
+async function openChat(matchId, profileId, name, photo) {
+  currentMatchId = matchId;
+  currentChatPartner = { id: profileId, name, photo };
+  document.getElementById('chat-name').textContent = name;
+  document.getElementById('chat-avatar').src = photo || '';
+  document.getElementById('chat-status').textContent = 'Faith Match';
+  showScreen('chat-screen');
+  await loadMessages();
+}
+
+async function loadMessages() {
+  if (!currentMatchId) return;
+  try {
+    const r = await fetch(API + '/dating/messages?match_id=' + currentMatchId, { headers: authHeaders() });
+    const d = await r.json();
+    if (!r.ok) return;
+
+    const container = document.getElementById('chat-messages');
+    container.innerHTML = d.messages.map(m => `
+      <div class="msg ${m.sender_id === d.myProfileId ? 'sent' : 'received'}">${escapeHtml(m.message)}</div>
+    `).join('');
+
+    if (!d.messages.length) {
+      container.innerHTML = '<div style="text-align:center;padding:3rem 1rem;color:var(--dim);font-size:0.85rem;">Say hello! You matched for a reason.</div>';
+    }
+
+    container.scrollTop = container.scrollHeight;
+  } catch {}
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg || !currentMatchId) return;
+
+  input.value = '';
+  // Optimistic add
+  const container = document.getElementById('chat-messages');
+  container.innerHTML += `<div class="msg sent">${escapeHtml(msg)}</div>`;
+  container.scrollTop = container.scrollHeight;
+
+  try {
+    await fetch(API + '/dating/message', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ match_id: currentMatchId, message: msg })
+    });
+  } catch { toast('Failed to send'); }
+}
+
+// ===== SETTINGS =====
+async function loadMyScore() {
+  try {
+    const r = await fetch(API + '/dating/profile', { headers: authHeaders() });
+    const d = await r.json();
+    if (d.profile) {
+      myProfile = d.profile;
+      document.getElementById('my-score').textContent = d.profile.master_score || '--';
+      document.getElementById('set-active').checked = d.profile.is_active;
+      document.getElementById('set-map').checked = d.profile.show_on_map;
+      document.getElementById('set-distance').checked = d.profile.show_distance;
+      document.getElementById('set-radius').value = d.profile.search_radius_miles || 50;
+    }
+  } catch {}
+}
+
+async function toggleActive(active) {
+  try {
+    await fetch(API + '/dating/toggle-active', {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify({ active })
+    });
+    toast(active ? 'Profile activated' : 'Profile deactivated');
+  } catch {}
+}
+
+async function updateSetting(key, val) {
+  try {
+    await fetch(API + '/dating/profile', {
+      method: 'PUT', headers: authHeaders(), body: JSON.stringify({ [key]: val })
+    });
+  } catch {}
+}
+
+// ===== UTILS =====
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', () => {
+  const savedEmail = localStorage.getItem('ve_email');
+  if (savedEmail) document.getElementById('login-email').value = savedEmail;
+
+  if (token) {
+    checkProfile();
+  }
+});
+</script>
+</body>
+</html>

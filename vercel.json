@@ -76,6 +76,10 @@
       "dest": "/api/ai.js"
     },
     {
+      "src": "/api/dating/(.*)",
+      "dest": "/api/dating.js"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     },
@@ -101,6 +105,10 @@
     {
       "src": "/dating",
       "dest": "/dating.html"
+    },
+    {
+      "src": "/faith-match",
+      "dest": "/faith-match.html"
     },
     {
       "src": "/about-pink",
