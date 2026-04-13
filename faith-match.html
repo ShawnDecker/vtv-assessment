@@ -466,7 +466,7 @@
         <div class="photo-slot" onclick="addPhoto(4)">+</div>
         <div class="photo-slot" onclick="addPhoto(5)">+</div>
       </div>
-      <p style="font-size:0.7rem;color:var(--red);">Minimum 2 photos required</p>
+      <p style="font-size:0.7rem;color:var(--red);">Tap to upload — minimum 2 photos required (max 5MB each)</p>
     </div>
     <div class="form-group">
       <label>Bio (max 300 chars)</label>
@@ -1037,12 +1037,35 @@ function getMultiChips(groupId) {
 }
 
 function addPhoto(idx) {
-  const url = prompt('Paste image URL:');
-  if (url) {
-    photoUrls[idx] = url;
-    const slots = document.querySelectorAll('#photo-grid .photo-slot');
-    slots[idx].innerHTML = `<img src="${url}" alt="Photo ${idx+1}" /><div class="remove" onclick="event.stopPropagation();removePhoto(${idx})">x</div>`;
-  }
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return toast('Photo must be under 5MB');
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      // Resize to max 800px wide for storage efficiency
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxW = 800, maxH = 1200;
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = h * maxW / w; w = maxW; }
+        if (h > maxH) { w = w * maxH / h; h = maxH; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        photoUrls[idx] = dataUrl;
+        const slots = document.querySelectorAll('#photo-grid .photo-slot');
+        slots[idx].innerHTML = `<img src="${dataUrl}" alt="Photo ${idx+1}" /><div class="remove" onclick="event.stopPropagation();removePhoto(${idx})">x</div>`;
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
 }
 function removePhoto(idx) {
   photoUrls[idx] = '';
