@@ -71,8 +71,19 @@
   .sys-dot.s-active { background:#22c55e; }
   .sys-dot.s-degraded { background:#eab308; }
   .sys-dot.s-down { background:#ef4444; }
+  .sys-dot.s-complete { background:#22c55e; }
+  .sys-dot.s-issues { background:#eab308; }
+  .sys-dot.s-pending { background:#3b82f6; animation:pulse 1.5s infinite; }
+  .sys-dot.s-online { background:#22c55e; }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
   .cat-header { font-size:11px; color:#D4A847; font-weight:bold; letter-spacing:1px; text-transform:uppercase; margin:16px 0 8px; padding-bottom:4px; border-bottom:1px solid #27272a; }
+  .download-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:8px; margin-bottom:16px; }
+  .download-card { background:#18181b; border:1px solid #27272a; border-radius:10px; padding:16px; text-align:center; cursor:pointer; transition:border-color 0.2s; text-decoration:none; color:#e4e4e7; display:block; }
+  .download-card:hover { border-color:#D4A847; }
+  .download-card .dl-icon { font-size:28px; margin-bottom:8px; }
+  .download-card .dl-name { font-size:13px; font-weight:bold; }
+  .download-card .dl-desc { font-size:10px; color:#71717a; margin-top:4px; }
+  .download-card .dl-size { font-size:9px; color:#D4A847; margin-top:6px; }
   .sys-summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
   .sys-summary .ss { font-size:12px; color:#a1a1aa; }
   .sys-summary .ss b { color:#e4e4e7; }
@@ -181,30 +192,106 @@ function render(data) {
   const el = document.getElementById('content');
   let html = '';
 
-  // === QUICK LINKS ===
-  html += '<div class="section-title">Quick Access</div>';
-  html += '<div class="quick-links">';
-  const links = [
-    { icon:'&#9881;', name:'n8n', sub:'Workflows', url:'https://n8n.srv1138119.hstgr.cloud' },
-    { icon:'&#9650;', name:'Vercel', sub:'Deployments', url:'https://vercel.com/danddappraisal-7740s-projects' },
-    { icon:'&#128202;', name:'Neon', sub:'Database', url:'https://console.neon.tech' },
-    { icon:'&#128179;', name:'Stripe', sub:'Payments', url:'https://dashboard.stripe.com' },
-    { icon:'&#127760;', name:'Hostinger', sub:'VPS', url:'https://hpanel.hostinger.com' },
-    { icon:'&#128231;', name:'Gmail', sub:'Email', url:'https://mail.google.com' },
-    { icon:'&#128100;', name:'HubSpot', sub:'CRM', url:'https://app.hubspot.com' },
-    { icon:'&#128197;', name:'Calendly', sub:'Scheduling', url:'https://calendly.com/app/scheduled_events/upcoming' },
-    { icon:'&#127968;', name:'GoDaddy', sub:'Domains', url:'https://dcc.godaddy.com' },
-    { icon:'&#128218;', name:'VTV Portal', sub:'Assessment', url:'https://assessment.valuetovictory.com' },
-    { icon:'&#127908;', name:'Audiobook', sub:'VPS Audio', url:'http://147.93.97.228:8082' },
-    { icon:'&#128221;', name:'Admin', sub:'Contacts', url:'https://assessment.valuetovictory.com/admin/contacts' },
-    { icon:'&#128150;', name:'Couples', sub:'Report', url:'https://assessment.valuetovictory.com/couple-report' },
-    { icon:'&#129309;', name:'Relationships', sub:'Hub', url:'https://assessment.valuetovictory.com/relationship-hub' },
-    { icon:'&#128187;', name:'GitHub', sub:'Repos', url:'https://github.com/ShawnDecker' },
+  // === QUICK LINKS (Categorized) ===
+  const linkGroups = [
+    { title: 'Cloud Services', links: [
+      { icon:'&#9881;', name:'n8n', sub:'Workflows', url:'https://n8n.srv1138119.hstgr.cloud' },
+      { icon:'&#9650;', name:'Vercel', sub:'Deployments', url:'https://vercel.com/danddappraisal-7740s-projects' },
+      { icon:'&#128202;', name:'Neon', sub:'Database', url:'https://console.neon.tech' },
+      { icon:'&#128179;', name:'Stripe', sub:'Payments', url:'https://dashboard.stripe.com' },
+      { icon:'&#127760;', name:'Hostinger', sub:'VPS', url:'https://hpanel.hostinger.com' },
+      { icon:'&#128231;', name:'Gmail', sub:'Email', url:'https://mail.google.com' },
+      { icon:'&#128100;', name:'HubSpot', sub:'CRM', url:'https://app.hubspot.com' },
+      { icon:'&#128197;', name:'Calendly', sub:'Scheduling', url:'https://calendly.com/app/scheduled_events/upcoming' },
+      { icon:'&#127968;', name:'GoDaddy', sub:'Domains', url:'https://dcc.godaddy.com' },
+      { icon:'&#128187;', name:'GitHub', sub:'Repos', url:'https://github.com/ShawnDecker' },
+    ]},
+    { title: 'VTV Sites & Portal', links: [
+      { icon:'&#128218;', name:'VTV Portal', sub:'Assessment', url:'https://assessment.valuetovictory.com' },
+      { icon:'&#128221;', name:'Admin', sub:'Contacts', url:'https://assessment.valuetovictory.com/admin/contacts' },
+      { icon:'&#128150;', name:'Couples', sub:'Report', url:'https://assessment.valuetovictory.com/couple-report' },
+      { icon:'&#129309;', name:'Relationships', sub:'Hub', url:'https://assessment.valuetovictory.com/relationship-hub' },
+      { icon:'&#127775;', name:'VTV Home', sub:'Marketing', url:'https://valuetovictory.com' },
+      { icon:'&#127912;', name:'Shawn Site', sub:'Author', url:'https://shawnedecker.com' },
+      { icon:'&#127908;', name:'Audiobook', sub:'VPS Audio', url:'http://147.93.97.228:8082' },
+    ]},
+    { title: 'AI & Local Services', links: [
+      { icon:'&#129302;', name:'Ollama', sub:'AI Models', url:'http://localhost:11434' },
+      { icon:'&#127916;', name:'Video Engine', sub:'Transcribe/Clip', url:'http://localhost:8003' },
+      { icon:'&#9881;', name:'Local n8n', sub:'Dev Workflows', url:'http://localhost:5678' },
+      { icon:'&#128444;', name:'ComfyUI', sub:'Image Gen', url:'http://localhost:8188' },
+      { icon:'&#129504;', name:'LLM Runtime', sub:'Local AI', url:'http://localhost:8006' },
+      { icon:'&#128024;', name:'Data Memory', sub:'ChromaDB', url:'http://localhost:8008' },
+    ]},
+    { title: 'Writing & Content Tools', links: [
+      { icon:'&#128214;', name:'BookStack', sub:'Wiki/Books', url:'http://localhost:9000' },
+      { icon:'&#9997;', name:'Etherpad', sub:'Collab Editor', url:'http://localhost:9001' },
+      { icon:'&#128196;', name:'Memos', sub:'Quick Notes', url:'http://localhost:9002' },
+      { icon:'&#128221;', name:'HedgeDoc', sub:'Markdown', url:'http://localhost:9003' },
+      { icon:'&#128220;', name:'Grammar', sub:'LanguageTool', url:'http://localhost:9004' },
+      { icon:'&#128269;', name:'Search', sub:'MeiliSearch', url:'http://localhost:7700' },
+    ]},
+    { title: 'BiaBox Engine', links: [
+      { icon:'&#128640;', name:'BiaBox', sub:'API Gateway', url:'http://localhost:8000' },
+      { icon:'&#127912;', name:'Social Engine', sub:'Content Gen', url:'http://localhost:8002' },
+      { icon:'&#128187;', name:'BiaBox Web', sub:'Frontend', url:'http://localhost:8080' },
+    ]},
   ];
-  for (const l of links) {
-    html += `<a class="quick-link" href="${l.url}" target="_blank"><span class="icon">${l.icon}</span><span class="ql-name">${l.name}</span><span class="ql-sub">${l.sub}</span></a>`;
+  for (const group of linkGroups) {
+    html += `<div class="section-title">${group.title}</div>`;
+    html += '<div class="quick-links">';
+    for (const l of group.links) {
+      html += `<a class="quick-link" href="${l.url}" target="_blank"><span class="icon">${l.icon}</span><span class="ql-name">${l.name}</span><span class="ql-sub">${l.sub}</span></a>`;
+    }
+    html += '</div>';
   }
+
+  // === TEAM DOWNLOADS ===
+  html += '<div class="section-title">Team Setup &amp; Downloads</div>';
+  html += '<div class="download-grid">';
+  html += '<a class="download-card" href="/vtv-install.bat" download><div class="dl-icon">&#128229;</div><div class="dl-name">Windows Installer</div><div class="dl-desc">Right-click, Run as Admin. No coding needed.</div><div class="dl-size">.bat — Zero tokens used</div></a>';
+  html += '<a class="download-card" href="/vtv-team-installer.js" download><div class="dl-icon">&#128187;</div><div class="dl-name">Advanced Installer</div><div class="dl-desc">Node.js script with full reporting</div><div class="dl-size">.js — For terminal users</div></a>';
+  html += '<a class="download-card" href="/VTV-SYSTEM-ARCHITECTURE.md" download><div class="dl-icon">&#128218;</div><div class="dl-name">System Architecture</div><div class="dl-desc">Full ecosystem documentation</div><div class="dl-size">Markdown</div></a>';
+  html += '<a class="download-card" href="javascript:void(0)" onclick="copyInstallCmd()"><div class="dl-icon">&#9889;</div><div class="dl-name">Quick Install CMD</div><div class="dl-desc">Copy one-line install command</div><div class="dl-size">Click to Copy</div></a>';
   html += '</div>';
+
+  // === TEAM INSTALLATIONS ===
+  const teamSystems = (data.systems || []).filter(s => s.category === 'team');
+  if (teamSystems.length) {
+    html += '<div class="section-title">Team Installations</div>';
+    const members = {};
+    for (const s of teamSystems) {
+      const memberName = s.system_name.split(':')[1] || 'unknown';
+      if (!members[memberName]) members[memberName] = [];
+      members[memberName].push(s);
+    }
+    html += '<div class="sys-grid">';
+    for (const [name, systems] of Object.entries(members)) {
+      const install = systems.find(s => s.system_type === 'installation');
+      const machine = systems.find(s => s.system_type === 'resource');
+      const ollama = systems.find(s => s.system_type === 'ollama');
+      const meta = install?.metadata || {};
+      const machineMeta = machine?.metadata || {};
+      const status = install?.status || 'pending';
+      const dotClass = 's-' + status;
+      const steps = meta.steps || [];
+      const passed = steps.filter(s => s.startsWith('pass:')).length;
+      const failed = steps.filter(s => s.startsWith('fail:')).length;
+
+      html += `<div class="sys-card">
+        <div class="sys-name"><span class="sys-dot ${dotClass}"></span>${name.toUpperCase()}</div>
+        <div class="sys-type">${machineMeta.hostname || 'Unknown machine'} &bull; ${machineMeta.os || ''}</div>
+        <div class="sys-meta">
+          <div>RAM: ${machineMeta.ram_gb || '?'}GB &bull; CPU: ${machineMeta.cpu_cores || '?'} cores</div>
+          <div>Disk Free: ${machineMeta.disk_free_gb || '?'}GB</div>
+          <div>Model Tier: ${meta.model_tier || '?'} (${(meta.models||[]).length} models)</div>
+          <div>Steps: ${passed} passed${failed ? ', <span style="color:#ef4444">' + failed + ' failed</span>' : ''}</div>
+        </div>
+        <div style="font-size:9px;color:#52525b;margin-top:4px;">Installed ${timeAgo(meta.installed_at || install?.last_reported_at)}</div>
+      </div>`;
+    }
+    html += '</div>';
+  }
 
   // === SYSTEM HEALTH ===
   html += '<div class="section-title">System Health</div>';
@@ -354,6 +441,15 @@ function render(data) {
 
 function stat(val, label) {
   return `<div class="stat-box"><div class="num">${val}</div><div class="label">${label}</div></div>`;
+}
+
+function copyInstallCmd() {
+  const cmd = 'curl -sO https://assessment.valuetovictory.com/vtv-team-installer.js && node vtv-team-installer.js';
+  navigator.clipboard.writeText(cmd).then(() => {
+    alert('Install command copied!\n\nPaste it in a terminal to start the installer.');
+  }).catch(() => {
+    prompt('Copy this command:', cmd);
+  });
 }
 
 function timeAgo(ts) {
