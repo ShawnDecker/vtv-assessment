@@ -183,14 +183,79 @@ async function main() {
   ok(`Config saved: ${configPath}`);
   console.log();
 
-  // Step 5: Generate report
+  // Step 5: Download supporting files
+  info('Downloading supporting files...');
+  const downloads = [
+    { name: 'VTV-SYSTEM-ARCHITECTURE.md', desc: 'System Architecture' },
+    { name: 'vtv-install.bat', desc: 'Windows Installer (backup)' },
+  ];
+  for (const dl of downloads) {
+    try {
+      const filePath = path.join(configDir, dl.name);
+      const res = await fetch(`${API_BASE}/${dl.name}`);
+      if (res.status === 200) {
+        const content = typeof res.data === 'string' ? res.data : JSON.stringify(res.data, null, 2);
+        fs.writeFileSync(filePath, content);
+        ok(`${dl.desc} → ${filePath}`);
+      } else {
+        warn(`${dl.desc} — HTTP ${res.status}, skipped`);
+      }
+    } catch (e) {
+      warn(`${dl.desc} — ${e.message}, skipped`);
+    }
+  }
+  console.log();
+
+  // Step 6: Create team assessment link file (easy sharing)
+  const linkContent = `Value to Victory — Team Assessment Link\n========================================\n\nShare this link with your team:\n${API_BASE}/?depth=extensive\n\nTeam Report:\n${API_BASE}/team-report/${teamId}\n\nDashboard:\n${API_BASE}/agent-dashboard\n\nCoaching:\nhttps://calendly.com/valuetovictory/30min\n`;
+  const linkPath = path.join(configDir, 'TEAM-LINKS.txt');
+  fs.writeFileSync(linkPath, linkContent);
+  ok(`Team links file: ${linkPath}`);
+  console.log();
+
+  // Step 7: Create a simple health check script for the team
+  const healthScript = `#!/usr/bin/env node
+// VTV Team Health Check — Run anytime: node health-check.js
+const https = require('https');
+const config = require('./vtv-config.json');
+console.log('\\n  VTV Health Check — Team: ' + config.teamId + '\\n');
+const checks = [
+  { name: 'API', url: config.apiBase + '/api/health' },
+  { name: 'Assessment', url: config.apiBase + '/api/questions?email=healthcheck@test.com&mode=individual&depth=quick' },
+  { name: 'Team Report', url: config.teamReportUrl },
+];
+let done = 0;
+for (const c of checks) {
+  const start = Date.now();
+  https.get(c.url, res => {
+    const ms = Date.now() - start;
+    const icon = res.statusCode === 200 ? '[OK]' : '[!!]';
+    console.log('  ' + icon + ' ' + c.name + ' — ' + res.statusCode + ' (' + ms + 'ms)');
+    if (++done === checks.length) console.log('');
+  }).on('error', e => {
+    console.log('  [XX] ' + c.name + ' — ' + e.message);
+    if (++done === checks.length) console.log('');
+  });
+}
+`;
+  const healthPath = path.join(configDir, 'health-check.js');
+  fs.writeFileSync(healthPath, healthScript);
+  ok(`Health check script: ${healthPath}`);
+  console.log();
+
+  // Step 8: Generate report
   console.log('  ============================================');
   console.log('   SETUP COMPLETE');
   console.log('  ============================================');
   console.log();
   info(`Team ID:       ${teamId}`);
   info(`Admin Email:   ${email}`);
-  info(`Config:        ${configPath}`);
+  console.log();
+  info('Installed files:');
+  info(`  ${configPath}`);
+  info(`  ${path.join(configDir, 'VTV-SYSTEM-ARCHITECTURE.md')}`);
+  info(`  ${path.join(configDir, 'TEAM-LINKS.txt')}`);
+  info(`  ${path.join(configDir, 'health-check.js')}`);
   console.log();
   info('Quick Links:');
   info(`  Dashboard:   ${config.dashboardUrl}`);

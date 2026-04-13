@@ -77,6 +77,21 @@ echo   Setup complete!
 echo  ============================================
 echo.
 echo  Your team agent is configured at: %VTV_DIR%
-echo  Dashboard: https://assessment.valuetovictory.com/agent-dashboard
+echo.
+echo  Files installed:
+echo    - vtv-config.json          (team configuration)
+echo    - VTV-SYSTEM-ARCHITECTURE.md (system docs)
+echo    - TEAM-LINKS.txt           (shareable links)
+echo    - health-check.js          (run anytime to check status)
+echo.
+echo  To run a health check anytime:
+echo    cd %VTV_DIR% ^&^& node health-check.js
+echo.
+
+REM Open dashboard in browser
+set /p OPENBROWSER="  Open dashboard in browser? (Y/n): "
+if /i not "%OPENBROWSER%"=="n" (
+    start https://assessment.valuetovictory.com/agent-dashboard
+)
 echo.
 pause
