@@ -5780,6 +5780,173 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
       } catch(e) { return res.status(500).json({ error:e.message }); }
     }
 
+    // GET /api/send-vt-pitch — Send Virginia Tech partnership pitch
+    if (req.method === 'GET' && url.startsWith('/send-vt-pitch')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const apiKey = params.get('key') || req.headers['x-api-key'] || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!validKey || apiKey !== validKey) return res.status(401).json({ error: 'API key required' });
+      if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return res.status(500).json({ error: 'Email not configured' });
+
+      const recipients = [
+        { email: 'csundergrad@cs.vt.edu', dept: 'Computer Science', role: 'Undergraduate Programs' },
+        { email: 'gradinfo@cs.vt.edu', dept: 'Computer Science', role: 'Graduate Programs' },
+        { email: 'mbflynn3@vt.edu', dept: 'Computer Science', role: 'Faculty' },
+        { email: 'cmda-advising@vt.edu', dept: 'CMDA / Data Science', role: 'Advising' },
+        { email: 'alattime@vt.edu', dept: 'CMDA / Data Science', role: 'Faculty' },
+        { email: 'angie.patterson@vt.edu', dept: 'CMDA / Data Science', role: 'Faculty' },
+        { email: 'dflora1@vt.edu', dept: 'CMDA / Data Science', role: 'Faculty' },
+        { email: 'agryan@vt.edu', dept: 'CMDA / Data Science', role: 'Faculty' },
+        { email: 'jodelong@vt.edu', dept: 'CMDA / Data Science', role: 'Faculty' },
+        { email: '1225coordinator@math.vt.edu', dept: 'Mathematics', role: 'MATH 1225 Coordinator' },
+        { email: '1226coordinator@math.vt.edu', dept: 'Mathematics', role: 'MATH 1226 Coordinator' },
+        { email: '2114coordinator@math.vt.edu', dept: 'Mathematics', role: 'MATH 2114 Coordinator' },
+        { email: 'summeradvising@math.vt.edu', dept: 'Mathematics', role: 'Summer Advising' },
+        { email: 'ufferman@vt.edu', dept: 'Mathematics / Statistics', role: 'Faculty' },
+        { email: 'jmhurdus@vt.edu', dept: 'Mathematics / Statistics', role: 'Faculty' },
+      ];
+
+      const transporter = nodemailer.createTransport({ service:'gmail', auth:{user:process.env.GMAIL_USER,pass:process.env.GMAIL_APP_PASSWORD} });
+      let sentCount = 0;
+      const results = [];
+
+      for (const r of recipients) {
+        try {
+          const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 16px;"><tr><td align="center">
+<table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;">
+
+<tr><td style="text-align:center;padding-bottom:24px;">
+  <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#D4A847;margin-bottom:6px;">VALUE TO VICTORY</div>
+  <div style="font-family:Georgia,serif;font-size:24px;font-style:italic;color:#ffffff;margin-bottom:4px;">Student Partnership Opportunity</div>
+  <div style="font-size:12px;color:#71717a;">Real-World AI &amp; Data Science &mdash; Live Production Platform</div>
+</td></tr>
+
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:36px 28px;">
+
+  <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 20px;">Dear ${r.dept} Team,</p>
+
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 16px;">My name is Shawn Decker. I'm the founder of <strong style="color:#D4A847;">Value to Victory</strong> &mdash; a live AI-powered personal development platform built on the same technology stack Virginia Tech students are learning in their coursework.</p>
+
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 16px;">I'm reaching out because I have <strong style="color:#e4e4e7;">specific, funded technical needs</strong> that align directly with your students' skillsets &mdash; and I'm offering something most startups can't: <strong style="color:#D4A847;">real equity, real portfolio work, and a live production codebase</strong> that's already serving users.</p>
+
+  <div style="background:#111118;border-left:3px solid #D4A847;padding:16px 20px;margin:20px 0;border-radius:0 8px 8px 0;">
+    <p style="color:#D4A847;font-size:14px;font-weight:bold;margin:0 0 8px;">The Platform (Live &amp; In Production)</p>
+    <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">88 files &bull; 30,000+ lines of code &bull; 26 database tables &bull; 60+ REST API endpoints &bull; 4 automated daily email systems &bull; Stripe payments &bull; PostgreSQL &bull; Serverless architecture &bull; Claude AI integration</p>
+    <p style="color:#71717a;font-size:12px;margin:8px 0 0;">Live at: assessment.valuetovictory.com</p>
+  </div>
+
+  <hr style="border:none;border-top:1px solid #27272a;margin:24px 0;"/>
+
+  <p style="color:#e4e4e7;font-size:16px;font-weight:bold;margin:0 0 16px;">What We Need &mdash; Mapped to VT Courses</p>
+
+  <!-- CS NEEDS -->
+  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px;margin-bottom:12px;">
+    <p style="color:#3b82f6;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;">Computer Science (AI &amp; ML)</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+      <tr><td style="color:#a1a1aa;padding:4px 0;vertical-align:top;width:40%;">CS 4804 / 5804</td><td style="color:#e4e4e7;padding:4px 0;">AI-powered coaching engine that adapts prescriptions based on user behavior patterns and assessment history</td></tr>
+      <tr><td colspan="2" style="border-bottom:1px solid #27272a;padding:2px 0;"></td></tr>
+      <tr><td style="color:#a1a1aa;padding:4px 0;vertical-align:top;">CS 4824 / 5824</td><td style="color:#e4e4e7;padding:4px 0;">Predictive scoring models &mdash; forecast user outcomes from assessment patterns, churn prediction, engagement optimization</td></tr>
+      <tr><td colspan="2" style="border-bottom:1px solid #27272a;padding:2px 0;"></td></tr>
+      <tr><td style="color:#a1a1aa;padding:4px 0;vertical-align:top;">CS 5834</td><td style="color:#e4e4e7;padding:4px 0;">NLP for sentiment analysis of user feedback, automated coaching email personalization, natural language assessment interpretation</td></tr>
+      <tr><td colspan="2" style="border-bottom:1px solid #27272a;padding:2px 0;"></td></tr>
+      <tr><td style="color:#a1a1aa;padding:4px 0;vertical-align:top;">CS 4984</td><td style="color:#e4e4e7;padding:4px 0;">Computer vision for document scanning (coaching worksheets), OCR for handwritten journal entries</td></tr>
+    </table>
+  </div>
+
+  <!-- DATA SCIENCE NEEDS -->
+  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px;margin-bottom:12px;">
+    <p style="color:#22c55e;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;">Data Science / CMDA</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+      <tr><td style="color:#a1a1aa;padding:4px 0;vertical-align:top;width:40%;">CMDA 3634</td><td style="color:#e4e4e7;padding:4px 0;">Interactive analytics dashboard &mdash; visualize pillar distributions, score trends, cohort analysis across 50 sub-dimensions</td></tr>
+      <tr><td colspan="2" style="border-bottom:1px solid #27272a;padding:2px 0;"></td></tr>
+      <tr><td style="color:#a1a1aa;padding:4px 0;vertical-align:top;">CMDA 4654</td><td style="color:#e4e4e7;padding:4px 0;">Cross-pillar impact modeling &mdash; quantify how weakness in one life dimension cascades into others (20 directional relationships in our existing matrix)</td></tr>
+      <tr><td colspan="2" style="border-bottom:1px solid #27272a;padding:2px 0;"></td></tr>
+      <tr><td style="color:#a1a1aa;padding:4px 0;vertical-align:top;">STAT 4714</td><td style="color:#e4e4e7;padding:4px 0;">Recommendation engine optimization &mdash; personalize tool/resource suggestions based on score patterns, demographics, and behavioral clusters</td></tr>
+    </table>
+  </div>
+
+  <!-- MATH NEEDS -->
+  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px;margin-bottom:12px;">
+    <p style="color:#D4A847;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;">Mathematics &amp; Statistics</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+      <tr><td style="color:#a1a1aa;padding:4px 0;vertical-align:top;width:40%;">MATH 1225/1226</td><td style="color:#e4e4e7;padding:4px 0;">Score curve optimization &mdash; model growth trajectories, diminishing returns analysis, compound improvement rates across 90-day challenges</td></tr>
+      <tr><td colspan="2" style="border-bottom:1px solid #27272a;padding:2px 0;"></td></tr>
+      <tr><td style="color:#a1a1aa;padding:4px 0;vertical-align:top;">MATH 2114</td><td style="color:#e4e4e7;padding:4px 0;">Matrix operations for our relationship assessment system (5-domain give/receive matrices), couple compatibility scoring, team aggregate analysis</td></tr>
+      <tr><td colspan="2" style="border-bottom:1px solid #27272a;padding:2px 0;"></td></tr>
+      <tr><td style="color:#a1a1aa;padding:4px 0;vertical-align:top;">STAT 3005</td><td style="color:#e4e4e7;padding:4px 0;">Percentile benchmarking engine, A/B testing framework for email engagement, statistical validation of assessment reliability</td></tr>
+    </table>
+  </div>
+
+  <hr style="border:none;border-top:1px solid #27272a;margin:24px 0;"/>
+
+  <p style="color:#e4e4e7;font-size:16px;font-weight:bold;margin:0 0 16px;">What Students Get</p>
+
+  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px;margin-bottom:16px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+      <tr><td style="color:#D4A847;font-weight:bold;padding:6px 0;vertical-align:top;width:30%;">Portfolio Work</td><td style="color:#a1a1aa;padding:6px 0;">Ship real features to a live production platform with real users &mdash; not a class project that dies on submission</td></tr>
+      <tr><td colspan="2" style="border-bottom:1px solid #27272a;padding:2px 0;"></td></tr>
+      <tr><td style="color:#D4A847;font-weight:bold;padding:6px 0;vertical-align:top;">Equity Option</td><td style="color:#a1a1aa;padding:6px 0;">Meaningful equity stakes in a company valued at $1.5M &mdash; real ownership, not just a line on a resume</td></tr>
+      <tr><td colspan="2" style="border-bottom:1px solid #27272a;padding:2px 0;"></td></tr>
+      <tr><td style="color:#D4A847;font-weight:bold;padding:6px 0;vertical-align:top;">Tech Stack</td><td style="color:#a1a1aa;padding:6px 0;">Node.js, PostgreSQL, Vercel serverless, Stripe, Claude AI API, Gmail automation &mdash; industry-standard tools</td></tr>
+      <tr><td colspan="2" style="border-bottom:1px solid #27272a;padding:2px 0;"></td></tr>
+      <tr><td style="color:#D4A847;font-weight:bold;padding:6px 0;vertical-align:top;">Real Data</td><td style="color:#a1a1aa;padding:6px 0;">Work with actual user assessment data across 50 sub-dimensions, 26 database tables, and growing daily</td></tr>
+      <tr><td colspan="2" style="border-bottom:1px solid #27272a;padding:2px 0;"></td></tr>
+      <tr><td style="color:#D4A847;font-weight:bold;padding:6px 0;vertical-align:top;">Mentorship</td><td style="color:#a1a1aa;padding:6px 0;">Direct collaboration with the founder and existing AI systems already integrated into the platform</td></tr>
+      <tr><td colspan="2" style="border-bottom:1px solid #27272a;padding:2px 0;"></td></tr>
+      <tr><td style="color:#D4A847;font-weight:bold;padding:6px 0;vertical-align:top;">Reference</td><td style="color:#a1a1aa;padding:6px 0;">A founder who will personally vouch for their work to future employers</td></tr>
+    </table>
+  </div>
+
+  <hr style="border:none;border-top:1px solid #27272a;margin:24px 0;"/>
+
+  <p style="color:#e4e4e7;font-size:16px;font-weight:bold;margin:0 0 12px;">The Ask</p>
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 16px;">I'd love to discuss how this could work as:</p>
+  <ul style="color:#a1a1aa;font-size:14px;line-height:1.8;padding-left:16px;margin:0 0 16px;">
+    <li><strong style="color:#e4e4e7;">Senior capstone or independent study project</strong> &mdash; real deliverables, real impact</li>
+    <li><strong style="color:#e4e4e7;">Paid internship or co-op</strong> &mdash; funded technical roles</li>
+    <li><strong style="color:#e4e4e7;">Research collaboration</strong> &mdash; the assessment data has academic potential</li>
+    <li><strong style="color:#e4e4e7;">Guest presentation</strong> &mdash; I'd be happy to present to your class about building AI products from zero to production</li>
+  </ul>
+
+  <div style="background:#111118;border-left:3px solid #D4A847;padding:16px 20px;margin:20px 0;border-radius:0 8px 8px 0;">
+    <p style="color:#D4A847;font-size:14px;font-weight:bold;margin:0 0 8px;">About Value to Victory</p>
+    <p style="color:#a1a1aa;font-size:13px;line-height:1.6;margin:0;">Value to Victory is a personal and professional development platform built around the Value Engine Assessment &mdash; a 50-dimension diagnostic across 5 life pillars (Time, People, Influence, Numbers, Knowledge). The platform includes automated coaching, relationship assessments, team analytics, a 60-day devotional system, and an audiobook. We're pre-revenue with a $1.5M valuation and preparing for angel investment.</p>
+  </div>
+
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:16px 0 0;">I'd welcome a 15-minute conversation at your convenience. I'm local to the area and happy to meet on campus.</p>
+
+  <p style="color:#e4e4e7;font-size:15px;line-height:1.7;margin:20px 0 0;">Respectfully,</p>
+  <p style="color:#e4e4e7;font-size:15px;font-weight:bold;margin:4px 0 0;">Shawn E. Decker</p>
+  <p style="color:#a1a1aa;font-size:13px;margin:2px 0 0;">Founder, Value to Victory</p>
+  <p style="color:#71717a;font-size:12px;margin:2px 0 0;">valuetovictory.com &bull; assessment.valuetovictory.com</p>
+
+</td></tr>
+
+<tr><td style="text-align:center;padding-top:24px;">
+  <a href="https://assessment.valuetovictory.com" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;">See the Live Platform</a>
+</td></tr>
+<tr><td style="text-align:center;padding-top:20px;">
+  <p style="color:#52525b;font-size:11px;margin:0;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p>
+</td></tr>
+</table></td></tr></table></body></html>`;
+
+          await transporter.sendMail({
+            from: '"Shawn Decker — Value to Victory" <'+process.env.GMAIL_USER+'>',
+            to: r.email,
+            replyTo: 'valuetovictory@gmail.com',
+            subject: 'Partnership Opportunity: Real AI/Data Platform Seeking VT ' + r.dept + ' Students',
+            html
+          });
+          sentCount++;
+          results.push({ email:r.email, dept:r.dept, status:'sent' });
+          await logEmail(sql, { recipient:r.email, emailType:'vt_pitch', subject:'VT Partnership Pitch — '+r.dept });
+        } catch(e) { results.push({ email:r.email, dept:r.dept, status:'error', error:e.message }); }
+      }
+      return res.json({ sent:sentCount, total:recipients.length, results });
+    }
+
     // GET/POST /api/send-blueprint — Email platform blueprint to recipients
     if ((req.method === 'POST' || req.method === 'GET') && url.startsWith('/send-blueprint')) {
       // Auth: accept x-api-key header OR key query param
