@@ -204,7 +204,7 @@ module.exports = async (req, res) => {
       `;
 
       // Send verification email
-      const verifyUrl = `https://vtv-assessment.vercel.app/api/dating/verify-email?token=${verifyToken}`;
+      const verifyUrl = `https://assessment.valuetovictory.com/api/dating/verify-email?token=${verifyToken}`;
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }

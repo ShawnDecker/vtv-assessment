@@ -642,8 +642,11 @@
 <script>
 // ===== STATE =====
 const API = '/api';
-let token = localStorage.getItem('ve_token');
-let userEmail = localStorage.getItem('ve_email');
+let token = localStorage.getItem('ve_token') || localStorage.getItem('vtv_token');
+let userEmail = localStorage.getItem('ve_email') || localStorage.getItem('vtv_member_email');
+// Sync portal token into faith-match keys so subsequent calls work
+if (token && !localStorage.getItem('ve_token')) localStorage.setItem('ve_token', token);
+if (userEmail && !localStorage.getItem('ve_email')) localStorage.setItem('ve_email', userEmail);
 let myProfile = null;
 let discoverProfiles = [];
 let currentCardIndex = 0;
