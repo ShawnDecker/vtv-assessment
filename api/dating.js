@@ -288,6 +288,10 @@ module.exports = async (req, res) => {
 
       const profile = await sql`SELECT trial_start, trial_ends, is_paid, email_verified FROM dating_profiles WHERE contact_id = ${contact[0].id} LIMIT 1`;
 
+      // Also check VTV membership — paid members get full access even without dating profile
+      const membership = await sql`SELECT membership_tier FROM user_profiles WHERE contact_id = ${contact[0].id} LIMIT 1`;
+      const hasPaidMembership = membership.length > 0 && membership[0].membership_tier !== 'free';
+
       let trialActive = false;
       let trialDaysLeft = 0;
       if (profile.length && profile[0].trial_ends) {
@@ -297,14 +301,15 @@ module.exports = async (req, res) => {
       }
 
       const hasAssessmentDone = assessment.length > 0;
-      const trialExpired = profile.length > 0 && !trialActive && !(profile[0].is_paid);
+      const isPaid = hasPaidMembership || (profile.length > 0 && profile[0].is_paid);
+      const trialExpired = profile.length > 0 && !trialActive && !isPaid;
 
       // Check 3-day assessment gate
       let lockedNoAssessment = false;
       let daysSinceStart = 0;
-      if (profile.length && profile[0].trial_start) {
+      if (profile.length && profile[0].trial_start && !isPaid) {
         daysSinceStart = (Date.now() - new Date(profile[0].trial_start).getTime()) / (1000 * 60 * 60 * 24);
-        if (daysSinceStart > 3 && !hasAssessmentDone && !profile[0].is_paid) {
+        if (daysSinceStart > 3 && !hasAssessmentDone) {
           lockedNoAssessment = true;
         }
       }
@@ -314,12 +319,13 @@ module.exports = async (req, res) => {
         hasAssessment: hasAssessmentDone,
         emailVerified: isVerified,
         hasProfile: profile.length > 0,
-        trialActive: trialActive && !lockedNoAssessment,
-        trialDaysLeft,
+        trialActive: (trialActive || isPaid) && !lockedNoAssessment,
+        trialDaysLeft: isPaid ? 999 : trialDaysLeft,
         trialExpired,
         lockedNoAssessment,
-        isPaid: profile.length > 0 && profile[0].is_paid,
-        plan: lockedNoAssessment ? 'charge_097' : trialExpired ? 'monthly_29' : 'trial'
+        isPaid,
+        membershipTier: membership.length > 0 ? membership[0].membership_tier : 'free',
+        plan: lockedNoAssessment ? 'charge_097' : trialExpired ? 'monthly_29' : isPaid ? 'paid' : 'trial'
       });
     }
 
@@ -443,13 +449,18 @@ module.exports = async (req, res) => {
           return res.status(413).json({ error: 'Photos too large. Try uploading fewer or smaller photos.' });
         }
 
+        // Check if user already has a paid subscription (auto-set is_paid)
+        const userProfile = await sql`SELECT membership_tier, stripe_subscription_id FROM user_profiles WHERE contact_id = ${user.contactId} LIMIT 1`;
+        const isPaid = userProfile.length > 0 && userProfile[0].membership_tier !== 'free';
+        const stripeSub = userProfile.length > 0 ? userProfile[0].stripe_subscription_id : null;
+
         await sql`
           INSERT INTO dating_profiles (contact_id, display_name, gender, seeking, date_of_birth, age,
             height_inches, weight_lbs, body_type, faith, denomination, faith_importance, bio,
             photo_urls, recreation_interests, general_interests,
             location_lat, location_lng, location_city, location_state,
             search_radius_miles, show_on_map, show_distance, age_min, age_max,
-            trial_start, trial_ends)
+            trial_start, trial_ends, is_paid, stripe_subscription_id)
           VALUES (${user.contactId}, ${b.display_name}, ${b.gender}, ${b.seeking},
             ${b.date_of_birth || null}, ${b.age || null},
             ${b.height_inches || null}, ${b.weight_lbs || null}, ${b.body_type || null},
@@ -460,9 +471,9 @@ module.exports = async (req, res) => {
             ${b.location_city || null}, ${b.location_state || null},
             ${b.search_radius_miles || 50}, ${b.show_on_map !== false}, ${b.show_distance !== false},
             ${b.age_min || 18}, ${b.age_max || 65},
-            now(), now() + interval '30 days')
+            now(), now() + interval '30 days', ${isPaid}, ${stripeSub})
         `;
-        return res.json({ ok: true, message: 'Profile created' });
+        return res.json({ ok: true, message: 'Profile created', isPaid });
       }
     }
 
