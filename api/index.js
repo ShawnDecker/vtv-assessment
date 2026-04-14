@@ -3561,7 +3561,7 @@ ${roadmapHtml}
       const email = (b.email || '').toLowerCase().trim();
       const newPin = (b.pin || '').trim();
       if (!email || !newPin) return res.status(400).json({ error: 'email and pin required' });
-      if (!/^\d{4,6}$/.test(newPin)) return res.status(400).json({ error: 'PIN must be 4-6 digits' });
+      if (newPin.length < 4 || newPin.length > 32) return res.status(400).json({ error: 'PIN must be 4-32 characters' });
 
       const pinHash = crypto.createHash('sha256').update(newPin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
       const rows = await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE LOWER(email) = ${email} RETURNING id, email, first_name`;
