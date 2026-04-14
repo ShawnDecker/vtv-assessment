@@ -7194,10 +7194,198 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
       return res.json({ success: true, logged: true });
     }
 
+    // ========== N8N WORKFLOW TRIGGERS ==========
+
+    // POST /api/n8n/trigger — Trigger an n8n workflow by name
+    if (req.method === 'POST' && url === '/n8n/trigger') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const { workflow, data } = req.body || {};
+      if (!workflow) return res.status(400).json({ error: 'workflow name required' });
+
+      const n8nBase = process.env.N8N_URL || process.env.N8N_WEBHOOK_URL?.replace(/\/webhook\/.*$/, '') || 'http://localhost:5678';
+      const webhookUrl = `${n8nBase}/webhook/${workflow}`;
+
+      try {
+        const n8nRes = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...data, triggered_at: new Date().toISOString(), source: 'vtv-api' }),
+          signal: AbortSignal.timeout(15000)
+        });
+        const n8nData = await n8nRes.text();
+        return res.json({ ok: true, workflow, status: n8nRes.status, response: n8nData });
+      } catch (e) {
+        return res.json({ ok: false, workflow, error: e.message });
+      }
+    }
+
+    // GET /api/n8n/status — Check n8n connectivity
+    if (req.method === 'GET' && url === '/n8n/status') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const n8nBase = process.env.N8N_URL || 'http://localhost:5678';
+      try {
+        const healthRes = await fetch(`${n8nBase}/healthz`, { signal: AbortSignal.timeout(8000) });
+        return res.json({ ok: healthRes.ok, status: healthRes.status, url: n8nBase });
+      } catch (e) {
+        return res.json({ ok: false, error: e.message, url: n8nBase });
+      }
+    }
+
+    // ========== SOCIAL MEDIA PUBLISHING ==========
+
+    // POST /api/social/publish — Publish content to social media platforms
+    if (req.method === 'POST' && url === '/social/publish') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const { platform, content, mediaUrl, scheduledAt } = req.body || {};
+      if (!platform || !content) return res.status(400).json({ error: 'platform and content required' });
+
+      const results = [];
+
+      // Log to database for tracking
+      try {
+        await sql`INSERT INTO analytics_events (event_type, metadata)
+          VALUES ('social_publish', ${JSON.stringify({ platform, content: content.substring(0, 200), scheduledAt })}::jsonb)`;
+      } catch {}
+
+      // Route to n8n for actual publishing (n8n handles the OAuth + API calls)
+      const n8nBase = process.env.N8N_URL || process.env.N8N_WEBHOOK_URL?.replace(/\/webhook\/.*$/, '') || 'http://localhost:5678';
+      try {
+        const pubRes = await fetch(`${n8nBase}/webhook/social-publish`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platform, content, mediaUrl, scheduledAt, source: 'vtv-api' }),
+          signal: AbortSignal.timeout(15000)
+        });
+        results.push({ platform, status: pubRes.ok ? 'sent' : 'failed', code: pubRes.status });
+      } catch (e) {
+        results.push({ platform, status: 'failed', error: e.message });
+      }
+
+      return res.json({ ok: true, results });
+    }
+
+    // POST /api/social/publish-devotional — Auto-publish today's devotional to all platforms
+    if (req.method === 'POST' && (url === '/social/publish-devotional' || (req.method === 'GET' && url === '/social/publish-devotional'))) {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+      // Load today's devotional
+      const fs = require('fs');
+      const path = require('path');
+      let devotionals = [];
+      try {
+        devotionals = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'devotionals.json'), 'utf-8'));
+      } catch { return res.status(500).json({ error: 'Could not load devotionals' }); }
+
+      const startDate = new Date('2026-04-06');
+      const today = new Date();
+      const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+      const dayIndex = ((diffDays % 60) + 60) % 60;
+      const dev = devotionals[dayIndex] || devotionals[0];
+
+      const socialPost = dev.social_media_post || `"${dev.chapter_title}" — ${dev.scripture_reference}: "${dev.scripture_text.substring(0, 100)}..." #RunningFromMiracles #ValueToVictory`;
+      const podcastTopic = dev.podcast_topic || '';
+
+      const n8nBase = process.env.N8N_URL || process.env.N8N_WEBHOOK_URL?.replace(/\/webhook\/.*$/, '') || 'http://localhost:5678';
+      const platforms = ['facebook', 'instagram', 'twitter', 'linkedin'];
+      const results = [];
+
+      for (const platform of platforms) {
+        try {
+          const pubRes = await fetch(`${n8nBase}/webhook/social-publish`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ platform, content: socialPost, devotional: dev, source: 'vtv-devotional-cron' }),
+            signal: AbortSignal.timeout(10000)
+          });
+          results.push({ platform, status: pubRes.ok ? 'sent' : 'n8n_error', code: pubRes.status });
+        } catch (e) {
+          results.push({ platform, status: 'failed', error: e.message });
+        }
+      }
+
+      // Log
+      try {
+        await sql`INSERT INTO analytics_events (event_type, metadata) VALUES ('devotional_social_publish', ${JSON.stringify({ day: dev.day_number, title: dev.title, results })}::jsonb)`;
+      } catch {}
+
+      return res.json({ ok: true, devotional: { day: dev.day_number, title: dev.title }, socialPost, podcastTopic, results });
+    }
+
+    // GET /api/ollama/models — List available Ollama models
+    if (req.method === 'GET' && url === '/ollama/models') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+      try {
+        const r = await fetch(`${ollamaUrl}/api/tags`, { signal: AbortSignal.timeout(8000) });
+        const data = await r.json();
+        return res.json({ ok: true, models: data.models || [], url: ollamaUrl });
+      } catch (e) {
+        return res.json({ ok: false, error: e.message, url: ollamaUrl });
+      }
+    }
+
+    // POST /api/ollama/generate — Direct Ollama text generation
+    if (req.method === 'POST' && url === '/ollama/generate') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const { prompt, model, system } = req.body || {};
+      if (!prompt) return res.status(400).json({ error: 'prompt required' });
+
+      const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+      const ollamaModel = model || process.env.OLLAMA_MODEL || 'llama3.1';
+
+      try {
+        const r = await fetch(`${ollamaUrl}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: ollamaModel,
+            messages: [
+              ...(system ? [{ role: 'system', content: system }] : []),
+              { role: 'user', content: prompt }
+            ],
+            stream: false,
+            options: { temperature: 0.7 }
+          }),
+          signal: AbortSignal.timeout(120000)
+        });
+        if (!r.ok) return res.status(502).json({ error: `Ollama error: ${r.status}` });
+        const data = await r.json();
+        return res.json({
+          ok: true,
+          content: data.message?.content || '',
+          model: ollamaModel,
+          tokens: { prompt: data.prompt_eval_count, completion: data.eval_count }
+        });
+      } catch (e) {
+        return res.json({ ok: false, error: e.message });
+      }
+    }
+
+    // POST /api/ollama/pull — Pull/download a model
+    if (req.method === 'POST' && url === '/ollama/pull') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const { model } = req.body || {};
+      if (!model) return res.status(400).json({ error: 'model name required' });
+
+      const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+      try {
+        const r = await fetch(`${ollamaUrl}/api/pull`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: model, stream: false }),
+          signal: AbortSignal.timeout(300000)
+        });
+        const data = await r.json();
+        return res.json({ ok: true, model, status: data.status || 'complete' });
+      } catch (e) {
+        return res.json({ ok: false, error: e.message });
+      }
+    }
+
     return res.status(404).json({ error: 'Not found' });
   } catch (err) {
     console.error('API Error:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Server error' });
   }
 };
 

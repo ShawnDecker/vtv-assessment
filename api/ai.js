@@ -114,40 +114,95 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
       return res.status(400).json({ error: `Unknown action: ${action}. Valid: coaching-insight, assessment-summary, email-draft, content-generate, devotional-generate` });
     }
 
-    // Call Vercel AI Gateway (OpenAI-compatible)
-    const aiResponse = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${AI_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4.5',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        max_tokens: 1024,
-        temperature: 0.7,
-      }),
-    });
+    // Determine AI provider: Ollama (local) or Vercel AI Gateway (cloud)
+    const useLocal = (context?.provider === 'ollama') || (context?.provider === 'local');
+    const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+    const ollamaModel = context?.model || process.env.OLLAMA_MODEL || 'llama3.1';
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      return res.status(502).json({ error: 'AI Gateway error', detail: errText });
+    let content = '';
+    let modelUsed = '';
+    let usage = {};
+
+    if (useLocal) {
+      // Call Ollama local AI
+      try {
+        const ollamaRes = await fetch(`${ollamaUrl}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: ollamaModel,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            stream: false,
+            options: { temperature: 0.7 }
+          }),
+          signal: AbortSignal.timeout(60000)
+        });
+        if (!ollamaRes.ok) throw new Error(`Ollama error: ${ollamaRes.status}`);
+        const ollamaData = await ollamaRes.json();
+        content = ollamaData.message?.content || '';
+        modelUsed = `ollama/${ollamaModel}`;
+        usage = { prompt_tokens: ollamaData.prompt_eval_count, completion_tokens: ollamaData.eval_count };
+      } catch (ollamaErr) {
+        // Fallback to cloud if local fails
+        console.warn('Ollama failed, falling back to cloud:', ollamaErr.message);
+        const fallback = await callCloudAI(AI_KEY, systemPrompt, userPrompt);
+        content = fallback.content;
+        modelUsed = fallback.model + ' (ollama-fallback)';
+        usage = fallback.usage;
+      }
+    } else {
+      // Call Vercel AI Gateway (Claude)
+      const result = await callCloudAI(AI_KEY, systemPrompt, userPrompt);
+      content = result.content;
+      modelUsed = result.model;
+      usage = result.usage;
     }
 
-    const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || '';
+    // Trigger n8n webhook if configured (fire-and-forget)
+    const n8nUrl = process.env.N8N_WEBHOOK_URL;
+    if (n8nUrl && context?.triggerN8n !== false) {
+      try {
+        fetch(n8nUrl.replace('/stripe-webhook', '/ai-content'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, content, contactId, model: modelUsed, timestamp: new Date().toISOString() }),
+          signal: AbortSignal.timeout(5000)
+        }).catch(() => {});
+      } catch {}
+    }
 
-    return res.json({
-      action,
-      content,
-      model: aiData.model || 'claude-sonnet',
-      usage: aiData.usage || {},
-    });
+    return res.json({ action, content, model: modelUsed, usage, provider: useLocal ? 'ollama' : 'cloud' });
 
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'AI service error' });
   }
 };
+
+async function callCloudAI(apiKey, systemPrompt, userPrompt) {
+  const aiResponse = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'anthropic/claude-sonnet-4.5',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      max_tokens: 1024,
+      temperature: 0.7,
+    }),
+  });
+  if (!aiResponse.ok) {
+    const errText = await aiResponse.text();
+    throw new Error('AI Gateway error: ' + errText);
+  }
+  const aiData = await aiResponse.json();
+  return {
+    content: aiData.choices?.[0]?.message?.content || '',
+    model: aiData.model || 'claude-sonnet',
+    usage: aiData.usage || {}
+  };
+}
