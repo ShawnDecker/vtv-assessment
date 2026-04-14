@@ -54,8 +54,9 @@
     .screen-title span { color: var(--gold); }
 
     /* ===== LOGIN SCREEN ===== */
-    #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    #login-screen { display: none; flex-direction: column; align-items: center; justify-content: flex-end;
                     padding: 0 1rem 2rem; position: relative; overflow: hidden; min-height: 100vh; }
+    #login-screen.active { display: flex; }
 
     /* Hero background */
     .login-hero-bg { position: absolute; inset: 0; z-index: 0; }
