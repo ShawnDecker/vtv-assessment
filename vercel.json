@@ -2,12 +2,16 @@
   "version": 2,
   "crons": [
     {
+      "path": "/api/agent/systems/run",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/ceo-briefing",
-      "schedule": "45 11 * * *"
+      "schedule": "45 16 * * *"
     },
     {
       "path": "/api/coaching/send",
-      "schedule": "47 10 * * *"
+      "schedule": "47 15 * * *"
     },
     {
       "path": "/api/accountability/send",
@@ -15,7 +19,7 @@
     },
     {
       "path": "/api/devotional/send",
-      "schedule": "47 16 * * *"
+      "schedule": "47 21 * * *"
     }
   ],
   "routes": [

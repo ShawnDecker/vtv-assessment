@@ -261,6 +261,9 @@
       <input type="password" id="login-pin" class="form-input" placeholder="PIN or password" minlength="4" maxlength="32" />
     </div>
     <button class="btn-gold" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div style="text-align:center;margin:0.5rem 0;">
+      <a href="#" onclick="showForgotPin();return false;" style="color:var(--gold);font-size:0.8rem;text-decoration:none;">Forgot PIN / Password?</a>
+    </div>
     <button class="btn-outline" onclick="showSignUp()">New Here? Sign Up Free</button>
     <div style="margin-top:1rem;padding:0.75rem;background:rgba(212,168,71,0.08);border:1px solid rgba(212,168,71,0.2);border-radius:0.5rem;text-align:center;">
       <p style="font-size:0.8rem;color:var(--gold);font-weight:600;">Free for 30 Days</p>
@@ -851,13 +854,25 @@ async function submitNewPin(email) {
     if (d.error) return toast(d.error);
 
     toast('PIN set! Signing in...');
-    // Now login with the new PIN
-    document.getElementById('login-email').value = email;
-    document.getElementById('login-pin').value = pin;
-    setTimeout(() => {
+    // Now auto-login with the new PIN (don't reload — call verify-pin directly)
+    const lr = await fetch(API + '/member/verify-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, pin })
+    });
+    const ld = await lr.json();
+    if (ld.verified && ld.token) {
+      token = ld.token;
+      userEmail = email;
+      localStorage.setItem('ve_token', ld.token);
+      localStorage.setItem('ve_email', email);
+      try { await fetch(API + '/dating/init', { method: 'POST', headers: authHeaders() }); } catch {}
+      await checkProfile();
+    } else {
+      // Fallback: reload with email pre-filled
+      localStorage.setItem('ve_email', email);
       location.reload();
-      // They'll auto-login on reload since email is saved
-    }, 500);
+    }
   } catch { toast('Failed to set PIN'); }
 }
 
@@ -881,6 +896,106 @@ function showTrialExpired(plan) {
         <p style="color:var(--green);font-size:0.75rem;margin-top:0.35rem;">Includes full VTV website & portal access</p>
         <a href="/pricing" style="display:inline-block;margin-top:0.75rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Subscribe Now</a>
       </div>`;
+  }
+}
+
+function showForgotPin() {
+  const loginBox = document.getElementById('login-screen').querySelector('.login-box');
+  const savedEmail = document.getElementById('login-email')?.value?.trim() || localStorage.getItem('ve_email') || '';
+  loginBox.innerHTML = `
+    <h3>Reset Your PIN</h3>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">Enter your email and we'll send you a link to reset your PIN or password.</p>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="forgot-email" class="form-input" placeholder="your@email.com" value="${savedEmail}" />
+    </div>
+    <button class="btn-gold" onclick="doForgotPin()">Send Reset Link</button>
+    <button class="btn-outline" onclick="location.reload()">Back to Sign In</button>
+  `;
+}
+
+async function doForgotPin() {
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) return toast('Enter your email');
+
+  try {
+    toast('Sending reset link...');
+    const r = await fetch(API + '/member/forgot-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const d = await r.json();
+    if (d.success) {
+      const loginBox = document.getElementById('login-screen').querySelector('.login-box');
+      loginBox.innerHTML = `
+        <div style="text-align:center;padding:1.5rem 0;">
+          <div style="font-size:2.5rem;margin-bottom:1rem;">📧</div>
+          <h3 style="color:var(--gold);margin-bottom:0.75rem;">Check Your Email</h3>
+          <p style="font-size:0.85rem;color:var(--muted);line-height:1.5;">We sent a PIN reset link to <strong style="color:var(--text);">${email}</strong>. Click the link in the email to choose a new PIN.</p>
+          <p style="font-size:0.75rem;color:var(--dim);margin-top:1rem;">The link expires in 1 hour.</p>
+          <button class="btn-outline" onclick="location.reload()" style="margin-top:1.5rem;">Back to Sign In</button>
+        </div>
+      `;
+    } else {
+      toast(d.error || 'Failed to send reset link');
+    }
+  } catch (e) {
+    console.error('Forgot PIN error:', e);
+    toast('Something went wrong — try again');
+  }
+}
+
+function showResetPinForm(token, email) {
+  const loginBox = document.getElementById('login-screen').querySelector('.login-box');
+  loginBox.innerHTML = `
+    <h3>Set a New PIN</h3>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">Choose a new PIN or password for your account.</p>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" class="form-input" value="${email}" readonly style="opacity:0.7;" />
+    </div>
+    <div class="form-group">
+      <label>New PIN or Password</label>
+      <input type="password" id="reset-new-pin" class="form-input" placeholder="4+ characters" minlength="4" maxlength="32" />
+    </div>
+    <div class="form-group">
+      <label>Confirm</label>
+      <input type="password" id="reset-confirm-pin" class="form-input" placeholder="Re-enter" minlength="4" maxlength="32" />
+    </div>
+    <button class="btn-gold" onclick="doResetPinToken('${token}','${email}')">Reset PIN & Sign In</button>
+  `;
+}
+
+async function doResetPinToken(token, email) {
+  const pin = document.getElementById('reset-new-pin').value.trim();
+  const confirm = document.getElementById('reset-confirm-pin').value.trim();
+  if (!pin || pin.length < 4) return toast('Must be at least 4 characters');
+  if (pin !== confirm) return toast('Passwords do not match');
+
+  try {
+    toast('Resetting your PIN...');
+    const r = await fetch(API + '/member/reset-pin-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, token, pin })
+    });
+    const d = await r.json();
+    if (d.success) {
+      // Auto-login with the returned JWT
+      localStorage.setItem('ve_token', d.token);
+      localStorage.setItem('ve_email', email);
+      toast('PIN reset! Signing you in...');
+      // Clean URL params and reload
+      setTimeout(() => {
+        window.location.href = '/faith-match';
+      }, 500);
+    } else {
+      toast(d.error || 'Reset failed — try requesting a new link');
+    }
+  } catch (e) {
+    console.error('Reset PIN error:', e);
+    toast('Something went wrong — try again');
   }
 }
 
@@ -956,6 +1071,14 @@ function showScreen(id) {
   } else {
     const bar = document.getElementById('chat-input-bar');
     if (bar) bar.classList.add('hidden');
+  }
+  // Sync nav bar active state
+  const screenToNav = { 'discover-screen': 'discover', 'matches-screen': 'matches', 'settings-screen': 'settings' };
+  const navKey = screenToNav[id];
+  if (navKey) {
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.screen === id);
+    });
   }
 }
 
@@ -1240,11 +1363,11 @@ function createCard(p, isTop) {
       </div>
     </div>
     <div class="card-info">
-      <div class="card-name">${p.display_name} <span>${p.age || ''}</span></div>
+      <div class="card-name">${escapeHtml(p.display_name)} <span>${p.age || ''}</span></div>
       <div class="card-details">
-        <span class="card-tag">${p.faith || 'Christian'}</span>
+        <span class="card-tag">${escapeHtml(p.faith || 'Christian')}</span>
         ${heightStr ? `<span class="card-tag">${heightStr}</span>` : ''}
-        ${p.location_city ? `<span class="card-tag">${p.location_city}${p.show_distance && p.distance_miles !== null ? ' · ' + p.distance_miles + 'mi' : ''}</span>` : ''}
+        ${p.location_city ? `<span class="card-tag">${escapeHtml(p.location_city)}${p.show_distance && p.distance_miles != null ? ' · ' + p.distance_miles + 'mi' : ''}</span>` : ''}
         ${sharedCount > 0 ? `<span class="shared-badge">${sharedCount} shared interest${sharedCount > 1 ? 's' : ''}</span>` : ''}
       </div>
       ${compat !== null ? `<div style="display:flex;gap:0.4rem;margin:0.4rem 0;font-size:0.65rem;color:var(--muted);">
@@ -1254,7 +1377,7 @@ function createCard(p, isTop) {
         <span>·</span>
         <span title="Preference Match (faith, age, distance)">Prefs ${cb.preferenceMatch || 0}%</span>
       </div>` : ''}
-      ${p.bio ? `<div class="card-bio">${p.bio}</div>` : ''}
+      ${p.bio ? `<div class="card-bio">${escapeHtml(p.bio)}</div>` : ''}
     </div>
     <div class="pink-bar" title="P.I.N.K. Assessment">
       <div class="pink-segment time" style="height:${Math.max(8, tPct * 0.36)}px;"><span class="label" style="color:var(--pink-t);">T</span></div>
@@ -1333,16 +1456,19 @@ function setupSwipeGesture(card) {
   };
 }
 
+let swiping = false;
 function doSwipe(direction) {
+  if (swiping) return;
   const stack = document.getElementById('card-stack');
   const topCard = stack.lastChild;
   if (!topCard) return;
+  swiping = true;
   topCard.classList.add(direction === 'right' ? 'exit-right' : 'exit-left');
   setTimeout(() => executeSwipe(direction), 300);
 }
 
 async function executeSwipe(direction) {
-  if (currentCardIndex >= discoverProfiles.length) return;
+  if (currentCardIndex >= discoverProfiles.length) { swiping = false; return; }
   const p = discoverProfiles[currentCardIndex];
 
   try {
@@ -1353,12 +1479,15 @@ async function executeSwipe(direction) {
     const d = await r.json();
 
     if (d.matched) {
-      // Show match popup
       showMatchPopup(p);
     }
-  } catch {}
+  } catch (e) {
+    console.error('Swipe error:', e);
+    toast('Swipe failed — try again');
+  }
 
   currentCardIndex++;
+  swiping = false;
   renderCards();
 }
 
@@ -1415,8 +1544,8 @@ async function loadMatches() {
           ${photo ? `<img class="match-avatar" src="${photo}" alt="${m.display_name}" />` :
             `<div class="match-avatar" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:var(--gold);">${initial}</div>`}
           <div class="match-info">
-            <div class="match-name">${m.display_name} <span style="color:var(--muted);font-weight:400;">${m.age || ''}</span></div>
-            <div class="match-preview">${m.faith || ''} · ${m.location_city || ''}</div>
+            <div class="match-name">${escapeHtml(m.display_name)} <span style="color:var(--muted);font-weight:400;">${m.age || ''}</span></div>
+            <div class="match-preview">${escapeHtml(m.faith || '')} · ${escapeHtml(m.location_city || '')}</div>
             <div class="match-time">Matched ${new Date(m.matched_at).toLocaleDateString()}</div>
           </div>
         </div>
@@ -1426,6 +1555,8 @@ async function loadMatches() {
 }
 
 // ===== CHAT =====
+let chatPollInterval = null;
+
 async function openChat(matchId, profileId, name, photo) {
   currentMatchId = matchId;
   currentChatPartner = { id: profileId, name, photo };
@@ -1434,6 +1565,16 @@ async function openChat(matchId, profileId, name, photo) {
   document.getElementById('chat-status').textContent = 'Aligned Hearts';
   showScreen('chat-screen');
   await loadMessages();
+  // Poll for new messages every 5 seconds while chat is open
+  if (chatPollInterval) clearInterval(chatPollInterval);
+  chatPollInterval = setInterval(() => {
+    if (document.getElementById('chat-screen').classList.contains('active')) {
+      loadMessages();
+    } else {
+      clearInterval(chatPollInterval);
+      chatPollInterval = null;
+    }
+  }, 5000);
 }
 
 async function loadMessages() {
@@ -1518,9 +1659,10 @@ function toast(msg) {
 }
 
 function escapeHtml(str) {
+  if (!str) return '';
   const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  div.textContent = String(str);
+  return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 // ===== INIT =====
@@ -1528,7 +1670,30 @@ window.addEventListener('DOMContentLoaded', () => {
   const savedEmail = localStorage.getItem('ve_email');
   if (savedEmail) document.getElementById('login-email').value = savedEmail;
 
+  // Handle PIN reset link from email
+  const urlParams = new URLSearchParams(window.location.search);
+  const resetToken = urlParams.get('reset-pin');
+  const resetEmail = urlParams.get('email');
+  if (resetToken && resetEmail) {
+    showResetPinForm(resetToken, decodeURIComponent(resetEmail));
+    return;
+  }
+
   if (token) {
+    // Validate token isn't expired before auto-loading
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+        if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+          // Token expired — clear and show login
+          localStorage.removeItem('ve_token');
+          token = null;
+          toast('Session expired — please sign in again');
+          return;
+        }
+      }
+    } catch (e) { /* proceed with checkProfile which will handle errors */ }
     checkProfile();
   }
 });

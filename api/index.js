@@ -766,7 +766,7 @@ module.exports = async (req, res) => {
 
   // Determine rate limit category
   const rateCategory = url.startsWith('/admin') ? 'admin'
-    : (url.includes('/verify-pin') || url.includes('/set-pin') || url.includes('/pin-login')) ? 'auth'
+    : (url.includes('/verify-pin') || url.includes('/set-pin') || url.includes('/pin-login') || url.includes('/forgot-pin') || url.includes('/reset-pin')) ? 'auth'
     : url === '/assessment' ? 'assessment'
     : 'default';
   const rateCheck = checkRateLimit(clientIP, rateCategory);
@@ -931,6 +931,102 @@ module.exports = async (req, res) => {
         focusPillar: (depth === 'pillar') ? focusPillar : null,
         questionsPerPillar: QUESTIONS_PER_PILLAR,
       });
+    }
+
+    // POST /api/member/forgot-pin — Send a PIN reset link via email
+    if (req.method === 'POST' && url === '/member/forgot-pin') {
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      if (!email) return res.status(400).json({ error: 'Email required' });
+
+      const rows = await sql`SELECT id, first_name, pin_hash FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (rows.length === 0) return res.json({ success: true, message: 'If an account exists, a reset link has been sent.' });
+
+      const contact = rows[0];
+
+      // Generate a secure reset token (expires in 1 hour)
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+      // Store token — reuse dating_email_verify or create inline temp storage
+      // We'll store in contacts table via a new column, or use a simple approach:
+      // Hash the token and store it alongside the contact
+      const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+      try {
+        await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS pin_reset_token TEXT`;
+        await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS pin_reset_expires TIMESTAMP WITH TIME ZONE`;
+      } catch (e) { /* columns may already exist */ }
+
+      await sql`UPDATE contacts SET pin_reset_token = ${tokenHash}, pin_reset_expires = ${expiresAt} WHERE id = ${contact.id}`;
+
+      // Send reset email
+      if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        try {
+          const resetUrl = `https://assessment.valuetovictory.com/faith-match?reset-pin=${resetToken}&email=${encodeURIComponent(email)}`;
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
+          });
+          await transporter.sendMail({
+            from: `"Value to Victory" <${process.env.GMAIL_USER}>`,
+            to: email,
+            subject: 'Reset Your PIN — Value to Victory',
+            html: `
+              <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:2rem;">
+                <h1 style="color:#D4A847;font-size:1.5rem;">PIN Reset Request</h1>
+                <p>Hi ${contact.first_name || 'there'},</p>
+                <p>Click the button below to reset your PIN. This link expires in 1 hour.</p>
+                <a href="${resetUrl}" style="display:inline-block;padding:0.75rem 2rem;background:#D4A847;color:#000;text-decoration:none;font-weight:700;border-radius:0.5rem;margin:1rem 0;">Reset My PIN</a>
+                <p style="color:#666;font-size:0.85rem;">If you didn't request this, you can safely ignore this email.</p>
+                <hr style="border:none;border-top:1px solid #eee;margin:1.5rem 0;" />
+                <p style="color:#999;font-size:0.75rem;">Value to Victory — Love · Values · Purpose</p>
+              </div>
+            `
+          });
+        } catch (e) { console.error('Failed to send PIN reset email:', e.message); }
+      }
+
+      return res.json({ success: true, message: 'If an account exists, a reset link has been sent.' });
+    }
+
+    // POST /api/member/reset-pin-token — Reset PIN using a token from email
+    if (req.method === 'POST' && url === '/member/reset-pin-token') {
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      const token = (b.token || '').trim();
+      const newPin = (b.pin || '').trim();
+      if (!email || !token || !newPin) return res.status(400).json({ error: 'Email, token, and new PIN required' });
+      if (newPin.length < 4 || newPin.length > 32) return res.status(400).json({ error: 'PIN must be 4-32 characters' });
+
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const rows = await sql`SELECT id, pin_reset_token, pin_reset_expires FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (rows.length === 0) return res.status(400).json({ error: 'Invalid reset link' });
+
+      const contact = rows[0];
+      if (!contact.pin_reset_token || contact.pin_reset_token !== tokenHash) {
+        return res.status(400).json({ error: 'Invalid or expired reset link' });
+      }
+      if (contact.pin_reset_expires && new Date(contact.pin_reset_expires) < new Date()) {
+        return res.status(400).json({ error: 'Reset link has expired. Please request a new one.' });
+      }
+
+      // Set the new PIN
+      const pinHash = crypto.createHash('sha256').update(newPin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+      await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW(), pin_reset_token = NULL, pin_reset_expires = NULL WHERE id = ${contact.id}`;
+
+      // Generate JWT so they're logged in immediately
+      let tier = 'free';
+      let teamIds = [];
+      try {
+        const profileRows = await sql`SELECT membership_tier FROM user_profiles WHERE contact_id = ${contact.id} LIMIT 1`;
+        if (profileRows.length > 0) tier = profileRows[0].membership_tier || 'free';
+        const teamRows = await sql`SELECT team_id FROM team_members WHERE contact_id = ${contact.id}`;
+        teamIds = teamRows.map(t => t.team_id);
+      } catch (e) { /* tables may not exist yet */ }
+
+      const jwtToken = createJWT({ contactId: contact.id, email, tier, teamIds });
+
+      return res.json({ success: true, message: 'PIN reset successfully', token: jwtToken, tier });
     }
 
     // POST /api/member/set-pin — Set or update PIN for member portal
@@ -1244,13 +1340,17 @@ module.exports = async (req, res) => {
       }
     }
 
-    // POST /api/member/delete-request — Log account deletion request and notify admin
+    // POST /api/member/delete-request — Log account deletion request, immediately unsubscribe, and notify admin
     if (req.method === 'POST' && url === '/member/delete-request') {
       const b = req.body || {};
       const email = (b.email || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       try {
+        // IMMEDIATELY unsubscribe from all email sequences to prevent bounces
+        try { await sql`UPDATE coaching_sequences SET unsubscribed = TRUE WHERE LOWER(email) = ${email}`; } catch(e) {}
+        try { await sql`UPDATE devotional_progress SET opted_out = TRUE WHERE LOWER(email) = ${email}`; } catch(e) {}
+
         // Log the request
         await logEmail(sql, {
           recipient: email,
@@ -1270,7 +1370,7 @@ module.exports = async (req, res) => {
             from: `"The Value Engine" <${process.env.GMAIL_USER}>`,
             to: 'valuetovictory@gmail.com',
             subject: `Account Deletion Request — ${email}`,
-            html: `<p>User <strong>${email}</strong> has requested account deletion.</p><p>Requested at: ${new Date().toISOString()}</p><p>Please process within 48 hours per privacy policy.</p>`,
+            html: `<p>User <strong>${email}</strong> has requested account deletion.</p><p>Requested at: ${new Date().toISOString()}</p><p><strong>Auto-actions taken:</strong> Unsubscribed from coaching sequences and devotionals.</p><p>Please process full deletion within 48 hours per privacy policy.</p>`,
           });
         }
         return res.json({ success: true });
@@ -1806,8 +1906,7 @@ Don't guess. Run the system.
             assessment_id = EXCLUDED.assessment_id,
             current_day = 0,
             last_sent_at = NULL,
-            started_at = NOW(),
-            unsubscribed = FALSE`;
+            started_at = NOW()`;
         console.log(`Coaching sequence enrolled/reset for ${cleanEmail}, assessment ${assessment.id}`);
       } catch (coachErr) {
         console.error('Coaching enroll error (non-fatal):', coachErr.message);
@@ -2468,6 +2567,10 @@ Don't guess. Run the system.
 
     // Helper: cascade-delete a contact and all related data
     async function cascadeDeleteContact(id) {
+      // Look up email first for tables that use email instead of contact_id
+      const contactRow = await sql`SELECT email FROM contacts WHERE id = ${id} LIMIT 1`;
+      const contactEmail = contactRow.length ? contactRow[0].email?.toLowerCase() : null;
+
       // Get assessment IDs for this contact first
       const assessmentRows = await sql`SELECT id FROM assessments WHERE contact_id = ${id}`;
       const aIds = assessmentRows.map(r => r.id);
@@ -2481,7 +2584,7 @@ Don't guess. Run the system.
       // Delete tables that reference contact_id (try each, ignore if table doesn't exist)
       const contactTables = [
         'assessment_progress', 'assessments', 'analytics_events', 'challenges',
-        'cherish_honor_matrix', 'coaching_requests', 'coaching_sequences',
+        'cherish_honor_matrix', 'coaching_requests',
         'couple_challenge_responses', 'email_engagement', 'email_log',
         'intimacy_results', 'love_language_results', 'partner_profiles',
         'privacy_preferences', 'relationship_matrix', 'user_profiles',
@@ -2490,8 +2593,29 @@ Don't guess. Run the system.
       for (const t of contactTables) {
         try { await sql.unsafe(`DELETE FROM ${t} WHERE contact_id = $1`, [id]); } catch(e) {}
       }
+      // Delete tables that use email instead of contact_id
+      if (contactEmail) {
+        try { await sql`DELETE FROM coaching_sequences WHERE LOWER(email) = ${contactEmail}`; } catch(e) {}
+        try { await sql`DELETE FROM free_book_signups WHERE LOWER(email) = ${contactEmail}`; } catch(e) {}
+        try { await sql`DELETE FROM devotional_progress WHERE LOWER(email) = ${contactEmail}`; } catch(e) {}
+      }
+      // Clean up dating tables
+      try {
+        const datingProfile = await sql`SELECT id FROM dating_profiles WHERE contact_id = ${id}`;
+        if (datingProfile.length) {
+          const dpId = datingProfile[0].id;
+          await sql`DELETE FROM dating_messages WHERE sender_id = ${dpId}`;
+          await sql`DELETE FROM dating_swipes WHERE swiper_id = ${dpId} OR swiped_id = ${dpId}`;
+          await sql`DELETE FROM dating_matches WHERE profile_a_id = ${dpId} OR profile_b_id = ${dpId}`;
+          await sql`DELETE FROM dating_blocks WHERE blocker_id = ${dpId} OR blocked_id = ${dpId}`;
+          await sql`DELETE FROM dating_reports WHERE reporter_id = ${dpId} OR reported_id = ${dpId}`;
+          await sql`DELETE FROM dating_profiles WHERE id = ${dpId}`;
+        }
+        await sql`DELETE FROM dating_email_verify WHERE contact_id = ${id}`;
+      } catch(e) {}
       // Handle couples (initiator or partner)
       try { await sql`DELETE FROM couples WHERE initiator_contact_id = ${id} OR partner_contact_id = ${id}`; } catch(e) {}
+      try { await sql`DELETE FROM partner_invites WHERE sender_contact_id = ${id} OR recipient_contact_id = ${id}`; } catch(e) {}
       // Finally delete the contact
       await sql`DELETE FROM contacts WHERE id = ${id}`;
     }
@@ -4848,8 +4972,10 @@ This link expires in 24 hours.
         todayStart.setHours(0, 0, 0, 0);
 
         // Find all active sequences: not unsubscribed, day < 8, last_sent_at is null or before today
+        // JOIN contacts to skip orphaned sequences (deleted accounts)
         const sequences = await sql`
           SELECT cs.* FROM coaching_sequences cs
+          INNER JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
           WHERE cs.unsubscribed = FALSE
             AND cs.current_day < 8
             AND (cs.last_sent_at IS NULL OR cs.last_sent_at < ${todayStart.toISOString()})
@@ -6899,8 +7025,18 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             ORDER BY c.id ASC
           `;
         } catch(e) {
-          // If devotional tables don't exist, send to all contacts
-          subscribers = await sql`SELECT id as contact_id, email, first_name FROM contacts WHERE email IS NOT NULL AND email != '' ORDER BY id ASC`;
+          // If devotional tables don't exist, only send to paid members (not all contacts)
+          try {
+            subscribers = await sql`
+              SELECT c.id as contact_id, c.email, c.first_name FROM contacts c
+              INNER JOIN user_profiles up ON up.contact_id = c.id
+              WHERE c.email IS NOT NULL AND c.email != ''
+                AND up.membership_tier IN ('individual','couple','premium')
+              ORDER BY c.id ASC`;
+          } catch(e2) {
+            // If user_profiles also doesn't exist, skip entirely
+            subscribers = [];
+          }
         }
 
         if (subscribers.length === 0) return res.json({ sent: 0, message: 'No subscribers found' });
