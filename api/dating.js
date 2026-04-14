@@ -283,10 +283,17 @@ module.exports = async (req, res) => {
       // Assessment not required upfront — they have 3 days
       const assessment = await sql`SELECT id FROM assessments WHERE contact_id = ${contact[0].id} LIMIT 1`;
 
-      const verified = await sql`SELECT verified FROM dating_email_verify WHERE contact_id = ${contact[0].id} LIMIT 1`;
-      const isVerified = verified.length && verified[0].verified;
+      // Wrap table queries in try-catch — tables may not exist yet for new users
+      let isVerified = false;
+      try {
+        const verified = await sql`SELECT verified FROM dating_email_verify WHERE contact_id = ${contact[0].id} LIMIT 1`;
+        isVerified = verified.length && verified[0].verified;
+      } catch { /* table may not exist yet */ }
 
-      const profile = await sql`SELECT trial_start, trial_ends, is_paid, email_verified FROM dating_profiles WHERE contact_id = ${contact[0].id} LIMIT 1`;
+      let profile = [];
+      try {
+        profile = await sql`SELECT trial_start, trial_ends, is_paid, email_verified FROM dating_profiles WHERE contact_id = ${contact[0].id} LIMIT 1`;
+      } catch { /* table may not exist yet */ }
 
       let trialActive = false;
       let trialDaysLeft = 0;
@@ -1033,7 +1040,7 @@ module.exports = async (req, res) => {
     return res.status(404).json({ error: 'Not found' });
 
   } catch (err) {
-    console.error('Dating API error:', err);
-    return res.status(500).json({ error: 'Server error' });
+    console.error('Dating API error:', path, err.message || err);
+    return res.status(500).json({ error: 'Server error', detail: err.message, path });
   }
 };
