@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" type="image/png" href="/favicon.png"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+<title>Aligned Hearts Admin — The Value Engine</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #e4e4e7; min-height: 100vh; }
+
+  /* ── Login Screen ── */
+  .login-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 1.5rem;
+  }
+  .login-box {
+    width: 100%; max-width: 380px; text-align: center;
+  }
+  .login-brand {
+    font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: #D4A847; font-weight: 700; margin-bottom: 0.35rem;
+  }
+  .login-title {
+    font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 2rem;
+  }
+  .login-box input {
+    width: 100%; padding: 0.85rem 1rem; background: #18181b;
+    border: 1px solid #27272a; border-radius: 0.5rem; color: #e4e4e7;
+    font-size: 0.95rem; font-family: inherit; outline: none; margin-bottom: 0.75rem;
+  }
+  .login-box input:focus { border-color: #D4A847; }
+  .login-box input::placeholder { color: #52525b; }
+  .login-btn {
+    width: 100%; padding: 0.85rem; background: linear-gradient(135deg, #D4A847, #b8942e);
+    color: #0a0a0a; font-size: 0.95rem; font-weight: 700; border: none;
+    border-radius: 0.5rem; cursor: pointer; font-family: inherit; transition: opacity 0.2s;
+  }
+  .login-btn:hover { opacity: 0.9; }
+  .login-error {
+    color: #ef4444; font-size: 0.8rem; margin-top: 0.75rem; display: none;
+  }
+
+  /* ── Dashboard Shell ── */
+  .dashboard { display: none; }
+  .dashboard.show { display: block; }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.85rem 1.5rem; border-bottom: 1px solid #1a1a1a;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 0.75rem; }
+  .topbar-brand {
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: #D4A847; font-weight: 700;
+  }
+  .topbar-title { font-size: 1rem; font-weight: 700; color: #fff; }
+  .topbar-logout {
+    padding: 0.4rem 0.85rem; background: transparent; border: 1px solid #27272a;
+    border-radius: 0.375rem; color: #a1a1aa; font-size: 0.75rem; font-family: inherit;
+    cursor: pointer; transition: border-color 0.2s, color 0.2s;
+  }
+  .topbar-logout:hover { border-color: #ef4444; color: #ef4444; }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+
+  /* ── Stats Grid ── */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.5rem; margin-bottom: 1.75rem;
+  }
+  .stat-card {
+    background: #18181b; border: 1px solid #27272a; border-radius: 0.625rem;
+    padding: 1rem; text-align: center;
+  }
+  .stat-value { font-size: 1.6rem; font-weight: 900; color: #D4A847; line-height: 1; }
+  .stat-label {
+    font-size: 0.6rem; color: #71717a; text-transform: uppercase;
+    letter-spacing: 0.08em; margin-top: 0.35rem; font-weight: 500;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex; gap: 0; border-bottom: 1px solid #27272a; margin-bottom: 1.25rem;
+  }
+  .tab-btn {
+    padding: 0.65rem 1.25rem; background: none; border: none;
+    border-bottom: 2px solid transparent; color: #71717a; font-size: 0.85rem;
+    font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.2s;
+  }
+  .tab-btn:hover { color: #a1a1aa; }
+  .tab-btn.active { color: #D4A847; border-bottom-color: #D4A847; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Reports ── */
+  .report-card {
+    background: #18181b; border: 1px solid #27272a; border-radius: 0.625rem;
+    padding: 1rem 1.25rem; margin-bottom: 0.5rem;
+  }
+  .report-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap;
+  }
+  .report-people { font-size: 0.85rem; color: #e4e4e7; }
+  .report-people strong { color: #fff; font-weight: 700; }
+  .report-people .arrow { color: #D4A847; margin: 0 0.35rem; }
+  .report-date { font-size: 0.7rem; color: #52525b; white-space: nowrap; }
+  .report-reason {
+    display: inline-block; margin-top: 0.5rem; padding: 0.2rem 0.55rem;
+    background: #27272a; border-radius: 0.25rem; font-size: 0.7rem;
+    color: #a1a1aa; font-weight: 500; text-transform: capitalize;
+  }
+  .report-details {
+    margin-top: 0.5rem; font-size: 0.8rem; color: #a1a1aa; line-height: 1.5;
+  }
+  .report-actions {
+    display: flex; gap: 0.4rem; margin-top: 0.75rem; flex-wrap: wrap;
+  }
+  .action-btn {
+    padding: 0.35rem 0.75rem; border: 1px solid #27272a; border-radius: 0.375rem;
+    font-size: 0.7rem; font-weight: 600; font-family: inherit; cursor: pointer;
+    transition: all 0.2s; background: transparent;
+  }
+  .action-btn:disabled { opacity: 0.4; cursor: default; }
+  .action-btn.dismiss { color: #a1a1aa; }
+  .action-btn.dismiss:hover:not(:disabled) { background: #27272a; color: #e4e4e7; }
+  .action-btn.warn { color: #eab308; border-color: rgba(234,179,8,0.3); }
+  .action-btn.warn:hover:not(:disabled) { background: rgba(234,179,8,0.1); }
+  .action-btn.suspend { color: #f97316; border-color: rgba(249,115,22,0.3); }
+  .action-btn.suspend:hover:not(:disabled) { background: rgba(249,115,22,0.1); }
+  .action-btn.ban { color: #ef4444; border-color: rgba(239,68,68,0.3); }
+  .action-btn.ban:hover:not(:disabled) { background: rgba(239,68,68,0.1); }
+
+  .empty-state {
+    text-align: center; padding: 3rem 1rem; color: #52525b; font-size: 0.85rem;
+  }
+
+  .report-resolved {
+    display: inline-block; padding: 0.2rem 0.6rem; border-radius: 0.25rem;
+    font-size: 0.7rem; font-weight: 600; margin-top: 0.75rem;
+  }
+  .resolved-dismiss { background: #27272a; color: #a1a1aa; }
+  .resolved-warn { background: rgba(234,179,8,0.15); color: #eab308; }
+  .resolved-suspend { background: rgba(249,115,22,0.15); color: #f97316; }
+  .resolved-ban { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+  /* ── Profiles Table ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  th {
+    text-align: left; color: #71717a; font-size: 0.6rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em; padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid #27272a; white-space: nowrap;
+  }
+  td {
+    padding: 0.6rem 0.5rem; border-bottom: 1px solid #1f1f23; color: #e4e4e7;
+    white-space: nowrap;
+  }
+  tr:hover td { background: #1c1c1f; }
+  .badge {
+    display: inline-block; padding: 0.15rem 0.45rem; border-radius: 0.25rem;
+    font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+  }
+  .badge-green { background: #052e16; color: #22c55e; }
+  .badge-red { background: #3b1114; color: #ef4444; }
+  .badge-gold { background: #3b3006; color: #D4A847; }
+  .badge-gray { background: #27272a; color: #71717a; }
+
+  /* ── Loading / Error ── */
+  .spinner {
+    display: inline-block; width: 18px; height: 18px;
+    border: 2px solid #27272a; border-top-color: #D4A847;
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-row { text-align: center; padding: 2rem; color: #52525b; }
+  .error-msg {
+    padding: 0.75rem 1rem; background: #3b1114; border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 0.5rem; color: #ef4444; font-size: 0.8rem; margin-bottom: 1rem;
+  }
+
+  /* ── Toast ── */
+  .toast-container {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    display: flex; flex-direction: column; gap: 0.5rem; z-index: 1000;
+  }
+  .toast {
+    padding: 0.65rem 1rem; border-radius: 0.5rem; font-size: 0.78rem;
+    font-weight: 500; animation: slideIn 0.3s ease; min-width: 220px;
+  }
+  .toast-success { background: #052e16; border: 1px solid rgba(34,197,94,0.3); color: #22c55e; }
+  .toast-error { background: #3b1114; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .topbar { flex-wrap: wrap; gap: 0.5rem; }
+    .main { padding: 1rem; }
+    .report-header { flex-direction: column; gap: 0.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-brand">The Value Engine</div>
+    <div class="login-title">Aligned Hearts Admin</div>
+    <input type="password" id="apiKeyInput" placeholder="Admin API Key" autocomplete="off"/>
+    <button class="login-btn" id="loginBtn">Sign In</button>
+    <div class="login-error" id="loginError">Invalid API key. Please try again.</div>
+  </div>
+</div>
+
+<!-- ═══════════ DASHBOARD ═══════════ -->
+<div class="dashboard" id="dashboard">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="topbar-brand">The Value Engine</div>
+        <div class="topbar-title">Aligned Hearts Admin</div>
+      </div>
+    </div>
+    <button class="topbar-logout" id="logoutBtn">Log Out</button>
+  </div>
+
+  <div class="main">
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="stat-value">--</div><div class="stat-label">Total Profiles</div></div>
+      <div class="stat-card"><div class="stat-value">--</div><div class="stat-label">Active</div></div>
+      <div class="stat-card"><div class="stat-value">--</div><div class="stat-label">Matches</div></div>
+      <div class="stat-card"><div class="stat-value">--</div><div class="stat-label">Messages</div></div>
+      <div class="stat-card"><div class="stat-value">--</div><div class="stat-label">Pending Reports</div></div>
+      <div class="stat-card"><div class="stat-value">--</div><div class="stat-label">Paid Users</div></div>
+      <div class="stat-card"><div class="stat-value">--</div><div class="stat-label">Trial Users</div></div>
+      <div class="stat-card"><div class="stat-value">--</div><div class="stat-label">Recent Signups</div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="reports">Reports</button>
+      <button class="tab-btn" data-tab="profiles">Profiles</button>
+    </div>
+
+    <!-- Reports Panel -->
+    <div class="tab-panel active" id="panel-reports">
+      <div class="loading-row" id="reportsLoading"><span class="spinner"></span></div>
+      <div id="reportsError"></div>
+      <div id="reportsList"></div>
+    </div>
+
+    <!-- Profiles Panel -->
+    <div class="tab-panel" id="panel-profiles">
+      <div class="loading-row" id="profilesLoading"><span class="spinner"></span></div>
+      <div id="profilesError"></div>
+      <div class="table-wrap" id="profilesTableWrap" style="display:none;">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th><th>Email</th><th>Gender</th><th>Active</th>
+              <th>Paid</th><th>Reports</th><th>Matches</th>
+              <th>Likes Given</th><th>Likes Recv</th><th>Joined</th>
+            </tr>
+          </thead>
+          <tbody id="profilesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+(function () {
+  // ── Elements ──
+  const loginScreen  = document.getElementById('loginScreen');
+  const dashboard    = document.getElementById('dashboard');
+  const apiKeyInput  = document.getElementById('apiKeyInput');
+  const loginBtn     = document.getElementById('loginBtn');
+  const loginError   = document.getElementById('loginError');
+  const logoutBtn    = document.getElementById('logoutBtn');
+  const statsGrid    = document.getElementById('statsGrid');
+  const reportsList  = document.getElementById('reportsList');
+  const reportsLoad  = document.getElementById('reportsLoading');
+  const reportsErr   = document.getElementById('reportsError');
+  const profilesBody = document.getElementById('profilesBody');
+  const profilesLoad = document.getElementById('profilesLoading');
+  const profilesErr  = document.getElementById('profilesError');
+  const profilesWrap = document.getElementById('profilesTableWrap');
+  const toasts       = document.getElementById('toasts');
+
+  const STORAGE_KEY = 'vtv_admin_key';
+
+  // ── Helpers ──
+  function getKey() { return localStorage.getItem(STORAGE_KEY) || ''; }
+
+  async function api(method, path, body) {
+    const opts = {
+      method,
+      headers: { 'x-api-key': getKey(), 'Content-Type': 'application/json' },
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(path, opts);
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(text || `HTTP ${res.status}`);
+    }
+    return res.json();
+  }
+
+  function toast(msg, type) {
+    const el = document.createElement('div');
+    el.className = 'toast toast-' + type;
+    el.textContent = msg;
+    toasts.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+  }
+
+  function fmtDate(d) {
+    if (!d) return '--';
+    const dt = new Date(d);
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function fmtNum(n) {
+    if (n == null) return '--';
+    return Number(n).toLocaleString();
+  }
+
+  function esc(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  // ── Auth ──
+  function showDashboard() {
+    loginScreen.style.display = 'none';
+    dashboard.classList.add('show');
+    loadStats();
+    loadReports();
+  }
+
+  function showLogin() {
+    dashboard.classList.remove('show');
+    loginScreen.style.display = 'flex';
+    apiKeyInput.value = '';
+    loginError.style.display = 'none';
+  }
+
+  // Check stored key on load
+  if (getKey()) {
+    showDashboard();
+  }
+
+  loginBtn.addEventListener('click', async () => {
+    const key = apiKeyInput.value.trim();
+    if (!key) { loginError.style.display = 'block'; return; }
+    localStorage.setItem(STORAGE_KEY, key);
+    // Validate by calling stats
+    try {
+      await api('GET', '/api/dating/admin/stats');
+      loginError.style.display = 'none';
+      showDashboard();
+    } catch (e) {
+      localStorage.removeItem(STORAGE_KEY);
+      loginError.style.display = 'block';
+    }
+  });
+
+  apiKeyInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') loginBtn.click();
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem(STORAGE_KEY);
+    showLogin();
+  });
+
+  // ── Tabs ──
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const panel = document.getElementById('panel-' + btn.dataset.tab);
+      panel.classList.add('active');
+
+      // Lazy-load profiles on first visit
+      if (btn.dataset.tab === 'profiles' && !profilesBody.children.length) {
+        loadProfiles();
+      }
+    });
+  });
+
+  // ── Load Stats ──
+  async function loadStats() {
+    try {
+      const d = await api('GET', '/api/dating/admin/stats');
+      const fields = [
+        { key: 'totalProfiles',  label: 'Total Profiles' },
+        { key: 'activeProfiles', label: 'Active' },
+        { key: 'totalMatches',   label: 'Matches' },
+        { key: 'totalMessages',  label: 'Messages' },
+        { key: 'pendingReports', label: 'Pending Reports' },
+        { key: 'paidUsers',      label: 'Paid Users' },
+        { key: 'trialUsers',     label: 'Trial Users' },
+        { key: 'recentSignups',  label: 'Recent Signups' },
+      ];
+      statsGrid.innerHTML = fields.map(f => `
+        <div class="stat-card">
+          <div class="stat-value">${fmtNum(d[f.key])}</div>
+          <div class="stat-label">${f.label}</div>
+        </div>
+      `).join('');
+    } catch (e) {
+      console.error('Stats error:', e);
+    }
+  }
+
+  // ── Load Reports ──
+  async function loadReports() {
+    reportsLoad.style.display = 'block';
+    reportsErr.innerHTML = '';
+    reportsList.innerHTML = '';
+    try {
+      const data = await api('GET', '/api/dating/admin/reports?status=pending');
+      reportsLoad.style.display = 'none';
+      const reports = data.reports || data || [];
+      if (!reports.length) {
+        reportsList.innerHTML = '<div class="empty-state">No pending reports.</div>';
+        return;
+      }
+      reportsList.innerHTML = reports.map(r => `
+        <div class="report-card" id="report-${esc(r.id || r.report_id)}">
+          <div class="report-header">
+            <div class="report-people">
+              <strong>${esc(r.reporter_name || r.reporter)}</strong>
+              <span class="arrow">&#8594;</span>
+              <strong>${esc(r.reported_name || r.reported)}</strong>
+            </div>
+            <div class="report-date">${fmtDate(r.created_at || r.date)}</div>
+          </div>
+          <div class="report-reason">${esc(r.reason)}</div>
+          ${r.details ? '<div class="report-details">' + esc(r.details) + '</div>' : ''}
+          <div class="report-actions" data-report-id="${esc(r.id || r.report_id)}">
+            <button class="action-btn dismiss" onclick="handleAction(this,'dismiss')">Dismiss</button>
+            <button class="action-btn warn" onclick="handleAction(this,'warn')">Warn</button>
+            <button class="action-btn suspend" onclick="handleAction(this,'suspend')">Suspend</button>
+            <button class="action-btn ban" onclick="handleAction(this,'ban')">Ban</button>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      reportsLoad.style.display = 'none';
+      reportsErr.innerHTML = '<div class="error-msg">Failed to load reports: ' + esc(e.message) + '</div>';
+    }
+  }
+
+  // ── Report Action (global for onclick) ──
+  window.handleAction = async function (btn, action) {
+    const container = btn.closest('.report-actions');
+    const reportId = container.dataset.reportId;
+    const buttons = container.querySelectorAll('.action-btn');
+    buttons.forEach(b => b.disabled = true);
+    try {
+      await api('POST', '/api/dating/admin/report-action', { report_id: reportId, action });
+      toast('Report ' + action + (action === 'dismiss' ? 'ed' : action === 'ban' ? 'ned' : 'ed') + ' successfully.', 'success');
+      // Replace actions with resolved badge
+      const labels = { dismiss: 'Dismissed', warn: 'Warned', suspend: 'Suspended', ban: 'Banned' };
+      container.innerHTML = '<span class="report-resolved resolved-' + action + '">' + labels[action] + '</span>';
+      // Refresh stats to update pending count
+      loadStats();
+    } catch (e) {
+      toast('Action failed: ' + e.message, 'error');
+      buttons.forEach(b => b.disabled = false);
+    }
+  };
+
+  // ── Load Profiles ──
+  async function loadProfiles() {
+    profilesLoad.style.display = 'block';
+    profilesErr.innerHTML = '';
+    profilesWrap.style.display = 'none';
+    try {
+      const data = await api('GET', '/api/dating/admin/profiles');
+      profilesLoad.style.display = 'none';
+      const profiles = data.profiles || data || [];
+      if (!profiles.length) {
+        profilesErr.innerHTML = '<div class="empty-state">No profiles found.</div>';
+        return;
+      }
+      profilesBody.innerHTML = profiles.map(p => `
+        <tr>
+          <td>${esc(p.display_name)}</td>
+          <td>${esc(p.email)}</td>
+          <td>${esc(p.gender || '--')}</td>
+          <td><span class="badge ${p.is_active ? 'badge-green' : 'badge-red'}">${p.is_active ? 'Yes' : 'No'}</span></td>
+          <td><span class="badge ${p.is_paid ? 'badge-gold' : 'badge-gray'}">${p.is_paid ? 'Paid' : 'Free'}</span></td>
+          <td>${p.pending_reports ? '<span class="badge badge-red">' + fmtNum(p.pending_reports) + '</span>' : '0'}</td>
+          <td>${fmtNum(p.match_count)}</td>
+          <td>${fmtNum(p.likes_given)}</td>
+          <td>${fmtNum(p.likes_received)}</td>
+          <td>${fmtDate(p.created_at)}</td>
+        </tr>
+      `).join('');
+      profilesWrap.style.display = 'block';
+    } catch (e) {
+      profilesLoad.style.display = 'none';
+      profilesErr.innerHTML = '<div class="error-msg">Failed to load profiles: ' + esc(e.message) + '</div>';
+    }
+  }
+
+})();
+</script>
+</body>
+</html>

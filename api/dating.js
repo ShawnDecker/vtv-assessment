@@ -741,6 +741,33 @@ module.exports = async (req, res) => {
       return res.json({ messages, myProfileId: myProfile[0].id });
     }
 
+    // ===== UNREAD COUNTS (for notification badges) =====
+    if (path === 'unread' && req.method === 'GET') {
+      const myProfile = await sql`SELECT id FROM dating_profiles WHERE contact_id = ${user.contactId}`;
+      if (!myProfile.length) return res.json({ unreadMessages: 0, newMatches: 0 });
+      const myId = myProfile[0].id;
+
+      // Unread messages: messages in my matches that I haven't read and I didn't send
+      const [unreadMsg] = await sql`
+        SELECT COUNT(*) as cnt FROM dating_messages m
+        JOIN dating_matches dm ON dm.id = m.match_id
+        WHERE (dm.profile_a_id = ${myId} OR dm.profile_b_id = ${myId})
+          AND dm.unmatched = false
+          AND m.sender_id != ${myId}
+          AND m.read_at IS NULL
+      `;
+
+      // New matches in last 24h
+      const [newMatches] = await sql`
+        SELECT COUNT(*) as cnt FROM dating_matches
+        WHERE (profile_a_id = ${myId} OR profile_b_id = ${myId})
+          AND unmatched = false
+          AND matched_at > now() - interval '24 hours'
+      `;
+
+      return res.json({ unreadMessages: +unreadMsg.cnt, newMatches: +newMatches.cnt });
+    }
+
     // ===== TOGGLE ACTIVE =====
     if (path === 'toggle-active' && req.method === 'POST') {
       const { active } = req.body;
@@ -764,7 +791,7 @@ module.exports = async (req, res) => {
       return res.json({ ok: true });
     }
 
-    // ===== UPLOAD PHOTO =====
+    // ===== UPLOAD PHOTO (Cloudinary CDN or base64 fallback) =====
     if (path === 'upload-photo' && req.method === 'POST') {
       const { photoBase64, photoIndex } = req.body;
       if (photoBase64 === undefined || photoIndex === undefined) {
@@ -781,8 +808,36 @@ module.exports = async (req, res) => {
 
       // Check size — base64 is ~33% larger than binary, so 2MB binary ~ 2.67MB base64
       const sizeBytes = Math.ceil((photoBase64.length - photoBase64.indexOf(',') - 1) * 0.75);
-      if (sizeBytes > 2 * 1024 * 1024) {
-        return res.status(400).json({ error: 'Photo must be under 2MB' });
+      if (sizeBytes > 5 * 1024 * 1024) {
+        return res.status(400).json({ error: 'Photo must be under 5MB' });
+      }
+
+      // Upload to Cloudinary CDN if configured, otherwise store base64
+      let photoUrl = photoBase64;
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+      const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
+
+      if (cloudName && uploadPreset) {
+        try {
+          const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              file: photoBase64,
+              upload_preset: uploadPreset,
+              folder: `vtv-dating/${user.contactId}`,
+              transformation: 'c_limit,w_800,h_1000,q_auto,f_auto'
+            })
+          });
+          const uploadData = await uploadRes.json();
+          if (uploadData.secure_url) {
+            photoUrl = uploadData.secure_url;
+          } else {
+            console.warn('Cloudinary upload failed, falling back to base64:', uploadData.error?.message);
+          }
+        } catch (cloudErr) {
+          console.warn('Cloudinary upload error, falling back to base64:', cloudErr.message);
+        }
       }
 
       // Get current profile
@@ -792,11 +847,9 @@ module.exports = async (req, res) => {
       // Build photos array (up to 6 slots)
       let photos = profile[0].photo_urls || [];
       if (!Array.isArray(photos)) photos = [];
-      // Ensure array is at least photoIndex+1 long
       while (photos.length <= photoIndex) photos.push('');
-      // Cap at 6
       photos = photos.slice(0, 6);
-      photos[photoIndex] = photoBase64;
+      photos[photoIndex] = photoUrl;
 
       const photosJson = JSON.stringify(photos);
       await sql`
@@ -804,7 +857,7 @@ module.exports = async (req, res) => {
         WHERE contact_id = ${user.contactId}
       `;
 
-      return res.json({ ok: true, photos, message: 'Photo uploaded' });
+      return res.json({ ok: true, photos, photoUrl, cdn: photoUrl !== photoBase64, message: 'Photo uploaded' });
     }
 
     // ===== REMOVE PHOTO =====
@@ -830,6 +883,111 @@ module.exports = async (req, res) => {
       `;
 
       return res.json({ ok: true, photos, message: 'Photo removed' });
+    }
+
+    // =========================================================
+    // ADMIN MODERATION ENDPOINTS (require x-api-key header)
+    // =========================================================
+    const apiKey = req.headers['x-api-key'] || '';
+    const validKey = process.env.ADMIN_API_KEY || '';
+    const isAdmin = validKey && apiKey === validKey;
+
+    // ===== GET REPORTS (admin) =====
+    if (path === 'admin/reports' && req.method === 'GET' && isAdmin) {
+      const status = url.searchParams.get('status') || 'pending';
+      const reports = await sql`
+        SELECT dr.*,
+               rp.display_name as reporter_name, rp.photo_urls as reporter_photos,
+               dp.display_name as reported_name, dp.photo_urls as reported_photos,
+               dp.bio as reported_bio, dp.contact_id as reported_contact_id
+        FROM dating_reports dr
+        JOIN dating_profiles rp ON rp.id = dr.reporter_id
+        JOIN dating_profiles dp ON dp.id = dr.reported_id
+        WHERE dr.status = ${status}
+        ORDER BY dr.created_at DESC
+        LIMIT 50
+      `;
+      return res.json({ reports, count: reports.length });
+    }
+
+    // ===== UPDATE REPORT STATUS (admin) =====
+    if (path === 'admin/report-action' && req.method === 'POST' && isAdmin) {
+      const { report_id, action, reason } = req.body;
+      if (!report_id || !action) return res.status(400).json({ error: 'report_id and action required' });
+
+      if (action === 'dismiss') {
+        await sql`UPDATE dating_reports SET status = 'dismissed' WHERE id = ${report_id}`;
+        return res.json({ ok: true, action: 'dismissed' });
+      }
+
+      if (action === 'warn') {
+        await sql`UPDATE dating_reports SET status = 'warned' WHERE id = ${report_id}`;
+        return res.json({ ok: true, action: 'warned' });
+      }
+
+      if (action === 'suspend') {
+        const report = await sql`SELECT reported_id FROM dating_reports WHERE id = ${report_id}`;
+        if (report.length) {
+          await sql`UPDATE dating_profiles SET is_active = false WHERE id = ${report[0].reported_id}`;
+          await sql`UPDATE dating_reports SET status = 'suspended' WHERE id = ${report_id}`;
+        }
+        return res.json({ ok: true, action: 'suspended' });
+      }
+
+      if (action === 'ban') {
+        const report = await sql`SELECT reported_id FROM dating_reports WHERE id = ${report_id}`;
+        if (report.length) {
+          await sql`UPDATE dating_profiles SET is_active = false WHERE id = ${report[0].reported_id}`;
+          await sql`UPDATE dating_reports SET status = 'banned' WHERE id = ${report_id}`;
+          // Also add to blocks from all users who reported
+          const allReports = await sql`SELECT DISTINCT reporter_id FROM dating_reports WHERE reported_id = ${report[0].reported_id}`;
+          for (const r of allReports) {
+            await sql`INSERT INTO dating_blocks (blocker_id, blocked_id, reason) VALUES (${r.reporter_id}, ${report[0].reported_id}, ${reason || 'admin_ban'}) ON CONFLICT DO NOTHING`;
+          }
+        }
+        return res.json({ ok: true, action: 'banned' });
+      }
+
+      return res.status(400).json({ error: 'Invalid action. Use: dismiss, warn, suspend, ban' });
+    }
+
+    // ===== GET ALL DATING PROFILES (admin) =====
+    if (path === 'admin/profiles' && req.method === 'GET' && isAdmin) {
+      const profiles = await sql`
+        SELECT dp.*, c.email, c.first_name, c.last_name,
+               (SELECT COUNT(*) FROM dating_reports WHERE reported_id = dp.id AND status = 'pending') as pending_reports,
+               (SELECT COUNT(*) FROM dating_matches WHERE (profile_a_id = dp.id OR profile_b_id = dp.id) AND unmatched = false) as match_count,
+               (SELECT COUNT(*) FROM dating_swipes WHERE swiper_id = dp.id AND direction = 'right') as likes_given,
+               (SELECT COUNT(*) FROM dating_swipes WHERE swiped_id = dp.id AND direction = 'right') as likes_received
+        FROM dating_profiles dp
+        JOIN contacts c ON c.id = dp.contact_id
+        ORDER BY dp.created_at DESC
+        LIMIT 100
+      `;
+      return res.json({ profiles, count: profiles.length });
+    }
+
+    // ===== DATING STATS (admin) =====
+    if (path === 'admin/stats' && req.method === 'GET' && isAdmin) {
+      const [totalProfiles] = await sql`SELECT COUNT(*) as cnt FROM dating_profiles`;
+      const [activeProfiles] = await sql`SELECT COUNT(*) as cnt FROM dating_profiles WHERE is_active = true`;
+      const [totalMatches] = await sql`SELECT COUNT(*) as cnt FROM dating_matches WHERE unmatched = false`;
+      const [totalMessages] = await sql`SELECT COUNT(*) as cnt FROM dating_messages`;
+      const [pendingReports] = await sql`SELECT COUNT(*) as cnt FROM dating_reports WHERE status = 'pending'`;
+      const [paidUsers] = await sql`SELECT COUNT(*) as cnt FROM dating_profiles WHERE is_paid = true`;
+      const [trialUsers] = await sql`SELECT COUNT(*) as cnt FROM dating_profiles WHERE is_paid = false AND trial_ends > now()`;
+      const recentSignups = await sql`SELECT id, display_name, gender, created_at FROM dating_profiles ORDER BY created_at DESC LIMIT 10`;
+
+      return res.json({
+        totalProfiles: +totalProfiles.cnt,
+        activeProfiles: +activeProfiles.cnt,
+        totalMatches: +totalMatches.cnt,
+        totalMessages: +totalMessages.cnt,
+        pendingReports: +pendingReports.cnt,
+        paidUsers: +paidUsers.cnt,
+        trialUsers: +trialUsers.cnt,
+        recentSignups
+      });
     }
 
     return res.status(404).json({ error: 'Not found' });

@@ -877,16 +877,17 @@ async function submitNewPin(email) {
 }
 
 function showTrialExpired(plan) {
+  const email = userEmail || localStorage.getItem('ve_email') || '';
   const loginBox = document.getElementById('login-screen').querySelector('.login-box');
   if (plan === 'locked_no_assessment') {
     loginBox.innerHTML += `
       <div style="margin-top:1rem;padding:1rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:0.5rem;text-align:center;">
         <p style="color:var(--red);font-size:0.95rem;font-weight:700;">Access Locked</p>
         <p style="color:var(--muted);font-size:0.8rem;margin-top:0.5rem;">You didn't complete the P.I.N.K. assessment within 3 days.</p>
-        <p style="color:var(--muted);font-size:0.8rem;margin-top:0.25rem;">A <strong style="color:var(--text);">$0.97 charge</strong> has been applied.</p>
-        <p style="color:var(--muted);font-size:0.75rem;margin-top:0.5rem;">To restore access, either:</p>
-        <a href="/" style="display:inline-block;margin-top:0.5rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.85rem;">Complete the Assessment (restores 30-day trial)</a>
-        <a href="/pricing" style="display:inline-block;margin-top:0.4rem;padding:0.55rem 1.5rem;background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600;border-radius:0.5rem;text-decoration:none;font-size:0.8rem;">Subscribe $29/month</a>
+        <p style="color:var(--muted);font-size:0.75rem;margin-top:0.5rem;">To restore your 30-day trial:</p>
+        <a href="/checkout?tier=dating-gate&email=${encodeURIComponent(email)}" style="display:inline-block;margin-top:0.5rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.85rem;">Pay $0.97 & Restore Trial</a>
+        <a href="/?email=${encodeURIComponent(email)}&mode=relationship&depth=quick&from=faith-match" style="display:inline-block;margin-top:0.4rem;padding:0.55rem 1.5rem;background:transparent;border:1px solid var(--green);color:var(--green);font-weight:600;border-radius:0.5rem;text-decoration:none;font-size:0.8rem;">Complete Assessment (Free)</a>
+        <a href="/checkout?tier=dating-monthly&email=${encodeURIComponent(email)}" style="display:inline-block;margin-top:0.4rem;padding:0.55rem 1.5rem;background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600;border-radius:0.5rem;text-decoration:none;font-size:0.8rem;">Subscribe $29/month</a>
       </div>`;
   } else if (plan === 'monthly') {
     loginBox.innerHTML += `
@@ -894,8 +895,18 @@ function showTrialExpired(plan) {
         <p style="color:var(--gold);font-size:0.95rem;font-weight:700;">Your 30-Day Trial Has Ended</p>
         <p style="color:var(--muted);font-size:0.8rem;margin-top:0.5rem;">Subscribe for <strong style="color:var(--text);">$29/month</strong> to continue using Aligned Hearts</p>
         <p style="color:var(--green);font-size:0.75rem;margin-top:0.35rem;">Includes full VTV website & portal access</p>
-        <a href="/pricing" style="display:inline-block;margin-top:0.75rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Subscribe Now</a>
+        <a href="/checkout?tier=dating-monthly&email=${encodeURIComponent(email)}" style="display:inline-block;margin-top:0.75rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Subscribe Now — $29/mo</a>
       </div>`;
+  }
+}
+
+// Handle returning from Stripe payment success
+function checkPaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('payment') === 'success') {
+    toast('Payment successful! Welcome to Aligned Hearts.');
+    // Clean URL
+    window.history.replaceState({}, '', '/faith-match');
   }
 }
 
@@ -1036,6 +1047,7 @@ async function checkProfile() {
       showScreen('discover-screen');
       loadDiscover();
       loadMyScore();
+      startNotificationPolling();
       // Show assessment reminder if no assessment yet
       if (!d.profile.master_score && !d.profile.time_total) {
         const reminder = document.getElementById('assessment-reminder');
@@ -1087,7 +1099,12 @@ function navTo(btn) {
   btn.classList.add('active');
   const screen = btn.dataset.screen;
   showScreen(screen);
-  if (screen === 'matches-screen') loadMatches();
+  if (screen === 'matches-screen') {
+    loadMatches();
+    // Clear badge when viewing matches
+    const badge = document.getElementById('match-badge');
+    if (badge) badge.classList.add('hidden');
+  }
   if (screen === 'discover-screen') { if (!discoverProfiles.length) loadDiscover(); }
 }
 
@@ -1269,6 +1286,7 @@ async function submitProfile() {
     showScreen('discover-screen');
     loadDiscover();
     loadMyScore();
+    startNotificationPolling();
   } catch (e) { toast('Error saving profile'); }
 }
 
@@ -1632,6 +1650,34 @@ async function loadMyScore() {
   } catch {}
 }
 
+// ===== NOTIFICATION POLLING =====
+let notifInterval = null;
+
+async function pollNotifications() {
+  if (!token) return;
+  try {
+    const r = await fetch(API + '/dating/unread', { headers: authHeaders() });
+    const d = await r.json();
+    // Update matches badge
+    const badge = document.getElementById('match-badge');
+    if (badge) {
+      const total = (d.unreadMessages || 0) + (d.newMatches || 0);
+      if (total > 0) {
+        badge.textContent = total > 9 ? '9+' : total;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+  } catch {}
+}
+
+function startNotificationPolling() {
+  if (notifInterval) clearInterval(notifInterval);
+  pollNotifications(); // immediate first check
+  notifInterval = setInterval(pollNotifications, 15000); // every 15s
+}
+
 async function toggleActive(active) {
   try {
     await fetch(API + '/dating/toggle-active', {
@@ -1669,6 +1715,9 @@ function escapeHtml(str) {
 window.addEventListener('DOMContentLoaded', () => {
   const savedEmail = localStorage.getItem('ve_email');
   if (savedEmail) document.getElementById('login-email').value = savedEmail;
+
+  // Handle returning from Stripe payment
+  checkPaymentReturn();
 
   // Handle PIN reset link from email
   const urlParams = new URLSearchParams(window.location.search);

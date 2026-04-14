@@ -303,6 +303,10 @@
       "dest": "/agent-dashboard.html"
     },
     {
+      "src": "/dating-admin",
+      "dest": "/dating-admin.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
