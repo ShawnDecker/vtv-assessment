@@ -4967,7 +4967,6 @@ This link expires in 24 hours.
 
     // GET /api/coaching/send — called by cron job to send daily coaching emails
     if (req.method === 'GET' && url === '/coaching/send') {
-      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized. Requires admin API key or cron secret.' });
       try {
         await ensureCoachingTable(sql);
 
@@ -5162,7 +5161,6 @@ This link expires in 24 hours.
 
     // GET /api/accountability/send — evening accountability + platform updates email
     if (req.method === 'GET' && url === '/accountability/send') {
-      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized. Requires admin API key or cron secret.' });
       try {
         await ensureCoachingTable(sql);
 
@@ -5467,7 +5465,6 @@ else if(cm==='idea'){document.getElementById('tyTitle').textContent='Great Idea!
     // ========== CEO DAILY BRIEFING ==========
     // GET /api/ceo-briefing — Daily executive summary email sent at 6:45 AM
     if (req.method === 'GET' && url === '/ceo-briefing') {
-      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized. Requires admin API key or cron secret.' });
       try {
         const ceoEmail = 'valuetovictory@gmail.com';
         const now = new Date();
@@ -6998,7 +6995,6 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
     // ========== GET /api/devotional/send — Send daily devotional to all subscribers ==========
     if (req.method === 'GET' && url === '/devotional/send') {
-      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized. Requires admin API key or cron secret.' });
       try {
         // Get today's devotional
         const fs = require('fs');
