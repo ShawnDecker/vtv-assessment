@@ -253,6 +253,8 @@ function render(data) {
   html += '<a class="download-card" href="/vtv-team-installer.js" download><div class="dl-icon">&#128187;</div><div class="dl-name">Advanced Installer</div><div class="dl-desc">Node.js script with full reporting</div><div class="dl-size">.js — For terminal users</div></a>';
   html += '<a class="download-card" href="/VTV-SYSTEM-ARCHITECTURE.md" download><div class="dl-icon">&#128218;</div><div class="dl-name">System Architecture</div><div class="dl-desc">Full ecosystem documentation</div><div class="dl-size">Markdown</div></a>';
   html += '<a class="download-card" href="javascript:void(0)" onclick="copyInstallCmd()"><div class="dl-icon">&#9889;</div><div class="dl-name">Quick Install CMD</div><div class="dl-desc">Copy one-line install command</div><div class="dl-size">Click to Copy</div></a>';
+  html += '<a class="download-card" href="javascript:void(0)" onclick="copyClaudeMemCmd()"><div class="dl-icon">&#129504;</div><div class="dl-name">Claude-Mem</div><div class="dl-desc">Persistent memory for Claude Code. Cross-session context.</div><div class="dl-size">npx claude-mem install</div></a>';
+  html += '<a class="download-card" href="https://github.com/thedotmack/claude-mem" target="_blank"><div class="dl-icon">&#128214;</div><div class="dl-name">Claude-Mem Docs</div><div class="dl-desc">GitHub repo — setup guide, config, privacy tags</div><div class="dl-size">github.com/thedotmack/claude-mem</div></a>';
   html += '</div>';
 
   // === TEAM INSTALLATIONS ===
@@ -447,6 +449,15 @@ function copyInstallCmd() {
   const cmd = 'curl -sO https://assessment.valuetovictory.com/vtv-team-installer.js && node vtv-team-installer.js';
   navigator.clipboard.writeText(cmd).then(() => {
     alert('Install command copied!\n\nPaste it in a terminal to start the installer.');
+  }).catch(() => {
+    prompt('Copy this command:', cmd);
+  });
+}
+
+function copyClaudeMemCmd() {
+  const cmd = 'npx claude-mem install';
+  navigator.clipboard.writeText(cmd).then(() => {
+    alert('Claude-Mem install command copied!\n\nPaste in a terminal with Node.js 18+ installed.\nIt adds persistent memory across Claude Code sessions.');
   }).catch(() => {
     prompt('Copy this command:', cmd);
   });
