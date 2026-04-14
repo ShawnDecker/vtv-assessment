@@ -5,12 +5,86 @@ const fs = require('fs');
 const https = require('https');
 const BASE_URL = process.env.BASE_URL || 'https://assessment.valuetovictory.com';
 
+// Consolidated email endpoint — handles both send-email and verify-email
+// Route determination: request URL path decides which handler to run
+
 function escHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+// CORS allowed origins (superset used by send-email)
+const ALLOWED_ORIGINS = ['https://valuetovictory.com','https://www.valuetovictory.com','https://assessment.valuetovictory.com','https://shawnedecker.com','http://localhost:3000','http://localhost:5173'];
+function getCorsOrigin(req) { const o = req.headers.origin||''; return ALLOWED_ORIGINS.includes(o)?o:o.endsWith('.vercel.app')?o:ALLOWED_ORIGINS[0]; }
+
 module.exports = async (req, res) => {
+  // Determine which handler to run based on the request URL
+  const url = req.url || '';
+  if (url.includes('verify-email')) {
+    return handleVerifyEmail(req, res);
+  } else if (url.includes('send-email')) {
+    return handleSendEmail(req, res);
+  } else {
+    return res.status(400).json({ error: 'Unknown email route. Use /api/send-email or /api/verify-email' });
+  }
+};
+
+// ── Send Email Handler ─────────────────────────────────────────────────────────
+async function handleSendEmail(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', getCorsOrigin(req));
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Verify API key — accepts SEND_EMAIL_API_KEY or GMAIL_APP_PASSWORD
+  const authHeader = req.headers['authorization'] || '';
+  const apiKey = authHeader.replace('Bearer ', '');
+  const validKeys = [process.env.SEND_EMAIL_API_KEY, process.env.GMAIL_APP_PASSWORD].filter(Boolean);
+  if (validKeys.length === 0 || !validKeys.includes(apiKey)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { to, subject, html, text } = req.body || {};
+
+  if (!to || !subject || (!html && !text)) {
+    return res.status(400).json({ error: 'Missing required fields: to, subject, and html or text' });
+  }
+
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    return res.status(500).json({ error: 'Email service not configured' });
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+    });
+
+    const result = await transporter.sendMail({
+      from: `"Value to Victory" <${process.env.GMAIL_USER}>`,
+      to,
+      subject,
+      ...(html ? { html } : {}),
+      ...(text ? { text } : {}),
+    });
+
+    return res.status(200).json({
+      success: true,
+      messageId: result.messageId,
+    });
+  } catch (err) {
+    console.error('send-email error:', err);
+    return res.status(500).json({ error: 'Failed to send email' });
+  }
+}
+
+// ── Verify Email Handler ───────────────────────────────────────────────────────
+async function handleVerifyEmail(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -225,7 +299,7 @@ module.exports = async (req, res) => {
     console.error('verify-email error:', err);
     return sendPage(res, 500, 'Something Went Wrong', `We hit a snag verifying your email. Please try again or request a new link at <a href="${BASE_URL}/free-book" style="color:#D4A847;">our free book page</a>.`);
   }
-};
+}
 
 function sendPage(res, statusCode, title, bodyHtml) {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');

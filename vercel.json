@@ -49,7 +49,7 @@
     },
     {
       "src": "/api/verify-email",
-      "dest": "/api/verify-email.js"
+      "dest": "/api/email.js"
     },
     {
       "src": "/api/health",
@@ -61,15 +61,15 @@
     },
     {
       "src": "/api/migrate-digital-purchases",
-      "dest": "/api/migrate-digital-purchases.js"
+      "dest": "/api/migrate.js"
     },
     {
       "src": "/api/send-email",
-      "dest": "/api/send-email.js"
+      "dest": "/api/email.js"
     },
     {
       "src": "/api/migrate-analytics",
-      "dest": "/api/migrate-analytics.js"
+      "dest": "/api/migrate.js"
     },
     {
       "src": "/api/devotional-today",
