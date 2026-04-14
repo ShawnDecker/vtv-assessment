@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
 // ========== JWT (shared logic) ==========
-const JWT_SECRET = process.env.JWT_SECRET || 'vtv-fallback-change-me';
+const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_API_KEY || 'vtv-fallback-change-me';
 const TRIAL_DAYS = 30;
 
 function verifyJWT(token) {
@@ -23,15 +23,42 @@ function extractToken(req) {
   return null;
 }
 
-function cors(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+const ALLOWED_ORIGINS = ['https://valuetovictory.com','https://www.valuetovictory.com','https://assessment.valuetovictory.com','https://shawnedecker.com','http://localhost:3000','http://localhost:5173'];
+
+// Rate limiting
+const rateLimitStore = new Map();
+function checkRateLimit(ip, max = 60, windowMs = 60000) {
+  const now = Date.now();
+  let record = rateLimitStore.get(ip);
+  if (!record || (now - record.start) > windowMs) record = { count: 0, start: now };
+  record.count++;
+  rateLimitStore.set(ip, record);
+  if (rateLimitStore.size > 5000) {
+    for (const [k, v] of rateLimitStore) { if (now - v.start > windowMs * 2) rateLimitStore.delete(k); }
+  }
+  return record.count <= max;
+}
+
+function cors(req, res) {
+  const origin = req.headers.origin || '';
+  const allowed = ALLOWED_ORIGINS.includes(origin) || origin.endsWith('.vercel.app');
+  res.setHeader('Access-Control-Allow-Origin', allowed ? origin : ALLOWED_ORIGINS[0]);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key');
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
 }
 
 module.exports = async (req, res) => {
-  cors(res);
+  cors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // Rate limiting
+  const clientIP = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+  if (!checkRateLimit(clientIP)) {
+    return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+  }
 
   const sql = neon(process.env.DATABASE_URL);
   const url = new URL(req.url, `http://${req.headers.host}`);
@@ -303,7 +330,7 @@ module.exports = async (req, res) => {
     // The trial/lockout check below handles the enforcement
 
     // ===== CHECK: Access gating =====
-    if (!['profile', 'toggle-active', 'location', 'upload-photo', 'remove-photo'].includes(path)) {
+    if (!['profile', 'toggle-active', 'location', 'upload-photo', 'remove-photo', 'unread'].includes(path) && !path.startsWith('admin')) {
       const trialCheck = await sql`SELECT trial_start, trial_ends, is_paid, email_verified FROM dating_profiles WHERE contact_id = ${user.contactId} LIMIT 1`;
       if (trialCheck.length) {
         const { trial_start, trial_ends, is_paid } = trialCheck[0];
@@ -653,6 +680,7 @@ module.exports = async (req, res) => {
     // ===== UNMATCH =====
     if (path === 'unmatch' && req.method === 'POST') {
       const { match_id } = req.body;
+      if (!match_id) return res.status(400).json({ error: 'match_id required' });
       const myProfile = await sql`SELECT id FROM dating_profiles WHERE contact_id = ${user.contactId}`;
       if (!myProfile.length) return res.status(404).json({ error: 'No profile' });
 
@@ -667,8 +695,10 @@ module.exports = async (req, res) => {
     // ===== BLOCK =====
     if (path === 'block' && req.method === 'POST') {
       const { profile_id, reason } = req.body;
+      if (!profile_id) return res.status(400).json({ error: 'profile_id required' });
       const myProfile = await sql`SELECT id FROM dating_profiles WHERE contact_id = ${user.contactId}`;
       if (!myProfile.length) return res.status(404).json({ error: 'No profile' });
+      if (profile_id === myProfile[0].id) return res.status(400).json({ error: 'Cannot block yourself' });
 
       await sql`
         INSERT INTO dating_blocks (blocker_id, blocked_id, reason)
@@ -681,6 +711,7 @@ module.exports = async (req, res) => {
     // ===== REPORT =====
     if (path === 'report' && req.method === 'POST') {
       const { profile_id, reason, details } = req.body;
+      if (!profile_id || !reason) return res.status(400).json({ error: 'profile_id and reason required' });
       const myProfile = await sql`SELECT id FROM dating_profiles WHERE contact_id = ${user.contactId}`;
       if (!myProfile.length) return res.status(404).json({ error: 'No profile' });
 
@@ -722,6 +753,15 @@ module.exports = async (req, res) => {
 
       const myProfile = await sql`SELECT id FROM dating_profiles WHERE contact_id = ${user.contactId}`;
       if (!myProfile.length) return res.status(404).json({ error: 'No profile' });
+
+      // Verify the user is a party to this match
+      const matchCheck = await sql`
+        SELECT id FROM dating_matches
+        WHERE id = ${matchId}
+          AND (profile_a_id = ${myProfile[0].id} OR profile_b_id = ${myProfile[0].id})
+          AND unmatched = false
+      `;
+      if (!matchCheck.length) return res.status(403).json({ error: 'Not a valid match' });
 
       const messages = await sql`
         SELECT m.*, dp.display_name as sender_name
@@ -994,6 +1034,6 @@ module.exports = async (req, res) => {
 
   } catch (err) {
     console.error('Dating API error:', err);
-    return res.status(500).json({ error: 'Server error', details: err.message });
+    return res.status(500).json({ error: 'Server error' });
   }
 };

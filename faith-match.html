@@ -832,7 +832,7 @@ function showSetPinFlow(email) {
       <label>Confirm</label>
       <input type="password" id="confirm-pin" class="form-input" placeholder="Re-enter PIN or password" minlength="4" maxlength="32" />
     </div>
-    <button class="btn-gold" onclick="submitNewPin('${email}')">Set PIN & Sign In</button>
+    <button class="btn-gold" onclick="submitNewPin(this.dataset.email)" data-email="${escapeHtml(email)}">Set PIN & Sign In</button>
     <button class="btn-outline" onclick="location.reload()">Back</button>
   `;
 }
@@ -974,7 +974,7 @@ function showResetPinForm(token, email) {
       <label>Confirm</label>
       <input type="password" id="reset-confirm-pin" class="form-input" placeholder="Re-enter" minlength="4" maxlength="32" />
     </div>
-    <button class="btn-gold" onclick="doResetPinToken('${token}','${email}')">Reset PIN & Sign In</button>
+    <button class="btn-gold" onclick="doResetPinToken(this.dataset.token,this.dataset.email)" data-token="${escapeHtml(token)}" data-email="${escapeHtml(email)}">Reset PIN & Sign In</button>
   `;
 }
 

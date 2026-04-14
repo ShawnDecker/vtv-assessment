@@ -246,7 +246,7 @@ module.exports = async (req, res) => {
 
       // Forward Stripe events to n8n webhook (fire-and-forget, non-blocking)
       try {
-        const n8nWebhookUrl = 'https://n8n.srv1138119.hstgr.cloud/webhook/stripe-webhook';
+        const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL || 'https://n8n.srv1138119.hstgr.cloud/webhook/stripe-webhook';
         fetch(n8nWebhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

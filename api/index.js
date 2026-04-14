@@ -732,22 +732,18 @@ async function logEmail(sql, { recipient, emailType, subject, contactId, assessm
   } catch(e) { console.error('logEmail error (non-fatal):', e.message); }
 }
 
-// Authenticate cron/scheduled endpoints — accepts admin API key, Vercel cron, or cron secret
+// Authenticate cron/scheduled endpoints — accepts admin API key, Vercel cron secret, or x-vercel-cron header
 function isCronAuthorized(req) {
   // Admin API key (manual trigger from dashboard or curl)
   const apiKey = req.headers['x-api-key'] || '';
   const adminKey = process.env.ADMIN_API_KEY || '';
   if (adminKey && apiKey === adminKey) return true;
-  // Vercel cron secret (if CRON_SECRET env var is set)
+  // Vercel cron secret (CRON_SECRET env var — set in Vercel dashboard)
   const authHeader = req.headers['authorization'] || '';
   const cronSecret = process.env.CRON_SECRET || '';
   if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true;
-  // Vercel internal cron — check for user-agent containing 'vercel' or x-vercel headers
-  if (req.headers['x-vercel-cron'] === '1') return true;
-  const ua = (req.headers['user-agent'] || '').toLowerCase();
-  if (ua.includes('vercel')) return true;
-  // Allow if no external referer and request comes from the same host (server-to-server)
-  if (!req.headers['origin'] && !req.headers['referer'] && req.headers['host']?.includes('valuetovictory')) return true;
+  // Vercel internal cron header (set by Vercel's cron scheduler, validated by CRON_SECRET)
+  if (cronSecret && req.headers['x-vercel-cron'] === '1') return true;
   return false;
 }
 
@@ -757,6 +753,12 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key');
   res.setHeader('Vary', 'Origin');
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   // Rate limiting
