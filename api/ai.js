@@ -19,7 +19,7 @@ const LOCAL_MODELS = {
   'devotional-generate': process.env.LOCAL_MODEL_DEVOTIONAL  || 'llama3.1:8b',
 };
 
-const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
+const OLLAMA_HOST = process.env.OLLAMA_HOST || process.env.OLLAMA_URL || 'http://localhost:11434';
 const CLOUD_URL = 'https://ai-gateway.vercel.sh/v1/chat/completions';
 
 // ========== HEALTH CHECK: Is Ollama running? ==========
@@ -30,43 +30,31 @@ async function isOllamaAvailable() {
   } catch { return false; }
 }
 
-// ========== PROVIDER SELECTION ==========
-// 'local'  → Ollama only
-// 'cloud'  → Vercel AI Gateway only
-// 'auto'   → Try local first, fall back to cloud if Ollama is down
-async function getProvider(action) {
-  const setting = process.env.AI_PROVIDER || 'cloud';
-
-  if (setting === 'local') {
-    return {
-      url: `${OLLAMA_HOST}/v1/chat/completions`,
-      headers: { 'Content-Type': 'application/json' },
-      model: LOCAL_MODELS[action] || 'llama3.1:8b',
-      name: 'local',
-    };
+// ========== CLOUD AI HELPER ==========
+async function callCloudAI(apiKey, systemPrompt, userPrompt) {
+  const cloudModel = process.env.CLOUD_AI_MODEL || 'anthropic/claude-sonnet-4.5';
+  const aiResponse = await fetch(CLOUD_URL, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: cloudModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      max_tokens: 1024,
+      temperature: 0.7,
+    }),
+  });
+  if (!aiResponse.ok) {
+    const errText = await aiResponse.text();
+    throw new Error('AI Gateway error: ' + errText);
   }
-
-  if (setting === 'auto') {
-    const ollamaUp = await isOllamaAvailable();
-    if (ollamaUp) {
-      return {
-        url: `${OLLAMA_HOST}/v1/chat/completions`,
-        headers: { 'Content-Type': 'application/json' },
-        model: LOCAL_MODELS[action] || 'llama3.1:8b',
-        name: 'local',
-      };
-    }
-    // Fall through to cloud
-  }
-
-  // Cloud provider
-  const AI_KEY = process.env.AI_GATEWAY_API_KEY;
-  if (!AI_KEY) return null;
+  const aiData = await aiResponse.json();
   return {
-    url: CLOUD_URL,
-    headers: { 'Authorization': `Bearer ${AI_KEY}`, 'Content-Type': 'application/json' },
-    model: process.env.CLOUD_AI_MODEL || 'anthropic/claude-sonnet-4.5',
-    name: 'cloud',
+    content: aiData.choices?.[0]?.message?.content || '',
+    model: aiData.model || cloudModel,
+    usage: aiData.usage || {}
   };
 }
 
@@ -89,7 +77,9 @@ module.exports = async (req, res) => {
 
   if (!action) return res.status(400).json({ error: 'action required' });
 
-  // === NEW ACTION: health — Check AI provider status ===
+  const AI_KEY = process.env.AI_GATEWAY_API_KEY;
+
+  // === ACTION: health — Check AI provider status ===
   if (action === 'health') {
     const ollamaUp = await isOllamaAvailable();
     let ollamaModels = [];
@@ -103,7 +93,7 @@ module.exports = async (req, res) => {
     return res.json({
       provider: process.env.AI_PROVIDER || 'cloud',
       ollama: { available: ollamaUp, host: OLLAMA_HOST, models: ollamaModels },
-      cloud: { configured: !!process.env.AI_GATEWAY_API_KEY, model: process.env.CLOUD_AI_MODEL || 'anthropic/claude-sonnet-4.5' },
+      cloud: { configured: !!AI_KEY, model: process.env.CLOUD_AI_MODEL || 'anthropic/claude-sonnet-4.5' },
       taskModels: LOCAL_MODELS,
     });
   }
@@ -201,79 +191,78 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
       return res.status(400).json({ error: `Unknown action: ${action}. Valid: health, coaching-insight, assessment-summary, email-draft, content-generate, devotional-generate` });
     }
 
-    // ========== CALL AI PROVIDER ==========
-    const provider = await getProvider(action);
-    if (!provider) {
-      return res.status(500).json({ error: 'No AI provider available. Set AI_GATEWAY_API_KEY for cloud or install Ollama for local.' });
-    }
+    // ========== DETERMINE PROVIDER ==========
+    // Priority: per-request context.provider > env AI_PROVIDER > 'cloud'
+    const requestProvider = context?.provider;
+    const envProvider = process.env.AI_PROVIDER || 'cloud';
+    const useLocal = requestProvider === 'ollama' || requestProvider === 'local'
+      || (envProvider === 'local')
+      || (envProvider === 'auto' && await isOllamaAvailable());
 
-    const aiResponse = await fetch(provider.url, {
-      method: 'POST',
-      headers: provider.headers,
-      body: JSON.stringify({
-        model: provider.model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        max_tokens: 1024,
-        temperature: 0.7,
-      }),
-    });
+    let content = '';
+    let modelUsed = '';
+    let usage = {};
 
-    // If local fails, try cloud as fallback (when in auto mode)
-    if (!aiResponse.ok && provider.name === 'local' && (process.env.AI_PROVIDER === 'auto')) {
-      const cloudKey = process.env.AI_GATEWAY_API_KEY;
-      if (cloudKey) {
-        const cloudModel = process.env.CLOUD_AI_MODEL || 'anthropic/claude-sonnet-4.5';
-        const fallbackResponse = await fetch(CLOUD_URL, {
+    if (useLocal) {
+      // Call Ollama local AI
+      const ollamaModel = context?.model || LOCAL_MODELS[action] || process.env.OLLAMA_MODEL || 'llama3.1:8b';
+      try {
+        const ollamaRes = await fetch(`${OLLAMA_HOST}/api/chat`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${cloudKey}`, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: cloudModel,
+            model: ollamaModel,
             messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt }
             ],
-            max_tokens: 1024,
-            temperature: 0.7,
+            stream: false,
+            options: { temperature: 0.7 }
           }),
+          signal: AbortSignal.timeout(60000)
         });
-        if (fallbackResponse.ok) {
-          const data = await fallbackResponse.json();
-          return res.json({
-            action,
-            content: data.choices?.[0]?.message?.content || '',
-            provider: 'cloud (fallback)',
-            model: data.model || cloudModel,
-            usage: data.usage || {},
-          });
+        if (!ollamaRes.ok) throw new Error(`Ollama error: ${ollamaRes.status}`);
+        const ollamaData = await ollamaRes.json();
+        content = ollamaData.message?.content || '';
+        modelUsed = `ollama/${ollamaModel}`;
+        usage = { prompt_tokens: ollamaData.prompt_eval_count, completion_tokens: ollamaData.eval_count };
+      } catch (ollamaErr) {
+        // Fallback to cloud if local fails
+        console.warn('Ollama failed, falling back to cloud:', ollamaErr.message);
+        if (AI_KEY) {
+          const fallback = await callCloudAI(AI_KEY, systemPrompt, userPrompt);
+          content = fallback.content;
+          modelUsed = fallback.model + ' (ollama-fallback)';
+          usage = fallback.usage;
+        } else {
+          return res.status(502).json({ error: 'Local AI failed and no cloud API key configured', detail: ollamaErr.message });
         }
       }
+    } else {
+      // Call Vercel AI Gateway (Claude)
+      if (!AI_KEY) return res.status(500).json({ error: 'AI Gateway not configured. Set AI_GATEWAY_API_KEY or use AI_PROVIDER=local.' });
+      const result = await callCloudAI(AI_KEY, systemPrompt, userPrompt);
+      content = result.content;
+      modelUsed = result.model;
+      usage = result.usage;
     }
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      return res.status(502).json({
-        error: `AI ${provider.name} error`,
-        detail: errText,
-        provider: provider.name,
-        model: provider.model,
-      });
+    // Trigger n8n webhook if configured (fire-and-forget)
+    const n8nUrl = process.env.N8N_WEBHOOK_URL;
+    if (n8nUrl && context?.triggerN8n !== false) {
+      try {
+        fetch(n8nUrl.replace('/stripe-webhook', '/ai-content'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, content, contactId, model: modelUsed, timestamp: new Date().toISOString() }),
+          signal: AbortSignal.timeout(5000)
+        }).catch(() => {});
+      } catch {}
     }
 
-    const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || '';
-
-    return res.json({
-      action,
-      content,
-      provider: provider.name,
-      model: aiData.model || provider.model,
-      usage: aiData.usage || {},
-    });
+    return res.json({ action, content, model: modelUsed, usage, provider: useLocal ? 'ollama' : 'cloud' });
 
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'AI service error' });
   }
 };

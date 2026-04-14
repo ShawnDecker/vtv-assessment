@@ -23,12 +23,15 @@ const ACTIVE_PRICES = {
 
 // Map all URL slugs to DB-safe tier values
 const TIER_CONFIG = {
-  victorypath: { amount: 2900, name: 'VictoryPath Membership', dbTier: 'individual', priceKey: 'individual' },
-  individual:  { amount: 2900, name: 'VictoryPath Membership', dbTier: 'individual', priceKey: 'individual' },
-  builder:     { amount: 4700, name: 'Value Builder',          dbTier: 'couple',     priceKey: 'couple' },
-  couple:      { amount: 4700, name: 'Value Builder',          dbTier: 'couple',     priceKey: 'couple' },
-  vip:         { amount: 49700, name: 'Victory VIP',           dbTier: 'premium',    priceKey: 'premium' },
-  premium:     { amount: 49700, name: 'Victory VIP',           dbTier: 'premium',    priceKey: 'premium' }
+  victorypath: { amount: 2900, name: 'VictoryPath Membership', dbTier: 'individual', priceKey: 'individual', mode: 'subscription' },
+  individual:  { amount: 2900, name: 'VictoryPath Membership', dbTier: 'individual', priceKey: 'individual', mode: 'subscription' },
+  builder:     { amount: 4700, name: 'Value Builder',          dbTier: 'couple',     priceKey: 'couple',     mode: 'subscription' },
+  couple:      { amount: 4700, name: 'Value Builder',          dbTier: 'couple',     priceKey: 'couple',     mode: 'subscription' },
+  vip:         { amount: 49700, name: 'Victory VIP',           dbTier: 'premium',    priceKey: 'premium',    mode: 'subscription' },
+  premium:     { amount: 49700, name: 'Victory VIP',           dbTier: 'premium',    priceKey: 'premium',    mode: 'subscription' },
+  // Dating-specific tiers
+  'dating-gate':  { amount: 97,    name: 'Aligned Hearts Assessment Fee', dbTier: 'individual', mode: 'payment', isDating: true },
+  'dating-monthly': { amount: 2900, name: 'Aligned Hearts Monthly',       dbTier: 'individual', priceKey: 'individual', mode: 'subscription', isDating: true }
 };
 
 const BASE_URL = process.env.BASE_URL || 'https://assessment.valuetovictory.com';
@@ -158,8 +161,16 @@ module.exports = async (req, res) => {
 
             // Sync dating profile payment status
             try {
-              await sql`UPDATE dating_profiles SET is_paid = true, stripe_subscription_id = ${subscriptionId} WHERE contact_id = ${contactId}`;
+              await sql`UPDATE dating_profiles SET is_paid = true, stripe_subscription_id = ${subscriptionId || null} WHERE contact_id = ${contactId}`;
             } catch(e) { /* dating_profiles may not exist yet — that's OK */ }
+
+            // If this was a dating one-time gate payment ($0.97), restore trial
+            if (session.metadata?.payment_type === 'one_time' && session.metadata?.dating === 'true') {
+              try {
+                await sql`UPDATE dating_profiles SET trial_start = now(), trial_ends = now() + interval '30 days', is_paid = false WHERE contact_id = ${contactId}`;
+                console.log('[checkout] Dating trial restored for:', email);
+              } catch(e) { /* non-fatal */ }
+            }
           }
         }
       }
@@ -235,7 +246,7 @@ module.exports = async (req, res) => {
 
       // Forward Stripe events to n8n webhook (fire-and-forget, non-blocking)
       try {
-        const n8nWebhookUrl = 'https://n8n.srv1138119.hstgr.cloud/webhook/stripe-webhook';
+        const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL || 'https://n8n.srv1138119.hstgr.cloud/webhook/stripe-webhook';
         fetch(n8nWebhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -288,18 +299,46 @@ module.exports = async (req, res) => {
         }
       }
 
-      // Use hardcoded active prices directly -- env vars were stale/inactive
-      const priceId = ACTIVE_PRICES[config.priceKey];
-      console.log(`[Checkout] Using price ${priceId} for ${config.name} (${config.dbTier})`);
+      const isOneTime = config.mode === 'payment';
+      const isDating = config.isDating || false;
+      const successUrl = isDating
+        ? `${BASE_URL}/faith-match?payment=success&tier=${config.dbTier}`
+        : `${BASE_URL}/member?welcome=true&tier=${config.dbTier}`;
+      const cancelUrl = isDating ? `${BASE_URL}/faith-match` : `${BASE_URL}/pricing`;
 
-      const sessionParams = {
-        mode: 'subscription',
-        line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${BASE_URL}/member?welcome=true&tier=${config.dbTier}`,
-        cancel_url: `${BASE_URL}/pricing`,
-        metadata: { tier: config.dbTier },
-        allow_promotion_codes: true
-      };
+      let sessionParams;
+
+      if (isOneTime) {
+        // One-time payment (e.g., $0.97 dating assessment gate)
+        console.log(`[Checkout] Creating one-time payment: ${config.name} ($${(config.amount / 100).toFixed(2)})`);
+        sessionParams = {
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'usd',
+              product_data: { name: config.name },
+              unit_amount: config.amount
+            },
+            quantity: 1
+          }],
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          metadata: { tier: config.dbTier, dating: isDating ? 'true' : 'false', payment_type: 'one_time' },
+          allow_promotion_codes: true
+        };
+      } else {
+        // Subscription (recurring)
+        const priceId = ACTIVE_PRICES[config.priceKey];
+        console.log(`[Checkout] Using price ${priceId} for ${config.name} (${config.dbTier})`);
+        sessionParams = {
+          mode: 'subscription',
+          line_items: [{ price: priceId, quantity: 1 }],
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          metadata: { tier: config.dbTier, dating: isDating ? 'true' : 'false' },
+          allow_promotion_codes: true
+        };
+      }
 
       if (email) {
         // Find existing Stripe customer to prevent duplicates

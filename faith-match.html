@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/aligned-hearts-logo.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0a0a0a" />
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
   <title>VTV Aligned Hearts — Love · Values · Purpose</title>
   <meta name="description" content="Values-based dating powered by the P.I.N.K. Value Engine. Love · Values · Purpose." />
@@ -37,7 +42,11 @@
 
     /* ===== SCREENS ===== */
     .screen { display: none; padding: 1rem 1rem 5rem; max-width: 500px; margin: 0 auto; min-height: 100vh; }
-    .screen.active { display: block; }
+    .screen.active { display: block; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .loading-spinner { display:flex;align-items:center;justify-content:center;padding:4rem;color:var(--dim); }
+    .loading-spinner::after { content:'';width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.6s linear infinite;margin-left:0.5rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ===== HEADER ===== */
     .screen-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0 1rem; }
@@ -261,6 +270,9 @@
       <input type="password" id="login-pin" class="form-input" placeholder="PIN or password" minlength="4" maxlength="32" />
     </div>
     <button class="btn-gold" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div style="text-align:center;margin:0.5rem 0;">
+      <a href="#" onclick="showForgotPin();return false;" style="color:var(--gold);font-size:0.8rem;text-decoration:none;">Forgot PIN / Password?</a>
+    </div>
     <button class="btn-outline" onclick="showSignUp()">New Here? Sign Up Free</button>
     <div style="margin-top:1rem;padding:0.75rem;background:rgba(212,168,71,0.08);border:1px solid rgba(212,168,71,0.2);border-radius:0.5rem;text-align:center;">
       <p style="font-size:0.8rem;color:var(--gold);font-weight:600;">Free for 30 Days</p>
@@ -589,7 +601,7 @@
   </div>
   <div class="settings-section">
     <h4>Account</h4>
-    <button class="btn-outline" onclick="showScreen('setup-screen');currentSetupStep=1;showSetupStep();">Edit Profile</button>
+    <button class="btn-outline" onclick="editProfile()">Edit Profile</button>
     <button class="btn-danger" onclick="if(confirm('Deactivate your dating profile?')){toggleActive(false);toast('Profile deactivated')}">Deactivate Profile</button>
     <button class="btn-outline" style="margin-top:0.5rem;" onclick="localStorage.removeItem('ve_token');localStorage.removeItem('ve_email');location.reload();">Log Out</button>
   </div>
@@ -829,7 +841,7 @@ function showSetPinFlow(email) {
       <label>Confirm</label>
       <input type="password" id="confirm-pin" class="form-input" placeholder="Re-enter PIN or password" minlength="4" maxlength="32" />
     </div>
-    <button class="btn-gold" onclick="submitNewPin('${email}')">Set PIN & Sign In</button>
+    <button class="btn-gold" onclick="submitNewPin(this.dataset.email)" data-email="${escapeHtml(email)}">Set PIN & Sign In</button>
     <button class="btn-outline" onclick="location.reload()">Back</button>
   `;
 }
@@ -851,27 +863,40 @@ async function submitNewPin(email) {
     if (d.error) return toast(d.error);
 
     toast('PIN set! Signing in...');
-    // Now login with the new PIN
-    document.getElementById('login-email').value = email;
-    document.getElementById('login-pin').value = pin;
-    setTimeout(() => {
+    // Now auto-login with the new PIN (don't reload — call verify-pin directly)
+    const lr = await fetch(API + '/member/verify-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, pin })
+    });
+    const ld = await lr.json();
+    if (ld.verified && ld.token) {
+      token = ld.token;
+      userEmail = email;
+      localStorage.setItem('ve_token', ld.token);
+      localStorage.setItem('ve_email', email);
+      try { await fetch(API + '/dating/init', { method: 'POST', headers: authHeaders() }); } catch {}
+      await checkProfile();
+    } else {
+      // Fallback: reload with email pre-filled
+      localStorage.setItem('ve_email', email);
       location.reload();
-      // They'll auto-login on reload since email is saved
-    }, 500);
+    }
   } catch { toast('Failed to set PIN'); }
 }
 
 function showTrialExpired(plan) {
+  const email = userEmail || localStorage.getItem('ve_email') || '';
   const loginBox = document.getElementById('login-screen').querySelector('.login-box');
   if (plan === 'locked_no_assessment') {
     loginBox.innerHTML += `
       <div style="margin-top:1rem;padding:1rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:0.5rem;text-align:center;">
         <p style="color:var(--red);font-size:0.95rem;font-weight:700;">Access Locked</p>
         <p style="color:var(--muted);font-size:0.8rem;margin-top:0.5rem;">You didn't complete the P.I.N.K. assessment within 3 days.</p>
-        <p style="color:var(--muted);font-size:0.8rem;margin-top:0.25rem;">A <strong style="color:var(--text);">$0.97 charge</strong> has been applied.</p>
-        <p style="color:var(--muted);font-size:0.75rem;margin-top:0.5rem;">To restore access, either:</p>
-        <a href="/" style="display:inline-block;margin-top:0.5rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.85rem;">Complete the Assessment (restores 30-day trial)</a>
-        <a href="/pricing" style="display:inline-block;margin-top:0.4rem;padding:0.55rem 1.5rem;background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600;border-radius:0.5rem;text-decoration:none;font-size:0.8rem;">Subscribe $29/month</a>
+        <p style="color:var(--muted);font-size:0.75rem;margin-top:0.5rem;">To restore your 30-day trial:</p>
+        <a href="/checkout?tier=dating-gate&email=${encodeURIComponent(email)}" style="display:inline-block;margin-top:0.5rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.85rem;">Pay $0.97 & Restore Trial</a>
+        <a href="/?email=${encodeURIComponent(email)}&mode=relationship&depth=quick&from=faith-match" style="display:inline-block;margin-top:0.4rem;padding:0.55rem 1.5rem;background:transparent;border:1px solid var(--green);color:var(--green);font-weight:600;border-radius:0.5rem;text-decoration:none;font-size:0.8rem;">Complete Assessment (Free)</a>
+        <a href="/checkout?tier=dating-monthly&email=${encodeURIComponent(email)}" style="display:inline-block;margin-top:0.4rem;padding:0.55rem 1.5rem;background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600;border-radius:0.5rem;text-decoration:none;font-size:0.8rem;">Subscribe $29/month</a>
       </div>`;
   } else if (plan === 'monthly') {
     loginBox.innerHTML += `
@@ -879,8 +904,118 @@ function showTrialExpired(plan) {
         <p style="color:var(--gold);font-size:0.95rem;font-weight:700;">Your 30-Day Trial Has Ended</p>
         <p style="color:var(--muted);font-size:0.8rem;margin-top:0.5rem;">Subscribe for <strong style="color:var(--text);">$29/month</strong> to continue using Aligned Hearts</p>
         <p style="color:var(--green);font-size:0.75rem;margin-top:0.35rem;">Includes full VTV website & portal access</p>
-        <a href="/pricing" style="display:inline-block;margin-top:0.75rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Subscribe Now</a>
+        <a href="/checkout?tier=dating-monthly&email=${encodeURIComponent(email)}" style="display:inline-block;margin-top:0.75rem;padding:0.65rem 1.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--bg);font-weight:700;border-radius:0.5rem;text-decoration:none;font-size:0.9rem;">Subscribe Now — $29/mo</a>
       </div>`;
+  }
+}
+
+// Handle returning from Stripe payment success
+function checkPaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('payment') === 'success') {
+    toast('Payment successful! Welcome to Aligned Hearts.');
+    // Clean URL
+    window.history.replaceState({}, '', '/faith-match');
+  }
+}
+
+function showForgotPin() {
+  const loginBox = document.getElementById('login-screen').querySelector('.login-box');
+  const savedEmail = document.getElementById('login-email')?.value?.trim() || localStorage.getItem('ve_email') || '';
+  loginBox.innerHTML = `
+    <h3>Reset Your PIN</h3>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">Enter your email and we'll send you a link to reset your PIN or password.</p>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="forgot-email" class="form-input" placeholder="your@email.com" value="${savedEmail}" />
+    </div>
+    <button class="btn-gold" onclick="doForgotPin()">Send Reset Link</button>
+    <button class="btn-outline" onclick="location.reload()">Back to Sign In</button>
+  `;
+}
+
+async function doForgotPin() {
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) return toast('Enter your email');
+
+  try {
+    toast('Sending reset link...');
+    const r = await fetch(API + '/member/forgot-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const d = await r.json();
+    if (d.success) {
+      const loginBox = document.getElementById('login-screen').querySelector('.login-box');
+      loginBox.innerHTML = `
+        <div style="text-align:center;padding:1.5rem 0;">
+          <div style="font-size:2.5rem;margin-bottom:1rem;">📧</div>
+          <h3 style="color:var(--gold);margin-bottom:0.75rem;">Check Your Email</h3>
+          <p style="font-size:0.85rem;color:var(--muted);line-height:1.5;">We sent a PIN reset link to <strong style="color:var(--text);">${email}</strong>. Click the link in the email to choose a new PIN.</p>
+          <p style="font-size:0.75rem;color:var(--dim);margin-top:1rem;">The link expires in 1 hour.</p>
+          <button class="btn-outline" onclick="location.reload()" style="margin-top:1.5rem;">Back to Sign In</button>
+        </div>
+      `;
+    } else {
+      toast(d.error || 'Failed to send reset link');
+    }
+  } catch (e) {
+    console.error('Forgot PIN error:', e);
+    toast('Something went wrong — try again');
+  }
+}
+
+function showResetPinForm(token, email) {
+  const loginBox = document.getElementById('login-screen').querySelector('.login-box');
+  loginBox.innerHTML = `
+    <h3>Set a New PIN</h3>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">Choose a new PIN or password for your account.</p>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" class="form-input" value="${email}" readonly style="opacity:0.7;" />
+    </div>
+    <div class="form-group">
+      <label>New PIN or Password</label>
+      <input type="password" id="reset-new-pin" class="form-input" placeholder="4+ characters" minlength="4" maxlength="32" />
+    </div>
+    <div class="form-group">
+      <label>Confirm</label>
+      <input type="password" id="reset-confirm-pin" class="form-input" placeholder="Re-enter" minlength="4" maxlength="32" />
+    </div>
+    <button class="btn-gold" onclick="doResetPinToken(this.dataset.token,this.dataset.email)" data-token="${escapeHtml(token)}" data-email="${escapeHtml(email)}">Reset PIN & Sign In</button>
+  `;
+}
+
+async function doResetPinToken(token, email) {
+  const pin = document.getElementById('reset-new-pin').value.trim();
+  const confirm = document.getElementById('reset-confirm-pin').value.trim();
+  if (!pin || pin.length < 4) return toast('Must be at least 4 characters');
+  if (pin !== confirm) return toast('Passwords do not match');
+
+  try {
+    toast('Resetting your PIN...');
+    const r = await fetch(API + '/member/reset-pin-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, token, pin })
+    });
+    const d = await r.json();
+    if (d.success) {
+      // Auto-login with the returned JWT
+      localStorage.setItem('ve_token', d.token);
+      localStorage.setItem('ve_email', email);
+      toast('PIN reset! Signing you in...');
+      // Clean URL params and reload
+      setTimeout(() => {
+        window.location.href = '/faith-match';
+      }, 500);
+    } else {
+      toast(d.error || 'Reset failed — try requesting a new link');
+    }
+  } catch (e) {
+    console.error('Reset PIN error:', e);
+    toast('Something went wrong — try again');
   }
 }
 
@@ -921,6 +1056,7 @@ async function checkProfile() {
       showScreen('discover-screen');
       loadDiscover();
       loadMyScore();
+      startNotificationPolling();
       // Show assessment reminder if no assessment yet
       if (!d.profile.master_score && !d.profile.time_total) {
         const reminder = document.getElementById('assessment-reminder');
@@ -957,6 +1093,14 @@ function showScreen(id) {
     const bar = document.getElementById('chat-input-bar');
     if (bar) bar.classList.add('hidden');
   }
+  // Sync nav bar active state
+  const screenToNav = { 'discover-screen': 'discover', 'matches-screen': 'matches', 'settings-screen': 'settings' };
+  const navKey = screenToNav[id];
+  if (navKey) {
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.screen === id);
+    });
+  }
 }
 
 function navTo(btn) {
@@ -964,7 +1108,12 @@ function navTo(btn) {
   btn.classList.add('active');
   const screen = btn.dataset.screen;
   showScreen(screen);
-  if (screen === 'matches-screen') loadMatches();
+  if (screen === 'matches-screen') {
+    loadMatches();
+    // Clear badge when viewing matches
+    const badge = document.getElementById('match-badge');
+    if (badge) badge.classList.add('hidden');
+  }
   if (screen === 'discover-screen') { if (!discoverProfiles.length) loadDiscover(); }
 }
 
@@ -1146,6 +1295,7 @@ async function submitProfile() {
     showScreen('discover-screen');
     loadDiscover();
     loadMyScore();
+    startNotificationPolling();
   } catch (e) { toast('Error saving profile'); }
 }
 
@@ -1240,11 +1390,11 @@ function createCard(p, isTop) {
       </div>
     </div>
     <div class="card-info">
-      <div class="card-name">${p.display_name} <span>${p.age || ''}</span></div>
+      <div class="card-name">${escapeHtml(p.display_name)} <span>${p.age || ''}</span></div>
       <div class="card-details">
-        <span class="card-tag">${p.faith || 'Christian'}</span>
+        <span class="card-tag">${escapeHtml(p.faith || 'Christian')}</span>
         ${heightStr ? `<span class="card-tag">${heightStr}</span>` : ''}
-        ${p.location_city ? `<span class="card-tag">${p.location_city}${p.show_distance && p.distance_miles !== null ? ' · ' + p.distance_miles + 'mi' : ''}</span>` : ''}
+        ${p.location_city ? `<span class="card-tag">${escapeHtml(p.location_city)}${p.show_distance && p.distance_miles != null ? ' · ' + p.distance_miles + 'mi' : ''}</span>` : ''}
         ${sharedCount > 0 ? `<span class="shared-badge">${sharedCount} shared interest${sharedCount > 1 ? 's' : ''}</span>` : ''}
       </div>
       ${compat !== null ? `<div style="display:flex;gap:0.4rem;margin:0.4rem 0;font-size:0.65rem;color:var(--muted);">
@@ -1254,7 +1404,7 @@ function createCard(p, isTop) {
         <span>·</span>
         <span title="Preference Match (faith, age, distance)">Prefs ${cb.preferenceMatch || 0}%</span>
       </div>` : ''}
-      ${p.bio ? `<div class="card-bio">${p.bio}</div>` : ''}
+      ${p.bio ? `<div class="card-bio">${escapeHtml(p.bio)}</div>` : ''}
     </div>
     <div class="pink-bar" title="P.I.N.K. Assessment">
       <div class="pink-segment time" style="height:${Math.max(8, tPct * 0.36)}px;"><span class="label" style="color:var(--pink-t);">T</span></div>
@@ -1333,16 +1483,19 @@ function setupSwipeGesture(card) {
   };
 }
 
+let swiping = false;
 function doSwipe(direction) {
+  if (swiping) return;
   const stack = document.getElementById('card-stack');
   const topCard = stack.lastChild;
   if (!topCard) return;
+  swiping = true;
   topCard.classList.add(direction === 'right' ? 'exit-right' : 'exit-left');
   setTimeout(() => executeSwipe(direction), 300);
 }
 
 async function executeSwipe(direction) {
-  if (currentCardIndex >= discoverProfiles.length) return;
+  if (currentCardIndex >= discoverProfiles.length) { swiping = false; return; }
   const p = discoverProfiles[currentCardIndex];
 
   try {
@@ -1353,12 +1506,15 @@ async function executeSwipe(direction) {
     const d = await r.json();
 
     if (d.matched) {
-      // Show match popup
       showMatchPopup(p);
     }
-  } catch {}
+  } catch (e) {
+    console.error('Swipe error:', e);
+    toast('Swipe failed — try again');
+  }
 
   currentCardIndex++;
+  swiping = false;
   renderCards();
 }
 
@@ -1415,8 +1571,8 @@ async function loadMatches() {
           ${photo ? `<img class="match-avatar" src="${photo}" alt="${m.display_name}" />` :
             `<div class="match-avatar" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:var(--gold);">${initial}</div>`}
           <div class="match-info">
-            <div class="match-name">${m.display_name} <span style="color:var(--muted);font-weight:400;">${m.age || ''}</span></div>
-            <div class="match-preview">${m.faith || ''} · ${m.location_city || ''}</div>
+            <div class="match-name">${escapeHtml(m.display_name)} <span style="color:var(--muted);font-weight:400;">${m.age || ''}</span></div>
+            <div class="match-preview">${escapeHtml(m.faith || '')} · ${escapeHtml(m.location_city || '')}</div>
             <div class="match-time">Matched ${new Date(m.matched_at).toLocaleDateString()}</div>
           </div>
         </div>
@@ -1426,6 +1582,8 @@ async function loadMatches() {
 }
 
 // ===== CHAT =====
+let chatPollInterval = null;
+
 async function openChat(matchId, profileId, name, photo) {
   currentMatchId = matchId;
   currentChatPartner = { id: profileId, name, photo };
@@ -1434,6 +1592,16 @@ async function openChat(matchId, profileId, name, photo) {
   document.getElementById('chat-status').textContent = 'Aligned Hearts';
   showScreen('chat-screen');
   await loadMessages();
+  // Poll for new messages every 5 seconds while chat is open
+  if (chatPollInterval) clearInterval(chatPollInterval);
+  chatPollInterval = setInterval(() => {
+    if (document.getElementById('chat-screen').classList.contains('active')) {
+      loadMessages();
+    } else {
+      clearInterval(chatPollInterval);
+      chatPollInterval = null;
+    }
+  }, 5000);
 }
 
 async function loadMessages() {
@@ -1491,6 +1659,96 @@ async function loadMyScore() {
   } catch {}
 }
 
+// ===== NOTIFICATION POLLING =====
+let notifInterval = null;
+
+async function pollNotifications() {
+  if (!token) return;
+  try {
+    const r = await fetch(API + '/dating/unread', { headers: authHeaders() });
+    const d = await r.json();
+    // Update matches badge
+    const badge = document.getElementById('match-badge');
+    if (badge) {
+      const total = (d.unreadMessages || 0) + (d.newMatches || 0);
+      if (total > 0) {
+        badge.textContent = total > 9 ? '9+' : total;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+  } catch {}
+}
+
+function startNotificationPolling() {
+  if (notifInterval) clearInterval(notifInterval);
+  pollNotifications(); // immediate first check
+  notifInterval = setInterval(pollNotifications, 15000); // every 15s
+}
+
+function editProfile() {
+  if (!myProfile) { showScreen('setup-screen'); currentSetupStep = 1; showSetupStep(); return; }
+  // Pre-fill all fields from existing profile
+  const p = myProfile;
+  try {
+    document.getElementById('setup-name').value = p.display_name || '';
+    // Gender chips
+    document.querySelectorAll('#gender-chips .chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.val === p.gender);
+    });
+    document.querySelectorAll('#seeking-chips .chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.val === p.seeking);
+    });
+    if (p.date_of_birth) document.getElementById('setup-dob').value = p.date_of_birth.split('T')[0];
+    // Height
+    if (p.height_inches) {
+      document.getElementById('setup-height-ft').value = Math.floor(p.height_inches / 12);
+      document.getElementById('setup-height-in').value = p.height_inches % 12;
+    }
+    // Body type
+    document.querySelectorAll('#body-chips .chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.val === p.body_type);
+    });
+    // Faith
+    if (p.faith) document.getElementById('setup-faith').value = p.faith;
+    // Faith importance
+    document.querySelectorAll('#faith-imp-chips .chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.val === p.faith_importance);
+    });
+    // Bio
+    if (p.bio) document.getElementById('setup-bio').value = p.bio;
+    // Photos
+    const photos = p.photo_urls || [];
+    photoUrls = [...photos];
+    while (photoUrls.length < 6) photoUrls.push('');
+    document.querySelectorAll('.photo-slot img').forEach((img, i) => {
+      if (photoUrls[i]) { img.src = photoUrls[i]; img.style.display = 'block'; }
+    });
+    // Location
+    if (p.location_city) document.getElementById('setup-city').value = p.location_city;
+    if (p.location_state) document.getElementById('setup-state').value = p.location_state;
+    if (p.search_radius_miles) document.getElementById('setup-radius').value = p.search_radius_miles;
+    if (p.show_on_map !== undefined) document.getElementById('setup-map').checked = p.show_on_map;
+    if (p.show_distance !== undefined) document.getElementById('setup-distance').checked = p.show_distance;
+    if (p.age_min) document.getElementById('setup-age-min').value = p.age_min;
+    if (p.age_max) document.getElementById('setup-age-max').value = p.age_max;
+    // Interests
+    const recInterests = p.recreation_interests || [];
+    const genInterests = p.general_interests || [];
+    document.querySelectorAll('#rec-chips .chip').forEach(c => {
+      c.classList.toggle('selected', recInterests.includes(c.dataset.val));
+    });
+    document.querySelectorAll('#int-chips .chip').forEach(c => {
+      c.classList.toggle('selected', genInterests.includes(c.dataset.val));
+    });
+  } catch (e) { console.warn('Pre-fill error:', e); }
+
+  showScreen('setup-screen');
+  currentSetupStep = 1;
+  showSetupStep();
+}
+
 async function toggleActive(active) {
   try {
     await fetch(API + '/dating/toggle-active', {
@@ -1518,9 +1776,10 @@ function toast(msg) {
 }
 
 function escapeHtml(str) {
+  if (!str) return '';
   const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  div.textContent = String(str);
+  return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 // ===== INIT =====
@@ -1528,7 +1787,33 @@ window.addEventListener('DOMContentLoaded', () => {
   const savedEmail = localStorage.getItem('ve_email');
   if (savedEmail) document.getElementById('login-email').value = savedEmail;
 
+  // Handle returning from Stripe payment
+  checkPaymentReturn();
+
+  // Handle PIN reset link from email
+  const urlParams = new URLSearchParams(window.location.search);
+  const resetToken = urlParams.get('reset-pin');
+  const resetEmail = urlParams.get('email');
+  if (resetToken && resetEmail) {
+    showResetPinForm(resetToken, decodeURIComponent(resetEmail));
+    return;
+  }
+
   if (token) {
+    // Validate token isn't expired before auto-loading
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+        if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+          // Token expired — clear and show login
+          localStorage.removeItem('ve_token');
+          token = null;
+          toast('Session expired — please sign in again');
+          return;
+        }
+      }
+    } catch (e) { /* proceed with checkProfile which will handle errors */ }
     checkProfile();
   }
 });

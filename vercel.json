@@ -2,20 +2,24 @@
   "version": 2,
   "crons": [
     {
+      "path": "/api/agent/systems/run",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/ceo-briefing",
-      "schedule": "45 11 * * *"
+      "schedule": "45 10 * * *"
     },
     {
       "path": "/api/coaching/send",
-      "schedule": "47 10 * * *"
+      "schedule": "47 11 * * *"
     },
     {
       "path": "/api/accountability/send",
-      "schedule": "47 0 * * *"
+      "schedule": "47 22 * * *"
     },
     {
       "path": "/api/devotional/send",
-      "schedule": "47 16 * * *"
+      "schedule": "47 15 * * *"
     }
   ],
   "routes": [
@@ -297,6 +301,10 @@
     {
       "src": "/agent-dashboard",
       "dest": "/agent-dashboard.html"
+    },
+    {
+      "src": "/dating-admin",
+      "dest": "/dating-admin.html"
     },
     {
       "src": "/(.*)",
