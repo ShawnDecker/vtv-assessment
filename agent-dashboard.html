@@ -223,15 +223,15 @@ function render(data) {
     html += '</div>';
   }
 
-  // === TEAM DOWNLOADS ===
-  html += '<div class="section-title">Team Setup &amp; Downloads</div>';
-  html += '<div class="download-grid">';
-  html += '<a class="download-card" href="/vtv-install.bat" download><div class="dl-icon">&#128229;</div><div class="dl-name">Windows Installer</div><div class="dl-desc">Right-click, Run as Admin. No coding needed.</div><div class="dl-size">.bat — Zero tokens used</div></a>';
-  html += '<a class="download-card" href="/vtv-team-installer.js" download><div class="dl-icon">&#128187;</div><div class="dl-name">Advanced Installer</div><div class="dl-desc">Node.js script with full reporting</div><div class="dl-size">.js — For terminal users</div></a>';
-  html += '<a class="download-card" href="/VTV-SYSTEM-ARCHITECTURE.md" download><div class="dl-icon">&#128218;</div><div class="dl-name">System Architecture</div><div class="dl-desc">Full ecosystem documentation</div><div class="dl-size">Markdown</div></a>';
-  html += '<a class="download-card" href="javascript:void(0)" onclick="copyInstallCmd()"><div class="dl-icon">&#9889;</div><div class="dl-name">Quick Install CMD</div><div class="dl-desc">Copy one-line install command</div><div class="dl-size">Click to Copy</div></a>';
-  html += '<a class="download-card" href="javascript:void(0)" onclick="copyClaudeMemCmd()"><div class="dl-icon">&#129504;</div><div class="dl-name">Claude-Mem</div><div class="dl-desc">Persistent memory for Claude Code. Cross-session context.</div><div class="dl-size">npx claude-mem install</div></a>';
-  html += '<a class="download-card" href="https://github.com/thedotmack/claude-mem" target="_blank"><div class="dl-icon">&#128214;</div><div class="dl-name">Claude-Mem Docs</div><div class="dl-desc">GitHub repo — setup guide, config, privacy tags</div><div class="dl-size">github.com/thedotmack/claude-mem</div></a>';
+  // === TEAM SETUP — ONE BUTTON ===
+  html += '<div class="section-title">Team Setup</div>';
+  html += '<div style="max-width:400px;margin:0 auto 16px;">';
+  html += '<a class="download-card" href="/vtv-install.bat" download style="padding:24px;border:2px solid #D4A847;">';
+  html += '<div class="dl-icon" style="font-size:36px;">&#128229;</div>';
+  html += '<div class="dl-name" style="font-size:16px;">Download Installer</div>';
+  html += '<div class="dl-desc" style="font-size:12px;margin-top:6px;">One file. Right-click, Run as Admin.<br>Installs everything — VTV config + Claude-Mem memory.</div>';
+  html += '<div class="dl-size" style="margin-top:8px;">vtv-install.bat</div>';
+  html += '</a>';
   html += '</div>';
 
   // === TEAM INSTALLATIONS ===
@@ -422,23 +422,6 @@ function stat(val, label) {
   return `<div class="stat-box"><div class="num">${val}</div><div class="label">${label}</div></div>`;
 }
 
-function copyInstallCmd() {
-  const cmd = 'curl -sO https://assessment.valuetovictory.com/vtv-team-installer.js && node vtv-team-installer.js';
-  navigator.clipboard.writeText(cmd).then(() => {
-    alert('Install command copied!\n\nPaste it in a terminal to start the installer.');
-  }).catch(() => {
-    prompt('Copy this command:', cmd);
-  });
-}
-
-function copyClaudeMemCmd() {
-  const cmd = 'npx claude-mem install';
-  navigator.clipboard.writeText(cmd).then(() => {
-    alert('Claude-Mem install command copied!\n\nPaste in a terminal with Node.js 18+ installed.\nIt adds persistent memory across Claude Code sessions.');
-  }).catch(() => {
-    prompt('Copy this command:', cmd);
-  });
-}
 
 function timeAgo(ts) {
   if (!ts) return 'Never';
