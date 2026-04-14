@@ -7080,6 +7080,11 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
     <p style="color:#22c55e;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 8px;">Action Step</p>
     <p style="color:#e4e4e7;font-size:14px;line-height:1.6;margin:0;">${dev.action_step}</p>
   </div>
+  <div style="background:rgba(212,168,71,0.08);border:1px solid rgba(212,168,71,0.2);border-radius:8px;padding:16px 20px;margin-top:16px;text-align:center;">
+    <p style="color:#D4A847;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 6px;">Today&rsquo;s Reading</p>
+    <p style="color:#a1a1aa;font-size:13px;line-height:1.5;margin:0 0 10px;">Chapter ${dev.chapter_number}: &ldquo;${dev.chapter_title}&rdquo; from <em>Running From Miracles</em> by Shawn E. Decker</p>
+    <a href="https://assessment.valuetovictory.com/audiobook" style="display:inline-block;background:transparent;border:1px solid #D4A847;color:#D4A847;font-size:12px;font-weight:bold;text-decoration:none;padding:8px 20px;border-radius:6px;">Listen to the Audiobook &rarr;</a>
+  </div>
 </td></tr>
 <tr><td style="text-align:center;padding-top:24px;">
   <a href="https://assessment.valuetovictory.com/daily-word" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:8px;">Read Online</a>
