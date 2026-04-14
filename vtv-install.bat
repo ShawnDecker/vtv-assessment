@@ -45,8 +45,13 @@ echo  [OK] Node.js found:
 node --version
 echo.
 
-REM Create working directory
-set VTV_DIR=%USERPROFILE%\vtv-agent
+REM Choose install directory
+set DEFAULT_DIR=%USERPROFILE%\vtv-agent
+echo  Default install path: %DEFAULT_DIR%
+echo.
+set /p VTV_DIR="  Install path (press Enter for default): "
+if "%VTV_DIR%"=="" set VTV_DIR=%DEFAULT_DIR%
+
 if not exist "%VTV_DIR%" mkdir "%VTV_DIR%"
 cd /d "%VTV_DIR%"
 
