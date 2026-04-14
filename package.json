@@ -3,12 +3,13 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/dev-server.js",
-    "dev:local-ai": "AI_PROVIDER=local node scripts/dev-server.js",
-    "dev:auto": "AI_PROVIDER=auto node scripts/dev-server.js",
-    "setup:ollama": "bash scripts/setup-ollama.sh"
+    "dev:local-ai": "cross-env AI_PROVIDER=local node scripts/dev-server.js",
+    "dev:auto": "cross-env AI_PROVIDER=auto node scripts/dev-server.js",
+    "setup:ollama": "node scripts/setup-ollama.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
+    "cross-env": "^7.0.3",
     "dotenv": "^17.4.2",
     "nodemailer": "^8.0.5",
     "stripe": "^22.0.1"
