@@ -172,7 +172,8 @@
 <button class="refresh-btn" onclick="loadDashboard()">Refresh</button>
 
 <script>
-const API = '/api/agent';
+const API_BASE = 'https://assessment.valuetovictory.com';
+const API = API_BASE + '/api/agent';
 
 function toggleSection(id) {
   const body = document.getElementById(id);

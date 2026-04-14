@@ -6165,7 +6165,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
     // ========== AGENT SYSTEM — SELF-LEARNING MULTI-AGENT LOOP ==========
     // All /agent/* routes require API key EXCEPT tracking endpoints (embedded in emails)
-    if (url.startsWith('/agent') && !url.startsWith('/agent/email/track-open') && !url.startsWith('/agent/email/track-click')) {
+    if (url.startsWith('/agent') && !url.startsWith('/agent/email/track-open') && !url.startsWith('/agent/email/track-click') && url !== '/agent/dashboard') {
       const apiKey = req.headers['x-api-key'] || new URL('http://x' + req.url).searchParams.get('key') || '';
       const validKey = process.env.ADMIN_API_KEY || '';
       if (!validKey || apiKey !== validKey) {
