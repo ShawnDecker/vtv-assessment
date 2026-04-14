@@ -105,16 +105,46 @@
 
 <div class="header">
   <div class="brand">VALUE TO VICTORY</div>
-  <h1>Agent Command Center</h1>
+  <h1>Team Hub</h1>
 </div>
 
-<div id="auth" class="auth-screen">
-  <p style="color:#71717a;font-size:13px;margin-bottom:20px;">Enter your admin API key.</p>
-  <input type="password" id="apiKey" placeholder="Admin API Key" autocomplete="off"/>
-  <button onclick="authenticate()">Access Dashboard</button>
+<!-- SIMPLE TEAM VIEW — no login needed -->
+<div id="teamView" class="container show">
+  <div class="section-title">Get Started</div>
+  <div style="max-width:400px;margin:0 auto 16px;">
+    <a class="download-card" href="/vtv-install.bat" download style="padding:24px;border:2px solid #D4A847;">
+      <div class="dl-icon" style="font-size:36px;">&#128229;</div>
+      <div class="dl-name" style="font-size:16px;">Download Installer</div>
+      <div class="dl-desc" style="font-size:12px;margin-top:6px;">One file. Right-click, Run as Admin.<br>Installs VTV config + Claude-Mem memory.</div>
+      <div class="dl-size" style="margin-top:8px;">vtv-install.bat</div>
+    </a>
+    <a class="download-card" href="/vtv-uninstall.bat" download style="margin-top:8px;border-color:#3f3f46;">
+      <div class="dl-name" style="font-size:12px;color:#71717a;">Uninstall</div>
+    </a>
+  </div>
+
+  <div class="section-title">Quick Links</div>
+  <div class="quick-links">
+    <a class="quick-link" href="https://assessment.valuetovictory.com" target="_blank"><span class="icon">&#128218;</span><span class="ql-name">Assessment</span><span class="ql-sub">Take yours</span></a>
+    <a class="quick-link" href="https://valuetovictory.com" target="_blank"><span class="icon">&#127775;</span><span class="ql-name">VTV Home</span><span class="ql-sub">Main site</span></a>
+    <a class="quick-link" href="https://calendly.com/valuetovictory/30min" target="_blank"><span class="icon">&#128197;</span><span class="ql-name">Book Call</span><span class="ql-sub">30 min</span></a>
+  </div>
+
+  <div style="text-align:center;margin-top:40px;">
+    <a href="javascript:void(0)" onclick="showAdmin()" style="font-size:11px;color:#3f3f46;">Admin</a>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN — hidden by default -->
+<div id="auth" class="auth-screen" style="display:none;">
+  <p style="color:#71717a;font-size:13px;margin-bottom:20px;">Admin access</p>
+  <input type="password" id="apiKey" placeholder="PIN or API Key" autocomplete="off"/>
+  <button onclick="authenticate()">Go</button>
   <div id="authError" style="color:#ef4444;font-size:13px;margin-top:8px;display:none;"></div>
+  <div style="margin-top:12px;"><a href="javascript:void(0)" onclick="hideAdmin()" style="font-size:11px;color:#52525b;">Back</a></div>
 </div>
 
+<!-- FULL ADMIN DASHBOARD — after login -->
 <div id="dashboard" class="container">
   <div id="content"><div class="loading"><div class="spinner"></div><p style="margin-top:8px;">Loading agent data...</p></div></div>
 </div>
@@ -125,8 +155,17 @@
 let API_KEY = '';
 const API = '/api/agent';
 
+function showAdmin() {
+  document.getElementById('teamView').style.display = 'none';
+  document.getElementById('auth').style.display = 'block';
+}
+function hideAdmin() {
+  document.getElementById('auth').style.display = 'none';
+  document.getElementById('teamView').style.display = 'block';
+}
 function unlockDashboard() {
   document.getElementById('auth').style.display = 'none';
+  document.getElementById('teamView').style.display = 'none';
   document.getElementById('dashboard').classList.add('show');
   document.getElementById('refreshBtn').style.display = 'block';
   try { localStorage.setItem('vtv_admin_key', API_KEY); } catch(e){}
@@ -223,21 +262,7 @@ function render(data) {
     html += '</div>';
   }
 
-  // === TEAM SETUP — ONE BUTTON ===
-  html += '<div class="section-title">Team Setup</div>';
-  html += '<div style="max-width:400px;margin:0 auto 16px;">';
-  html += '<a class="download-card" href="/vtv-install.bat" download style="padding:24px;border:2px solid #D4A847;">';
-  html += '<div class="dl-icon" style="font-size:36px;">&#128229;</div>';
-  html += '<div class="dl-name" style="font-size:16px;">Download Installer</div>';
-  html += '<div class="dl-desc" style="font-size:12px;margin-top:6px;">One file. Right-click, Run as Admin.<br>Installs everything — VTV config + Claude-Mem memory.</div>';
-  html += '<div class="dl-size" style="margin-top:8px;">vtv-install.bat</div>';
-  html += '</a>';
-  html += '<a class="download-card" href="/vtv-uninstall.bat" download style="margin-top:8px;border-color:#3f3f46;">';
-  html += '<div class="dl-name" style="font-size:12px;color:#71717a;">Uninstall</div>';
-  html += '</a>';
-  html += '</div>';
-
-  // === TEAM INSTALLATIONS ===
+  // === TEAM INSTALLATIONS (admin only) ===
   const teamSystems = (data.systems || []).filter(s => s.category === 'team');
   if (teamSystems.length) {
     html += '<div class="section-title">Team Installations</div>';
