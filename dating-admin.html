@@ -249,6 +249,7 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="reports">Reports</button>
       <button class="tab-btn" data-tab="profiles">Profiles</button>
+      <button class="tab-btn" data-tab="tools">Quick Actions</button>
     </div>
 
     <!-- Reports Panel -->
@@ -273,6 +274,47 @@
           </thead>
           <tbody id="profilesBody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Quick Actions Panel -->
+    <div class="tab-panel" id="panel-tools">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;">
+        <!-- PIN Reset -->
+        <div class="card" style="padding:1.5rem;">
+          <h3 style="color:#D4A847;font-size:0.9rem;font-weight:700;margin-bottom:1rem;">Reset User PIN</h3>
+          <input type="email" id="tool-pin-email" placeholder="User email" style="width:100%;padding:0.6rem;background:#111;border:1px solid #27272a;border-radius:0.4rem;color:#e4e4e7;margin-bottom:0.5rem;font-family:inherit;" />
+          <input type="text" id="tool-pin-new" placeholder="New PIN (4-6 digits)" maxlength="6" style="width:100%;padding:0.6rem;background:#111;border:1px solid #27272a;border-radius:0.4rem;color:#e4e4e7;margin-bottom:0.75rem;font-family:inherit;" />
+          <button onclick="resetUserPin()" style="width:100%;padding:0.6rem;background:#D4A847;color:#0a0a0a;border:none;border-radius:0.4rem;font-weight:700;cursor:pointer;font-family:inherit;">Reset PIN</button>
+          <div id="tool-pin-result" style="margin-top:0.5rem;font-size:0.8rem;"></div>
+        </div>
+        <!-- Send Forgot PIN Email -->
+        <div class="card" style="padding:1.5rem;">
+          <h3 style="color:#D4A847;font-size:0.9rem;font-weight:700;margin-bottom:1rem;">Send PIN Reset Email</h3>
+          <input type="email" id="tool-forgot-email" placeholder="User email" style="width:100%;padding:0.6rem;background:#111;border:1px solid #27272a;border-radius:0.4rem;color:#e4e4e7;margin-bottom:0.75rem;font-family:inherit;" />
+          <button onclick="sendForgotPin()" style="width:100%;padding:0.6rem;background:transparent;border:1px solid #D4A847;color:#D4A847;border-radius:0.4rem;font-weight:700;cursor:pointer;font-family:inherit;">Send Reset Link</button>
+          <div id="tool-forgot-result" style="margin-top:0.5rem;font-size:0.8rem;"></div>
+        </div>
+        <!-- Check User Status -->
+        <div class="card" style="padding:1.5rem;">
+          <h3 style="color:#D4A847;font-size:0.9rem;font-weight:700;margin-bottom:1rem;">Check User Status</h3>
+          <input type="email" id="tool-check-email" placeholder="User email" style="width:100%;padding:0.6rem;background:#111;border:1px solid #27272a;border-radius:0.4rem;color:#e4e4e7;margin-bottom:0.75rem;font-family:inherit;" />
+          <button onclick="checkUserStatus()" style="width:100%;padding:0.6rem;background:transparent;border:1px solid #3b82f6;color:#3b82f6;border-radius:0.4rem;font-weight:700;cursor:pointer;font-family:inherit;">Check</button>
+          <div id="tool-check-result" style="margin-top:0.5rem;font-size:0.8rem;"></div>
+        </div>
+        <!-- Update Membership Tier -->
+        <div class="card" style="padding:1.5rem;">
+          <h3 style="color:#D4A847;font-size:0.9rem;font-weight:700;margin-bottom:1rem;">Update Membership Tier</h3>
+          <input type="email" id="tool-tier-email" placeholder="User email" style="width:100%;padding:0.6rem;background:#111;border:1px solid #27272a;border-radius:0.4rem;color:#e4e4e7;margin-bottom:0.5rem;font-family:inherit;" />
+          <select id="tool-tier-select" style="width:100%;padding:0.6rem;background:#111;border:1px solid #27272a;border-radius:0.4rem;color:#e4e4e7;margin-bottom:0.75rem;font-family:inherit;">
+            <option value="free">Free</option>
+            <option value="individual">Individual ($29/mo)</option>
+            <option value="couple">Couple ($47/mo)</option>
+            <option value="premium">Premium ($497/mo)</option>
+          </select>
+          <button onclick="updateTier()" style="width:100%;padding:0.6rem;background:transparent;border:1px solid #22c55e;color:#22c55e;border-radius:0.4rem;font-weight:700;cursor:pointer;font-family:inherit;">Update Tier</button>
+          <div id="tool-tier-result" style="margin-top:0.5rem;font-size:0.8rem;"></div>
+        </div>
       </div>
     </div>
 
@@ -523,6 +565,72 @@
       profilesErr.innerHTML = '<div class="error-msg">Failed to load profiles: ' + esc(e.message) + '</div>';
     }
   }
+
+  // ── Quick Action Tools ──
+  window.resetUserPin = async function() {
+    const email = document.getElementById('tool-pin-email').value.trim();
+    const pin = document.getElementById('tool-pin-new').value.trim();
+    const result = document.getElementById('tool-pin-result');
+    if (!email || !pin) { result.innerHTML = '<span style="color:#ef4444;">Email and PIN required</span>'; return; }
+    if (!/^\d{4,6}$/.test(pin)) { result.innerHTML = '<span style="color:#ef4444;">PIN must be 4-6 digits</span>'; return; }
+    try {
+      const data = await api('POST', '/api/admin/reset-pin', { email, pin });
+      result.innerHTML = '<span style="color:#22c55e;">PIN reset for ' + esc(data.contact?.firstName || email) + '</span>';
+      toast('PIN reset successfully', 'success');
+    } catch (e) { result.innerHTML = '<span style="color:#ef4444;">' + esc(e.message) + '</span>'; }
+  };
+
+  window.sendForgotPin = async function() {
+    const email = document.getElementById('tool-forgot-email').value.trim();
+    const result = document.getElementById('tool-forgot-result');
+    if (!email) { result.innerHTML = '<span style="color:#ef4444;">Email required</span>'; return; }
+    try {
+      const r = await fetch('/api/member/forgot-pin', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await r.json();
+      result.innerHTML = '<span style="color:#22c55e;">Reset link sent to ' + esc(email) + '</span>';
+      toast('Reset email sent', 'success');
+    } catch (e) { result.innerHTML = '<span style="color:#ef4444;">' + esc(e.message) + '</span>'; }
+  };
+
+  window.checkUserStatus = async function() {
+    const email = document.getElementById('tool-check-email').value.trim();
+    const result = document.getElementById('tool-check-result');
+    if (!email) { result.innerHTML = '<span style="color:#ef4444;">Email required</span>'; return; }
+    try {
+      const r = await fetch('/api/member/has-pin?email=' + encodeURIComponent(email));
+      const pinData = await r.json();
+      const r2 = await fetch('/api/dating/check-eligible', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const eligData = await r2.json();
+      result.innerHTML = `
+        <div style="background:#111;padding:0.75rem;border-radius:0.4rem;margin-top:0.5rem;line-height:1.8;">
+          <div>Account: <strong style="color:${pinData.exists ? '#22c55e' : '#ef4444'}">${pinData.exists ? 'Found' : 'Not Found'}</strong></div>
+          <div>PIN Set: <strong style="color:${pinData.hasPin ? '#22c55e' : '#ef4444'}">${pinData.hasPin ? 'Yes' : 'No'}</strong></div>
+          <div>Email Verified: <strong style="color:${eligData.emailVerified ? '#22c55e' : '#ef4444'}">${eligData.emailVerified ? 'Yes' : 'No'}</strong></div>
+          <div>Dating Profile: <strong>${eligData.hasProfile ? 'Yes' : 'No'}</strong></div>
+          <div>Trial: <strong style="color:${eligData.trialActive ? '#22c55e' : '#ef4444'}">${eligData.trialActive ? eligData.trialDaysLeft + ' days left' : eligData.trialExpired ? 'Expired' : 'Not started'}</strong></div>
+          <div>Paid: <strong style="color:${eligData.isPaid ? '#D4A847' : '#71717a'}">${eligData.isPaid ? 'Yes' : 'No'}</strong></div>
+          <div>Assessment: <strong>${eligData.hasAssessment ? 'Done' : 'Not done'}</strong></div>
+        </div>`;
+    } catch (e) { result.innerHTML = '<span style="color:#ef4444;">' + esc(e.message) + '</span>'; }
+  };
+
+  window.updateTier = async function() {
+    const email = document.getElementById('tool-tier-email').value.trim();
+    const tier = document.getElementById('tool-tier-select').value;
+    const result = document.getElementById('tool-tier-result');
+    if (!email) { result.innerHTML = '<span style="color:#ef4444;">Email required</span>'; return; }
+    try {
+      const data = await api('POST', '/api/admin/update-profile', { email, tier });
+      result.innerHTML = '<span style="color:#22c55e;">Tier updated to ' + esc(tier) + '</span>';
+      toast('Tier updated', 'success');
+    } catch (e) { result.innerHTML = '<span style="color:#ef4444;">' + esc(e.message) + '</span>'; }
+  };
 
 })();
 </script>

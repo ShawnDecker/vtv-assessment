@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/aligned-hearts-logo.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0a0a0a" />
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
   <title>VTV Aligned Hearts — Love · Values · Purpose</title>
   <meta name="description" content="Values-based dating powered by the P.I.N.K. Value Engine. Love · Values · Purpose." />
@@ -37,7 +42,11 @@
 
     /* ===== SCREENS ===== */
     .screen { display: none; padding: 1rem 1rem 5rem; max-width: 500px; margin: 0 auto; min-height: 100vh; }
-    .screen.active { display: block; }
+    .screen.active { display: block; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .loading-spinner { display:flex;align-items:center;justify-content:center;padding:4rem;color:var(--dim); }
+    .loading-spinner::after { content:'';width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.6s linear infinite;margin-left:0.5rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ===== HEADER ===== */
     .screen-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0 1rem; }
@@ -592,7 +601,7 @@
   </div>
   <div class="settings-section">
     <h4>Account</h4>
-    <button class="btn-outline" onclick="showScreen('setup-screen');currentSetupStep=1;showSetupStep();">Edit Profile</button>
+    <button class="btn-outline" onclick="editProfile()">Edit Profile</button>
     <button class="btn-danger" onclick="if(confirm('Deactivate your dating profile?')){toggleActive(false);toast('Profile deactivated')}">Deactivate Profile</button>
     <button class="btn-outline" style="margin-top:0.5rem;" onclick="localStorage.removeItem('ve_token');localStorage.removeItem('ve_email');location.reload();">Log Out</button>
   </div>
@@ -1676,6 +1685,68 @@ function startNotificationPolling() {
   if (notifInterval) clearInterval(notifInterval);
   pollNotifications(); // immediate first check
   notifInterval = setInterval(pollNotifications, 15000); // every 15s
+}
+
+function editProfile() {
+  if (!myProfile) { showScreen('setup-screen'); currentSetupStep = 1; showSetupStep(); return; }
+  // Pre-fill all fields from existing profile
+  const p = myProfile;
+  try {
+    document.getElementById('setup-name').value = p.display_name || '';
+    // Gender chips
+    document.querySelectorAll('#gender-chips .chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.val === p.gender);
+    });
+    document.querySelectorAll('#seeking-chips .chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.val === p.seeking);
+    });
+    if (p.date_of_birth) document.getElementById('setup-dob').value = p.date_of_birth.split('T')[0];
+    // Height
+    if (p.height_inches) {
+      document.getElementById('setup-height-ft').value = Math.floor(p.height_inches / 12);
+      document.getElementById('setup-height-in').value = p.height_inches % 12;
+    }
+    // Body type
+    document.querySelectorAll('#body-chips .chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.val === p.body_type);
+    });
+    // Faith
+    if (p.faith) document.getElementById('setup-faith').value = p.faith;
+    // Faith importance
+    document.querySelectorAll('#faith-imp-chips .chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.val === p.faith_importance);
+    });
+    // Bio
+    if (p.bio) document.getElementById('setup-bio').value = p.bio;
+    // Photos
+    const photos = p.photo_urls || [];
+    photoUrls = [...photos];
+    while (photoUrls.length < 6) photoUrls.push('');
+    document.querySelectorAll('.photo-slot img').forEach((img, i) => {
+      if (photoUrls[i]) { img.src = photoUrls[i]; img.style.display = 'block'; }
+    });
+    // Location
+    if (p.location_city) document.getElementById('setup-city').value = p.location_city;
+    if (p.location_state) document.getElementById('setup-state').value = p.location_state;
+    if (p.search_radius_miles) document.getElementById('setup-radius').value = p.search_radius_miles;
+    if (p.show_on_map !== undefined) document.getElementById('setup-map').checked = p.show_on_map;
+    if (p.show_distance !== undefined) document.getElementById('setup-distance').checked = p.show_distance;
+    if (p.age_min) document.getElementById('setup-age-min').value = p.age_min;
+    if (p.age_max) document.getElementById('setup-age-max').value = p.age_max;
+    // Interests
+    const recInterests = p.recreation_interests || [];
+    const genInterests = p.general_interests || [];
+    document.querySelectorAll('#rec-chips .chip').forEach(c => {
+      c.classList.toggle('selected', recInterests.includes(c.dataset.val));
+    });
+    document.querySelectorAll('#int-chips .chip').forEach(c => {
+      c.classList.toggle('selected', genInterests.includes(c.dataset.val));
+    });
+  } catch (e) { console.warn('Pre-fill error:', e); }
+
+  showScreen('setup-screen');
+  currentSetupStep = 1;
+  showSetupStep();
 }
 
 async function toggleActive(active) {
