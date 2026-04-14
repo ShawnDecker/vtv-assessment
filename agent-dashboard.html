@@ -195,46 +195,23 @@ function render(data) {
   // === QUICK LINKS (Categorized) ===
   const linkGroups = [
     { title: 'Cloud Services', links: [
-      { icon:'&#9881;', name:'n8n', sub:'Workflows', url:'https://n8n.srv1138119.hstgr.cloud' },
       { icon:'&#9650;', name:'Vercel', sub:'Deployments', url:'https://vercel.com/danddappraisal-7740s-projects' },
-      { icon:'&#128202;', name:'Neon', sub:'Database', url:'https://console.neon.tech' },
+      { icon:'&#9881;', name:'n8n', sub:'Workflows', url:'https://n8n.srv1138119.hstgr.cloud' },
       { icon:'&#128179;', name:'Stripe', sub:'Payments', url:'https://dashboard.stripe.com' },
-      { icon:'&#127760;', name:'Hostinger', sub:'VPS', url:'https://hpanel.hostinger.com' },
-      { icon:'&#128231;', name:'Gmail', sub:'Email', url:'https://mail.google.com' },
       { icon:'&#128100;', name:'HubSpot', sub:'CRM', url:'https://app.hubspot.com' },
+      { icon:'&#128202;', name:'Neon', sub:'Database', url:'https://console.neon.tech' },
+      { icon:'&#128187;', name:'GitHub', sub:'Repos', url:'https://github.com/ShawnDecker' },
+      { icon:'&#127760;', name:'Hostinger', sub:'VPS', url:'https://hpanel.hostinger.com' },
       { icon:'&#128197;', name:'Calendly', sub:'Scheduling', url:'https://calendly.com/app/scheduled_events/upcoming' },
       { icon:'&#127968;', name:'GoDaddy', sub:'Domains', url:'https://dcc.godaddy.com' },
-      { icon:'&#128187;', name:'GitHub', sub:'Repos', url:'https://github.com/ShawnDecker' },
     ]},
     { title: 'VTV Sites & Portal', links: [
+      { icon:'&#127775;', name:'VTV Home', sub:'Marketing', url:'https://valuetovictory.com' },
       { icon:'&#128218;', name:'VTV Portal', sub:'Assessment', url:'https://assessment.valuetovictory.com' },
       { icon:'&#128221;', name:'Admin', sub:'Contacts', url:'https://assessment.valuetovictory.com/admin/contacts' },
       { icon:'&#128150;', name:'Couples', sub:'Report', url:'https://assessment.valuetovictory.com/couple-report' },
       { icon:'&#129309;', name:'Relationships', sub:'Hub', url:'https://assessment.valuetovictory.com/relationship-hub' },
-      { icon:'&#127775;', name:'VTV Home', sub:'Marketing', url:'https://valuetovictory.com' },
       { icon:'&#127912;', name:'Shawn Site', sub:'Author', url:'https://shawnedecker.com' },
-      { icon:'&#127908;', name:'Audiobook', sub:'VPS Audio', url:'http://147.93.97.228:8082' },
-    ]},
-    { title: 'AI & Local Services', links: [
-      { icon:'&#129302;', name:'Ollama', sub:'AI Models', url:'http://localhost:11434' },
-      { icon:'&#127916;', name:'Video Engine', sub:'Transcribe/Clip', url:'http://localhost:8003' },
-      { icon:'&#9881;', name:'Local n8n', sub:'Dev Workflows', url:'http://localhost:5678' },
-      { icon:'&#128444;', name:'ComfyUI', sub:'Image Gen', url:'http://localhost:8188' },
-      { icon:'&#129504;', name:'LLM Runtime', sub:'Local AI', url:'http://localhost:8006' },
-      { icon:'&#128024;', name:'Data Memory', sub:'ChromaDB', url:'http://localhost:8008' },
-    ]},
-    { title: 'Writing & Content Tools', links: [
-      { icon:'&#128214;', name:'BookStack', sub:'Wiki/Books', url:'http://localhost:9000' },
-      { icon:'&#9997;', name:'Etherpad', sub:'Collab Editor', url:'http://localhost:9001' },
-      { icon:'&#128196;', name:'Memos', sub:'Quick Notes', url:'http://localhost:9002' },
-      { icon:'&#128221;', name:'HedgeDoc', sub:'Markdown', url:'http://localhost:9003' },
-      { icon:'&#128220;', name:'Grammar', sub:'LanguageTool', url:'http://localhost:9004' },
-      { icon:'&#128269;', name:'Search', sub:'MeiliSearch', url:'http://localhost:7700' },
-    ]},
-    { title: 'BiaBox Engine', links: [
-      { icon:'&#128640;', name:'BiaBox', sub:'API Gateway', url:'http://localhost:8000' },
-      { icon:'&#127912;', name:'Social Engine', sub:'Content Gen', url:'http://localhost:8002' },
-      { icon:'&#128187;', name:'BiaBox Web', sub:'Frontend', url:'http://localhost:8080' },
     ]},
   ];
   for (const group of linkGroups) {
