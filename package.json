@@ -3,7 +3,9 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/dev-server.js",
-    "dev:local-ai": "AI_PROVIDER=local node scripts/dev-server.js"
+    "dev:local-ai": "AI_PROVIDER=local node scripts/dev-server.js",
+    "dev:auto": "AI_PROVIDER=auto node scripts/dev-server.js",
+    "setup:ollama": "bash scripts/setup-ollama.sh"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
