@@ -1970,6 +1970,53 @@ module.exports = async (req, res) => {
       return res.json(exportData);
     }
 
+    // GET /api/billing-portal — Redirect to Stripe Customer Portal
+    if (req.method === 'GET' && url === '/billing-portal') {
+      const user = extractUser(req);
+      if (!user) return res.status(401).json({ error: 'Login required' });
+
+      const profile = await sql`SELECT stripe_customer_id FROM user_profiles WHERE contact_id = ${user.contactId} LIMIT 1`;
+      if (!profile.length || !profile[0].stripe_customer_id) {
+        return res.status(400).json({ error: 'No active subscription found. Subscribe first at /pricing.' });
+      }
+
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      const session = await stripe.billingPortal.sessions.create({
+        customer: profile[0].stripe_customer_id,
+        return_url: 'https://assessment.valuetovictory.com/member',
+      });
+
+      return res.json({ url: session.url });
+    }
+
+    // GET /api/trial-status — Check trial/subscription status for conversion prompts
+    if (req.method === 'GET' && url === '/trial-status') {
+      const user = extractUser(req);
+      if (!user) return res.status(401).json({ error: 'Login required' });
+
+      const profile = await sql`SELECT membership_tier, created_at, stripe_subscription_id FROM user_profiles WHERE contact_id = ${user.contactId} LIMIT 1`;
+      if (!profile.length) return res.json({ status: 'no_profile', daysActive: 0, shouldPrompt: true });
+
+      const p = profile[0];
+      const daysSinceSignup = Math.floor((Date.now() - new Date(p.created_at).getTime()) / (1000 * 60 * 60 * 24));
+      const isPaid = p.membership_tier !== 'free' && p.stripe_subscription_id;
+
+      const assessmentCount = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE contact_id = ${user.contactId}`;
+      const coachingDay = await sql`SELECT MAX(current_day) as day FROM coaching_sequences WHERE contact_id = ${user.contactId}`;
+
+      return res.json({
+        tier: p.membership_tier,
+        isPaid: !!isPaid,
+        daysActive: daysSinceSignup,
+        trialDaysLeft: Math.max(0, 7 - daysSinceSignup),
+        assessmentsTaken: +assessmentCount[0].cnt,
+        coachingDay: coachingDay[0]?.day || 0,
+        shouldPrompt: !isPaid && daysSinceSignup >= 5,
+        shouldLock: !isPaid && daysSinceSignup >= 8,
+        upgradeUrl: '/pricing'
+      });
+    }
+
     // POST /api/affiliate/apply — Create partner profile
     if (req.method === 'POST' && url === '/affiliate/apply') {
       const b = req.body || {};
@@ -2059,6 +2106,84 @@ module.exports = async (req, res) => {
         // Tables may not exist yet
         return res.json({ is_partner: false, note: 'Partner system initializing' });
       }
+    }
+
+    // POST /api/affiliate/init — Create affiliate tables
+    if (req.method === 'POST' && url === '/affiliate/init') {
+      await sql`CREATE TABLE IF NOT EXISTS affiliate_links (
+        id SERIAL PRIMARY KEY,
+        contact_id INTEGER NOT NULL,
+        code TEXT NOT NULL UNIQUE,
+        campaign TEXT DEFAULT 'default',
+        clicks INTEGER DEFAULT 0,
+        signups INTEGER DEFAULT 0,
+        conversions INTEGER DEFAULT 0,
+        commission_rate FLOAT DEFAULT 0.20,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`;
+      await sql`CREATE TABLE IF NOT EXISTS affiliate_conversions (
+        id SERIAL PRIMARY KEY,
+        affiliate_link_id INTEGER REFERENCES affiliate_links(id),
+        referred_contact_id INTEGER,
+        referred_email TEXT,
+        event_type TEXT NOT NULL,
+        amount_cents INTEGER DEFAULT 0,
+        commission_cents INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`;
+      await sql`CREATE INDEX IF NOT EXISTS idx_aff_links_code ON affiliate_links(code)`;
+      await sql`CREATE INDEX IF NOT EXISTS idx_aff_links_contact ON affiliate_links(contact_id)`;
+      return res.json({ ok: true, message: 'Affiliate tables created' });
+    }
+
+    // POST /api/affiliate/create-link — Generate unique referral link
+    if (req.method === 'POST' && url === '/affiliate/create-link') {
+      const user = extractUser(req);
+      if (!user) return res.status(401).json({ error: 'Login required' });
+
+      const b = req.body || {};
+      const campaign = sanitizeString(b.campaign || 'default', 50);
+      const code = crypto.randomBytes(6).toString('hex');
+
+      await sql`INSERT INTO affiliate_links (contact_id, code, campaign) VALUES (${user.contactId}, ${code}, ${campaign})`;
+
+      return res.json({
+        ok: true,
+        code,
+        link: `https://assessment.valuetovictory.com/?ref=${code}`,
+        campaign
+      });
+    }
+
+    // GET /api/affiliate/stats — Get affiliate performance
+    if (req.method === 'GET' && url === '/affiliate/stats') {
+      const user = extractUser(req);
+      if (!user) return res.status(401).json({ error: 'Login required' });
+
+      const links = await sql`SELECT * FROM affiliate_links WHERE contact_id = ${user.contactId} ORDER BY created_at DESC`;
+      const totalConversions = await sql`SELECT COUNT(*) as cnt, COALESCE(SUM(commission_cents),0) as total FROM affiliate_conversions ac JOIN affiliate_links al ON al.id = ac.affiliate_link_id WHERE al.contact_id = ${user.contactId}`;
+
+      return res.json({
+        links,
+        totalClicks: links.reduce((s, l) => s + (l.clicks || 0), 0),
+        totalSignups: links.reduce((s, l) => s + (l.signups || 0), 0),
+        totalConversions: +totalConversions[0].cnt,
+        totalCommission: +totalConversions[0].total / 100,
+        pendingPayout: +totalConversions[0].total / 100
+      });
+    }
+
+    // GET /api/affiliate/track?ref=CODE — Track referral click (called from frontend)
+    if (req.method === 'GET' && url.startsWith('/affiliate/track')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const refCode = params.get('ref');
+      if (!refCode) return res.status(400).json({ error: 'ref code required' });
+
+      try {
+        await sql`UPDATE affiliate_links SET clicks = clicks + 1 WHERE code = ${refCode}`;
+      } catch(e) {}
+      return res.json({ ok: true });
     }
 
     // GET /api/user/history?email=xxx
@@ -5886,6 +6011,67 @@ This link expires in 24 hours.
     }
 
     // ========== END COACHING REPLY SYSTEM ==========
+
+    // POST /api/trial/send-conversion-emails — Send upgrade emails to trial users approaching expiry
+    if (req.method === 'POST' && url === '/trial/send-conversion-emails') {
+      const apiKey = req.headers['x-api-key'];
+      const cronSecret = req.headers['x-cron-secret'] || req.headers['authorization']?.replace('Bearer ', '');
+      if (apiKey !== (process.env.ADMIN_API_KEY || '') && cronSecret !== (process.env.CRON_SECRET || '')) {
+        return res.status(401).json({ error: 'Admin or cron auth required' });
+      }
+
+      const targets = await sql`
+        SELECT c.id, c.email, c.first_name, up.membership_tier, up.created_at,
+               EXTRACT(DAY FROM NOW() - up.created_at) as days_active
+        FROM contacts c
+        JOIN user_profiles up ON up.contact_id = c.id
+        WHERE up.membership_tier = 'free'
+          AND up.stripe_subscription_id IS NULL
+          AND up.created_at > NOW() - INTERVAL '9 days'
+          AND up.created_at < NOW() - INTERVAL '4 days'
+          AND c.deleted_at IS NULL
+        ORDER BY up.created_at ASC
+        LIMIT 50
+      `;
+
+      const results = [];
+      if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
+        });
+
+        for (const t of targets) {
+          const days = Math.floor(t.days_active);
+          let subject, body;
+
+          if (days <= 5) {
+            subject = t.first_name ? `${t.first_name}, your free access ends in 2 days` : 'Your free access ends in 2 days';
+            body = `<p>You've been using Value to Victory for ${days} days. Your free access ends soon.</p><p>Upgrade to VictoryPath ($29/mo) to keep your coaching emails, action plans, and progress tracking.</p><p><a href="https://assessment.valuetovictory.com/pricing" style="display:inline-block;padding:12px 32px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:6px;">Upgrade Now →</a></p>`;
+          } else if (days <= 7) {
+            subject = t.first_name ? `${t.first_name}, last day of free access` : 'Last day of free access';
+            body = `<p>Your 7-day free trial ends today. After today, you'll lose access to:</p><ul><li>Daily coaching emails personalized to your P.I.N.K. score</li><li>Progress tracking & action plans</li><li>30-day challenges</li><li>Couple & relationship tools</li></ul><p><a href="https://assessment.valuetovictory.com/pricing" style="display:inline-block;padding:12px 32px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:6px;">Keep My Access — $29/mo →</a></p>`;
+          } else {
+            subject = t.first_name ? `${t.first_name}, we saved your results` : 'We saved your results';
+            body = `<p>Your free trial ended, but your P.I.N.K. assessment results are still saved.</p><p>Reactivate anytime for $29/mo and pick up right where you left off — your scores, your coaching plan, your progress.</p><p><a href="https://assessment.valuetovictory.com/pricing" style="display:inline-block;padding:12px 32px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:6px;">Reactivate My Account →</a></p>`;
+          }
+
+          try {
+            await transporter.sendMail({
+              from: '"Value to Victory" <' + process.env.GMAIL_USER + '>',
+              to: t.email,
+              subject,
+              html: '<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:2rem;">' + body + '<hr style="margin:2rem 0;border:none;border-top:1px solid #eee"/><p style="font-size:0.75rem;color:#999;">Value to Victory — valuetovictory.com</p></div>'
+            });
+            results.push({ email: t.email, days, status: 'sent' });
+          } catch(e) {
+            results.push({ email: t.email, days, status: 'failed', error: e.message });
+          }
+        }
+      }
+
+      return res.json({ sent: results.filter(r => r.status === 'sent').length, failed: results.filter(r => r.status === 'failed').length, results });
+    }
 
     // GET /api/accountability/send — evening accountability + platform updates email
     if (req.method === 'GET' && url === '/accountability/send') {

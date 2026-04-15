@@ -347,6 +347,26 @@
       "dest": "/nda-agreement.html"
     },
     {
+      "src": "/funnel",
+      "dest": "/funnel.html"
+    },
+    {
+      "src": "/start",
+      "dest": "/funnel.html"
+    },
+    {
+      "src": "/go",
+      "dest": "/funnel.html"
+    },
+    {
+      "src": "/upsell",
+      "dest": "/upsell.html"
+    },
+    {
+      "src": "/team-admin",
+      "dest": "/team-admin.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }

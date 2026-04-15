@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Your P.I.N.K. Score — The Value Engine</title>
+  <meta name="description" content="See your P.I.N.K. assessment results and unlock personalized coaching to grow your score." />
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-TT6PYLPP31');
+    gtag('config', 'G-MJ1SXZJ399');
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+
+    /* Hero */
+    .hero { text-align: center; padding: 3.5rem 1.5rem 2rem; }
+    .hero .brand { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    .hero .greeting { font-size: 1.1rem; color: #a1a1aa; margin-bottom: 1.5rem; }
+    .hero h1 { font-family: 'Instrument Serif', serif; font-size: 2rem; font-style: italic; color: #a1a1aa; margin-bottom: 0.5rem; }
+    .score-display { font-family: 'Instrument Serif', serif; font-size: 5rem; font-weight: 700; line-height: 1.1; margin-bottom: 0.25rem; transition: color 0.3s; }
+    .score-max { font-size: 1.1rem; color: #71717a; margin-bottom: 1.5rem; }
+    .range-badge {
+      display: inline-block; padding: 0.4rem 1.5rem; border-radius: 2rem;
+      font-size: 0.85rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      border: 1px solid currentColor;
+    }
+
+    /* Score colors */
+    .range-crisis { color: #ef4444; }
+    .range-survival { color: #f97316; }
+    .range-growth { color: #D4A847; }
+    .range-momentum { color: #22c55e; }
+    .range-mastery { color: #10b981; }
+
+    /* Section container */
+    .section { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+    .section-title { font-family: 'Instrument Serif', serif; font-size: 1.75rem; font-style: italic; text-align: center; margin-bottom: 1.25rem; }
+    .section-subtitle { text-align: center; color: #a1a1aa; max-width: 640px; margin: 0 auto 2rem; font-size: 1rem; }
+
+    /* Interpretation */
+    .interpretation {
+      background: #18181b; border: 1px solid #27272a; border-radius: 1rem;
+      padding: 2rem; text-align: center; margin-bottom: 0.5rem;
+    }
+    .interpretation p { color: #d4d4d8; font-size: 1.1rem; line-height: 1.7; max-width: 640px; margin: 0 auto; }
+
+    /* Weakest pillar */
+    .pillar-callout {
+      background: linear-gradient(160deg, #1c1917, #18181b); border: 1px solid rgba(212,168,71,0.3);
+      border-radius: 1rem; padding: 2rem; text-align: center; margin-top: 1.5rem;
+    }
+    .pillar-callout .label { font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    .pillar-callout h3 { font-family: 'Instrument Serif', serif; font-size: 1.5rem; font-style: italic; color: #fff; margin-bottom: 0.75rem; }
+    .pillar-callout p { color: #a1a1aa; font-size: 0.95rem; max-width: 520px; margin: 0 auto; }
+
+    /* Feature cards */
+    .features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+    .feature-card {
+      background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem;
+      padding: 1.5rem; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .feature-card .icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+    .feature-card h4 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; color: #fff; }
+    .feature-card p { font-size: 0.88rem; color: #a1a1aa; line-height: 1.5; }
+
+    /* Pricing */
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; align-items: start; }
+    .pricing-card {
+      background: #18181b; border: 1px solid #27272a; border-radius: 1rem;
+      padding: 2rem 1.5rem; text-align: center; position: relative;
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+    .pricing-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+    .pricing-card.recommended { border: 2px solid #D4A847; box-shadow: 0 0 30px rgba(212,168,71,0.12); }
+    .pricing-card.premium { background: linear-gradient(160deg, #1c1917, #18181b 40%, #1a1710); border: 1px solid rgba(212,168,71,0.4); }
+    .card-badge {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, #D4A847, #b8942e); color: #0a0a0a;
+      font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 0.35rem 1.25rem; border-radius: 2rem;
+    }
+    .pricing-card .tier-name { font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    .pricing-card .price { font-family: 'Instrument Serif', serif; font-size: 2.5rem; color: #fff; margin-bottom: 0.25rem; }
+    .pricing-card .price span { font-size: 1rem; color: #71717a; font-family: 'Satoshi', sans-serif; }
+    .pricing-card .desc { font-size: 0.85rem; color: #a1a1aa; margin-bottom: 1.25rem; line-height: 1.5; }
+    .pricing-card ul { list-style: none; text-align: left; margin-bottom: 1.5rem; }
+    .pricing-card ul li { font-size: 0.85rem; color: #d4d4d8; padding: 0.35rem 0; padding-left: 1.25rem; position: relative; }
+    .pricing-card ul li::before { content: '\2713'; position: absolute; left: 0; color: #D4A847; font-weight: 700; }
+    .cta-btn {
+      display: inline-block; width: 100%; padding: 0.85rem 1.5rem; border: none; border-radius: 0.5rem;
+      font-family: 'Satoshi', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      text-decoration: none; text-align: center; transition: all 0.2s;
+    }
+    .cta-primary { background: linear-gradient(135deg, #D4A847, #b8942e); color: #0a0a0a; }
+    .cta-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(212,168,71,0.3); }
+    .cta-secondary { background: #27272a; color: #fff; }
+    .cta-secondary:hover { background: #3f3f46; }
+
+    /* Social proof */
+    .social-proof { text-align: center; padding: 2rem 1.5rem; }
+    .social-proof p { color: #71717a; font-size: 0.95rem; }
+    .social-proof strong { color: #D4A847; }
+
+    /* Free option */
+    .free-option { text-align: center; padding: 1rem 1.5rem 3rem; }
+    .free-option p { color: #52525b; font-size: 0.85rem; }
+    .free-option a { color: #D4A847; text-decoration: none; }
+    .free-option a:hover { text-decoration: underline; }
+
+    /* Divider */
+    .divider { width: 60px; height: 2px; background: #D4A847; margin: 0 auto 2rem; opacity: 0.4; }
+
+    @media (max-width: 768px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; }
+      .score-display { font-size: 3.5rem; }
+      .hero h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="brand">The Value Engine</div>
+    <p class="greeting" id="greeting"></p>
+    <h1>Your P.I.N.K. Score</h1>
+    <div class="score-display" id="scoreDisplay">---</div>
+    <div class="score-max">out of 250</div>
+    <div class="range-badge" id="rangeBadge">---</div>
+  </section>
+
+  <!-- Interpretation -->
+  <div class="section">
+    <div class="interpretation">
+      <p id="interpretation">Take the free assessment to discover your P.I.N.K. score across People, Influence, Numbers, and Knowledge.</p>
+    </div>
+
+    <!-- Weakest pillar callout -->
+    <div class="pillar-callout" id="pillarCallout" style="display:none;">
+      <div class="label">Your Biggest Opportunity</div>
+      <h3 id="pillarName"></h3>
+      <p id="pillarDesc"></p>
+    </div>
+  </div>
+
+  <!-- What you're missing -->
+  <div class="section">
+    <div class="divider"></div>
+    <h2 class="section-title">What You're Missing</h2>
+    <p class="section-subtitle">Your score is a snapshot. These tools turn it into a trajectory.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon">&#9993;</div>
+        <h4>Daily AI Coaching Emails</h4>
+        <p>Personalized coaching delivered every morning, tailored to your weakest pillar. No generic advice -- every message is built from your actual score.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">&#9776;</div>
+        <h4>Personalized Action Plans</h4>
+        <p>Specific next steps based on your results. Not theory -- concrete moves you can make this week to start closing gaps.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">&#9889;</div>
+        <h4>30-Day Challenges</h4>
+        <p>Structured challenges that build real habits in each P.I.N.K. pillar. Small daily actions that compound into lasting change.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">&#9650;</div>
+        <h4>Progress Tracking</h4>
+        <p>Retake the assessment monthly and watch your score climb. See exactly which pillars are growing and where to push harder.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pricing -->
+  <div class="section">
+    <div class="divider"></div>
+    <h2 class="section-title">Choose Your Path</h2>
+    <p class="section-subtitle">Every tier includes the full assessment, AI coaching, and the member portal.</p>
+    <div class="pricing-grid">
+
+      <!-- VictoryPath -->
+      <div class="pricing-card">
+        <div class="tier-name">VictoryPath</div>
+        <div class="price">$29<span>/mo</span></div>
+        <div class="desc">Individual growth. AI-powered coaching built around your score.</div>
+        <ul>
+          <li>Full P.I.N.K. Assessment</li>
+          <li>Daily AI coaching emails</li>
+          <li>Personalized action plans</li>
+          <li>30-day pillar challenges</li>
+          <li>Member portal access</li>
+        </ul>
+        <a class="cta-btn cta-secondary" id="ctaVictorypath" href="/checkout?tier=victorypath">Start Now</a>
+      </div>
+
+      <!-- Value Builder -->
+      <div class="pricing-card recommended">
+        <div class="card-badge">Most Popular</div>
+        <div class="tier-name">Value Builder</div>
+        <div class="price">$47<span>/mo</span></div>
+        <div class="desc">For couples and partners. Everything in VictoryPath plus relationship tools.</div>
+        <ul>
+          <li>Everything in VictoryPath</li>
+          <li>Couple assessment tools</li>
+          <li>Relationship matrix</li>
+          <li>Partner invite &amp; compare</li>
+          <li>Couple challenges</li>
+        </ul>
+        <a class="cta-btn cta-primary" id="ctaValuebuilder" href="/checkout?tier=valuebuilder">Start Now</a>
+      </div>
+
+      <!-- Victory VIP -->
+      <div class="pricing-card premium">
+        <div class="tier-name">Victory VIP</div>
+        <div class="price">$497<span>/mo</span></div>
+        <div class="desc">White-glove coaching. 1:1 access, leadership mode, and enterprise tools.</div>
+        <ul>
+          <li>Everything in Value Builder</li>
+          <li>1:1 coaching sessions</li>
+          <li>Leadership assessment mode</li>
+          <li>White-label team access</li>
+          <li>Priority support</li>
+        </ul>
+        <a class="cta-btn cta-secondary" id="ctaVip" href="/checkout?tier=vip">Start Now</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Social proof -->
+  <div class="social-proof">
+    <p>Join <strong>200+ members</strong> already growing their P.I.N.K. score</p>
+  </div>
+
+  <!-- Free option -->
+  <div class="free-option">
+    <p>Not ready? Your score is saved. Come back anytime at <a href="https://valuetovictory.com">valuetovictory.com</a></p>
+  </div>
+
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const score = parseInt(params.get('score')) || 0;
+      const range = (params.get('range') || '').toLowerCase();
+      const weakest = (params.get('weakest') || '').toLowerCase();
+      const name = params.get('name') || '';
+      const email = params.get('email') || '';
+
+      // Greeting
+      const greetEl = document.getElementById('greeting');
+      if (name) greetEl.textContent = 'Great work, ' + name + '. Here\u2019s where you stand.';
+
+      // Score display
+      if (score > 0) {
+        document.getElementById('scoreDisplay').textContent = score;
+      }
+
+      // Range coloring + badge
+      const rangeMap = {
+        crisis:   { cls: 'range-crisis',   label: 'Crisis' },
+        survival: { cls: 'range-survival',  label: 'Survival' },
+        growth:   { cls: 'range-growth',    label: 'Growth' },
+        momentum: { cls: 'range-momentum',  label: 'Momentum' },
+        mastery:  { cls: 'range-mastery',   label: 'Mastery' }
+      };
+      const r = rangeMap[range];
+      const scoreEl = document.getElementById('scoreDisplay');
+      const badgeEl = document.getElementById('rangeBadge');
+      if (r) {
+        scoreEl.classList.add(r.cls);
+        badgeEl.classList.add(r.cls);
+        badgeEl.textContent = r.label;
+      } else if (score > 0) {
+        // Derive range from score
+        let derived = 'crisis';
+        if (score >= 200) derived = 'mastery';
+        else if (score >= 150) derived = 'momentum';
+        else if (score >= 100) derived = 'growth';
+        else if (score >= 50) derived = 'survival';
+        const d = rangeMap[derived];
+        scoreEl.classList.add(d.cls);
+        badgeEl.classList.add(d.cls);
+        badgeEl.textContent = d.label;
+      }
+
+      // Interpretation text
+      const interpretations = {
+        crisis:   'Your life is quietly depreciating. The good news? Now you know exactly where.',
+        survival: 'You\u2019re getting by, but you\u2019re leaking value in places you can\u2019t see yet.',
+        growth:   'You\u2019re building momentum. A few targeted moves will accelerate everything.',
+        momentum: 'You\u2019re ahead of 80% of people. The right coaching locks this in permanently.',
+        mastery:  'You\u2019re operating at elite level. Coaching at this stage is about legacy, not survival.'
+      };
+      const effectiveRange = range || (score >= 200 ? 'mastery' : score >= 150 ? 'momentum' : score >= 100 ? 'growth' : score >= 50 ? 'survival' : score > 0 ? 'crisis' : '');
+      if (interpretations[effectiveRange]) {
+        document.getElementById('interpretation').textContent = interpretations[effectiveRange];
+      }
+
+      // Weakest pillar
+      const pillars = {
+        people:    { name: 'People',    desc: 'Your relationships, network, and the quality of people you surround yourself with. This pillar drives everything else -- who you know shapes what you become.' },
+        influence: { name: 'Influence', desc: 'Your ability to lead, persuade, and create impact. Low influence means your ideas aren\u2019t reaching the people who need them.' },
+        numbers:   { name: 'Numbers',   desc: 'Your financial literacy, wealth-building habits, and relationship with money. This is the pillar most people avoid -- and it costs them.' },
+        knowledge: { name: 'Knowledge', desc: 'Your commitment to growth, learning systems, and intellectual investment. Knowledge compounds faster than any other asset.' },
+        time:      { name: 'Time',      desc: 'How you invest your most irreplaceable resource. Time management isn\u2019t about productivity hacks -- it\u2019s about aligning your hours with your values.' }
+      };
+      if (weakest && pillars[weakest]) {
+        const p = pillars[weakest];
+        document.getElementById('pillarCallout').style.display = 'block';
+        document.getElementById('pillarName').textContent = p.name;
+        document.getElementById('pillarDesc').textContent = p.desc;
+      }
+
+      // Append email to checkout links if available
+      const e = email || params.get('e') || '';
+      if (e) {
+        document.querySelectorAll('.cta-btn[href^="/checkout"]').forEach(function(a) {
+          a.href += '&email=' + encodeURIComponent(e);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
