@@ -123,6 +123,18 @@
       "dest": "/about-pink.html"
     },
     {
+      "src": "/joy",
+      "dest": "/joy-sutton-showcase.html"
+    },
+    {
+      "src": "/media",
+      "dest": "/joy-sutton-showcase.html"
+    },
+    {
+      "src": "/portfolio",
+      "dest": "/portfolio-links.html"
+    },
+    {
       "src": "/framework/time",
       "dest": "/framework-time.html"
     },
