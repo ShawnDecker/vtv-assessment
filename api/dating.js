@@ -672,6 +672,11 @@ module.exports = async (req, res) => {
       `;
 
       let matched = false;
+
+      // Get both profiles + emails for notifications
+      const myFullProfile = await sql`SELECT dp.display_name, c.email, c.first_name FROM dating_profiles dp JOIN contacts c ON c.id = dp.contact_id WHERE dp.id = ${myId}`;
+      const theirFullProfile = await sql`SELECT dp.display_name, c.email, c.first_name, dp.contact_id FROM dating_profiles dp JOIN contacts c ON c.id = dp.contact_id WHERE dp.id = ${profile_id}`;
+
       if (direction === 'right') {
         // Check if they already swiped right on us
         const mutual = await sql`
@@ -688,6 +693,78 @@ module.exports = async (req, res) => {
             ON CONFLICT (profile_a_id, profile_b_id) DO NOTHING
           `;
           matched = true;
+
+          // ===== MATCH NOTIFICATION — Email BOTH people immediately =====
+          if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD && myFullProfile.length && theirFullProfile.length) {
+            try {
+              const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
+              });
+
+              const matchHtml = (recipientName, matchName) => `
+                <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:2rem;background:#0a0a0a;color:#f0f0f0;border-radius:12px;">
+                  <div style="text-align:center;margin-bottom:1.5rem;">
+                    <span style="font-size:3rem;">💘</span>
+                    <h1 style="color:#D4A847;font-size:1.8rem;margin:0.5rem 0;">It's a Match!</h1>
+                  </div>
+                  <p style="color:#a0a0a0;text-align:center;font-size:1rem;line-height:1.6;">
+                    ${recipientName}, you and <strong style="color:#fff;">${matchName}</strong> both liked each other on Aligned Hearts!
+                  </p>
+                  <div style="text-align:center;margin:2rem 0;">
+                    <a href="https://assessment.valuetovictory.com/faith-match" style="display:inline-block;padding:14px 36px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:8px;font-size:1rem;">Send a Message →</a>
+                  </div>
+                  <p style="color:#606060;font-size:0.75rem;text-align:center;">Aligned Hearts by Value to Victory — Values-Based Dating</p>
+                </div>`;
+
+              // Email to the person who just swiped (me)
+              transporter.sendMail({
+                from: '"Aligned Hearts" <' + process.env.GMAIL_USER + '>',
+                to: myFullProfile[0].email,
+                subject: "It's a Match! 💘 You and " + theirFullProfile[0].display_name + " connected",
+                html: matchHtml(myFullProfile[0].first_name || myFullProfile[0].display_name, theirFullProfile[0].display_name)
+              }).catch(() => {});
+
+              // Email to the other person
+              transporter.sendMail({
+                from: '"Aligned Hearts" <' + process.env.GMAIL_USER + '>',
+                to: theirFullProfile[0].email,
+                subject: "It's a Match! 💘 " + myFullProfile[0].display_name + " likes you too",
+                html: matchHtml(theirFullProfile[0].first_name || theirFullProfile[0].display_name, myFullProfile[0].display_name)
+              }).catch(() => {});
+            } catch(e) { console.error('Match notification error:', e.message); }
+          }
+        } else {
+          // ===== LIKE NOTIFICATION — Email the person who was liked =====
+          if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD && theirFullProfile.length) {
+            try {
+              const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
+              });
+
+              await transporter.sendMail({
+                from: '"Aligned Hearts" <' + process.env.GMAIL_USER + '>',
+                to: theirFullProfile[0].email,
+                subject: "Someone likes you on Aligned Hearts! 💛",
+                html: `
+                  <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:2rem;background:#0a0a0a;color:#f0f0f0;border-radius:12px;">
+                    <div style="text-align:center;margin-bottom:1.5rem;">
+                      <span style="font-size:3rem;">💛</span>
+                      <h1 style="color:#D4A847;font-size:1.6rem;margin:0.5rem 0;">You've Got an Admirer!</h1>
+                    </div>
+                    <p style="color:#a0a0a0;text-align:center;font-size:1rem;line-height:1.6;">
+                      ${theirFullProfile[0].first_name || theirFullProfile[0].display_name}, someone on Aligned Hearts just liked your profile!
+                    </p>
+                    <p style="color:#707070;text-align:center;font-size:0.85rem;">Log in to see who it is. If you like them back — it's a match!</p>
+                    <div style="text-align:center;margin:2rem 0;">
+                      <a href="https://assessment.valuetovictory.com/faith-match" style="display:inline-block;padding:14px 36px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:8px;font-size:1rem;">See Who Likes You →</a>
+                    </div>
+                    <p style="color:#606060;font-size:0.75rem;text-align:center;">Aligned Hearts by Value to Victory — Values-Based Dating</p>
+                  </div>`
+              }).catch(() => {});
+            } catch(e) { console.error('Like notification error:', e.message); }
+          }
         }
       }
 
@@ -789,6 +866,51 @@ module.exports = async (req, res) => {
         INSERT INTO dating_messages (match_id, sender_id, message)
         VALUES (${match_id}, ${myProfile[0].id}, ${message})
       `;
+
+      // ===== MESSAGE NOTIFICATION — Email the recipient =====
+      try {
+        // Find the other person in the match
+        const fullMatch = await sql`SELECT profile_a_id, profile_b_id FROM dating_matches WHERE id = ${match_id}`;
+        if (fullMatch.length) {
+          const otherProfileId = fullMatch[0].profile_a_id === myProfile[0].id ? fullMatch[0].profile_b_id : fullMatch[0].profile_a_id;
+          const otherPerson = await sql`SELECT dp.display_name, c.email, c.first_name FROM dating_profiles dp JOIN contacts c ON c.id = dp.contact_id WHERE dp.id = ${otherProfileId}`;
+          const sender = await sql`SELECT display_name FROM dating_profiles WHERE id = ${myProfile[0].id}`;
+
+          // Only send if they have unread messages (don't spam on every message in a conversation)
+          const recentNotif = await sql`SELECT id FROM dating_messages WHERE match_id = ${match_id} AND sender_id = ${myProfile[0].id} AND read_at IS NULL AND sent_at > NOW() - INTERVAL '30 minutes'`;
+
+          if (otherPerson.length && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD && recentNotif.length <= 1) {
+            const transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
+            });
+
+            transporter.sendMail({
+              from: '"Aligned Hearts" <' + process.env.GMAIL_USER + '>',
+              to: otherPerson[0].email,
+              subject: (sender[0]?.display_name || 'Someone') + " sent you a message 💬",
+              html: `
+                <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:2rem;background:#0a0a0a;color:#f0f0f0;border-radius:12px;">
+                  <div style="text-align:center;margin-bottom:1.5rem;">
+                    <span style="font-size:2.5rem;">💬</span>
+                    <h1 style="color:#D4A847;font-size:1.4rem;margin:0.5rem 0;">New Message</h1>
+                  </div>
+                  <p style="color:#a0a0a0;text-align:center;font-size:1rem;line-height:1.6;">
+                    ${otherPerson[0].first_name || otherPerson[0].display_name}, <strong style="color:#fff;">${sender[0]?.display_name || 'Your match'}</strong> just sent you a message on Aligned Hearts.
+                  </p>
+                  <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:1rem;margin:1.5rem 0;text-align:center;">
+                    <p style="color:#ccc;font-style:italic;font-size:0.9rem;">"${message.substring(0, 100)}${message.length > 100 ? '...' : ''}"</p>
+                  </div>
+                  <div style="text-align:center;margin:1.5rem 0;">
+                    <a href="https://assessment.valuetovictory.com/faith-match" style="display:inline-block;padding:12px 32px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:8px;">Reply Now →</a>
+                  </div>
+                  <p style="color:#606060;font-size:0.75rem;text-align:center;">Aligned Hearts by Value to Victory</p>
+                </div>`
+            }).catch(() => {});
+          }
+        }
+      } catch(e) { console.error('Message notification error:', e.message); }
+
       return res.json({ ok: true });
     }
 
