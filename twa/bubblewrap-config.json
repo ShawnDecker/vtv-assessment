@@ -1,0 +1,33 @@
+{
+  "packageId": "com.valuetovictory.alignedhearts",
+  "host": "assessment.valuetovictory.com",
+  "name": "Aligned Hearts",
+  "launcherName": "Aligned Hearts",
+  "display": "standalone",
+  "themeColor": "#D4A847",
+  "navigationColor": "#0a0a0a",
+  "navigationColorDark": "#0a0a0a",
+  "navigationDividerColor": "#1a1a1a",
+  "navigationDividerColorDark": "#1a1a1a",
+  "backgroundColor": "#0a0a0a",
+  "enableNotifications": true,
+  "startUrl": "/faith-match",
+  "iconUrl": "https://assessment.valuetovictory.com/aligned-hearts-logo.png",
+  "maskableIconUrl": "https://assessment.valuetovictory.com/aligned-hearts-logo.png",
+  "shortcuts": [
+    {
+      "name": "My Profile",
+      "shortName": "Profile",
+      "url": "/faith-match#settings",
+      "iconUrl": "https://assessment.valuetovictory.com/aligned-hearts-logo.png"
+    }
+  ],
+  "signing": {
+    "keystore": "./aligned-hearts.keystore",
+    "keystorePassword": "CHANGE_ME",
+    "alias": "aligned-hearts",
+    "aliasPassword": "CHANGE_ME"
+  },
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://assessment.valuetovictory.com/manifest.json"
+}

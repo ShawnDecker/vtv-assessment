@@ -3,11 +3,15 @@
   "short_name": "Aligned Hearts",
   "description": "Faith-based dating powered by the P.I.N.K. Value Engine. Love · Values · Purpose.",
   "start_url": "/faith-match",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#D4A847",
   "orientation": "portrait-primary",
   "categories": ["social", "lifestyle"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/aligned-hearts-logo.png",
@@ -15,5 +19,10 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "screenshots": [],
+  "related_applications": [{
+    "platform": "play",
+    "id": "com.valuetovictory.alignedhearts"
+  }]
 }

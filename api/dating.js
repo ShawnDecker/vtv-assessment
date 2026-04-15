@@ -350,7 +350,8 @@ module.exports = async (req, res) => {
     // The trial/lockout check below handles the enforcement
 
     // ===== CHECK: Access gating =====
-    if (!['profile', 'toggle-active', 'location', 'upload-photo', 'remove-photo', 'unread'].includes(path) && !path.startsWith('admin')) {
+    // Allow profile ops + account deletion without trial gate
+    if (!['profile', 'toggle-active', 'location', 'upload-photo', 'remove-photo', 'unread', 'delete-account'].includes(path) && !path.startsWith('admin')) {
       const trialCheck = await sql`SELECT trial_start, trial_ends, is_paid, email_verified FROM dating_profiles WHERE contact_id = ${user.contactId} LIMIT 1`;
       if (trialCheck.length) {
         const { trial_start, trial_ends, is_paid } = trialCheck[0];
@@ -407,6 +408,26 @@ module.exports = async (req, res) => {
     // ===== CREATE/UPDATE PROFILE =====
     if (path === 'profile' && (req.method === 'POST' || req.method === 'PUT')) {
       const b = req.body;
+
+      // Age validation: must be 18+
+      if (b.date_of_birth) {
+        const dob = new Date(b.date_of_birth);
+        const today = new Date();
+        const age = Math.floor((today - dob) / (365.25 * 24 * 60 * 60 * 1000));
+        if (dob > today) return res.status(400).json({ error: 'Birth date cannot be in the future' });
+        if (age < 18) return res.status(403).json({ error: 'You must be 18 or older to use Aligned Hearts' });
+        if (age > 120) return res.status(400).json({ error: 'Invalid birth date' });
+        b.age = age;
+      }
+
+      // Gender validation
+      if (b.gender && !['male', 'female'].includes(b.gender)) {
+        return res.status(400).json({ error: 'Gender must be male or female' });
+      }
+      if (b.seeking && !['male', 'female'].includes(b.seeking)) {
+        return res.status(400).json({ error: 'Seeking must be male or female' });
+      }
+
       const existing = await sql`SELECT id FROM dating_profiles WHERE contact_id = ${user.contactId}`;
 
       if (existing.length) {
@@ -1053,6 +1074,56 @@ module.exports = async (req, res) => {
         trialUsers: +trialUsers.cnt,
         recentSignups
       });
+    }
+
+    // ===== DELETE ACCOUNT (GDPR + Play Store requirement) =====
+    if (path === 'delete-account' && req.method === 'DELETE') {
+      const contactId = user.contactId;
+
+      // Get profile ID for cascading deletes
+      const profile = await sql`SELECT id FROM dating_profiles WHERE contact_id = ${contactId} LIMIT 1`;
+      if (profile.length) {
+        const profileId = profile[0].id;
+        // Delete in order (child records first)
+        await sql`DELETE FROM dating_messages WHERE sender_id = ${profileId}`;
+        await sql`DELETE FROM dating_messages WHERE match_id IN (SELECT id FROM dating_matches WHERE profile_a_id = ${profileId} OR profile_b_id = ${profileId})`;
+        await sql`DELETE FROM dating_matches WHERE profile_a_id = ${profileId} OR profile_b_id = ${profileId}`;
+        await sql`DELETE FROM dating_swipes WHERE swiper_id = ${profileId} OR swiped_id = ${profileId}`;
+        await sql`DELETE FROM dating_blocks WHERE blocker_id = ${profileId} OR blocked_id = ${profileId}`;
+        await sql`DELETE FROM dating_reports WHERE reporter_id = ${profileId} OR reported_id = ${profileId}`;
+        await sql`DELETE FROM dating_profiles WHERE id = ${profileId}`;
+      }
+
+      // Delete email verification
+      try { await sql`DELETE FROM dating_email_verify WHERE contact_id = ${contactId}`; } catch {}
+
+      console.log(`[dating] Account deleted: contact ${contactId}`);
+      return res.json({ success: true, message: 'Your dating profile and all associated data have been permanently deleted.' });
+    }
+
+    // ===== PHOTO MODERATION: Flag photo for review =====
+    if (path === 'admin/flag-photo' && req.method === 'POST' && isAdmin) {
+      const { profileId, photoIndex, reason } = req.body;
+      if (!profileId) return res.status(400).json({ error: 'profileId required' });
+
+      // Get profile photos
+      const rows = await sql`SELECT photo_urls FROM dating_profiles WHERE id = ${profileId}`;
+      if (!rows.length) return res.status(404).json({ error: 'Profile not found' });
+
+      const photos = rows[0].photo_urls || [];
+      if (photoIndex !== undefined && photoIndex < photos.length) {
+        photos[photoIndex] = null; // Remove flagged photo
+        const photoJson = JSON.stringify(photos);
+        await sql`UPDATE dating_profiles SET photo_urls = ${photoJson}::jsonb WHERE id = ${profileId}`;
+      }
+
+      // Log the moderation action
+      try {
+        await sql`INSERT INTO dating_reports (reporter_id, reported_id, reason, details, status)
+          VALUES (0, ${profileId}, 'photo_moderation', ${reason || 'Photo flagged by admin'}, 'resolved')`;
+      } catch {}
+
+      return res.json({ success: true, message: 'Photo removed and logged' });
     }
 
     return res.status(404).json({ error: 'Not found' });

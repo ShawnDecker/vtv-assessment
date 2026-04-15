@@ -616,6 +616,7 @@
     <button class="btn-outline" onclick="editProfile()">Edit Profile</button>
     <button class="btn-danger" onclick="if(confirm('Deactivate your dating profile?')){toggleActive(false);toast('Profile deactivated')}">Deactivate Profile</button>
     <button class="btn-outline" style="margin-top:0.5rem;" onclick="localStorage.removeItem('ve_token');localStorage.removeItem('ve_email');location.reload();">Log Out</button>
+    <button class="btn-danger" style="margin-top:1rem;background:#3b1114;color:#ef4444;border:1px solid #ef444444;" onclick="deleteAccount()">Delete My Account & Data</button>
   </div>
   <div style="text-align:center;padding:1rem;font-size:0.65rem;color:var(--dim);">
     Aligned Hearts by Value To Victory<br/>Love · Values · Purpose
@@ -1704,6 +1705,24 @@ function startNotificationPolling() {
 
 // ===== SHARING =====
 const SHARE_URL = 'https://assessment.valuetovictory.com/faith-match';
+async function deleteAccount() {
+  if (!confirm('Are you sure you want to permanently delete your account? This removes your profile, matches, messages, and all data. This cannot be undone.')) return;
+  if (!confirm('FINAL WARNING: This is permanent. Type reason below or click OK to proceed.')) return;
+  try {
+    toast('Deleting account...');
+    const r = await fetch(API + '/dating/delete-account', { method: 'DELETE', headers: authHeaders() });
+    const d = await r.json();
+    if (d.success) {
+      localStorage.removeItem('ve_token');
+      localStorage.removeItem('ve_email');
+      alert('Your account has been permanently deleted. Thank you for using Aligned Hearts.');
+      location.reload();
+    } else {
+      toast(d.error || 'Failed to delete account');
+    }
+  } catch { toast('Error deleting account — please try again'); }
+}
+
 const SHARE_TEXT = 'Check out Aligned Hearts — values-based dating powered by the P.I.N.K. Value Engine. Know your worth before you date!';
 
 function shareApp() {
@@ -1878,6 +1897,11 @@ window.addEventListener('DOMContentLoaded', () => {
     checkProfile();
   }
 });
+
+// Register service worker for PWA / Play Store
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>
