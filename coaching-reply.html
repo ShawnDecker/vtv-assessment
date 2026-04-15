@@ -123,7 +123,8 @@
         const status = await statusRes.json();
 
         // Get member data for pillar scores
-        const memberRes = await fetch(`/api/member?email=${encodeURIComponent(email)}`);
+        const tk = localStorage.getItem('vtv_token');
+        const memberRes = await fetch(`/api/member?email=${encodeURIComponent(email)}`, tk ? { headers: { 'Authorization': 'Bearer ' + tk } } : {});
         const member = await memberRes.json();
 
         if (member.assessments && member.assessments.length > 0) {

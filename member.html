@@ -1529,7 +1529,9 @@
   async function loadFullDashboard() {
     showState('stateLoading');
     try {
-      var res = await fetch('/api/member?email=' + encodeURIComponent(currentEmail));
+      var token = localStorage.getItem('vtv_token');
+      var headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+      var res = await fetch('/api/member?email=' + encodeURIComponent(currentEmail), { headers: headers });
       var data = await res.json();
       if (!data || data.found === false) {
         showState('stateNotFound');
@@ -1830,7 +1832,7 @@
       </div>`;
 
     // Fetch entitlement and update the CTA
-    fetch('/api/entitlements?email=' + encodeURIComponent(email))
+    fetch('/api/entitlements?email=' + encodeURIComponent(email), { headers: localStorage.getItem('vtv_token') ? { 'Authorization': 'Bearer ' + localStorage.getItem('vtv_token') } : {} })
       .then(r => r.json())
       .then(data => {
         const ctaEl = document.getElementById('audiobookCta');

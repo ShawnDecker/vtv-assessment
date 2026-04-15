@@ -372,7 +372,7 @@
       var email = localStorage.getItem('ve_email');
       if (!email) return;
 
-      fetch('/api/entitlements?email=' + encodeURIComponent(email))
+      fetch('/api/entitlements?email=' + encodeURIComponent(email), { headers: localStorage.getItem('vtv_token') ? { 'Authorization': 'Bearer ' + localStorage.getItem('vtv_token') } : {} })
         .then(function(r) { return r.json(); })
         .then(function(data) {
           var tier = data.tier || 'free';

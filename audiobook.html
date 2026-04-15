@@ -1086,7 +1086,7 @@
       if (purchaseBtn) purchaseBtn.href = payLink;
 
       // Show a brief loading state on the main wrapper
-      fetch('/api/entitlements?email=' + encodeURIComponent(email))
+      fetch('/api/entitlements?email=' + encodeURIComponent(email), { headers: localStorage.getItem('vtv_token') ? { 'Authorization': 'Bearer ' + localStorage.getItem('vtv_token') } : {} })
         .then(function(r) { return r.json(); })
         .then(function(data) {
           var audiobook = data.products && data.products['rfm-audiobook'];
