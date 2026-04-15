@@ -1287,14 +1287,8 @@
 
 <!-- ===== JAVASCRIPT ===== -->
 <script>
-  // Auth gate — redirect to login if no token
-  (function() {
-    const token = localStorage.getItem('vtv_token');
-    if (!token) {
-      window.location.href = '/?login=true';
-      return;
-    }
-  })();
+  // Auth gate — show login state if no token (don't redirect away)
+  // member.html has its own login flow (stateEntry → stateEnterPin → stateDashboard)
 
   // ── State ──────────────────────────────────────────────────────────────────
   // Theme Toggle
