@@ -3,6 +3,36 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const BASE_URL = process.env.BASE_URL || 'https://assessment.valuetovictory.com';
 
+// ========== VTV COACHING CONSTITUTION ==========
+// This governs EVERY AI-generated response, coaching email, and system interaction.
+// No code in this platform may violate these principles.
+const VTV_CONSTITUTION = {
+  coreRule: 'NEVER cause harm. Every interaction must add value to the person and those around them while encouraging openness to growth.',
+  principles: [
+    'Speak truth with compassion — honest about weaknesses, never cruel about them',
+    'Build people up — even confrontation should leave them stronger than before',
+    'No addiction mechanics — no streaks that punish, no notifications that guilt, no gamification that creates anxiety',
+    'Respect autonomy — suggest, never pressure. They choose their pace.',
+    'Faith-grounded — wisdom is welcome, preaching is not. Meet people where they are.',
+    'Privacy is sacred — their data is theirs. Their struggles are theirs. Their growth is theirs to share or keep.',
+    'No comparison to others — only compare them to their previous self',
+    'Celebrate effort, not just results — showing up matters more than the score',
+    'When someone is struggling, lead with empathy before strategy',
+    'The goal is a person who no longer needs the system — not a user who cannot leave it',
+  ],
+  tone: {
+    voice: 'Direct, warm, like a mentor who has been through it. Not corporate. Not clinical. Real.',
+    never: ['game-changer', 'unlock potential', 'level up', 'crush it', 'hustle', 'grind harder', 'no excuses'],
+    always: ['honest', 'specific to their data', 'actionable within their real life', 'respectful of their time'],
+  },
+  safetyFilters: {
+    mentalHealth: 'If someone indicates self-harm, crisis, or severe depression — do NOT coach. Provide 988 Suicide & Crisis Lifeline and encourage professional help immediately.',
+    relationships: 'Never advise ending relationships. Encourage communication, professional counseling, and self-reflection.',
+    financial: 'Never give specific investment advice. Encourage financial literacy and professional consultation.',
+    faith: 'Honor all faith backgrounds. Share biblical wisdom when natural. Never gatekeep or judge.',
+  },
+};
+
 // ========== SECURITY: Rate Limiting ==========
 const rateLimitStore = new Map();
 const RATE_LIMITS = {
@@ -5925,16 +5955,26 @@ This link expires in 24 hours.
         if (lowerResp.includes('lead') || lowerResp.includes('team') || lowerResp.includes('influence')) themes.push('leadership');
         if (lowerResp.includes('pray') || lowerResp.includes('god') || lowerResp.includes('faith') || lowerResp.includes('church')) themes.push('faith');
 
-        // Generate personalized insight based on their response
+        // Generate personalized insight — governed by VTV_CONSTITUTION
+        // Core rule: NEVER cause harm. Add value. Encourage openness to growth.
         let insight = 'Your response has been saved. Tomorrow\'s coaching email will reflect what you shared.';
-        if (sentiment === 'negative' && !actionCompleted) {
-          insight = `Struggling is part of the process. The fact that you showed up to check in today means you\'re still in it. Tomorrow\'s email will address exactly where you\'re stuck with your ${weakestPillar || 'weakest pillar'}.`;
+
+        // Check for crisis language first (safety filter)
+        const crisisWords = ['suicide', 'kill myself', 'end it all', 'self-harm', 'want to die', 'no reason to live', 'give up on life'];
+        const isCrisis = crisisWords.some(w => lowerResp.includes(w));
+        if (isCrisis) {
+          sentiment = 'crisis';
+          insight = `I hear you, and I want you to know — what you\'re feeling matters. This system isn\'t equipped to help with what you\'re going through right now, but someone is. Please reach out to the 988 Suicide & Crisis Lifeline (call or text 988) or chat at 988lifeline.org. You are not alone, and your life has value that no score can measure.`;
+        } else if (sentiment === 'negative' && !actionCompleted) {
+          insight = `The fact that you showed up to check in today — that matters. Struggling doesn\'t mean failing. It means you\'re aware, and awareness is the first step to change. Tomorrow\'s email will meet you where you are with your ${weakestPillar || 'growth area'}, not where you think you should be.`;
         } else if (sentiment === 'positive' && actionCompleted) {
-          insight = `Strong work. You completed the action step AND you\'re feeling good about it. That\'s rare. Tomorrow\'s email will build on this momentum — expect something that pushes you further.`;
+          insight = `You did the work and you feel it. That\'s not luck — that\'s you choosing to grow. Tomorrow\'s email will build on what you started. The people around you benefit when you invest in yourself like this.`;
         } else if (actionCompleted && sentiment !== 'positive') {
-          insight = `You did the work even though you\'re not feeling great about it. That\'s discipline, not motivation. And discipline is what changes scores. Tomorrow\'s email will show you why what you did today matters more than you think.`;
+          insight = `You showed up and did the work even when it didn\'t feel good. That kind of consistency is rare and it\'s exactly what changes lives — yours and the people around you. What you did today matters more than how it felt.`;
         } else if (!actionCompleted && sentiment === 'positive') {
-          insight = `Good energy, but the action step didn\'t happen. Energy without action is just enthusiasm. Tomorrow\'s email will give you a smaller, faster version of today\'s step. No excuses.`;
+          insight = `Good to hear you\'re in a strong place. The action step is still there when you\'re ready — no guilt, no pressure. Tomorrow\'s email will offer a version that fits into your real schedule. Growth happens at your pace, not anyone else\'s.`;
+        } else if (mood === 'struggling') {
+          insight = `Thank you for being honest about where you are. That takes courage. You don\'t have to fix everything today. Pick one small thing tomorrow that moves you forward — even 5 minutes counts. You\'re building something that matters.`;
         }
 
         // Save reply
