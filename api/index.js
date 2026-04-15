@@ -8076,7 +8076,9 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
     }
 
     // ========== POST /api/webhook/vercel-budget — Vercel spend management webhook ==========
-    // Receives POST from Vercel when budget limit is reached or billing cycle ends
+    // Vercel sends two event types:
+    //   1. spend_amount_threshold: { budgetAmount, currentSpend, teamId, thresholdPercent }
+    //   2. endOfBillingCycle: { teamId, type: "endOfBillingCycle" }
     if (req.method === 'POST' && url === '/webhook/vercel-budget') {
       try {
         // Verify webhook signature if secret is configured
@@ -8084,7 +8086,6 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         if (webhookSecret) {
           const signature = req.headers['x-vercel-signature'] || '';
           const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-          const crypto = require('crypto');
           const expected = crypto.createHmac('sha1', webhookSecret).update(rawBody).digest('hex');
           if (signature !== expected) {
             console.warn('[vercel-budget] Invalid signature — rejecting');
@@ -8093,22 +8094,40 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         }
 
         const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-        const event = body?.type || body?.event || 'unknown';
-        const amount = body?.amount || body?.budgetAmount || null;
         const ts = new Date().toISOString();
 
-        console.log(`[vercel-budget] Event: ${event}, Amount: ${amount}, Time: ${ts}`);
+        // Detect event type from Vercel's actual payload format
+        let eventType = 'unknown';
+        let budgetAmount = null;
+        let currentSpend = null;
+        let thresholdPercent = null;
+
+        if (body?.type === 'endOfBillingCycle') {
+          eventType = 'endOfBillingCycle';
+        } else if (body?.thresholdPercent !== undefined) {
+          eventType = 'spend_amount_threshold';
+          budgetAmount = body.budgetAmount;
+          currentSpend = body.currentSpend;
+          thresholdPercent = body.thresholdPercent;
+        } else {
+          // Test or unknown event — log but don't act
+          eventType = body?.type || body?.event || 'test';
+          budgetAmount = body?.budgetAmount || body?.amount || null;
+        }
+
+        console.log(`[vercel-budget] Event: ${eventType}, Budget: $${budgetAmount}, Spend: $${currentSpend}, Threshold: ${thresholdPercent}%`);
 
         // Log to system_registry for dashboard visibility
         try {
+          const isOverBudget = eventType === 'spend_amount_threshold' && thresholdPercent >= 100;
           await sql`INSERT INTO system_registry (system_name, system_type, category, status, endpoint, metadata, last_reported_at)
             VALUES (
               'vercel:budget-alert',
               'webhook',
               'cloud',
-              ${event === 'budget.reached' ? 'degraded' : 'healthy'},
+              ${isOverBudget ? 'degraded' : 'healthy'},
               'https://vercel.com/danddappraisal-7740s-projects/settings/billing',
-              ${JSON.stringify({ event, amount, received_at: ts, raw: body })}::jsonb,
+              ${JSON.stringify({ eventType, budgetAmount, currentSpend, thresholdPercent, received_at: ts })}::jsonb,
               NOW()
             )
             ON CONFLICT (system_name) DO UPDATE SET
@@ -8121,26 +8140,46 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
         // Send alert email to Shawn
         try {
-          const nodemailer = require('nodemailer');
           const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: { user: 'valuetovictory@gmail.com', pass: process.env.GMAIL_APP_PASSWORD }
           });
 
-          const statusEmoji = event === 'budget.reached' ? '🚨' : '✅';
-          const subject = `${statusEmoji} Vercel Budget Alert: ${event}`;
-          const htmlBody = `
-            <div style="font-family:Arial;max-width:500px;padding:20px;background:#0a0a0a;color:#e4e4e7;border-radius:10px;">
-              <h2 style="color:#D4A847;margin:0 0 12px;">Vercel Budget Alert</h2>
-              <p><strong>Event:</strong> ${event}</p>
-              ${amount ? `<p><strong>Budget Amount:</strong> $${amount}</p>` : ''}
+          let subject, messageHtml;
+          if (eventType === 'spend_amount_threshold') {
+            const emoji = thresholdPercent >= 100 ? '🚨' : thresholdPercent >= 75 ? '⚠️' : 'ℹ️';
+            subject = `${emoji} Vercel Spend Alert: ${thresholdPercent}% of $${budgetAmount} budget used`;
+            messageHtml = `
+              <p><strong>Current Spend:</strong> $${currentSpend} of $${budgetAmount}</p>
+              <p><strong>Threshold:</strong> ${thresholdPercent}%</p>
               <p><strong>Time:</strong> ${ts}</p>
               <hr style="border-color:#27272a;margin:16px 0;">
               <p style="font-size:13px;color:#a1a1aa;">
-                ${event === 'budget.reached'
-                  ? '⚠️ Production deployments may be paused. Go to Vercel → Settings → Billing to increase the limit or resume.'
-                  : '✅ Billing cycle ended. Projects should auto-resume if paused.'}
-              </p>
+                ${thresholdPercent >= 100
+                  ? '🚨 Budget limit reached! Production deployments may be paused. Go to Vercel to increase the limit or resume.'
+                  : thresholdPercent >= 75
+                    ? '⚠️ Approaching budget limit. Consider reviewing usage.'
+                    : 'ℹ️ Budget milestone reached. No action needed.'}
+              </p>`;
+          } else if (eventType === 'endOfBillingCycle') {
+            subject = '✅ Vercel: Billing cycle ended';
+            messageHtml = `
+              <p><strong>Event:</strong> Billing cycle ended</p>
+              <p><strong>Time:</strong> ${ts}</p>
+              <hr style="border-color:#27272a;margin:16px 0;">
+              <p style="font-size:13px;color:#a1a1aa;">✅ New billing cycle started. If deployments were paused, they should auto-resume.</p>`;
+          } else {
+            subject = `Vercel Webhook: ${eventType}`;
+            messageHtml = `
+              <p><strong>Event:</strong> ${escapeHtml(eventType)}</p>
+              ${budgetAmount ? `<p><strong>Budget:</strong> $${budgetAmount}</p>` : ''}
+              <p><strong>Time:</strong> ${ts}</p>`;
+          }
+
+          const htmlBody = `
+            <div style="font-family:Arial;max-width:500px;padding:20px;background:#0a0a0a;color:#e4e4e7;border-radius:10px;">
+              <h2 style="color:#D4A847;margin:0 0 12px;">Vercel Budget Alert</h2>
+              ${messageHtml}
               <a href="https://vercel.com/danddappraisal-7740s-projects/settings/billing" style="display:inline-block;margin-top:12px;padding:10px 20px;background:#D4A847;color:#0a0a0a;text-decoration:none;border-radius:6px;font-weight:bold;">Open Vercel Billing</a>
             </div>`;
 
@@ -8155,7 +8194,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           console.error('[vercel-budget] Email failed:', emailErr.message);
         }
 
-        return res.json({ received: true, event, timestamp: ts });
+        return res.json({ received: true, event: eventType, timestamp: ts });
       } catch (whErr) {
         console.error('[vercel-budget] Error:', whErr);
         return res.status(500).json({ error: 'Webhook processing failed' });
