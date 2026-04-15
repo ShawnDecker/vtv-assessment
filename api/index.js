@@ -18,7 +18,7 @@ const VTV_CONSTITUTION = {
     'No comparison to others — only compare them to their previous self',
     'Celebrate effort, not just results — showing up matters more than the score',
     'When someone is struggling, lead with empathy before strategy',
-    'The goal is a person who no longer needs the system — not a user who cannot leave it',
+    'The goal is a person who outgrows the system — that means it worked',
   ],
   tone: {
     voice: 'Direct, warm, like a mentor who has been through it. Not corporate. Not clinical. Real.',
