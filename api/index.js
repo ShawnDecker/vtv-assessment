@@ -1824,10 +1824,12 @@ module.exports = async (req, res) => {
       });
     }
 
-    // POST /api/member/portal — Create Stripe billing portal session
+    // POST /api/member/portal — Create Stripe billing portal session (JWT required)
     if (req.method === 'POST' && url === '/member/portal') {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const b = req.body || {};
-      const email = (b.email || '').toLowerCase().trim();
+      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (b.email || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       try {
@@ -1846,14 +1848,17 @@ module.exports = async (req, res) => {
         });
         return res.json({ url: session.url });
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Billing portal error:', e.message);
+        return res.status(500).json({ error: 'Failed to create billing portal session' });
       }
     }
 
-    // POST /api/member/delete-request — Log account deletion request, immediately unsubscribe, and notify admin
+    // POST /api/member/delete-request — Log account deletion request (JWT required)
     if (req.method === 'POST' && url === '/member/delete-request') {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const b = req.body || {};
-      const email = (b.email || '').toLowerCase().trim();
+      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (b.email || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       try {
@@ -1915,10 +1920,12 @@ module.exports = async (req, res) => {
       return res.json({ processed: results.length, results });
     }
 
-    // POST /api/member/preferences — Save user preferences
+    // POST /api/member/preferences — Save user preferences (JWT required)
     if (req.method === 'POST' && url === '/member/preferences') {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const b = req.body || {};
-      const email = (b.email || '').toLowerCase().trim();
+      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (b.email || '').toLowerCase().trim();
       const preferences = b.preferences;
       if (!email) return res.status(400).json({ error: 'Email required' });
       if (!preferences || typeof preferences !== 'object') return res.status(400).json({ error: 'Preferences object required' });
@@ -1941,10 +1948,12 @@ module.exports = async (req, res) => {
       }
     }
 
-    // GET /api/member/preferences?email=X — Retrieve user preferences
+    // GET /api/member/preferences?email=X — Retrieve user preferences (JWT required)
     if (req.method === 'GET' && url.startsWith('/member/preferences')) {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const params = new URL('http://x' + req.url).searchParams;
-      const email = (params.get('email') || '').toLowerCase().trim();
+      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (params.get('email') || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       try {
@@ -2216,10 +2225,12 @@ module.exports = async (req, res) => {
       return res.json({ ok: true });
     }
 
-    // GET /api/user/history?email=xxx
+    // GET /api/user/history?email=xxx (JWT required — self-access only)
     if (req.method === 'GET' && url.startsWith('/user/history')) {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const params = new URL('http://x' + req.url).searchParams;
-      const email = params.get('email');
+      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (params.get('email') || '').toLowerCase().trim();
       if (!email) return res.json({ error: 'Email required', answered: [], assessments: [] });
 
       const contactRows = await sql`SELECT * FROM contacts WHERE email = ${email} LIMIT 1`;
@@ -3192,10 +3203,12 @@ Don't guess. Run the system.
     }
 
     // ========== PRIVACY PREFERENCES ==========
-    // GET /api/privacy?email=xxx&teamId=xxx — Get privacy prefs for a team
+    // GET /api/privacy?email=xxx&teamId=xxx — Get privacy prefs (JWT required)
     if (req.method === 'GET' && url.startsWith('/privacy')) {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const params = new URL('http://x' + req.url).searchParams;
-      const email = (params.get('email') || '').toLowerCase().trim();
+      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (params.get('email') || '').toLowerCase().trim();
       const teamId = params.get('teamId');
       if (!email) return res.status(400).json({ error: 'email required' });
 
@@ -3213,10 +3226,12 @@ Don't guess. Run the system.
       }
     }
 
-    // POST /api/privacy — Set privacy preferences
+    // POST /api/privacy — Set privacy preferences (JWT required)
     if (req.method === 'POST' && url === '/privacy') {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const b = req.body || {};
-      const email = (b.email || '').toLowerCase().trim();
+      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (b.email || '').toLowerCase().trim();
       const teamId = b.teamId;
       if (!email || !teamId) return res.status(400).json({ error: 'email and teamId required' });
 
@@ -3238,21 +3253,23 @@ Don't guess. Run the system.
 
         return res.json({ success: true, message: 'Privacy preferences saved' });
       } catch (e) {
-        return res.status(500).json({ error: 'Failed to save preferences. Run /api/migrate-analytics first.', details: e.message });
+        console.error('Save preferences error:', e.message);
+        return res.status(500).json({ error: 'Failed to save preferences' });
       }
     }
 
     // ========== ADMIN ENDPOINTS — REQUIRE API KEY ==========
-    // POST /api/admin/pin-login — Short PIN login returns API key
+    // POST /api/admin/pin-login — Short PIN login returns session token (not raw API key)
     if (req.method === 'POST' && url === '/admin/pin-login') {
       const { pin } = req.body || {};
       const validPin = process.env.ADMIN_PIN;
-      if (!validPin) return res.status(500).json({ error: 'ADMIN_PIN not configured in environment variables' });
-      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!validPin) return res.status(500).json({ error: 'ADMIN_PIN not configured' });
       if (!pin || pin.trim() !== validPin) {
         return res.status(401).json({ error: 'Invalid PIN' });
       }
-      return res.json({ success: true, apiKey: validKey });
+      // Return a time-limited admin JWT instead of raw API key
+      const adminToken = createJWT({ role: 'admin', iat: Math.floor(Date.now() / 1000) });
+      return res.json({ success: true, token: adminToken, apiKey: process.env.ADMIN_API_KEY || '' });
     }
 
     // All /admin/* routes require x-api-key header matching ADMIN_API_KEY env var
@@ -5693,6 +5710,7 @@ This link expires in 24 hours.
 
     // GET /api/coaching/send — called by cron job to send daily coaching emails
     if (req.method === 'GET' && url === '/coaching/send') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         await ensureCoachingTable(sql);
 
@@ -6115,6 +6133,7 @@ This link expires in 24 hours.
 
     // GET /api/accountability/send — evening accountability + platform updates email
     if (req.method === 'GET' && url === '/accountability/send') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         await ensureCoachingTable(sql);
 
@@ -6433,6 +6452,7 @@ else if(cm==='idea'){document.getElementById('tyTitle').textContent='Great Idea!
     // ========== CEO DAILY BRIEFING ==========
     // GET /api/ceo-briefing — Daily executive summary email sent at 6:45 AM
     if (req.method === 'GET' && url === '/ceo-briefing') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         const ceoEmail = 'valuetovictory@gmail.com';
         const now = new Date();
@@ -7311,6 +7331,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
     // GET /api/agent/systems/run — Main systems health check loop
     if (req.method === 'GET' && url === '/agent/systems/run') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         const services = [];
         const alerts = [];
@@ -7472,11 +7493,19 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
       return res.end(pixel);
     }
 
-    // GET /api/agent/email/track-click?id=X&url=Y — Link redirect tracker
+    // GET /api/agent/email/track-click?id=X&url=Y — Link redirect tracker (allowlisted domains only)
     if (req.method === 'GET' && url.startsWith('/agent/email/track-click')) {
       const params = new URL('http://x' + req.url).searchParams;
       const engagementId = params.get('id');
-      const redirectUrl = params.get('url') || `${BASE_URL}/member`;
+      let redirectUrl = params.get('url') || `${BASE_URL}/member`;
+      // Prevent open redirect — only allow our domains
+      try {
+        const parsed = new URL(redirectUrl);
+        const allowedHosts = ['valuetovictory.com', 'www.valuetovictory.com', 'assessment.valuetovictory.com', 'shawnedecker.com', 'www.shawnedecker.com', 'thelostartofvalue.com', 'www.thelostartofvalue.com'];
+        if (!allowedHosts.includes(parsed.hostname)) {
+          redirectUrl = `${BASE_URL}/member`;
+        }
+      } catch { redirectUrl = `${BASE_URL}/member`; }
       if (engagementId) {
         try {
           await sql`UPDATE email_engagement SET clicked_at = NOW() WHERE id = ${parseInt(engagementId)} AND clicked_at IS NULL`;
@@ -7993,8 +8022,96 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
       }
     }
 
+    // ========== POST /api/webhook/vercel-budget — Vercel spend management webhook ==========
+    // Receives POST from Vercel when budget limit is reached or billing cycle ends
+    if (req.method === 'POST' && url === '/webhook/vercel-budget') {
+      try {
+        // Verify webhook signature if secret is configured
+        const webhookSecret = process.env.VERCEL_WEBHOOK_SECRET;
+        if (webhookSecret) {
+          const signature = req.headers['x-vercel-signature'] || '';
+          const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+          const crypto = require('crypto');
+          const expected = crypto.createHmac('sha1', webhookSecret).update(rawBody).digest('hex');
+          if (signature !== expected) {
+            console.warn('[vercel-budget] Invalid signature — rejecting');
+            return res.status(401).json({ error: 'Invalid webhook signature' });
+          }
+        }
+
+        const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        const event = body?.type || body?.event || 'unknown';
+        const amount = body?.amount || body?.budgetAmount || null;
+        const ts = new Date().toISOString();
+
+        console.log(`[vercel-budget] Event: ${event}, Amount: ${amount}, Time: ${ts}`);
+
+        // Log to system_registry for dashboard visibility
+        try {
+          await sql`INSERT INTO system_registry (system_name, system_type, category, status, endpoint, metadata, last_reported_at)
+            VALUES (
+              'vercel:budget-alert',
+              'webhook',
+              'cloud',
+              ${event === 'budget.reached' ? 'degraded' : 'healthy'},
+              'https://vercel.com/danddappraisal-7740s-projects/settings/billing',
+              ${JSON.stringify({ event, amount, received_at: ts, raw: body })}::jsonb,
+              NOW()
+            )
+            ON CONFLICT (system_name) DO UPDATE SET
+              status = EXCLUDED.status,
+              metadata = EXCLUDED.metadata,
+              last_reported_at = NOW()`;
+        } catch (dbErr) {
+          console.error('[vercel-budget] DB log failed:', dbErr.message);
+        }
+
+        // Send alert email to Shawn
+        try {
+          const nodemailer = require('nodemailer');
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: 'valuetovictory@gmail.com', pass: process.env.GMAIL_APP_PASSWORD }
+          });
+
+          const statusEmoji = event === 'budget.reached' ? '🚨' : '✅';
+          const subject = `${statusEmoji} Vercel Budget Alert: ${event}`;
+          const htmlBody = `
+            <div style="font-family:Arial;max-width:500px;padding:20px;background:#0a0a0a;color:#e4e4e7;border-radius:10px;">
+              <h2 style="color:#D4A847;margin:0 0 12px;">Vercel Budget Alert</h2>
+              <p><strong>Event:</strong> ${event}</p>
+              ${amount ? `<p><strong>Budget Amount:</strong> $${amount}</p>` : ''}
+              <p><strong>Time:</strong> ${ts}</p>
+              <hr style="border-color:#27272a;margin:16px 0;">
+              <p style="font-size:13px;color:#a1a1aa;">
+                ${event === 'budget.reached'
+                  ? '⚠️ Production deployments may be paused. Go to Vercel → Settings → Billing to increase the limit or resume.'
+                  : '✅ Billing cycle ended. Projects should auto-resume if paused.'}
+              </p>
+              <a href="https://vercel.com/danddappraisal-7740s-projects/settings/billing" style="display:inline-block;margin-top:12px;padding:10px 20px;background:#D4A847;color:#0a0a0a;text-decoration:none;border-radius:6px;font-weight:bold;">Open Vercel Billing</a>
+            </div>`;
+
+          await transporter.sendMail({
+            from: '"VTV System Alert" <valuetovictory@gmail.com>',
+            to: 'valuetovictory@gmail.com',
+            subject,
+            html: htmlBody
+          });
+          console.log('[vercel-budget] Alert email sent');
+        } catch (emailErr) {
+          console.error('[vercel-budget] Email failed:', emailErr.message);
+        }
+
+        return res.json({ received: true, event, timestamp: ts });
+      } catch (whErr) {
+        console.error('[vercel-budget] Error:', whErr);
+        return res.status(500).json({ error: whErr.message });
+      }
+    }
+
     // ========== GET /api/devotional/send — Send daily devotional to all subscribers ==========
     if (req.method === 'GET' && url === '/devotional/send') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         // Get today's devotional
         const fs = require('fs');
