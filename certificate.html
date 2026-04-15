@@ -110,7 +110,8 @@
 
       try {
         // Get user history for name and scores
-        var histResp = await fetch('/api/user/history?email=' + encodeURIComponent(email));
+        var _t = localStorage.getItem('vtv_token');
+        var histResp = await fetch('/api/user/history?email=' + encodeURIComponent(email), { headers: _t ? {'Authorization': 'Bearer ' + _t} : {} });
         var histData = await histResp.json();
 
         // Get challenge status

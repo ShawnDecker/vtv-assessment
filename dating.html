@@ -219,7 +219,8 @@
       resultEl.classList.remove('hidden');
 
       try {
-        var resp = await fetch('/api/user/history?email=' + encodeURIComponent(email));
+        var _t = localStorage.getItem('vtv_token');
+        var resp = await fetch('/api/user/history?email=' + encodeURIComponent(email), { headers: _t ? {'Authorization': 'Bearer ' + _t} : {} });
         var data = await resp.json();
 
         if (data.isNewUser || !data.assessments || data.assessments.length === 0) {
@@ -311,9 +312,11 @@
       resultEl.classList.remove('hidden');
 
       try {
+        var _t = localStorage.getItem('vtv_token');
+        var _h = _t ? {'Authorization': 'Bearer ' + _t} : {};
         var [respA, respB] = await Promise.all([
-          fetch('/api/user/history?email=' + encodeURIComponent(emailA)),
-          fetch('/api/user/history?email=' + encodeURIComponent(emailB))
+          fetch('/api/user/history?email=' + encodeURIComponent(emailA), { headers: _h }),
+          fetch('/api/user/history?email=' + encodeURIComponent(emailB), { headers: _h })
         ]);
         var dataA = await respA.json();
         var dataB = await respB.json();

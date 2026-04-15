@@ -230,9 +230,10 @@
         progressReminders: document.getElementById('progressReminders').checked,
         darkMode: document.getElementById('darkMode').checked
       };
+      var _t = localStorage.getItem('vtv_token');
       fetch('/api/member/preferences', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(_t ? {'Authorization': 'Bearer ' + _t} : {}) },
         body: JSON.stringify({ email: currentEmail, preferences: prefs })
       }).catch(function(e) { console.warn('Pref sync error:', e); });
     }
@@ -252,9 +253,10 @@
         return;
       }
       try {
+        var _t = localStorage.getItem('vtv_token');
         var resp = await fetch('/api/member/delete-request', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...(_t ? {'Authorization': 'Bearer ' + _t} : {}) },
           body: JSON.stringify({ email: currentEmail })
         });
         var data = await resp.json();
@@ -276,7 +278,8 @@
     async function loadPreferences() {
       if (!currentEmail) return;
       try {
-        var resp = await fetch('/api/member/preferences?email=' + encodeURIComponent(currentEmail));
+        var _t = localStorage.getItem('vtv_token');
+        var resp = await fetch('/api/member/preferences?email=' + encodeURIComponent(currentEmail), { headers: _t ? {'Authorization': 'Bearer ' + _t} : {} });
         var data = await resp.json();
         if (data.preferences) {
           if (typeof data.preferences.coachingEmails === 'boolean') document.getElementById('coachingEmails').checked = data.preferences.coachingEmails;

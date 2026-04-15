@@ -150,7 +150,8 @@
       if (!email || !email.includes('@')) { errEl.textContent = 'Enter a valid email.'; errEl.classList.remove('hidden'); return; }
 
       try {
-        var resp = await fetch('/api/user/history?email=' + encodeURIComponent(email));
+        var _t = localStorage.getItem('vtv_token');
+        var resp = await fetch('/api/user/history?email=' + encodeURIComponent(email), { headers: _t ? {'Authorization': 'Bearer ' + _t} : {} });
         var data = await resp.json();
         if (data.isNewUser || !data.assessments || data.assessments.length === 0) {
           errEl.textContent = 'No assessments found. Take one first.'; errEl.classList.remove('hidden'); return;

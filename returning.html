@@ -115,7 +115,8 @@
       document.getElementById('lookupBtn').textContent = 'Looking up...';
 
       try {
-        var res = await fetch('/api/user/history?email=' + encodeURIComponent(email));
+        var _t = localStorage.getItem('vtv_token');
+        var res = await fetch('/api/user/history?email=' + encodeURIComponent(email), { headers: _t ? {'Authorization': 'Bearer ' + _t} : {} });
         var data = await res.json();
 
         if (data.isNewUser || data.totalAnswered === 0) {

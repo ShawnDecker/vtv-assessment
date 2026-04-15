@@ -1708,9 +1708,10 @@
     btn.disabled = true;
     btn.textContent = 'Opening portal…';
     try {
+      var _t = localStorage.getItem('vtv_token');
       const res = await fetch('/api/member/portal', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(_t ? {'Authorization': 'Bearer ' + _t} : {}) },
         body: JSON.stringify({ email: currentEmail })
       });
       const data = await res.json();
