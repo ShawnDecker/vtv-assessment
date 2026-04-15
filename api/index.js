@@ -1083,8 +1083,15 @@ module.exports = async (req, res) => {
 
       const rows = await sql`SELECT id, first_name, pin_hash FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
       if (rows.length === 0) return res.json({ verified: false, error: 'No account found' });
-      if (!rows[0].pin_hash) return res.json({ verified: false, needsPin: true, message: 'No PIN set yet' });
-      if (rows[0].pin_hash !== pinHash) return res.json({ verified: false, error: 'Incorrect PIN' });
+
+      // If no PIN set, auto-set it for them (first login)
+      if (!rows[0].pin_hash) {
+        // For Amanda's account or any account without a PIN, set it now
+        await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE id = ${rows[0].id}`;
+        // Continue to login (don't return needsPin — just log them in)
+      } else if (rows[0].pin_hash !== pinHash) {
+        return res.json({ verified: false, error: 'Incorrect PIN' });
+      }
 
       // Generate JWT token for authenticated sessions
       const contactId = rows[0].id;

@@ -601,6 +601,17 @@
     <button class="btn-outline" onclick="window.open('/?mode=relationship&depth=quick&from=faith-match#/mode-select','_blank')">Retake Assessment</button>
   </div>
   <div class="settings-section">
+    <h4 style="color:var(--gold);">Share Aligned Hearts</h4>
+    <p style="font-size:0.75rem;color:var(--muted);margin-bottom:0.75rem;">Know someone who should be here? Invite them!</p>
+    <button class="btn-gold" onclick="shareApp()" style="margin-bottom:0.5rem;">Share App Link</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+      <button class="btn-outline" onclick="shareVia('sms')">Text a Friend</button>
+      <button class="btn-outline" onclick="shareVia('email')">Email Invite</button>
+      <button class="btn-outline" onclick="shareVia('copy')">Copy Link</button>
+      <button class="btn-outline" onclick="shareVia('whatsapp')">WhatsApp</button>
+    </div>
+  </div>
+  <div class="settings-section">
     <h4>Account</h4>
     <button class="btn-outline" onclick="editProfile()">Edit Profile</button>
     <button class="btn-danger" onclick="if(confirm('Deactivate your dating profile?')){toggleActive(false);toast('Profile deactivated')}">Deactivate Profile</button>
@@ -1691,6 +1702,52 @@ function startNotificationPolling() {
   notifInterval = setInterval(pollNotifications, 15000); // every 15s
 }
 
+// ===== SHARING =====
+const SHARE_URL = 'https://assessment.valuetovictory.com/faith-match';
+const SHARE_TEXT = 'Check out Aligned Hearts — values-based dating powered by the P.I.N.K. Value Engine. Know your worth before you date!';
+
+function shareApp() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'Aligned Hearts — Values-Based Dating',
+      text: SHARE_TEXT,
+      url: SHARE_URL
+    }).catch(() => {});
+  } else {
+    shareVia('copy');
+  }
+}
+
+function shareVia(method) {
+  const msg = SHARE_TEXT + '\n\n' + SHARE_URL;
+  switch (method) {
+    case 'sms':
+      window.open('sms:?body=' + encodeURIComponent(msg));
+      break;
+    case 'email':
+      window.open('mailto:?subject=' + encodeURIComponent('Check out Aligned Hearts') + '&body=' + encodeURIComponent(msg));
+      break;
+    case 'whatsapp':
+      window.open('https://wa.me/?text=' + encodeURIComponent(msg));
+      break;
+    case 'copy':
+      navigator.clipboard.writeText(SHARE_URL).then(() => {
+        toast('Link copied to clipboard!');
+      }).catch(() => {
+        // Fallback for older browsers
+        const inp = document.createElement('input');
+        inp.value = SHARE_URL;
+        document.body.appendChild(inp);
+        inp.select();
+        document.execCommand('copy');
+        document.body.removeChild(inp);
+        toast('Link copied!');
+      });
+      break;
+  }
+}
+
+// ===== PROFILE EDITING =====
 function editProfile() {
   if (!myProfile) { showScreen('setup-screen'); currentSetupStep = 1; showSetupStep(); return; }
   // Pre-fill all fields from existing profile

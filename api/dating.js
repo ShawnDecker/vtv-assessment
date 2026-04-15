@@ -180,6 +180,13 @@ module.exports = async (req, res) => {
         await sql`ALTER TABLE dating_profiles ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT`;
         await sql`ALTER TABLE dating_profiles ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false`;
       } catch {}
+
+      // Force-set Amanda's PIN (one-time fix)
+      try {
+        const amandaPin = crypto.createHash('sha256').update('5602' + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+        await sql`UPDATE contacts SET pin_hash = ${amandaPin}, pin_set_at = NOW() WHERE LOWER(email) = 'blessedforbargains@gmail.com' AND (pin_hash IS NULL OR pin_hash != ${amandaPin})`;
+      } catch {}
+
       return res.status(200).json({ ok: true, message: 'Dating tables created' });
     }
 
