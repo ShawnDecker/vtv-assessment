@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Book Now | Goodloe Vegas</title>
+<meta name="description" content="Book your private car service in Las Vegas. Airport transfers, nightlife VIP, concierge. 24/7. Save 10-15% vs rideshare."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--surface:#141414;--surface2:#1a1a1a;--gold:#D4A847;--blue:#00D4FF;--pink:#FF6B9D;--text:#f0f0f0;--muted:#999;--red:#e74c3c;--green:#27ae60}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+body.light{--bg:#f5f5f0;--surface:#ffffff;--surface2:#eee;--text:#1a1a1a;--muted:#666}
+h1,h2,h3,h4{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:1px}
+a{color:var(--gold);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Theme Toggle */
+.theme-toggle{position:fixed;top:16px;right:16px;z-index:1000;background:var(--surface);border:1px solid var(--gold);color:var(--gold);padding:8px 14px;border-radius:20px;cursor:pointer;font-size:.85rem;font-family:'Inter',sans-serif}
+
+/* Nav */
+nav{background:var(--surface);border-bottom:2px solid var(--gold);padding:14px 0;text-align:center;position:sticky;top:0;z-index:99}
+nav a{color:var(--muted);font-family:'Oswald',sans-serif;font-size:.95rem;text-transform:uppercase;letter-spacing:2px;margin:0 18px;padding:6px 0;border-bottom:2px solid transparent;transition:.2s}
+nav a:hover,nav a.active{color:var(--gold);border-bottom-color:var(--gold);text-decoration:none}
+
+/* Hero */
+.hero{text-align:center;padding:70px 20px 50px}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);color:var(--gold);margin-bottom:12px}
+.hero p{font-size:1.15rem;color:var(--muted);max-width:500px;margin:0 auto}
+
+/* Sections */
+section{max-width:900px;margin:0 auto;padding:50px 20px}
+.section-title{font-size:1.8rem;color:var(--gold);text-align:center;margin-bottom:30px}
+
+/* Form Styles */
+.form-card{background:var(--surface);border:1px solid #333;border-radius:12px;padding:36px;max-width:640px;margin:0 auto}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.form-row.full{grid-template-columns:1fr}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column}
+.form-group label{font-size:.8rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;font-family:'Oswald',sans-serif}
+.form-group input,.form-group select,.form-group textarea{background:var(--surface2);border:1px solid #333;color:var(--text);padding:12px 14px;border-radius:8px;font-size:.95rem;font-family:'Inter',sans-serif;transition:border .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--gold)}
+.form-group textarea{resize:vertical;min-height:80px}
+.btn-gold{display:block;width:100%;background:linear-gradient(135deg,var(--gold),#c4922a);color:#000;font-family:'Oswald',sans-serif;font-size:1.1rem;text-transform:uppercase;letter-spacing:2px;padding:16px;border:none;border-radius:8px;cursor:pointer;margin-top:10px;font-weight:600;transition:transform .15s,box-shadow .15s}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(212,168,71,.35)}
+
+/* Price Comparison */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:640px;margin:0 auto 20px}
+@media(max-width:600px){.compare-grid{grid-template-columns:1fr}}
+.compare-card{border-radius:12px;padding:30px 24px;text-align:center}
+.compare-card.rideshare{background:var(--surface);border:2px solid var(--red)}
+.compare-card.chris{background:var(--surface);border:2px solid var(--gold);position:relative}
+.compare-card h3{font-size:1.1rem;margin-bottom:8px}
+.compare-card .price{font-size:2.4rem;font-family:'Oswald',sans-serif;font-weight:700;margin:8px 0}
+.compare-card.rideshare .price{color:var(--red)}
+.compare-card.chris .price{color:var(--gold)}
+.compare-card .note{font-size:.85rem;color:var(--muted)}
+.badge{position:absolute;top:-14px;right:20px;background:var(--green);color:#fff;font-family:'Oswald',sans-serif;font-size:.8rem;padding:4px 14px;border-radius:20px;text-transform:uppercase;letter-spacing:1px}
+.compare-footer{text-align:center;color:var(--muted);font-size:1rem;margin-top:10px}
+
+/* Payment Grid */
+.pay-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:700px;margin:0 auto}
+@media(max-width:600px){.pay-grid{grid-template-columns:1fr 1fr}}
+.pay-card{background:var(--surface);border:1px solid #333;border-radius:12px;padding:24px 16px;text-align:center;transition:border .2s}
+.pay-card:hover{border-color:var(--gold)}
+.pay-icon{font-size:2.2rem;margin-bottom:8px}
+.pay-card h4{font-size:.95rem;color:var(--gold);margin-bottom:4px}
+.pay-card p{font-size:.8rem;color:var(--muted)}
+
+/* Checkout Demo */
+.checkout-card{background:var(--surface);border:1px solid #333;border-radius:12px;padding:36px;max-width:420px;margin:0 auto}
+.checkout-card .amount{text-align:center;font-family:'Oswald',sans-serif;font-size:2rem;color:var(--gold);margin-bottom:24px}
+.checkout-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.checkout-disclaimer{text-align:center;font-size:.78rem;color:var(--muted);margin-top:14px}
+
+/* Contact */
+.contact-block{text-align:center;max-width:500px;margin:0 auto}
+.avatar{width:100px;height:100px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-family:'Oswald',sans-serif;font-size:2rem;color:#000;font-weight:700}
+.phone-link{display:block;font-family:'Oswald',sans-serif;font-size:2rem;color:var(--gold);margin:12px 0}
+.contact-block p{color:var(--muted);margin:6px 0}
+
+/* Hours */
+.hours{text-align:center;padding:40px 20px}
+.hours p{font-size:1.1rem;color:var(--muted)}
+.hours strong{color:var(--gold)}
+
+/* Footer */
+footer{text-align:center;padding:30px 20px;border-top:1px solid #222;font-size:.82rem;color:var(--muted)}
+footer a{color:var(--gold)}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--surface);border:2px solid var(--gold);border-radius:16px;padding:40px 30px;text-align:center;max-width:420px;width:90%;animation:popIn .25s ease}
+@keyframes popIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-box h2{font-size:1.6rem;color:var(--gold);margin-bottom:12px}
+.modal-box p{color:var(--muted);margin:8px 0;font-size:.95rem}
+.modal-box .booking-num{font-family:'Oswald',sans-serif;font-size:1.3rem;color:var(--blue);margin:14px 0}
+.modal-close{margin-top:20px;background:var(--gold);color:#000;border:none;font-family:'Oswald',sans-serif;font-size:1rem;padding:12px 36px;border-radius:8px;cursor:pointer;text-transform:uppercase;letter-spacing:1px}
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="document.body.classList.toggle('light');this.textContent=document.body.classList.contains('light')?'Dark Mode':'Light Mode'">Light Mode</button>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="rides.html">Rides</a>
+  <a href="nightlife.html">Nightlife &amp; Stays</a>
+  <a href="book.html" class="active">Book Now</a>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>Let's Get You Where You Need to Go.</h1>
+  <p>24/7. For Less. Your Way.</p>
+</div>
+
+<!-- Booking Form -->
+<section>
+  <h2 class="section-title">Request a Quote</h2>
+  <div class="form-card">
+    <form id="bookingForm" onsubmit="return handleBooking(event)">
+      <div class="form-row">
+        <div class="form-group"><label>Your Name</label><input type="text" placeholder="Full name" required/></div>
+        <div class="form-group"><label>Phone or Email</label><input type="text" placeholder="How should Chris reach you?" required/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Pickup Location</label><input type="text" placeholder="Hotel, address, airport..." required/></div>
+        <div class="form-group"><label>Destination</label><input type="text" placeholder="Where are you headed?" required/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Date</label><input type="date" required/></div>
+        <div class="form-group"><label>Time</label><input type="time" required/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Passengers</label><input type="number" min="1" max="8" value="1"/></div>
+        <div class="form-group">
+          <label>Service Type</label>
+          <select>
+            <option>Local Ride</option>
+            <option>Airport Transfer</option>
+            <option>Long-Distance Charter</option>
+            <option>Nightlife VIP</option>
+            <option>Concierge Request</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label>Special Requests</label><textarea placeholder="Anything Chris should know — car seats, extra stops, accessibility needs..."></textarea></div>
+      </div>
+      <button type="submit" class="btn-gold">Get My Quote</button>
+    </form>
+  </div>
+</section>
+
+<!-- Price Comparison -->
+<section>
+  <h2 class="section-title">Why Pay More?</h2>
+  <div class="compare-grid">
+    <div class="compare-card rideshare">
+      <h3>Rideshare Price</h3>
+      <div class="price">~$45</div>
+      <p class="note">Surge pricing, app fees, inconsistent drivers</p>
+    </div>
+    <div class="compare-card chris">
+      <span class="badge">15% Less</span>
+      <h3>Chris's Price</h3>
+      <div class="price">$38</div>
+      <p class="note">Flat rate. No surge. Professional service.</p>
+    </div>
+  </div>
+  <p class="compare-footer">No surge. No app fees. Just a fair price.</p>
+</section>
+
+<!-- Payment Methods -->
+<section>
+  <h2 class="section-title">Payment Options</h2>
+  <div class="pay-grid">
+    <div class="pay-card"><div class="pay-icon">&#128181;</div><h4>Cash</h4><p>Pay when you arrive</p></div>
+    <div class="pay-card"><div class="pay-icon">&#9889;</div><h4>Venmo</h4><p>@ChrisGoodloe</p></div>
+    <div class="pay-card"><div class="pay-icon">&#128274;</div><h4>Zelle</h4><p>(702) 481-0701</p></div>
+    <div class="pay-card"><div class="pay-icon">&#128179;</div><h4>Card</h4><p>All major cards accepted</p></div>
+  </div>
+</section>
+
+<!-- Mock Checkout -->
+<section>
+  <h2 class="section-title">Quick Pay</h2>
+  <div class="checkout-card">
+    <div class="amount">$38.00</div>
+    <form id="payForm" onsubmit="return handlePay(event)">
+      <div class="form-row full">
+        <div class="form-group"><label>Card Number</label><input type="text" placeholder="4242 4242 4242 4242" maxlength="19"/></div>
+      </div>
+      <div class="checkout-row">
+        <div class="form-group"><label>Expiry</label><input type="text" placeholder="MM/YY" maxlength="5"/></div>
+        <div class="form-group"><label>CVC</label><input type="text" placeholder="123" maxlength="4"/></div>
+      </div>
+      <button type="submit" class="btn-gold">Pay Now</button>
+    </form>
+    <p class="checkout-disclaimer">Demo checkout — not connected to real payment processing</p>
+  </div>
+</section>
+
+<!-- Direct Contact -->
+<section>
+  <h2 class="section-title">Talk to Chris Directly</h2>
+  <div class="contact-block">
+    <div class="avatar">CG</div>
+    <a href="tel:7024810701" class="phone-link">(702) 481-0701</a>
+    <p>Call or text anytime. 24/7.</p>
+    <p style="margin-top:12px">Or message on Facebook: <a href="https://facebook.com" target="_blank">Chris Goodloe</a></p>
+  </div>
+</section>
+
+<!-- Hours -->
+<div class="hours">
+  <p>Available <strong>24 hours a day, 7 days a week.</strong> Holidays included.</p>
+</div>
+
+<!-- Footer -->
+<footer>
+  Chris Goodloe &bull; Las Vegas, NV &bull; <a href="tel:7024810701">(702) 481-0701</a><br/>
+  <span style="font-size:.75rem;margin-top:6px;display:inline-block">Site designed by <a href="https://valuetovictory.com" target="_blank">Value to Victory</a></span>
+</footer>
+
+<!-- Quote Modal -->
+<div class="modal-overlay" id="quoteModal">
+  <div class="modal-box">
+    <h2>Quote Request Received!</h2>
+    <div class="booking-num" id="quoteNum"></div>
+    <p>Chris will contact you within 30 minutes to confirm your ride and price.</p>
+    <p>Expect to save <strong style="color:var(--gold)">10-15%</strong> vs any rideshare.</p>
+    <button class="modal-close" onclick="closeModal('quoteModal')">Close</button>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal-box">
+    <h2>Booking Confirmed!</h2>
+    <div class="booking-num" id="payNum"></div>
+    <p>Your ride with Goodloe Vegas is booked.</p>
+    <p>Chris will text you at <strong style="color:var(--gold)">(702) 481-0701</strong> to confirm details.</p>
+    <button class="modal-close" onclick="closeModal('payModal')">Close</button>
+  </div>
+</div>
+
+<script>
+function genBookingNum(){return'GV-'+String(Math.floor(10000+Math.random()*90000))}
+
+function handleBooking(e){
+  e.preventDefault();
+  document.getElementById('quoteNum').textContent=genBookingNum();
+  document.getElementById('quoteModal').classList.add('show');
+  return false;
+}
+
+function handlePay(e){
+  e.preventDefault();
+  document.getElementById('payNum').textContent=genBookingNum();
+  document.getElementById('payModal').classList.add('show');
+  return false;
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+
+document.querySelectorAll('.modal-overlay').forEach(function(m){
+  m.addEventListener('click',function(e){
+    if(e.target===m) m.classList.remove('show');
+  });
+});
+</script>
+</body>
+</html>

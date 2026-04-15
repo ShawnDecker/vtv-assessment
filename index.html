@@ -1,1453 +1,263 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-    <title>The Value Engine — P.I.N.K. Assessment</title>
-    <meta name="description" content="You're not broke — you're mispricing your life. Take the free 5-minute P.I.N.K. assessment and get your Master Value Score across Time, People, Influence, Numbers, and Knowledge." />
-
-    <!-- Open Graph (Facebook, Instagram, LinkedIn) -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://assessment.valuetovictory.com" />
-    <meta property="og:title" content="You Are Not Broke. You Are Mispricing Your Life." />
-    <meta property="og:description" content="Free 5-minute diagnostic across 5 pillars of value — Time, People, Influence, Numbers, and Knowledge. Get your Master Value Score and a personalized prescription to fix what's broken." />
-    <meta property="og:image" content="https://assessment.valuetovictory.com/og-image.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:site_name" content="Value to Victory" />
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="You Are Not Broke. You Are Mispricing Your Life." />
-    <meta name="twitter:description" content="Free 5-minute diagnostic across 5 pillars of value. Get your Master Value Score instantly." />
-    <meta name="twitter:image" content="https://assessment.valuetovictory.com/og-image.png" />
-
-    <!-- Additional SEO & Social -->
-    <meta name="author" content="Shawn E. Decker" />
-    <meta name="keywords" content="Value Engine, PINK assessment, personal development, Master Value Score, free assessment, life value diagnostic, Shawn Decker, Value to Victory, coaching, self improvement, know your value" />
-    <link rel="canonical" href="https://assessment.valuetovictory.com" />
-    <script>
-    // Dynamic question loader — fetches personalized questions before bundle executes
-    (function() {
-      var params = new URLSearchParams(window.location.search);
-      var savedEmail = null;
-      try { savedEmail = localStorage.getItem('ve_email'); } catch(e) {}
-      var email = params.get('email') || savedEmail;
-      var mode = params.get('mode') || 'individual';
-      var depth = params.get('depth') || (window.__veDepth) || 'extensive';
-      var pillar = params.get('pillar') || '';
-
-      // Persist depth choice for the session
-      window.__veDepth = depth;
-      window.__veFocusPillar = pillar || null;
-
-      if (email) {
-        try { localStorage.setItem('ve_email', email); } catch(e) {}
-      }
-      // Always fetch dynamic questions from the bank so the rotation pool is used.
-      // The API returns personalized questions (unanswered first) if email is provided,
-      // otherwise returns a shuffled set from the full 281-question pool.
-      var shouldFetch = true;
-      if (shouldFetch) {
-        var xhr = new XMLHttpRequest();
-        var apiUrl = '/api/questions?' + (email ? 'email=' + encodeURIComponent(email) + '&' : '') + 'mode=' + encodeURIComponent(mode) + '&depth=' + encodeURIComponent(depth);
-        if (depth === 'pillar' && pillar) {
-          apiUrl += '&pillar=' + encodeURIComponent(pillar);
-        }
-        xhr.open('GET', apiUrl, false); // synchronous
-        try {
-          xhr.send();
-          if (xhr.status === 200) {
-            var data = JSON.parse(xhr.responseText);
-            if (data.questions && data.questions.length > 0) {
-              window.__veQuestions = data.questions;
-              window.__veUserHistory = data;
-            }
-          }
-        } catch(e) {
-          console.warn('Dynamic question load failed, using defaults:', e);
-        }
-      }
-    })();
-    </script>
-    <script>
-    // === DEPTH SELECTOR + RESULTS DEEP-DIVE INJECTION ===
-    // Intercepts the React app to add assessment depth selection and results CTAs
-    (function() {
-      // --- Monkey-patch fetch to inject depth/focusPillar into assessment submission ---
-      var originalFetch = window.fetch;
-      window.fetch = function(url, opts) {
-        if (typeof url === 'string' && url.indexOf('/api/assessment') !== -1 && opts && opts.method === 'POST' && opts.body) {
-          try {
-            var body = JSON.parse(opts.body);
-            body.depth = window.__veDepth || 'quick';
-            body.focusPillar = window.__veFocusPillar || null;
-            opts = Object.assign({}, opts, { body: JSON.stringify(body) });
-          } catch(e) {}
-        }
-        return originalFetch.call(this, url, opts);
-      };
-
-      // --- CSS for injected components ---
-      var style = document.createElement('style');
-      style.textContent = [
-        '.ve-depth-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center; padding:1rem; animation:veFadeIn 0.3s ease; }',
-        '@keyframes veFadeIn { from{opacity:0} to{opacity:1} }',
-        '.ve-depth-card { background:#18181b; border:1px solid #27272a; border-radius:1rem; max-width:520px; width:100%; padding:2.5rem 2rem; text-align:center; font-family:"Satoshi",sans-serif; }',
-        '.ve-depth-card h2 { font-family:"Instrument Serif",serif; font-style:italic; font-size:1.75rem; color:#fff; margin-bottom:0.5rem; }',
-        '.ve-depth-card .ve-sub { font-size:0.85rem; color:#a1a1aa; margin-bottom:2rem; line-height:1.5; }',
-        '.ve-depth-option { border:1px solid #27272a; border-radius:0.75rem; padding:1.5rem; margin-bottom:1rem; cursor:pointer; transition:all 0.2s; text-align:left; background:#0a0a0a; }',
-        '.ve-depth-option:hover { border-color:#D4A847; background:#1a1a1a; }',
-        '.ve-depth-option.ve-premium { border-color:#D4A84740; background:linear-gradient(135deg,#18181b,#1a1510); }',
-        '.ve-depth-option.ve-premium:hover { border-color:#D4A847; }',
-        '.ve-depth-option h3 { font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:0.375rem; display:flex; align-items:center; gap:0.5rem; }',
-        '.ve-depth-option .ve-badge { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; background:#D4A84720; color:#D4A847; padding:0.15rem 0.5rem; border-radius:1rem; font-weight:700; }',
-        '.ve-depth-option p { font-size:0.85rem; color:#a1a1aa; line-height:1.5; margin:0; }',
-        '.ve-depth-option .ve-detail { font-size:0.75rem; color:#71717a; margin-top:0.5rem; }',
-        '.ve-depth-option .ve-recommend { font-size:0.78rem; color:#D4A847; margin-top:0.625rem; font-style:italic; }',
-        // Results deep-dive section
-        '.ve-deeper-section { background:#18181b; border:1px solid #27272a; border-radius:0.75rem; padding:2rem; margin:1.5rem auto; max-width:600px; text-align:center; }',
-        '.ve-deeper-section h3 { font-family:"Instrument Serif",serif; font-style:italic; font-size:1.5rem; color:#D4A847; margin-bottom:0.75rem; }',
-        '.ve-deeper-section p { font-size:0.9rem; color:#a1a1aa; line-height:1.6; margin-bottom:1.5rem; }',
-        '.ve-deeper-btn { display:inline-block; padding:0.875rem 2rem; background:linear-gradient(135deg,#D4A847,#b8942e); color:#0a0a0a; font-family:"Satoshi",sans-serif; font-size:0.95rem; font-weight:700; border:none; border-radius:0.625rem; cursor:pointer; transition:opacity 0.2s; text-decoration:none; }',
-        '.ve-deeper-btn:hover { opacity:0.9; }',
-        '.ve-pillar-btns { display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:center; margin-top:1.25rem; }',
-        '.ve-pillar-btn { padding:0.5rem 1rem; background:#0a0a0a; border:1px solid #27272a; border-radius:0.5rem; color:#d4d4d8; font-family:"Satoshi",sans-serif; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s; text-decoration:none; }',
-        '.ve-pillar-btn:hover { border-color:#D4A847; color:#D4A847; }',
-        '.ve-pillar-label { font-size:0.78rem; color:#71717a; margin-top:1.5rem; margin-bottom:0.5rem; }',
-      ].join('\n');
-      document.head.appendChild(style);
-
-      // --- Depth selector overlay ---
-      function showDepthSelector(selectedMode) {
-        var existing = document.getElementById('ve-depth-overlay');
-        if (existing) existing.remove();
-
-        var overlay = document.createElement('div');
-        overlay.id = 've-depth-overlay';
-        overlay.className = 've-depth-overlay';
-        overlay.innerHTML = '<div class="ve-depth-card">' +
-          '<h2>Choose Your Assessment Depth</h2>' +
-          '<p class="ve-sub">How deep do you want to go? Both assessments measure the same 5 pillars of value.</p>' +
-          '<div class="ve-depth-option" data-depth="quick">' +
-            '<h3>Quick Check <span style="color:#71717a;font-weight:400;font-size:0.85rem;">~5 minutes</span></h3>' +
-            '<p>Get your P.I.N.K. Value Score in 5 minutes. 25 questions across all 5 pillars.</p>' +
-            '<p class="ve-detail">Perfect for a first look at where you stand.</p>' +
-          '</div>' +
-          '<div class="ve-depth-option ve-premium" data-depth="extensive">' +
-            '<h3>Extensive Assessment <span class="ve-badge">Recommended</span> <span style="color:#71717a;font-weight:400;font-size:0.85rem;">~15\u201320 min</span></h3>' +
-            '<p>For those ready to truly reflect and create real change. 50 questions. Deeper insights. Personalized prescription.</p>' +
-            '<p class="ve-recommend">We recommend this for anyone serious about understanding where they stand and ready to do the work.</p>' +
-          '</div>' +
-        '</div>';
-
-        document.body.appendChild(overlay);
-
-        overlay.querySelectorAll('.ve-depth-option').forEach(function(opt) {
-          opt.addEventListener('click', function() {
-            var depth = this.getAttribute('data-depth');
-            window.__veDepth = depth;
-            window.__veFocusPillar = null;
-            overlay.remove();
-
-            // Reload the page with depth in the URL so the sync pre-fetch script
-            // runs BEFORE the React bundle evaluates, giving us the correct question count.
-            var mode = selectedMode || 'individual';
-            window.location.href = '/?depth=' + encodeURIComponent(depth) + '&mode=' + encodeURIComponent(mode) + '#/assessment';
-          });
-        });
-      }
-
-      // --- Inject "Go Deeper" section on results page ---
-      function injectResultsDeepDive() {
-        // Don't inject if already there
-        if (document.getElementById('ve-deeper-inject')) return;
-
-        var root = document.getElementById('root');
-        if (!root) return;
-
-        // Find the results container (look for the score range badge pattern)
-        var resultsContainer = root.querySelector('[class*="min-h-screen"]');
-        if (!resultsContainer) return;
-
-        var depth = window.__veDepth || 'quick';
-        var section = document.createElement('div');
-        section.id = 've-deeper-inject';
-        section.style.padding = '0 1rem 3rem';
-
-        if (depth === 'quick') {
-          section.innerHTML = '<div class="ve-deeper-section">' +
-            '<h3>Ready to Go Deeper?</h3>' +
-            '<p>Your quick score gives you a snapshot \u2014 but real change requires real reflection. The extensive assessment unlocks your full P.I.N.K. breakdown, personalized prescription, and the tools to actually move the needle.</p>' +
-            '<a class="ve-deeper-btn" href="/?depth=extensive#/mode-select">Take the Extensive Assessment</a>' +
-            '<p class="ve-pillar-label">Or dive into one pillar at a time:</p>' +
-            '<div class="ve-pillar-btns">' +
-              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=time#/mode-select">Time</a>' +
-              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=people#/mode-select">People</a>' +
-              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=influence#/mode-select">Influence</a>' +
-              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=numbers#/mode-select">Numbers</a>' +
-              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=knowledge#/mode-select">Knowledge</a>' +
-            '</div>' +
-          '</div>';
-        } else {
-          // Extensive or pillar — still show pillar deep-dives
-          section.innerHTML = '<div class="ve-deeper-section">' +
-            '<h3>Explore Individual Pillars</h3>' +
-            '<p>Dive into a single pillar for even more detail and targeted insights.</p>' +
-            '<div class="ve-pillar-btns">' +
-              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=time#/mode-select">Time</a>' +
-              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=people#/mode-select">People</a>' +
-              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=influence#/mode-select">Influence</a>' +
-              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=numbers#/mode-select">Numbers</a>' +
-              '<a class="ve-pillar-btn" href="/?depth=pillar&pillar=knowledge#/mode-select">Knowledge</a>' +
-            '</div>' +
-          '</div>';
-        }
-
-        // Append before the free-book section or at the end of root
-        var freeBook = document.getElementById('free-book-section');
-        if (freeBook) {
-          freeBook.parentNode.insertBefore(section, freeBook);
-        } else {
-          root.appendChild(section);
-        }
-      }
-
-      // --- Hide non-assessment content during assessment ---
-      function updateSectionVisibility() {
-        var hash = window.location.hash;
-        var isAssessment = hash.indexOf('#/assessment') === 0;
-        var isCapture = hash.indexOf('#/capture') === 0;
-        var fb = document.getElementById('free-book-section');
-        var faq = document.getElementById('faq-objections-section');
-        if (isAssessment) {
-          if (fb) fb.style.display = 'none';
-          if (faq) faq.style.display = 'none';
-        } else if (!isCapture) {
-          // Show on non-assessment, non-capture routes (landing, results, etc.)
-          // Only show if it was originally meant to be visible
-          if (fb && hash === '#/' || hash === '' || hash === '#') fb.style.display = '';
-        }
-      }
-      window.addEventListener('hashchange', updateSectionVisibility);
-      updateSectionVisibility();
-      // Also re-check on DOM changes in case React re-renders
-      new MutationObserver(updateSectionVisibility).observe(document.body, { childList: true, subtree: true });
-
-      // --- Watch for mode selection clicks to show depth selector ---
-      var lastHash = '';
-      var modeSelectObserver = null;
-
-      function watchModeSelect() {
-        var root = document.getElementById('root');
-        if (!root) return;
-
-        if (modeSelectObserver) modeSelectObserver.disconnect();
-
-        modeSelectObserver = new MutationObserver(function() {
-          // Check if we're on mode-select page
-          if (window.location.hash === '#/mode-select' || window.location.hash === '#/mode-select/') {
-            // Look for mode selection buttons (they contain "Start Individual", "Start Relationship", etc.)
-            var buttons = root.querySelectorAll('button');
-            buttons.forEach(function(btn) {
-              var text = btn.textContent || '';
-              if ((text.indexOf('Start Individual') !== -1 || text.indexOf('Start Relationship') !== -1 || text.indexOf('Start Leadership') !== -1) && !btn.__veDepthHooked) {
-                btn.__veDepthHooked = true;
-                btn.addEventListener('click', function(e) {
-                  var mode = 'individual';
-                  if (text.indexOf('Relationship') !== -1) mode = 'relationship';
-                  else if (text.indexOf('Leadership') !== -1) mode = 'leadership';
-
-                  // If depth was pre-selected via URL, skip the selector
-                  var urlParams = new URLSearchParams(window.location.search);
-                  var preDepth = urlParams.get('depth');
-                  if (preDepth) {
-                    window.__veDepth = preDepth;
-                    window.__veFocusPillar = urlParams.get('pillar') || null;
-                    return; // Let the click proceed naturally
-                  }
-
-                  // Show depth selector — selection triggers a full page reload with depth param
-                  e.preventDefault();
-                  e.stopPropagation();
-                  showDepthSelector(mode);
-                }, true);
-              }
-            });
-          }
-
-          // Check if we're on results page — inject deep-dive CTAs
-          if (window.location.hash === '#/results' || window.location.hash === '#/results/') {
-            setTimeout(injectResultsDeepDive, 500);
-            setTimeout(injectFaithMatchReturn, 700);
-          }
-        });
-
-        modeSelectObserver.observe(root, { childList: true, subtree: true });
-      }
-
-      // Start watching once DOM is ready
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', watchModeSelect);
-      } else {
-        watchModeSelect();
-      }
-
-      // Faith Match redirect after assessment
-      function injectFaithMatchReturn() {
-        var fromParam = new URLSearchParams(window.location.search).get('from');
-        if (fromParam !== 'faith-match') return;
-        var root = document.getElementById('root');
-        if (!root) return;
-        if (document.getElementById('faith-match-return')) return;
-        var resultsContainer = root.querySelector('[class*="min-h-screen"]');
-        if (!resultsContainer) return;
-        var div = document.createElement('div');
-        div.id = 'faith-match-return';
-        div.style.cssText = 'text-align:center;padding:1.5rem;margin:1rem auto;max-width:400px;background:linear-gradient(135deg,rgba(212,168,71,0.15),rgba(212,168,71,0.05));border:1px solid rgba(212,168,71,0.3);border-radius:0.75rem;';
-        div.innerHTML = '<p style="font-size:1.1rem;font-weight:700;color:#D4A847;margin-bottom:0.5rem;">Assessment Complete!</p><p style="font-size:0.85rem;color:#a1a1aa;margin-bottom:1rem;">Your P.I.N.K. scores are ready. Continue to set up your Aligned Hearts profile.</p><a href="/faith-match" style="display:inline-block;padding:0.75rem 2rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:800;border-radius:0.5rem;text-decoration:none;font-size:1rem;">Continue to Aligned Hearts &rarr;</a>';
-        resultsContainer.insertBefore(div, resultsContainer.firstChild);
-      }
-
-      // Also watch hash changes
-      window.addEventListener('hashchange', function() {
-        if (window.location.hash === '#/results' || window.location.hash === '#/results/') {
-          setTimeout(injectResultsDeepDive, 800);
-          setTimeout(injectFaithMatchReturn, 1000);
-        }
-        if (window.location.hash === '#/mode-select' || window.location.hash === '#/mode-select/') {
-          watchModeSelect();
-        }
-      });
-
-      // --- Patch mode-select page text to reflect depth choice ---
-      var modePatchObserver = new MutationObserver(function() {
-        if (window.location.hash !== '#/mode-select' && window.location.hash !== '#/mode-select/') return;
-        var root = document.getElementById('root');
-        if (!root) return;
-        // Patch "All modes include the full 50-question..." subtitle
-        var allTexts = root.querySelectorAll('p');
-        allTexts.forEach(function(el) {
-          if (el.textContent && el.textContent.indexOf('full 50-question') !== -1) {
-            el.textContent = 'Choose your mode, then pick your assessment depth — Quick (25 questions, ~5 min) or Extensive (50 questions, ~15–20 min).';
-          }
-          // Patch card detail "50 questions + time multiplier"
-          if (el.textContent === '50 questions + time multiplier') {
-            el.textContent = '25–50 questions + time multiplier';
-          }
-        });
-      });
-      modePatchObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
-
-      // --- Save email to localStorage when user enters it in the React form ---
-      // This ensures the pre-fetch script works on subsequent page loads (depth redirect).
-      var emailObserver = new MutationObserver(function() {
-        var emailInput = document.querySelector('[data-testid="input-email"]');
-        if (emailInput && !emailInput.__veEmailHooked) {
-          emailInput.__veEmailHooked = true;
-          // Watch for form submission
-          var form = emailInput.closest('form');
-          if (form && !form.__veFormHooked) {
-            form.__veFormHooked = true;
-            form.addEventListener('submit', function() {
-              var val = emailInput.value.trim();
-              if (val) {
-                try { localStorage.setItem('ve_email', val); } catch(e) {}
-              }
-            });
-          }
-        }
-      });
-      emailObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
-
-      // --- Patch question counter for quick depth mode ---
-      // For first-time users where __veQuestions wasn't pre-fetched, the React app
-      // shows 50 hardcoded questions. This patches the DOM to show the correct count.
-      function patchQuestionCounter() {
-        var d = window.__veDepth || new URLSearchParams(window.location.search).get('depth') || 'quick';
-        if (d !== 'quick') return;
-        var root = document.getElementById('root');
-        if (!root) return;
-        // Walk ALL text nodes and elements looking for "of 50"
-        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
-        var node;
-        while (node = walker.nextNode()) {
-          if (node.nodeValue && node.nodeValue.trim() === '50') {
-            // Check if sibling/parent context is a question counter
-            var parent = node.parentElement;
-            if (parent && parent.textContent && parent.textContent.match(/Question \d+ of 50/)) {
-              node.nodeValue = '25';
-            }
-          }
-        }
-      }
-      // Run the patcher on DOM changes
-      var qPatchObserver = new MutationObserver(function() {
-        var d = window.__veDepth || new URLSearchParams(window.location.search).get('depth');
-        if (d === 'quick') patchQuestionCounter();
-      });
-      qPatchObserver.observe(document.body || document.documentElement, { childList: true, subtree: true, characterData: true });
-    })();
-    </script>
-    <script type="module" crossorigin src="./assets/index-DXoDn4Oe.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CHzibysT.css">
-  </head>
-  <body>
-    <div id="root"></div>
-
-    <!-- ═══════════════════════════════════════════════════════════════
-         TRUST SIGNALS + CREDENTIAL UPGRADES
-         Sections: Featured On | Credentials | Testimonials | Video
-         ═══════════════════════════════════════════════════════════════ -->
-    <div id="ve-trust-sections" style="display:none;">
-      <style>
-        /* ── Scroll Reveal Animation ── */
-        .ve-reveal {
-          opacity: 0;
-          transform: translateY(40px);
-          transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
-        }
-        .ve-reveal.ve-visible {
-          opacity: 1;
-          transform: translateY(0);
-        }
-        .ve-reveal-delay-1 { transition-delay: 0.1s; }
-        .ve-reveal-delay-2 { transition-delay: 0.2s; }
-        .ve-reveal-delay-3 { transition-delay: 0.3s; }
-        .ve-reveal-delay-4 { transition-delay: 0.4s; }
-
-        /* ── AS FEATURED ON ── */
-        .ve-featured-bar {
-          background: linear-gradient(180deg, #0a0a0a 0%, #0f0f0f 50%, #0a0a0a 100%);
-          border-top: 1px solid #1a1a1a;
-          border-bottom: 1px solid #1a1a1a;
-          padding: 3rem 1.5rem;
-          text-align: center;
-        }
-        .ve-featured-bar .ve-eyebrow {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.65rem;
-          letter-spacing: 4px;
-          text-transform: uppercase;
-          color: #52525b;
-          margin-bottom: 2rem;
-        }
-        .ve-featured-logos {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-wrap: wrap;
-          gap: 2rem 3rem;
-          max-width: 800px;
-          margin: 0 auto;
-        }
-        .ve-featured-logo {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: #3f3f46;
-          letter-spacing: 0.05em;
-          transition: color 0.3s ease;
-          white-space: nowrap;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        .ve-featured-logo:hover { color: #71717a; }
-        .ve-featured-logo .ve-logo-icon {
-          font-size: 1.1rem;
-          opacity: 0.6;
-        }
-        .ve-featured-logo.ve-amazon { font-size: 1.05rem; letter-spacing: 0.02em; }
-        .ve-featured-logo.ve-wfxr { font-weight: 900; font-size: 1.1rem; }
-        .ve-featured-logo.ve-podcast { font-style: italic; font-weight: 500; }
-        .ve-featured-divider {
-          width: 1px;
-          height: 24px;
-          background: #27272a;
-        }
-        @media (max-width: 640px) {
-          .ve-featured-logos { gap: 1.5rem 2rem; }
-          .ve-featured-logo { font-size: 0.8rem; }
-          .ve-featured-logo.ve-wfxr { font-size: 0.95rem; }
-          .ve-featured-logo.ve-amazon { font-size: 0.9rem; }
-          .ve-featured-divider { display: none; }
-        }
-
-        /* ── CREDENTIAL BADGES ── */
-        .ve-credentials-section {
-          background: #0a0a0a;
-          padding: 5rem 1.5rem;
-          text-align: center;
-        }
-        .ve-credentials-section .ve-section-eyebrow {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.65rem;
-          letter-spacing: 4px;
-          text-transform: uppercase;
-          color: #D4A847;
-          margin-bottom: 0.75rem;
-        }
-        .ve-credentials-section .ve-section-title {
-          font-family: 'Instrument Serif', serif;
-          font-style: italic;
-          font-size: 2rem;
-          color: #fff;
-          margin-bottom: 0.75rem;
-        }
-        .ve-credentials-section .ve-section-sub {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.9rem;
-          color: #71717a;
-          margin-bottom: 3rem;
-          max-width: 480px;
-          margin-left: auto;
-          margin-right: auto;
-          line-height: 1.6;
-        }
-        .ve-badge-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          gap: 1.5rem;
-          max-width: 960px;
-          margin: 0 auto;
-        }
-        .ve-badge-card {
-          background: #18181b;
-          border: 1px solid #27272a;
-          border-radius: 1rem;
-          padding: 2rem 1.5rem;
-          text-align: center;
-          position: relative;
-          overflow: hidden;
-          transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-        }
-        .ve-badge-card:hover {
-          border-color: #D4A84760;
-          transform: translateY(-4px);
-          box-shadow: 0 8px 40px rgba(212,168,71,0.08);
-        }
-        .ve-badge-card::before {
-          content: '';
-          position: absolute;
-          top: -1px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 60px;
-          height: 3px;
-          background: linear-gradient(90deg, transparent, #D4A847, transparent);
-          border-radius: 0 0 4px 4px;
-        }
-        .ve-badge-icon {
-          width: 72px;
-          height: 72px;
-          margin: 0 auto 1.25rem;
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .ve-badge-icon::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 50%;
-          background: conic-gradient(from 0deg, #D4A84700, #D4A84740, #D4A84700, #D4A84740, #D4A84700);
-          animation: ve-badge-spin 8s linear infinite;
-        }
-        .ve-badge-icon::after {
-          content: '';
-          position: absolute;
-          inset: 3px;
-          border-radius: 50%;
-          background: #18181b;
-        }
-        @keyframes ve-badge-spin {
-          to { transform: rotate(360deg); }
-        }
-        .ve-badge-icon svg {
-          position: relative;
-          z-index: 1;
-          width: 28px;
-          height: 28px;
-          stroke: #D4A847;
-          stroke-width: 1.5;
-          fill: none;
-        }
-        .ve-badge-glow {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: 72px;
-          height: 72px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(212,168,71,0.15) 0%, transparent 70%);
-          filter: blur(12px);
-          z-index: 0;
-        }
-        .ve-badge-title {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: #fff;
-          margin-bottom: 0.5rem;
-        }
-        .ve-badge-desc {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.8rem;
-          color: #71717a;
-          line-height: 1.5;
-        }
-        @media (max-width: 520px) {
-          .ve-badge-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
-          .ve-badge-card { padding: 1.5rem 1rem; }
-          .ve-badge-icon { width: 56px; height: 56px; }
-          .ve-credentials-section .ve-section-title { font-size: 1.65rem; }
-        }
-
-        /* ── TESTIMONIALS ── */
-        .ve-testimonials-section {
-          background: linear-gradient(180deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%);
-          padding: 5rem 1.5rem;
-          text-align: center;
-          border-top: 1px solid #1a1a1a;
-        }
-        .ve-testimonials-section .ve-section-eyebrow {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.65rem;
-          letter-spacing: 4px;
-          text-transform: uppercase;
-          color: #D4A847;
-          margin-bottom: 0.75rem;
-        }
-        .ve-testimonials-section .ve-section-title {
-          font-family: 'Instrument Serif', serif;
-          font-style: italic;
-          font-size: 2rem;
-          color: #fff;
-          margin-bottom: 3rem;
-        }
-        .ve-testimonial-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 1.5rem;
-          max-width: 960px;
-          margin: 0 auto;
-        }
-        .ve-testimonial-card {
-          background: #18181b;
-          border: 1px solid #27272a;
-          border-radius: 0.75rem;
-          padding: 2rem 1.5rem;
-          text-align: left;
-          position: relative;
-          transition: border-color 0.3s, transform 0.3s;
-        }
-        .ve-testimonial-card:hover {
-          border-color: #D4A84740;
-          transform: translateY(-2px);
-        }
-        .ve-testimonial-card .ve-quote-mark {
-          font-family: 'Instrument Serif', serif;
-          font-size: 3.5rem;
-          color: #D4A847;
-          line-height: 1;
-          margin-bottom: 0.25rem;
-          opacity: 0.4;
-        }
-        .ve-testimonial-card .ve-quote-text {
-          font-family: 'Instrument Serif', serif;
-          font-style: italic;
-          font-size: 0.95rem;
-          color: #d4d4d8;
-          line-height: 1.7;
-          margin-bottom: 1.5rem;
-        }
-        .ve-testimonial-card .ve-quote-author {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-        .ve-testimonial-card .ve-avatar {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #292007, #1a1510);
-          border: 2px solid #D4A847;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 900;
-          font-size: 0.8rem;
-          color: #D4A847;
-          flex-shrink: 0;
-        }
-        .ve-testimonial-card .ve-author-name {
-          font-weight: 700;
-          font-size: 0.85rem;
-          color: #fff;
-        }
-        .ve-testimonial-card .ve-author-role {
-          font-size: 0.72rem;
-          color: #71717a;
-        }
-        .ve-testimonial-card .ve-stat-badge {
-          display: inline-block;
-          margin-top: 1rem;
-          padding: 0.3rem 0.75rem;
-          background: rgba(212,168,71,0.08);
-          border: 1px solid rgba(212,168,71,0.2);
-          border-radius: 2rem;
-          font-size: 0.72rem;
-          font-weight: 700;
-          color: #D4A847;
-        }
-        .ve-testimonials-cta {
-          margin-top: 2.5rem;
-        }
-        .ve-testimonials-cta a {
-          display: inline-block;
-          padding: 0.75rem 2rem;
-          border: 1px solid #27272a;
-          border-radius: 0.5rem;
-          color: #a1a1aa;
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.85rem;
-          font-weight: 600;
-          text-decoration: none;
-          transition: all 0.2s;
-        }
-        .ve-testimonials-cta a:hover {
-          border-color: #D4A847;
-          color: #D4A847;
-        }
-        @media (max-width: 520px) {
-          .ve-testimonial-grid { grid-template-columns: 1fr; }
-          .ve-testimonials-section .ve-section-title { font-size: 1.65rem; }
-        }
-
-        /* ── CINEMATIC VIDEO ── */
-        .ve-video-section {
-          background: #0a0a0a;
-          padding: 5rem 1.5rem;
-          text-align: center;
-        }
-        .ve-video-section .ve-section-eyebrow {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.65rem;
-          letter-spacing: 4px;
-          text-transform: uppercase;
-          color: #D4A847;
-          margin-bottom: 0.75rem;
-        }
-        .ve-video-section .ve-section-title {
-          font-family: 'Instrument Serif', serif;
-          font-style: italic;
-          font-size: 2rem;
-          color: #fff;
-          margin-bottom: 0.75rem;
-        }
-        .ve-video-section .ve-section-sub {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.9rem;
-          color: #71717a;
-          margin-bottom: 2.5rem;
-          max-width: 480px;
-          margin-left: auto;
-          margin-right: auto;
-          line-height: 1.6;
-        }
-        .ve-video-container {
-          max-width: 800px;
-          margin: 0 auto;
-          position: relative;
-          border-radius: 1rem;
-          overflow: hidden;
-          background: #18181b;
-          border: 1px solid #27272a;
-          box-shadow:
-            0 0 0 1px rgba(212,168,71,0.06),
-            0 4px 60px rgba(0,0,0,0.6),
-            0 0 120px rgba(212,168,71,0.04);
-        }
-        .ve-video-container::before {
-          content: '';
-          position: absolute;
-          inset: -1px;
-          border-radius: 1rem;
-          padding: 1px;
-          background: linear-gradient(135deg, #D4A84730, transparent 40%, transparent 60%, #D4A84730);
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-          pointer-events: none;
-          z-index: 1;
-        }
-        .ve-video-inner {
-          position: relative;
-          width: 100%;
-          padding-bottom: 56.25%;
-          background: #111;
-        }
-        .ve-video-inner iframe {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          border: none;
-        }
-        .ve-video-caption {
-          padding: 1rem 1.5rem;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          border-top: 1px solid #27272a;
-        }
-        .ve-video-caption .ve-caption-text {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.78rem;
-          color: #71717a;
-        }
-        .ve-video-caption .ve-caption-text strong {
-          color: #a1a1aa;
-          font-weight: 600;
-        }
-        .ve-video-caption .ve-caption-badge {
-          padding: 0.25rem 0.75rem;
-          background: rgba(212,168,71,0.08);
-          border: 1px solid rgba(212,168,71,0.2);
-          border-radius: 2rem;
-          font-size: 0.65rem;
-          font-weight: 700;
-          color: #D4A847;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-        }
-        .ve-video-glow {
-          position: absolute;
-          bottom: -40px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 60%;
-          height: 80px;
-          background: radial-gradient(ellipse, rgba(212,168,71,0.06) 0%, transparent 70%);
-          filter: blur(20px);
-          pointer-events: none;
-        }
-        @media (max-width: 520px) {
-          .ve-video-section { padding: 3rem 1rem; }
-          .ve-video-section .ve-section-title { font-size: 1.65rem; }
-          .ve-video-caption { flex-direction: column; gap: 0.5rem; }
-        }
-
-        /* ── STATS BAR ── */
-        .ve-stats-bar {
-          background: #0f0f0f;
-          border-top: 1px solid #1a1a1a;
-          border-bottom: 1px solid #1a1a1a;
-          padding: 3rem 1.5rem;
-        }
-        .ve-stats-grid {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 3rem;
-          max-width: 800px;
-          margin: 0 auto;
-          flex-wrap: wrap;
-        }
-        .ve-stat-item {
-          text-align: center;
-        }
-        .ve-stat-number {
-          font-family: 'Instrument Serif', serif;
-          font-size: 2.5rem;
-          font-style: italic;
-          color: #D4A847;
-          line-height: 1;
-          margin-bottom: 0.25rem;
-        }
-        .ve-stat-label {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.72rem;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #52525b;
-          font-weight: 600;
-        }
-        .ve-stat-divider {
-          width: 1px;
-          height: 40px;
-          background: #27272a;
-        }
-        @media (max-width: 520px) {
-          .ve-stats-grid { gap: 2rem; }
-          .ve-stat-number { font-size: 2rem; }
-          .ve-stat-divider { display: none; }
-        }
-
-        /* ── PHOTO DIVIDER ── */
-        .ve-photo-divider {
-          position: relative;
-          height: 200px;
-          background: linear-gradient(180deg, #0a0a0a, #111 20%, #111 80%, #0a0a0a);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          overflow: hidden;
-        }
-        .ve-photo-divider::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(212,168,71,0.03) 0%, transparent 50%, rgba(212,168,71,0.03) 100%);
-        }
-        .ve-photo-divider .ve-divider-verse {
-          position: relative;
-          z-index: 1;
-          font-family: 'Instrument Serif', serif;
-          font-style: italic;
-          font-size: 1.25rem;
-          color: #d4d4d8;
-          max-width: 520px;
-          padding: 0 2rem;
-          line-height: 1.7;
-        }
-        .ve-photo-divider .ve-verse-ref {
-          display: block;
-          font-family: 'Satoshi', sans-serif;
-          font-style: normal;
-          font-size: 0.7rem;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: #D4A847;
-          margin-top: 0.75rem;
-          font-weight: 600;
-        }
-      </style>
-
-      <!-- ═══ AS FEATURED ON ═══ -->
-      <section class="ve-featured-bar ve-reveal">
-        <div class="ve-eyebrow">As Featured On</div>
-        <div class="ve-featured-logos">
-          <div class="ve-featured-logo ve-wfxr">
-            <span class="ve-logo-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
-            </span>
-            WFXR
-          </div>
-          <div class="ve-featured-divider"></div>
-          <div class="ve-featured-logo ve-amazon">
-            <span class="ve-logo-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            </span>
-            Amazon Best Seller
-          </div>
-          <div class="ve-featured-divider"></div>
-          <div class="ve-featured-logo ve-podcast">
-            <span class="ve-logo-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-            </span>
-            Monday Christian Podcast
-          </div>
-          <div class="ve-featured-divider"></div>
-          <div class="ve-featured-logo">
-            <span class="ve-logo-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-            </span>
-            The Roanoker
-          </div>
-          <div class="ve-featured-divider"></div>
-          <div class="ve-featured-logo">
-            <span class="ve-logo-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            </span>
-            578 Media
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ STATS BAR ═══ -->
-      <section class="ve-stats-bar ve-reveal">
-        <div class="ve-stats-grid">
-          <div class="ve-stat-item">
-            <div class="ve-stat-number">281</div>
-            <div class="ve-stat-label">Questions in the Bank</div>
-          </div>
-          <div class="ve-stat-divider"></div>
-          <div class="ve-stat-item">
-            <div class="ve-stat-number">5</div>
-            <div class="ve-stat-label">Pillars of Value</div>
-          </div>
-          <div class="ve-stat-divider"></div>
-          <div class="ve-stat-item">
-            <div class="ve-stat-number">90</div>
-            <div class="ve-stat-label">Day Challenge</div>
-          </div>
-          <div class="ve-stat-divider"></div>
-          <div class="ve-stat-item">
-            <div class="ve-stat-number">3</div>
-            <div class="ve-stat-label">Assessment Modes</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ SCRIPTURE DIVIDER ═══ -->
-      <div class="ve-photo-divider ve-reveal">
-        <div class="ve-divider-verse">
-          "His master said to him, 'Well done, good and faithful servant. You have been faithful over a little; I will set you over much.'"
-          <span class="ve-verse-ref">Matthew 25:23</span>
-        </div>
-      </div>
-
-      <!-- ═══ CREDENTIAL BADGES ═══ -->
-      <section class="ve-credentials-section">
-        <div class="ve-section-eyebrow ve-reveal">Credentials</div>
-        <h2 class="ve-section-title ve-reveal">Not Templates. Not Clip-Art.</h2>
-        <p class="ve-section-sub ve-reveal">Built on real experience, real results, and a real framework rooted in faith.</p>
-        <div class="ve-badge-grid">
-          <div class="ve-badge-card ve-reveal ve-reveal-delay-1">
-            <div class="ve-badge-icon">
-              <div class="ve-badge-glow"></div>
-              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            </div>
-            <div class="ve-badge-title">Amazon Best-Selling Author</div>
-            <div class="ve-badge-desc">Running From Miracles &mdash; a story of struggle, purpose, and the unfinished journey</div>
-          </div>
-          <div class="ve-badge-card ve-reveal ve-reveal-delay-2">
-            <div class="ve-badge-icon">
-              <div class="ve-badge-glow"></div>
-              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            </div>
-            <div class="ve-badge-title">P.I.N.K. Framework Creator</div>
-            <div class="ve-badge-desc">Original 5-pillar value system measuring People, Influence, Numbers, Knowledge & Time</div>
-          </div>
-          <div class="ve-badge-card ve-reveal ve-reveal-delay-3">
-            <div class="ve-badge-icon">
-              <div class="ve-badge-glow"></div>
-              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <div class="ve-badge-title">Certified Value Strategist</div>
-            <div class="ve-badge-desc">Individual, couples & leadership coaching powered by data-driven assessment diagnostics</div>
-          </div>
-          <div class="ve-badge-card ve-reveal ve-reveal-delay-4">
-            <div class="ve-badge-icon">
-              <div class="ve-badge-glow"></div>
-              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-            </div>
-            <div class="ve-badge-title">Featured Speaker</div>
-            <div class="ve-badge-desc">WFXR, Monday Christian Podcast, 578 Media, The Roanoker &mdash; sharing the value message</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ TESTIMONIALS ═══ -->
-      <section class="ve-testimonials-section">
-        <div class="ve-section-eyebrow ve-reveal">Real Results</div>
-        <h2 class="ve-section-title ve-reveal">Don't Take Our Word For It</h2>
-        <div class="ve-testimonial-grid">
-          <div class="ve-testimonial-card ve-reveal ve-reveal-delay-1">
-            <div class="ve-quote-mark">&ldquo;</div>
-            <div class="ve-quote-text">I scored 171 on my first assessment. Within 90 days I gained back 10+ hours per week just by applying the Time pillar recommendations. The system works if you actually run it.</div>
-            <div class="ve-quote-author">
-              <div class="ve-avatar">SA</div>
-              <div>
-                <div class="ve-author-name">Sandra Aldridge</div>
-                <div class="ve-author-role">VictoryPath Member</div>
-              </div>
-            </div>
-            <div class="ve-stat-badge">+10 hrs/week recovered</div>
-          </div>
-          <div class="ve-testimonial-card ve-reveal ve-reveal-delay-2">
-            <div class="ve-quote-mark">&ldquo;</div>
-            <div class="ve-quote-text">I thought I was doing fine until I saw my Numbers pillar score. It forced me to look at what I was actually managing versus what I was ignoring. That one pillar changed my whole approach to business.</div>
-            <div class="ve-quote-author">
-              <div class="ve-avatar">CD</div>
-              <div>
-                <div class="ve-author-name">Cameron Decker</div>
-                <div class="ve-author-role">Victory VIP</div>
-              </div>
-            </div>
-            <div class="ve-stat-badge">Numbers pillar: +22 pts</div>
-          </div>
-          <div class="ve-testimonial-card ve-reveal ve-reveal-delay-3">
-            <div class="ve-quote-mark">&ldquo;</div>
-            <div class="ve-quote-text">I retook the assessment after 90 days and my master score went up 18 points. The action plan gave me specific things to do &mdash; not motivational fluff. Just the moves.</div>
-            <div class="ve-quote-author">
-              <div class="ve-avatar">AL</div>
-              <div>
-                <div class="ve-author-name">Alex LB</div>
-                <div class="ve-author-role">VictoryPath Member</div>
-              </div>
-            </div>
-            <div class="ve-stat-badge">Master score: +18 pts</div>
-          </div>
-        </div>
-        <div class="ve-testimonials-cta ve-reveal">
-          <a href="/testimonials">See All Results &rarr;</a>
-        </div>
-      </section>
-
-      <!-- ═══ SCRIPTURE DIVIDER 2 ═══ -->
-      <div class="ve-photo-divider ve-reveal">
-        <div class="ve-divider-verse">
-          "Where your treasure is, there your heart will be also."
-          <span class="ve-verse-ref">Matthew 6:21</span>
-        </div>
-      </div>
-
-      <!-- ═══ CINEMATIC VIDEO ═══ -->
-      <section class="ve-video-section">
-        <div class="ve-section-eyebrow ve-reveal">The Story</div>
-        <h2 class="ve-section-title ve-reveal">See What This Is Really About</h2>
-        <p class="ve-section-sub ve-reveal">Not a pitch. Not a webinar. A real conversation about value, purpose, and the framework that changes how you see your life.</p>
-        <div class="ve-video-container ve-reveal">
-          <div class="ve-video-inner">
-            <!-- Replace VIDEO_ID with your YouTube video ID -->
-            <iframe src="https://www.youtube.com/embed/VIDEO_ID?rel=0&modestbranding=1&color=white" title="The Value Engine — The Story" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
-          </div>
-          <div class="ve-video-caption">
-            <div class="ve-caption-text"><strong>Shawn E. Decker</strong> &mdash; Author, Coach, Framework Creator</div>
-            <div class="ve-caption-badge">Watch Now</div>
-          </div>
-          <div class="ve-video-glow"></div>
-        </div>
-      </section>
-    </div>
-
-    <script>
-    // ── Trust Sections: Show/Hide + Scroll Reveal ──
-    (function() {
-      var trustSections = document.getElementById('ve-trust-sections');
-      if (!trustSections) return;
-
-      // Show after React renders (same pattern as free-book-section)
-      var root = document.getElementById('root');
-      if (root && root.children.length === 0) {
-        var obs = new MutationObserver(function() {
-          trustSections.style.display = 'block';
-          obs.disconnect();
-        });
-        obs.observe(root, { childList: true });
-        setTimeout(function() { trustSections.style.display = 'block'; }, 3000);
-      } else {
-        trustSections.style.display = 'block';
-      }
-
-      // Hide during assessment
-      function updateTrustVisibility() {
-        var hash = window.location.hash;
-        var isAssessment = hash.indexOf('#/assessment') === 0;
-        var isCapture = hash.indexOf('#/capture') === 0;
-        var isModeSelect = hash.indexOf('#/mode-select') === 0;
-        var isResults = hash.indexOf('#/results') === 0;
-        if (isAssessment || isCapture || isModeSelect || isResults) {
-          trustSections.style.display = 'none';
-        } else {
-          trustSections.style.display = 'block';
-        }
-      }
-      window.addEventListener('hashchange', updateTrustVisibility);
-      updateTrustVisibility();
-
-      // Scroll-reveal with IntersectionObserver
-      var reveals = trustSections.querySelectorAll('.ve-reveal');
-      if ('IntersectionObserver' in window) {
-        var io = new IntersectionObserver(function(entries) {
-          entries.forEach(function(entry) {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('ve-visible');
-              io.unobserve(entry.target);
-            }
-          });
-        }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
-        reveals.forEach(function(el) { io.observe(el); });
-      } else {
-        // Fallback: show all
-        reveals.forEach(function(el) { el.classList.add('ve-visible'); });
-      }
-    })();
-    </script>
-
-    <!-- Free Book Section -->
-    <div id="free-book-section" style="display:none;">
-      <style>
-        #free-book-section {
-          background: linear-gradient(180deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%);
-          padding: 4rem 1.5rem;
-          text-align: center;
-          border-top: 1px solid #1a1a1a;
-        }
-        #free-book-section .fb-container {
-          max-width: 560px;
-          margin: 0 auto;
-        }
-        #free-book-section .fb-eyebrow {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.7rem;
-          letter-spacing: 3px;
-          text-transform: uppercase;
-          color: #D4A847;
-          margin-bottom: 1rem;
-        }
-        #free-book-section h2 {
-          font-family: 'Instrument Serif', serif;
-          font-style: italic;
-          font-size: 2rem;
-          color: #fff;
-          margin-bottom: 1rem;
-        }
-        #free-book-section .fb-desc {
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.95rem;
-          color: #a1a1aa;
-          line-height: 1.6;
-          margin-bottom: 2rem;
-        }
-        #free-book-section .fb-form-card {
-          background: #18181b;
-          border: 1px solid #27272a;
-          border-radius: 1rem;
-          padding: 2rem 1.5rem;
-          text-align: left;
-        }
-        #free-book-section .fb-input {
-          width: 100%;
-          padding: 0.875rem 1rem;
-          background: #0a0a0a;
-          border: 1px solid #27272a;
-          border-radius: 0.5rem;
-          color: #fff;
-          font-family: 'Satoshi', sans-serif;
-          font-size: 1rem;
-          outline: none;
-          transition: border-color 0.2s;
-          margin-bottom: 0.75rem;
-        }
-        #free-book-section .fb-input:focus {
-          border-color: #D4A847;
-        }
-        #free-book-section .fb-input::placeholder {
-          color: #52525b;
-        }
-        #free-book-section .fb-btn {
-          display: block;
-          width: 100%;
-          padding: 0.95rem;
-          background: linear-gradient(135deg, #D4A847, #b8942e);
-          color: #0a0a0a;
-          font-family: 'Satoshi', sans-serif;
-          font-size: 0.95rem;
-          font-weight: 700;
-          border: none;
-          border-radius: 0.625rem;
-          cursor: pointer;
-          transition: opacity 0.2s;
-          margin-top: 0.5rem;
-        }
-        #free-book-section .fb-btn:hover { opacity: 0.9; }
-        #free-book-section .fb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        #free-book-section .fb-note {
-          font-size: 0.78rem;
-          color: #52525b;
-          margin-top: 0.875rem;
-          text-align: center;
-          line-height: 1.5;
-        }
-        #free-book-section .fb-link {
-          display: inline-block;
-          margin-top: 1.25rem;
-          font-size: 0.85rem;
-          color: #D4A847;
-          text-decoration: none;
-          text-align: center;
-          width: 100%;
-        }
-        #free-book-section .fb-link:hover { text-decoration: underline; }
-        #free-book-section .fb-msg {
-          margin-top: 0.75rem;
-          padding: 0.75rem 1rem;
-          border-radius: 0.5rem;
-          font-size: 0.88rem;
-          display: none;
-        }
-        #free-book-section .fb-msg.ok {
-          display: block;
-          background: rgba(34,197,94,0.1);
-          border: 1px solid rgba(34,197,94,0.3);
-          color: #22c55e;
-        }
-        #free-book-section .fb-msg.err {
-          display: block;
-          background: rgba(239,68,68,0.1);
-          border: 1px solid rgba(239,68,68,0.3);
-          color: #ef4444;
-        }
-        @media (max-width: 520px) {
-          #free-book-section { padding: 3rem 1rem; }
-          #free-book-section h2 { font-size: 1.65rem; }
-          #free-book-section .fb-form-card { padding: 1.5rem 1rem; }
-        }
-      </style>
-      <div class="fb-container">
-        <div class="fb-eyebrow">FREE BOOK</div>
-        <h2>I Just Want My Free Copy</h2>
-        <p class="fb-desc">Not ready for the full assessment? No problem. Get a free digital copy of <em>Running From Miracles</em> &mdash; Shawn Decker's personal story of struggle, purpose, and the unfinished journey.</p>
-        <div class="fb-form-card">
-          <input type="email" class="fb-input" id="fb-email" placeholder="Your email address" required />
-          <button class="fb-btn" id="fb-submit" onclick="submitFreeBook()">Send Me My Free Copy</button>
-          <p class="fb-note">We'll send a quick verification email first &mdash; just click the link to confirm and your book arrives instantly.</p>
-          <div id="fb-msg" class="fb-msg"></div>
-          <a href="/free-book" class="fb-link">Learn more about the book &rarr;</a>
-        </div>
-      </div>
-    </div>
-
-    <script>
-    // Show the free book section once React has rendered (or immediately if no React root content)
-    (function() {
-      var section = document.getElementById('free-book-section');
-      if (section) {
-        // Use MutationObserver to show after React renders
-        var root = document.getElementById('root');
-        if (root && root.children.length === 0) {
-          var observer = new MutationObserver(function() {
-            section.style.display = 'block';
-            observer.disconnect();
-          });
-          observer.observe(root, { childList: true });
-          // Fallback: show after 3 seconds even if React doesn't render
-          setTimeout(function() { section.style.display = 'block'; }, 3000);
-        } else {
-          section.style.display = 'block';
-        }
-      }
-    })();
-
-    function submitFreeBook() {
-      var btn = document.getElementById('fb-submit');
-      var msg = document.getElementById('fb-msg');
-      var emailInput = document.getElementById('fb-email');
-      var email = emailInput.value.trim();
-
-      if (!email) return;
-
-      btn.disabled = true;
-      btn.textContent = 'Sending...';
-      msg.className = 'fb-msg';
-      msg.style.display = 'none';
-
-      fetch('/api/free-book-signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'Friend', email: email }),
-      })
-      .then(function(resp) { return resp.json().then(function(d) { return { ok: resp.ok, data: d }; }); })
-      .then(function(result) {
-        if (result.ok && result.data.success) {
-          msg.className = 'fb-msg ok';
-          msg.textContent = result.data.message || 'Verification email sent! Check your inbox.';
-          msg.style.display = 'block';
-          btn.textContent = 'Email Sent!';
-        } else {
-          msg.className = 'fb-msg err';
-          msg.textContent = result.data.error || 'Something went wrong. Please try again.';
-          msg.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = 'Send Me My Free Copy';
-        }
-      })
-      .catch(function() {
-        msg.className = 'fb-msg err';
-        msg.textContent = 'Network error. Please try again.';
-        msg.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Send Me My Free Copy';
-      });
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chris Goodloe — Vegas Concierge & Private Transportation</title>
+  <meta name="description" content="Think Vegas. Think Chris. Private car service, nightlife VIP, full concierge — 20+ years of Las Vegas hospitality experience." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a0a; --bg-card: #141414; --text: #f0f0f0; --text-muted: #a0a0a0;
+      --gold: #D4A847; --pink: #FF6B9D; --blue: #00D4FF;
+      --border: rgba(255,255,255,0.08); --radius: 12px;
     }
-    </script>
-  
-    <!-- Member Login Button -->
-    <div id="member-login-btn" style="position:fixed;top:12px;right:16px;z-index:9998;">
-      <a href="/member" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(10,10,10,0.8);backdrop-filter:blur(8px);border:1px solid #27272a;border-radius:8px;color:#D4A847;font-family:'Satoshi',sans-serif;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.2s;" onmouseenter="this.style.borderColor='#D4A847';this.style.background='rgba(212,168,71,0.1)'" onmouseleave="this.style.borderColor='#27272a';this.style.background='rgba(10,10,10,0.8)'">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A847" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-        Member Login
-      </a>
+    [data-theme="light"] {
+      --bg: #f5f3ef; --bg-card: #ffffff; --text: #1a1a1a; --text-muted: #666;
+      --border: rgba(0,0,0,0.1);
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; transition: background .3s, color .3s; }
+    h1, h2, h3, h4 { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+    a { color: var(--gold); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Theme Toggle */
+    .theme-toggle { position: fixed; top: 16px; right: 16px; z-index: 999; background: var(--bg-card); border: 1px solid var(--border); border-radius: 50%; width: 44px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: background .3s; }
+    .theme-toggle:hover { border-color: var(--gold); }
+
+    /* Hero */
+    .hero { position: relative; min-height: 90vh; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+    .hero-bg { position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?w=1400&q=80') center/cover no-repeat; }
+    .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(10,10,10,0.55), rgba(10,10,10,0.92)); }
+    .hero-content { position: relative; z-index: 2; padding: 40px 24px; max-width: 800px; }
+    .hero h1 { font-size: clamp(2.6rem, 6vw, 4.2rem); color: #fff; margin-bottom: 16px; line-height: 1.15; }
+    .hero h1 span { color: var(--gold); }
+    .hero p { font-size: 1.15rem; color: #ccc; margin-bottom: 32px; max-width: 560px; margin-left: auto; margin-right: auto; }
+    .hero-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn { display: inline-block; padding: 14px 32px; border-radius: 8px; font-family: 'Oswald', sans-serif; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; transition: transform .2s, box-shadow .2s; }
+    .btn:hover { transform: translateY(-2px); text-decoration: none; }
+    .btn-gold { background: var(--gold); color: #0a0a0a; }
+    .btn-gold:hover { box-shadow: 0 6px 24px rgba(212,168,71,0.4); }
+    .btn-outline { border: 2px solid var(--gold); color: var(--gold); background: transparent; }
+    .btn-outline:hover { background: rgba(212,168,71,0.1); }
+
+    /* Nav Strip */
+    .nav-strip { display: flex; justify-content: center; gap: 8px; padding: 20px 24px; flex-wrap: wrap; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+    .nav-pill { padding: 10px 22px; border-radius: 24px; font-family: 'Oswald', sans-serif; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); border: 1px solid var(--border); transition: all .2s; }
+    .nav-pill:hover, .nav-pill.active { color: var(--gold); border-color: var(--gold); background: rgba(212,168,71,0.08); text-decoration: none; }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 60px 0; }
+    .stat-box { text-align: center; padding: 28px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); }
+    .stat-box .num { font-family: 'Oswald', sans-serif; font-size: 2.4rem; color: var(--gold); }
+    .stat-box .label { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Quote */
+    .quote-block { border-left: 4px solid var(--gold); padding: 28px 32px; margin: 40px 0; background: var(--bg-card); border-radius: 0 var(--radius) var(--radius) 0; }
+    .quote-block p { font-size: 1.25rem; font-style: italic; color: var(--text); }
+    .quote-block cite { display: block; margin-top: 12px; font-style: normal; color: var(--gold); font-size: 0.9rem; }
+
+    /* About */
+    .about { padding: 60px 0; }
+    .about h2 { font-size: 2rem; margin-bottom: 28px; }
+    .about h2 span { color: var(--gold); }
+    .about p { margin-bottom: 20px; color: var(--text-muted); font-size: 1.05rem; line-height: 1.8; }
+
+    /* Photo Divider */
+    .photo-divider { position: relative; height: 340px; overflow: hidden; margin: 40px 0; border-radius: var(--radius); }
+    .photo-divider img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-divider .overlay-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(10,10,10,0.6); }
+    .photo-divider .overlay-text h3 { font-size: clamp(1.5rem, 4vw, 2.4rem); color: #fff; text-align: center; padding: 0 24px; }
+    .photo-divider .overlay-text h3 span { color: var(--blue); }
+
+    /* Services */
+    .services { padding: 60px 0; }
+    .services h2 { font-size: 2rem; text-align: center; margin-bottom: 40px; }
+    .services h2 span { color: var(--gold); }
+    .service-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
+    .service-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px 24px; transition: border-color .3s, transform .3s; position: relative; }
+    .service-card:hover { border-color: var(--gold); transform: translateY(-4px); }
+    .service-card .icon { font-size: 2.2rem; margin-bottom: 12px; }
+    .service-card h4 { font-size: 1.1rem; margin-bottom: 10px; color: var(--text); }
+    .service-card p { font-size: 0.92rem; color: var(--text-muted); line-height: 1.7; }
+    .badge-soon { position: absolute; top: 16px; right: 16px; background: var(--pink); color: #fff; font-family: 'Oswald', sans-serif; font-size: 0.7rem; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Payment */
+    .payment { padding: 48px 0; text-align: center; }
+    .payment h3 { font-size: 1.4rem; margin-bottom: 20px; }
+    .pay-row { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 12px; }
+    .pay-item { font-size: 1.1rem; padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; }
+    .payment .tagline { color: var(--text-muted); font-size: 0.95rem; margin-top: 16px; }
+
+    /* Contact */
+    .contact-card { max-width: 560px; margin: 48px auto; text-align: center; background: var(--bg-card); border: 2px solid var(--gold); border-radius: var(--radius); padding: 48px 32px; }
+    .contact-card h3 { font-size: 1.8rem; margin-bottom: 8px; }
+    .contact-card .phone { font-size: 1.6rem; color: var(--gold); font-family: 'Oswald', sans-serif; margin: 16px 0; display: inline-block; }
+    .contact-card .phone:hover { color: var(--blue); }
+    .contact-card p { color: var(--text-muted); }
+
+    /* VTV Banner */
+    .vtv-banner { margin: 48px 0; padding: 36px 32px; border: 1px solid var(--gold); border-radius: var(--radius); background: rgba(212,168,71,0.06); text-align: center; }
+    .vtv-banner h3 { font-size: 1.3rem; margin-bottom: 10px; }
+    .vtv-banner h3 span { color: var(--gold); }
+    .vtv-banner p { color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem; }
+
+    /* Footer */
+    footer { text-align: center; padding: 40px 24px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; }
+    footer span { color: var(--gold); }
+
+    @media (max-width: 600px) {
+      .hero { min-height: 80vh; }
+      .stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .service-grid { grid-template-columns: 1fr; }
+      .pay-row { gap: 12px; }
+      .pay-item { font-size: 0.95rem; padding: 10px 14px; }
+      .contact-card { padding: 32px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#9790;</button>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1>Think Vegas.<br><span>Think Chris.</span></h1>
+      <p>Private transportation, VIP nightlife, and full concierge service from a 20-year Vegas insider. No surge pricing. No hassle. Just the experience you came for.</p>
+      <div class="hero-btns">
+        <a href="book.html" class="btn btn-gold">Book a Ride</a>
+        <a href="#services" class="btn btn-outline">Explore Services</a>
+      </div>
     </div>
-    <script>
-    // Hide login button on member/returning pages (already logged in context)
-    (function(){
-      var path = window.location.pathname;
-      if(path.indexOf('/member') !== -1 || path.indexOf('/returning') !== -1 || path.indexOf('/report') !== -1 || path.indexOf('/action-plan') !== -1) {
-        var btn = document.getElementById('member-login-btn');
-        if(btn) btn.style.display = 'none';
-      }
-    })();
-    </script>
+  </section>
 
-<!-- Deselect / Clear Answer Button -->
-<script>
-(function() {
-  // Add a "Clear Answer" button when a radio option is selected
-  var observer = new MutationObserver(function() {
-    // Find all radio groups (assessment question containers)
-    var groups = document.querySelectorAll('[role="radiogroup"]');
-    groups.forEach(function(group) {
-      // Check if any item is checked
-      var checked = group.querySelector('[data-state="checked"]');
-      var existingBtn = group.parentElement && group.parentElement.querySelector('.ve-clear-btn');
-      
-      if (checked && !existingBtn) {
-        // Add clear button after the radio group
-        var btn = document.createElement('button');
-        btn.className = 've-clear-btn';
-        btn.textContent = 'Clear Selection';
-        btn.style.cssText = 'display:block;margin:0.75rem auto 0;padding:0.4rem 1rem;background:transparent;border:1px solid #3f3f46;color:#71717a;border-radius:0.375rem;font-size:0.8rem;cursor:pointer;font-family:inherit;transition:all 0.2s;';
-        btn.onmouseenter = function() { btn.style.borderColor = '#D4A847'; btn.style.color = '#D4A847'; };
-        btn.onmouseleave = function() { btn.style.borderColor = '#3f3f46'; btn.style.color = '#71717a'; };
-        btn.onclick = function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          // Click the checked item to deselect (Radix RadioGroup toggle behavior)
-          // Since Radix doesn't support deselect natively, simulate by dispatching events
-          var checkedItem = group.querySelector('[data-state="checked"]');
-          if (checkedItem) {
-            // Force React state update by dispatching a custom event
-            // The simplest approach: click the checked item twice rapidly
-            checkedItem.click();
-            // If still checked, try removing data-state
-            setTimeout(function() {
-              var stillChecked = group.querySelector('[data-state="checked"]');
-              if (stillChecked) {
-                // Dispatch a keyboard event (Escape) to try to clear
-                stillChecked.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-              }
-              // Remove the button since we attempted clear
-              btn.remove();
-            }, 50);
-          }
-        };
-        group.parentElement.insertBefore(btn, group.nextSibling);
-      } else if (!checked && existingBtn) {
-        existingBtn.remove();
-      }
+  <!-- Nav Strip -->
+  <nav class="nav-strip">
+    <a href="index.html" class="nav-pill active">Home</a>
+    <a href="rides.html" class="nav-pill">Rides</a>
+    <a href="nightlife.html" class="nav-pill">Nightlife & Stays</a>
+    <a href="book.html" class="nav-pill">Book Now</a>
+  </nav>
+
+  <!-- Stats -->
+  <div class="container">
+    <section class="stats reveal">
+      <div class="stat-box"><div class="num">20+</div><div class="label">Years Hospitality</div></div>
+      <div class="stat-box"><div class="num">10-15%</div><div class="label">Less Than Rideshare</div></div>
+      <div class="stat-box"><div class="num">24/7</div><div class="label">Available</div></div>
+      <div class="stat-box"><div class="num">50 States</div><div class="label">Licensed Nationwide</div></div>
+    </section>
+
+    <!-- Quote -->
+    <section class="quote-block reveal">
+      <p>"When you think about Vegas, think of Chris. I got you covered."</p>
+      <cite>-- Chris Goodloe, Chief Fun Officer</cite>
+    </section>
+
+    <!-- About -->
+    <section class="about reveal">
+      <h2>The Man Behind <span>The Experience</span></h2>
+      <p>For over 20 years, Chris Goodloe lived and breathed Las Vegas hospitality from the inside out. As a casino host, he built relationships with high rollers, coordinated unforgettable nights, and learned what makes people feel truly taken care of. He spent 15 years in timeshare, mastering the art of selling experiences that people actually want. Hospitality is not just a career for Chris -- it is DNA.</p>
+      <p>But Chris was never just a nine-to-five guy. On the side, he built businesses in insurance (licensed in life and health), network marketing, and anything that let him serve people directly. The entrepreneurial engine was always running, always looking for the next way to add value.</p>
+      <p>Now the day job is done. Chris walked away from the clock to build something bigger -- a full-service Vegas experience ecosystem that gives visitors and locals more for less. Private rides that beat rideshare prices. VIP nightlife with no cover and no games. Airbnb bundles with a car at your door. This is what happens when 20 years of insider knowledge meets full-time focus.</p>
+    </section>
+  </div>
+
+  <!-- Photo Divider -->
+  <section class="photo-divider reveal">
+    <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200&q=80" alt="Luxury car interior" loading="lazy" />
+    <div class="overlay-text"><h3>Your Vegas Experience <span>Starts Here</span></h3></div>
+  </section>
+
+  <!-- Services -->
+  <div class="container">
+    <section class="services reveal" id="services">
+      <h2>What Chris <span>Brings to the Table</span></h2>
+      <div class="service-grid">
+        <div class="service-card">
+          <div class="icon">&#128663;</div>
+          <h4>Private Car Service</h4>
+          <p>No surge pricing. Ever. Show your rideshare screenshot and we beat it by 10-15%. Cash, Venmo, Zelle -- pay however works for you. Clean rides, on time, every time.</p>
+        </div>
+        <div class="service-card">
+          <div class="icon">&#127881;</div>
+          <h4>Nightlife VIP</h4>
+          <p>Free rides to the hottest clubs. Free entry. You do not pay to play -- you just show up and have fun. Chris has the connects so you do not have to.</p>
+        </div>
+        <div class="service-card">
+          <span class="badge-soon">Coming Soon</span>
+          <div class="icon">&#127968;</div>
+          <h4>Airbnb + Car Bundles</h4>
+          <p>Rent a house by the day, week, or month. It comes with a driver or a car at your disposal. The full Vegas package without the full Vegas price tag.</p>
+        </div>
+        <div class="service-card">
+          <div class="icon">&#127920;</div>
+          <h4>Full Concierge</h4>
+          <p>20 years of Vegas insider knowledge working for you. Restaurants, shows, events, deals -- whatever you need, Chris makes it happen. Just ask.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Payment Methods -->
+    <section class="payment reveal">
+      <h3>Pay However You Want</h3>
+      <div class="pay-row">
+        <div class="pay-item">&#128181; Cash</div>
+        <div class="pay-item">Venmo</div>
+        <div class="pay-item">Zelle</div>
+        <div class="pay-item">&#128179; Card</div>
+      </div>
+      <p class="tagline">No apps. No friction. Just pay and ride.</p>
+    </section>
+
+    <!-- Contact Card -->
+    <section class="contact-card reveal">
+      <h3>Chris Goodloe</h3>
+      <p>Chief Fun Officer &bull; Las Vegas, NV</p>
+      <a href="tel:7024810701" class="phone">(702) 481-0701</a>
+      <p>Message me. We will get you on the calendar.</p>
+    </section>
+
+    <!-- VTV Banner -->
+    <section class="vtv-banner reveal">
+      <h3>Discover Your <span>Value Score</span></h3>
+      <p>Take the free P.I.N.K. assessment and find out what you are really worth across the five pillars of value.</p>
+      <a href="https://assessment.valuetovictory.com" class="btn btn-gold">Take the Assessment</a>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>Chris Goodloe &bull; Las Vegas, NV &bull; <a href="tel:7024810701">(702) 481-0701</a></p>
+    <p style="margin-top:8px;">Site designed by <span>Value to Victory</span></p>
+  </footer>
+
+  <script>
+    /* Dark / Light Toggle */
+    const toggle = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('cg-theme');
+    if (saved === 'light') { document.documentElement.setAttribute('data-theme', 'light'); toggle.textContent = '\u2600'; }
+    toggle.addEventListener('click', () => {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      document.documentElement.setAttribute('data-theme', isLight ? '' : 'light');
+      toggle.textContent = isLight ? '\u263E' : '\u2600';
+      localStorage.setItem('cg-theme', isLight ? 'dark' : 'light');
     });
-  });
-  
-  // Start observing after React mounts
-  setTimeout(function() {
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-state'] });
-  }, 2000);
-})();
-</script>
 
-  </body>
+    /* Scroll Reveal */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
 </html>

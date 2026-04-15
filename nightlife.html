@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vegas Nightlife & Stays | Chris Goodloe</title>
+  <meta name="description" content="Free rides and free entry to Vegas clubs. Airbnb stays with a personal driver. 20 years of Las Vegas insider knowledge — Chris Goodloe has you covered." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --bg: #0a0a0a; --surface: #141414; --border: #222; --text: #f0f0f0; --muted: #999; --gold: #D4A847; --pink: #FF6B9D; --blue: #00D4FF; --pink-glow: rgba(255,107,157,0.15); }
+    [data-theme="light"] { --bg: #f5f5f5; --surface: #fff; --border: #ddd; --text: #1a1a1a; --muted: #666; --pink-glow: rgba(255,107,157,0.08); }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+    h1, h2, h3, h4 { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.04em; }
+    a { color: var(--pink); text-decoration: none; transition: opacity 0.2s; }
+    a:hover { opacity: 0.8; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; }
+
+    /* Theme Toggle */
+    .theme-toggle { position: fixed; top: 1rem; right: 1rem; z-index: 1000; background: var(--surface); border: 1px solid var(--border); border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; transition: background 0.3s; }
+    .theme-toggle:hover { border-color: var(--pink); }
+
+    /* Nav */
+    .nav-strip { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.75rem 0; position: sticky; top: 0; z-index: 900; }
+    .nav-strip .container { display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap; }
+    .nav-strip a { font-family: 'Oswald', sans-serif; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 0.4rem 0; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .nav-strip a:hover { color: var(--text); }
+    .nav-strip a.active { color: var(--pink); border-bottom-color: var(--pink); }
+
+    /* Hero */
+    .hero { position: relative; min-height: 70vh; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+    .hero-bg { position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=1400&q=80') center/cover no-repeat; }
+    .hero-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(10,10,10,0.55), rgba(10,10,10,0.85)); }
+    .hero-content { position: relative; z-index: 2; padding: 3rem 1.25rem; }
+    .hero h1 { font-size: clamp(2.2rem, 6vw, 4rem); color: #fff; line-height: 1.1; margin-bottom: 1rem; }
+    .hero h1 span { color: var(--pink); }
+    .hero p { font-size: clamp(1rem, 2.5vw, 1.3rem); color: #ccc; max-width: 600px; margin: 0 auto; }
+
+    /* Section */
+    .section { padding: 4rem 0; }
+    .section-label { font-family: 'Inter', sans-serif; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--pink); margin-bottom: 0.5rem; }
+    .section-title { font-size: clamp(1.5rem, 4vw, 2.4rem); margin-bottom: 1rem; }
+    .section-sub { color: var(--muted); max-width: 650px; margin-bottom: 2rem; }
+
+    /* Feature List */
+    .feature-list { list-style: none; display: grid; gap: 1rem; margin-bottom: 2rem; }
+    .feature-list li { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 1.05rem; }
+    .feature-list .check { color: var(--pink); font-weight: 700; font-size: 1.2rem; flex-shrink: 0; }
+
+    /* Cards Grid */
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: transform 0.3s, border-color 0.3s; }
+    .card:hover { transform: translateY(-4px); border-color: var(--pink); }
+    .card img { width: 100%; height: 200px; object-fit: cover; }
+    .card-body { padding: 1.25rem; }
+    .card-body h3 { font-size: 1.15rem; margin-bottom: 0.5rem; }
+    .card-body p { font-size: 0.9rem; color: var(--muted); }
+    .badge { display: inline-block; font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.3rem 0.75rem; border-radius: 20px; margin-bottom: 0.5rem; }
+    .badge-pink { background: var(--pink-glow); color: var(--pink); border: 1px solid var(--pink); }
+    .badge-gold { background: rgba(212,168,71,0.15); color: var(--gold); border: 1px solid var(--gold); }
+
+    /* Photo Divider */
+    .photo-divider { position: relative; height: 340px; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; margin: 2rem 0; }
+    .photo-divider img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .photo-divider::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(10,10,10,0.5), rgba(10,10,10,0.8)); }
+    .photo-divider h2 { position: relative; z-index: 2; font-size: clamp(1.5rem, 4vw, 2.5rem); color: #fff; padding: 0 1.25rem; }
+    .photo-divider h2 span { color: var(--pink); }
+
+    /* Coming Soon Overlay */
+    .coming-soon-wrap { position: relative; }
+    .coming-soon-wrap::before { content: ''; position: absolute; inset: 0; background: rgba(10,10,10,0.35); border-radius: 12px; z-index: 2; pointer-events: none; }
+    .coming-soon-badge { position: absolute; top: 12px; right: 12px; z-index: 3; font-family: 'Oswald', sans-serif; font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; background: var(--gold); color: #0a0a0a; padding: 0.35rem 0.85rem; border-radius: 4px; font-weight: 700; }
+
+    /* Concierge */
+    .concierge-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+    .concierge-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; text-align: center; transition: border-color 0.3s; }
+    .concierge-item:hover { border-color: var(--gold); }
+    .concierge-item .icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .concierge-item h4 { font-size: 0.95rem; margin-bottom: 0.25rem; }
+
+    /* CTA */
+    .cta-section { text-align: center; padding: 4rem 0; }
+    .cta-section h2 { font-size: clamp(1.5rem, 4vw, 2.4rem); margin-bottom: 0.75rem; }
+    .cta-section p { color: var(--muted); margin-bottom: 2rem; }
+    .btn-primary { display: inline-block; font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.9rem 2.5rem; border-radius: 8px; background: var(--pink); color: #fff; border: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(255,107,157,0.3); }
+    .btn-outline { display: inline-block; font-family: 'Oswald', sans-serif; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.8rem 2rem; border-radius: 8px; background: transparent; color: var(--text); border: 1px solid var(--border); cursor: pointer; transition: border-color 0.2s; margin-left: 1rem; }
+    .btn-outline:hover { border-color: var(--pink); color: var(--pink); }
+    .phone-link { display: block; margin-top: 1rem; font-size: 1.1rem; font-weight: 600; color: var(--gold); letter-spacing: 0.04em; }
+
+    /* Footer */
+    .footer { border-top: 1px solid var(--border); padding: 2rem 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
+    .footer span { color: var(--gold); }
+
+    /* Scroll Reveal */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .nav-strip .container { gap: 1rem; }
+      .nav-strip a { font-size: 0.8rem; }
+      .cards-grid { grid-template-columns: 1fr; }
+      .concierge-grid { grid-template-columns: repeat(2, 1fr); }
+      .btn-outline { margin-left: 0; margin-top: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">&#9790;</button>
+
+  <!-- Nav Strip -->
+  <nav class="nav-strip">
+    <div class="container">
+      <a href="index.html">Home</a>
+      <a href="rides.html">Rides</a>
+      <a href="nightlife.html" class="active">Nightlife &amp; Stays</a>
+      <a href="book.html">Book Now</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <h1>You Don't <span>Pay to Play.</span></h1>
+      <p>Free rides. Free entry. Just show up and have fun.</p>
+    </div>
+  </section>
+
+  <!-- VIP Nightlife Section -->
+  <section class="section reveal">
+    <div class="container">
+      <p class="section-label">VIP Nightlife</p>
+      <h2 class="section-title">The Vegas Nightlife Experience</h2>
+      <p class="section-sub">Chris's 20 years of relationships in Vegas hospitality mean he can get you in where others can't. No gimmicks, no guest-list hassles -- just show up and enjoy the night.</p>
+      <ul class="feature-list">
+        <li><span class="check">&#10003;</span> Free ride to the club</li>
+        <li><span class="check">&#10003;</span> Free entry -- no cover charge</li>
+        <li><span class="check">&#10003;</span> No surge pricing on the way home</li>
+        <li><span class="check">&#10003;</span> VIP access where available</li>
+      </ul>
+      <p style="color:var(--muted); font-size:0.95rem; max-width:600px;">You don't pay to play. You get up to the club for free. Chris handles the rest -- the clubs compensate him directly, so your wallet stays in your pocket.</p>
+    </div>
+  </section>
+
+  <!-- Club Cards -->
+  <section class="section reveal" style="background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+    <div class="container">
+      <p class="section-label">Featured Venues</p>
+      <h2 class="section-title">Where the Night Takes You</h2>
+      <p class="section-sub">Showcase of the kind of venues Chris can get you into. These are examples -- the full list depends on the night and what's happening in Vegas.</p>
+      <div class="cards-grid">
+        <div class="card">
+          <img src="https://images.unsplash.com/photo-1571204829887-3b8d69e4094d?w=600&q=80" alt="Upscale nightclub interior" loading="lazy" />
+          <div class="card-body">
+            <span class="badge badge-pink">Free Entry + Free Ride</span>
+            <h3>Marquee Nightclub</h3>
+            <p>Multi-level megaclub on the Strip. World-class DJs, rooftop pool deck, and one of the biggest dance floors in Vegas.</p>
+          </div>
+        </div>
+        <div class="card">
+          <img src="https://images.unsplash.com/photo-1545128485-c400e7702796?w=600&q=80" alt="Neon-lit club atmosphere" loading="lazy" />
+          <div class="card-body">
+            <span class="badge badge-pink">Free Entry + Free Ride</span>
+            <h3>XS Nightclub</h3>
+            <p>Iconic Wynn venue with an outdoor pool area, premium bottle service, and a lineup that draws the biggest names in EDM.</p>
+          </div>
+        </div>
+        <div class="card">
+          <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80" alt="VIP nightlife experience" loading="lazy" />
+          <div class="card-body">
+            <span class="badge badge-pink">Free Entry + Free Ride</span>
+            <h3>Hakkasan Nightclub</h3>
+            <p>Five levels of nightlife inside MGM Grand. Restaurant, lounge, main room, and a Ling Ling club-within-a-club.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Photo Divider -->
+  <section class="photo-divider">
+    <img src="https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?w=1200&q=80" alt="Vegas pool party" loading="lazy" />
+    <h2>Day or Night. <span>Chris Has You Covered.</span></h2>
+  </section>
+
+  <!-- Airbnb + Car Bundles (Coming Soon) -->
+  <section class="section reveal">
+    <div class="container">
+      <p class="section-label">Stays + Rides</p>
+      <h2 class="section-title">Stay + Ride Packages</h2>
+      <p class="section-sub">Rent a luxury house by the day, week, or month -- and it comes with either a personal driver at your disposal or a car you can use. Arriving soon.</p>
+      <div class="cards-grid">
+        <div class="card coming-soon-wrap">
+          <span class="coming-soon-badge">Coming Soon</span>
+          <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80" alt="Luxury Vegas home with Strip view" loading="lazy" />
+          <div class="card-body">
+            <span class="badge badge-gold">Includes Driver or Vehicle</span>
+            <h3>The Strip View Suite</h3>
+            <p>Modern suite with panoramic Strip views. Perfect for a weekend getaway.</p>
+            <p style="color:var(--gold); font-weight:600; margin-top:0.5rem;">Daily from $XXX</p>
+          </div>
+        </div>
+        <div class="card coming-soon-wrap">
+          <span class="coming-soon-badge">Coming Soon</span>
+          <img src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80" alt="Luxury villa with pool" loading="lazy" />
+          <div class="card-body">
+            <span class="badge badge-gold">Includes Driver or Vehicle</span>
+            <h3>The Vegas Villa</h3>
+            <p>Spacious villa with private pool and full kitchen. Ideal for groups and extended stays.</p>
+            <p style="color:var(--gold); font-weight:600; margin-top:0.5rem;">Weekly from $X,XXX</p>
+          </div>
+        </div>
+        <div class="card coming-soon-wrap">
+          <span class="coming-soon-badge">Coming Soon</span>
+          <img src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=80" alt="Executive estate exterior" loading="lazy" />
+          <div class="card-body">
+            <span class="badge badge-gold">Includes Driver or Vehicle</span>
+            <h3>The Executive Estate</h3>
+            <p>Premium estate for long-term stays. Full luxury, full privacy, full service.</p>
+            <p style="color:var(--gold); font-weight:600; margin-top:0.5rem;">Monthly from $X,XXX</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Concierge Services -->
+  <section class="section reveal" style="background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+    <div class="container" style="text-align:center;">
+      <p class="section-label">Concierge</p>
+      <h2 class="section-title">20 Years of Vegas. One Phone Call.</h2>
+      <p class="section-sub" style="margin-left:auto; margin-right:auto;">Whatever you need when you think about Vegas -- Chris has the answer. Two decades of casino hosting, promoter relationships, and insider knowledge at your fingertips.</p>
+      <div class="concierge-grid">
+        <div class="concierge-item">
+          <div class="icon">&#127860;</div>
+          <h4>Restaurants</h4>
+          <p style="font-size:0.85rem; color:var(--muted);">Reservations at the best spots in town</p>
+        </div>
+        <div class="concierge-item">
+          <div class="icon">&#127903;</div>
+          <h4>Shows &amp; Events</h4>
+          <p style="font-size:0.85rem; color:var(--muted);">Tickets, deals, and VIP access</p>
+        </div>
+        <div class="concierge-item">
+          <div class="icon">&#128142;</div>
+          <h4>Hidden Gems</h4>
+          <p style="font-size:0.85rem; color:var(--muted);">The spots only locals know about</p>
+        </div>
+        <div class="concierge-item">
+          <div class="icon">&#11088;</div>
+          <h4>VIP Access</h4>
+          <p style="font-size:0.85rem; color:var(--muted);">Skip lines, premium seating, upgrades</p>
+        </div>
+        <div class="concierge-item">
+          <div class="icon">&#128188;</div>
+          <h4>Corporate Events</h4>
+          <p style="font-size:0.85rem; color:var(--muted);">Plan team outings and client experiences</p>
+        </div>
+        <div class="concierge-item">
+          <div class="icon">&#127881;</div>
+          <h4>Bachelor / Bachelorette</h4>
+          <p style="font-size:0.85rem; color:var(--muted);">Legendary parties, handled start to finish</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section reveal">
+    <div class="container">
+      <h2>Plan Your Vegas Trip</h2>
+      <p>Ready to experience Vegas the right way? Book with Chris and skip the hassle.</p>
+      <a href="book.html" class="btn-primary">Book Now</a>
+      <a href="tel:+17024810701" class="btn-outline">Call Chris</a>
+      <a href="tel:+17024810701" class="phone-link">(702) 481-0701</a>
+      <p style="color:var(--muted); font-size:0.85rem; margin-top:1rem;">Accepts Cash, Venmo &amp; Zelle</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 <span>Chris Goodloe</span> &middot; Las Vegas, NV &middot; <a href="tel:+17024810701">(702) 481-0701</a></p>
+      <p style="margin-top:0.5rem;">Cash &middot; Venmo &middot; Zelle</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    // Dark / Light toggle
+    function toggleTheme() {
+      var html = document.documentElement;
+      var current = html.getAttribute('data-theme');
+      var next = current === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('cg-theme', next);
+      document.querySelector('.theme-toggle').textContent = next === 'light' ? '\u2600' : '\u263E';
+    }
+    (function() {
+      var saved = localStorage.getItem('cg-theme');
+      if (saved === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.querySelector('.theme-toggle').textContent = '\u2600';
+      }
+    })();
+
+    // Scroll reveal
+    (function() {
+      var els = document.querySelectorAll('.reveal');
+      if (!els.length) return;
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      els.forEach(function(el) { observer.observe(el); });
+    })();
+  </script>
+
+</body>
+</html>

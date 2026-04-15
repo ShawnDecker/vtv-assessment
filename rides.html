@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vegas Rides | Chris Goodloe - Private Car Service</title>
+  <meta name="description" content="Private car service in Las Vegas. Beat any Uber or Lyft price by 10-15%. No surge pricing ever. Licensed nationwide. Cash, Venmo, Zelle accepted." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --bg: #0a0a0a; --surface: #141414; --border: #1f1f1f; --text: #f5f5f5; --muted: #a0a0a0; --gold: #D4A847; --blue: #00D4FF; --pink: #FF6B9D; --radius: 12px; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+    body.light { --bg: #f5f5f0; --surface: #ffffff; --border: #e0e0e0; --text: #1a1a1a; --muted: #555; }
+    h1, h2, h3, h4 { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.04em; }
+    a { color: var(--blue); text-decoration: none; transition: color 0.2s; }
+    a:hover { color: var(--gold); }
+    img { max-width: 100%; display: block; }
+
+    /* Theme Toggle */
+    .theme-toggle { position: fixed; top: 1rem; right: 1rem; z-index: 1000; background: var(--surface); border: 1px solid var(--border); border-radius: 50px; padding: 0.5rem 0.75rem; cursor: pointer; font-size: 1.1rem; transition: background 0.3s; }
+    .theme-toggle:hover { border-color: var(--gold); }
+
+    /* Nav */
+    .nav-strip { display: flex; justify-content: center; gap: 2rem; padding: 1rem 1.5rem; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 900; flex-wrap: wrap; }
+    .nav-strip a { font-family: 'Oswald', sans-serif; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 0.25rem 0; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .nav-strip a:hover, .nav-strip a.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+    /* Hero */
+    .hero { position: relative; min-height: 75vh; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+    .hero-bg { position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1563720223185-11003d516935?w=1400&q=80') center/cover no-repeat; }
+    .hero-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(10,10,10,0.55), rgba(10,10,10,0.9)); }
+    .hero-content { position: relative; z-index: 2; max-width: 700px; padding: 2rem 1.5rem; }
+    .hero h1 { font-size: clamp(2.2rem, 6vw, 3.8rem); line-height: 1.1; margin-bottom: 1rem; }
+    .hero h1 span { color: var(--blue); }
+    .hero p { font-size: 1.15rem; color: var(--muted); max-width: 540px; margin: 0 auto; }
+
+    /* Sections */
+    .section { padding: 5rem 1.5rem; max-width: 1100px; margin: 0 auto; }
+    .section-title { text-align: center; font-size: clamp(1.6rem, 4vw, 2.4rem); margin-bottom: 0.5rem; }
+    .section-sub { text-align: center; color: var(--muted); font-size: 1rem; margin-bottom: 3rem; }
+
+    /* Steps */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem 1.5rem; text-align: center; transition: transform 0.3s, border-color 0.3s; }
+    .step-card:hover { transform: translateY(-4px); border-color: var(--blue); }
+    .step-num { font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 700; color: var(--blue); margin-bottom: 0.5rem; }
+    .step-card h3 { font-size: 1.05rem; margin-bottom: 0.5rem; }
+    .step-card p { font-size: 0.9rem; color: var(--muted); }
+    .steps-note { text-align: center; font-size: 1.1rem; font-weight: 600; color: var(--gold); }
+
+    /* Service Tiers */
+    .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+    .tier-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem 1.5rem; transition: transform 0.3s, border-color 0.3s; }
+    .tier-card:hover { transform: translateY(-4px); border-color: var(--gold); }
+    .tier-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .tier-card h3 { font-size: 1.15rem; color: var(--gold); margin-bottom: 0.5rem; }
+    .tier-card p { font-size: 0.9rem; color: var(--muted); }
+
+    /* Photo Divider */
+    .photo-divider { position: relative; height: 340px; overflow: hidden; margin: 0; }
+    .photo-divider img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-divider .overlay { position: absolute; inset: 0; background: rgba(10,10,10,0.6); display: flex; align-items: center; justify-content: center; }
+    .photo-divider .overlay h2 { font-size: clamp(1.8rem, 5vw, 3rem); color: #fff; text-shadow: 0 2px 20px rgba(0,0,0,0.6); }
+
+    /* Fleet */
+    .fleet { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    .fleet-card { border-radius: var(--radius); overflow: hidden; background: var(--surface); border: 1px solid var(--border); transition: transform 0.3s, border-color 0.3s; }
+    .fleet-card:hover { transform: translateY(-4px); border-color: var(--blue); }
+    .fleet-card img { width: 100%; height: 200px; object-fit: cover; }
+    .fleet-card .info { padding: 1.25rem; }
+    .fleet-card h3 { font-size: 1.1rem; margin-bottom: 0.35rem; }
+    .fleet-card p { font-size: 0.88rem; color: var(--muted); }
+
+    /* Driver Program */
+    .driver-card { background: linear-gradient(135deg, var(--surface), #1a1510); border: 1px solid var(--gold); border-radius: var(--radius); padding: 2.5rem 2rem; text-align: center; max-width: 640px; margin: 0 auto; }
+    .driver-card h3 { font-size: 1.6rem; color: var(--gold); margin-bottom: 0.75rem; }
+    .driver-card p { font-size: 0.95rem; color: var(--muted); line-height: 1.7; margin-bottom: 0.5rem; }
+
+    /* Payment Row */
+    .pay-row { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; padding: 2.5rem 1.5rem; }
+    .pay-item { text-align: center; font-size: 0.95rem; font-weight: 600; color: var(--text); }
+    .pay-item span { display: block; font-size: 1.8rem; margin-bottom: 0.25rem; }
+
+    /* CTA */
+    .cta-section { text-align: center; padding: 4rem 1.5rem; }
+    .cta-btn { display: inline-block; padding: 1rem 3rem; background: linear-gradient(135deg, var(--blue), #009dc0); color: #0a0a0a; font-family: 'Oswald', sans-serif; font-size: 1.2rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border: none; border-radius: 50px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-decoration: none; }
+    .cta-btn:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(0,212,255,0.3); color: #0a0a0a; }
+    .cta-phone { margin-top: 1.25rem; font-size: 1.3rem; font-weight: 600; }
+    .cta-phone a { color: var(--gold); }
+
+    /* Footer */
+    footer { text-align: center; padding: 2.5rem 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+
+    /* Scroll Reveal */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 600px) {
+      .nav-strip { gap: 1rem; font-size: 0.85rem; }
+      .hero { min-height: 60vh; }
+      .section { padding: 3rem 1rem; }
+      .photo-divider { height: 220px; }
+      .pay-row { gap: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#9790;</button>
+
+  <!-- Nav Strip -->
+  <nav class="nav-strip">
+    <a href="index.html">Home</a>
+    <a href="rides.html" class="active">Rides</a>
+    <a href="nightlife.html">Nightlife &amp; Stays</a>
+    <a href="book.html">Book Now</a>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content reveal">
+      <h1>Get There for <span>Less.</span><br />No Surge. Ever.</h1>
+      <p>Screenshot your Uber or Lyft quote. Send it to Chris. Pay 10-15% less -- guaranteed. Private car service across Las Vegas and beyond.</p>
+    </div>
+  </section>
+
+  <!-- Price-Beat Guarantee -->
+  <section class="section reveal">
+    <h2 class="section-title">The <span style="color:var(--blue)">Price-Beat</span> Guarantee</h2>
+    <p class="section-sub">Three steps. Cheaper ride. Every single time.</p>
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h3>Pull Up Your Quote</h3>
+        <p>Open Uber or Lyft and get your fare estimate like you normally would.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h3>Screenshot &amp; Send</h3>
+        <p>Take a screenshot of the price and text it to Chris at <strong>(702) 481-0701</strong>.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h3>Pay 10-15% Less</h3>
+        <p>Get a confirmed lower price. Hop in. No surge, no games, no algorithms.</p>
+      </div>
+    </div>
+    <p class="steps-note">No app needed. Cash, Venmo, or Zelle.</p>
+  </section>
+
+  <!-- Service Tiers -->
+  <section class="section reveal">
+    <h2 class="section-title">Services</h2>
+    <p class="section-sub">From the Strip to the state line and beyond.</p>
+    <div class="tiers">
+      <div class="tier-card">
+        <div class="tier-icon">&#127922;</div>
+        <h3>Vegas Local Rides</h3>
+        <p>Get around the Strip and beyond. Flat rates, no surge. Reliable and ready when you are.</p>
+      </div>
+      <div class="tier-card">
+        <div class="tier-icon">&#9992;&#65039;</div>
+        <h3>Airport Transfers</h3>
+        <p>Harry Reid International (LAS) pickup and dropoff. On time, every time. No circling the terminal.</p>
+      </div>
+      <div class="tier-card">
+        <div class="tier-icon">&#128739;&#65039;</div>
+        <h3>Long-Distance Charters</h3>
+        <p>Vegas to LA, Phoenix, Burbank -- anywhere in the US. Licensed nationwide for long-haul trips.</p>
+      </div>
+      <div class="tier-card">
+        <div class="tier-icon">&#128188;</div>
+        <h3>Corporate &amp; Event Transport</h3>
+        <p>Conferences, conventions, group events. Professional service for business that means business.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Photo Divider -->
+  <div class="photo-divider reveal">
+    <img src="https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=1200&q=80" alt="Fleet SUV" loading="lazy" />
+    <div class="overlay"><h2>Your Ride. Your Rules.</h2></div>
+  </div>
+
+  <!-- Fleet Preview -->
+  <section class="section reveal">
+    <h2 class="section-title">The Fleet</h2>
+    <p class="section-sub">Clean. Comfortable. Ready to roll.</p>
+    <div class="fleet">
+      <div class="fleet-card">
+        <img src="https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&q=80" alt="Luxury Sedan" loading="lazy" />
+        <div class="info">
+          <h3>Luxury Sedan</h3>
+          <p>Sleek, quiet, and comfortable. Perfect for airport runs, date nights, and executive travel.</p>
+        </div>
+      </div>
+      <div class="fleet-card">
+        <img src="https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=600&q=80" alt="Full-Size SUV" loading="lazy" />
+        <div class="info">
+          <h3>Full-Size SUV</h3>
+          <p>Room for the crew and the luggage. Ideal for groups, family trips, and long-distance charters.</p>
+        </div>
+      </div>
+      <div class="fleet-card">
+        <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0afa?w=600&q=80" alt="Premium Black Car" loading="lazy" />
+        <div class="info">
+          <h3>Premium Black Car</h3>
+          <p>The VIP experience. Tinted, polished, and built for those who want to arrive like they mean it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Driver Program -->
+  <section class="section reveal">
+    <div class="driver-card">
+      <h3>Want to Drive? Join the Network.</h3>
+      <p>Chris is building a fleet. Vehicles available for lease -- daily, weekly, or monthly. Need a driver instead? Hire one at reasonable rates.</p>
+      <p>Growing fleet. Growing network. Get in early.</p>
+      <p style="margin-top:1rem;"><a href="tel:7024810701" style="color:var(--gold);font-weight:700;">Call (702) 481-0701</a> to get started.</p>
+    </div>
+  </section>
+
+  <!-- Payment Row -->
+  <div class="pay-row reveal">
+    <div class="pay-item"><span>&#128181;</span>Cash</div>
+    <div class="pay-item"><span style="color:var(--blue);">V</span>Venmo</div>
+    <div class="pay-item"><span style="color:#6c2dc7;">Z</span>Zelle</div>
+    <div class="pay-item"><span>&#128179;</span>Card</div>
+  </div>
+
+  <!-- CTA -->
+  <section class="cta-section reveal">
+    <a href="book.html" class="cta-btn">Book a Ride</a>
+    <p class="cta-phone">Or call now: <a href="tel:7024810701">(702) 481-0701</a></p>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 Chris Goodloe &mdash; Las Vegas Private Car Service</p>
+    <p style="margin-top:0.5rem;">Licensed to operate anywhere in the United States.</p>
+  </footer>
+
+  <script>
+    /* Theme toggle */
+    const toggle = document.getElementById('themeToggle');
+    const stored = localStorage.getItem('cg-theme');
+    if (stored === 'light') { document.body.classList.add('light'); toggle.textContent = '\u2600'; }
+    toggle.addEventListener('click', () => {
+      document.body.classList.toggle('light');
+      const isLight = document.body.classList.contains('light');
+      toggle.textContent = isLight ? '\u2600' : '\u263E';
+      localStorage.setItem('cg-theme', isLight ? 'light' : 'dark');
+    });
+
+    /* Scroll reveal */
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    reveals.forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
