@@ -1,16 +1,36 @@
 const { neon } = require('@neondatabase/serverless');
+const crypto = require('crypto');
 
 // Product IDs that VIP (premium) members get automatically
 const VIP_PRODUCTS = ['rfm-audiobook'];
 
 // CORS allowed origins
 const ALLOWED_ORIGINS = ['https://valuetovictory.com','https://www.valuetovictory.com','https://assessment.valuetovictory.com','https://shawnedecker.com','http://localhost:3000','http://localhost:5173'];
-function getCorsOrigin(req) { const o = req.headers.origin||''; return ALLOWED_ORIGINS.includes(o)?o:o.endsWith('.vercel.app')?o:ALLOWED_ORIGINS[0]; }
+function getCorsOrigin(req) { const o = req.headers.origin||''; return ALLOWED_ORIGINS.includes(o)?o:(o.endsWith('.vercel.app')&&o.includes('vtv-assessment'))?o:ALLOWED_ORIGINS[0]; }
+
+// JWT verification for entitlements
+const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_API_KEY;
+function verifyJWT(token) {
+  try {
+    if (!JWT_SECRET) return null;
+    const [header, body, signature] = token.split('.');
+    const expectedSig = crypto.createHmac('sha256', JWT_SECRET).update(`${header}.${body}`).digest('base64url');
+    if (signature !== expectedSig) return null;
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString());
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch { return null; }
+}
+function extractUser(req) {
+  const auth = req.headers['authorization'] || '';
+  if (auth.startsWith('Bearer ')) return verifyJWT(auth.slice(7));
+  return null;
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', getCorsOrigin(req));
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -19,7 +39,13 @@ module.exports = async (req, res) => {
   }
 
   const params = new URL('http://x' + req.url).searchParams;
-  const email = (params.get('email') || '').toLowerCase().trim();
+  const jwtUser = extractUser(req);
+  const emailParam = (params.get('email') || '').toLowerCase().trim();
+
+  // Require JWT auth; email param only allowed for self-access
+  if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
+  const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : '';
+  if (emailParam && emailParam !== email) return res.status(403).json({ error: 'Access denied — you can only view your own entitlements' });
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: 'Valid email is required' });

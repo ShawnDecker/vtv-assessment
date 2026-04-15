@@ -141,6 +141,15 @@
   </div>
 
   <script>
+    // Auth gate — redirect to login if no token
+    (function() {
+      const token = localStorage.getItem('vtv_token');
+      if (!token) {
+        window.location.href = '/?login=true';
+        return;
+      }
+    })();
+
     var currentEmail = '';
     try { var saved = localStorage.getItem('vtv_member_email') || localStorage.getItem('ve_email'); if (saved) document.getElementById('email').value = saved; } catch(e) {}
     document.getElementById('darkMode').checked = (localStorage.getItem('vtv_theme') || 'light') === 'dark';

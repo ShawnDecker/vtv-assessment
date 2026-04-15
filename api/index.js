@@ -32,7 +32,8 @@ function checkRateLimit(ip, category = 'default') {
 }
 
 // ========== SECURITY: JWT Token Generation & Verification ==========
-const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_API_KEY || 'vtv-fallback-change-me';
+const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_API_KEY;
+if (!JWT_SECRET) console.error('CRITICAL: JWT_SECRET not set — auth will fail');
 const JWT_EXPIRY = 7 * 24 * 60 * 60; // 7 days in seconds
 
 function createJWT(payload) {
@@ -45,6 +46,7 @@ function createJWT(payload) {
 
 function verifyJWT(token) {
   try {
+    if (!JWT_SECRET) return null;
     const [header, body, signature] = token.split('.');
     const expectedSig = crypto.createHmac('sha256', JWT_SECRET).update(`${header}.${body}`).digest('base64url');
     if (signature !== expectedSig) return null;
@@ -58,6 +60,23 @@ function extractToken(req) {
   const auth = req.headers['authorization'] || '';
   if (auth.startsWith('Bearer ')) return auth.slice(7);
   return null;
+}
+
+function extractUser(req) {
+  const auth = req.headers['authorization'] || '';
+  if (auth.startsWith('Bearer ')) {
+    return verifyJWT(auth.slice(7));
+  }
+  return null;
+}
+
+async function auditLog(sql, { action, actor, targetTable, targetId, oldValues, newValues, ip }) {
+  try {
+    await sql`INSERT INTO audit_log (action, actor, target_table, target_id, old_values, new_values, ip_address)
+      VALUES (${action}, ${actor || 'system'}, ${targetTable || null}, ${targetId || null},
+              ${oldValues ? JSON.stringify(oldValues) : null}::jsonb,
+              ${newValues ? JSON.stringify(newValues) : null}::jsonb, ${ip || null})`;
+  } catch(e) { console.error('Audit log error:', e.message); }
 }
 
 // ========== SECURITY: CORS Allowed Origins ==========
@@ -76,7 +95,7 @@ function getCorsOrigin(req) {
   const origin = req.headers.origin || '';
   if (ALLOWED_ORIGINS.includes(origin)) return origin;
   // Allow Vercel preview deployments
-  if (origin.endsWith('.vercel.app')) return origin;
+  if (origin.endsWith('.vercel.app') && origin.includes('vtv-assessment')) return origin;
   return ALLOWED_ORIGINS[0]; // Default to main domain
 }
 
@@ -1110,6 +1129,8 @@ module.exports = async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Content-Security-Policy', "default-src 'self' https:; script-src 'self' 'unsafe-inline' https://assets.calendly.com https://www.googletagmanager.com https://api.fontshare.com; style-src 'self' 'unsafe-inline' https://api.fontshare.com https://fonts.googleapis.com; img-src 'self' https: data:; connect-src 'self' https:; frame-src https://calendly.com https://www.youtube.com;");
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -1623,7 +1644,13 @@ module.exports = async (req, res) => {
     // GET /api/member?email=xxx — Member portal: profile, tier, assessments, teams
     if (req.method === 'GET' && url.startsWith('/member') && !url.startsWith('/member/portal')) {
       const params = new URL('http://x' + req.url).searchParams;
-      const email = (params.get('email') || '').toLowerCase().trim();
+      const jwtUser = extractUser(req);
+      const emailParam = (params.get('email') || '').toLowerCase().trim();
+
+      // Require JWT auth; email param only allowed for self-access
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
+      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : '';
+      if (emailParam && emailParam !== email) return res.status(403).json({ error: 'Access denied — you can only view your own profile' });
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       const contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
@@ -3925,6 +3952,7 @@ ${roadmapHtml}
       const pinHash = crypto.createHash('sha256').update(newPin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
       const rows = await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE LOWER(email) = ${email} RETURNING id, email, first_name`;
       if (rows.length === 0) return res.status(404).json({ error: 'No contact found with that email' });
+      await auditLog(sql, { action: 'admin_reset_pin', actor: 'admin', targetTable: 'contacts', targetId: rows[0].id, newValues: { email }, ip: clientIP });
       return res.json({ success: true, contact: { id: rows[0].id, email: rows[0].email, firstName: rows[0].first_name }, message: `PIN reset successfully for ${email}` });
     }
 
@@ -3948,6 +3976,7 @@ ${roadmapHtml}
       await Promise.all(updates);
 
       const profile = await sql`SELECT membership_tier, stripe_customer_id, stripe_subscription_id, partner_id FROM user_profiles WHERE contact_id = ${contactId} LIMIT 1`;
+      await auditLog(sql, { action: 'admin_update_profile', actor: 'admin', targetTable: 'user_profiles', targetId: contactId, newValues: { tier: b.tier, stripeCustomerId: b.stripeCustomerId, stripeSubscriptionId: b.stripeSubscriptionId }, ip: clientIP });
       return res.json({ success: true, contactId, email, profile: profile[0] });
     }
 

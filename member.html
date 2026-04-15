@@ -1286,6 +1286,15 @@
 
 <!-- ===== JAVASCRIPT ===== -->
 <script>
+  // Auth gate — redirect to login if no token
+  (function() {
+    const token = localStorage.getItem('vtv_token');
+    if (!token) {
+      window.location.href = '/?login=true';
+      return;
+    }
+  })();
+
   // ── State ──────────────────────────────────────────────────────────────────
   // Theme Toggle
   function initTheme() {

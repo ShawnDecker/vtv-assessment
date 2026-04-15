@@ -331,6 +331,18 @@
       "dest": "/media-overview.html"
     },
     {
+      "src": "/investor-pitch",
+      "dest": "/investor-pitch.html"
+    },
+    {
+      "src": "/executive-summary",
+      "dest": "/executive-summary.html"
+    },
+    {
+      "src": "/nda",
+      "dest": "/nda-agreement.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }

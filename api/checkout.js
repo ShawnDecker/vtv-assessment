@@ -71,6 +71,13 @@ module.exports = async (req, res) => {
       // Handle checkout.session.completed
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
+
+        // SECURITY: Verify payment actually succeeded
+        if (session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required') {
+          console.log('[checkout] Ignoring incomplete session:', session.id, 'status:', session.payment_status);
+          return res.json({ received: true, skipped: 'payment_not_completed' });
+        }
+
         const email = (session.customer_email || session.customer_details?.email || '').toLowerCase().trim();
         const customerId = session.customer;
         const subscriptionId = session.subscription;
@@ -159,6 +166,14 @@ module.exports = async (req, res) => {
             }
             console.log('[checkout] Tier updated:', email, '→', tier, 'contact:', contactId);
 
+            // Audit log
+            try {
+              await sql`INSERT INTO audit_log (action, actor, target_table, target_id, new_values, ip_address)
+                VALUES ('stripe_checkout_completed', 'stripe_webhook', 'user_profiles', ${contactId},
+                        ${JSON.stringify({ email, tier, subscriptionId, customerId })}::jsonb,
+                        ${req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'stripe'})`;
+            } catch(e) {}
+
             // Sync dating profile payment status
             try {
               await sql`UPDATE dating_profiles SET is_paid = true, stripe_subscription_id = ${subscriptionId || null} WHERE contact_id = ${contactId}`;
@@ -191,6 +206,14 @@ module.exports = async (req, res) => {
         // Sync dating profile payment status on cancellation
         try {
           await sql`UPDATE dating_profiles SET is_paid = false, stripe_subscription_id = NULL WHERE stripe_subscription_id = ${subscriptionId}`;
+        } catch(e) {}
+
+        // Audit log
+        try {
+          await sql`INSERT INTO audit_log (action, actor, target_table, target_id, new_values, ip_address)
+            VALUES ('stripe_subscription_deleted', 'stripe_webhook', 'user_profiles', ${subscriptionId},
+                    ${JSON.stringify({ subscriptionId, action: 'downgrade_to_free' })}::jsonb,
+                    ${req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'stripe'})`;
         } catch(e) {}
       }
 

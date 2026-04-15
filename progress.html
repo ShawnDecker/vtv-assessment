@@ -113,7 +113,16 @@
   </div>
 
   <script>
-    // JWT auth check — require authentication through member portal
+    // Auth gate — redirect to login if no token
+    (function() {
+      const token = localStorage.getItem('vtv_token');
+      if (!token) {
+        window.location.href = '/?login=true';
+        return;
+      }
+    })();
+
+    // JWT auth check — pre-fill email from token
     (function() {
       try {
         var token = localStorage.getItem('vtv_token');
@@ -124,19 +133,12 @@
             // Keep both localStorage keys in sync
             localStorage.setItem('ve_email', payload.email);
           }
-        } else {
-          // No token — redirect to member portal
-          window.location.href = '/member?msg=Please+log+in+to+view+your+progress';
-          return;
         }
       } catch(e) {
         // Token decode failed — try localStorage fallback
         var saved = localStorage.getItem('ve_email') || localStorage.getItem('vtv_member_email');
         if (saved) {
           document.getElementById('email').value = saved;
-        } else {
-          window.location.href = '/member?msg=Please+log+in+to+view+your+progress';
-          return;
         }
       }
     })();

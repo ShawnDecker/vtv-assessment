@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
 // ========== JWT (shared logic) ==========
-const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_API_KEY || 'vtv-fallback-change-me';
+const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_API_KEY;
 const TRIAL_DAYS = 30;
 
 function verifyJWT(token) {
