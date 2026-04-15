@@ -6170,15 +6170,17 @@ This link expires in 24 hours.
       return res.json({ sent: results.filter(r => r.status === 'sent').length, failed: results.filter(r => r.status === 'failed').length, results });
     }
 
-    // GET /api/accountability/send — evening accountability + platform updates email (with daily dedup)
+    // GET /api/accountability/send — PERSONALIZED evening accountability email
+    // Pulls each person's assessment, coaching day, latest reply, devotional, and reply streak
     if (req.method === 'GET' && url === '/accountability/send') {
       if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         await ensureCoachingTable(sql);
 
-        // Dedup: skip anyone who already got an accountability email today
+        // Get members with their assessment data
         const members = await sql`
-          SELECT cs.email, cs.current_day, c.first_name
+          SELECT cs.email, cs.current_day, cs.assessment_id, cs.engagement_score,
+            c.first_name, c.id as contact_id
           FROM coaching_sequences cs
           JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
           WHERE cs.unsubscribed = FALSE
@@ -6202,21 +6204,16 @@ This link expires in 24 hours.
         }
         if (!transporter) return res.status(500).json({ error: 'Email credentials not configured' });
 
-        const platformUpdates = [
-          'Tier-aware upsell system \u2014 paid members now see relevant next steps instead of generic CTAs',
-          'RFM Audiobook page with 65-chapter player, mini player, and chapter search',
-          'Cart checkout supporting mixed subscriptions + one-time products',
-          'Couple Challenge Hub and Relationship Matrix for partners',
-          'Member dashboard with audiobook access card and quick links',
-          'Mobile responsive overhaul across the entire member portal',
-        ];
-        const bugFixes = [
-          'Fixed all 7 Stripe payment links \u2014 every tier verified working',
-          'Fixed member login error handling and dashboard score display',
-          'Restored free-book section visibility during assessment',
-          'Fixed Stripe webhook signature verification',
-          'Resolved 40+ UI bugs across 8 new pages',
-        ];
+        // Get today's devotional for faith section
+        let devotional = null;
+        try {
+          const startDate = new Date('2026-03-01');
+          const today = new Date();
+          const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+          const cycleDay = (diffDays % 60) + 1;
+          const devRows = await sql`SELECT * FROM rfm_devotionals WHERE day_number = ${cycleDay} LIMIT 1`;
+          if (devRows.length > 0) devotional = devRows[0];
+        } catch (e) { /* devotional table may not exist */ }
 
         let sentCount = 0;
         const results = [];
@@ -6224,69 +6221,168 @@ This link expires in 24 hours.
         for (const member of members) {
           try {
             const firstName = escapeHtml(member.first_name || 'Friend');
-            const unsubToken = Buffer.from(member.email).toString('base64');
-            const unsubUrl = `${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(member.email)}&token=${unsubToken}`;
+            const email = member.email;
+            const coachingDay = member.current_day || 1;
+            const unsubToken = Buffer.from(email).toString('base64');
+            const unsubUrl = `${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(email)}&token=${unsubToken}`;
+            const feedbackUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('What did the Value Engine help you with today?')}`;
+            const bugUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
 
-            const feedbackUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(member.email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('Can you tell us something the Value Engine helped you with today?')}`;
-            const bugUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(member.email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
+            // Get their assessment data
+            let assessment = null;
+            try {
+              const aRows = await sql`SELECT * FROM assessments WHERE id = ${member.assessment_id} LIMIT 1`;
+              if (aRows.length > 0) assessment = aRows[0];
+            } catch (e) { /* non-fatal */ }
+
+            const weakest = assessment?.weakest_pillar || 'your focus area';
+            const weakestScore = assessment ? (assessment[`${weakest.toLowerCase()}_total`] || 0) : 0;
+            const masterScore = assessment?.master_score || 0;
+            const scoreRange = assessment?.score_range || '';
+
+            // Get latest reply
+            let lastReply = null;
+            let replyStreak = 0;
+            try {
+              const replies = await sql`SELECT * FROM coaching_replies WHERE email = ${email} ORDER BY coaching_day DESC LIMIT 5`;
+              if (replies.length > 0) {
+                lastReply = replies[0];
+                replyStreak = 1;
+                const days = replies.map(r => r.coaching_day).sort((a, b) => b - a);
+                for (let i = 0; i < days.length - 1; i++) {
+                  if (days[i] - days[i + 1] <= 2) replyStreak++; else break;
+                }
+              }
+            } catch (e) { /* table may not exist */ }
+
+            // Get action completion rate
+            let actionRate = 0;
+            try {
+              const engRows = await sql`SELECT COUNT(*) as total, SUM(CASE WHEN action_completed THEN 1 ELSE 0 END) as completed FROM email_engagement WHERE email = ${email}`;
+              if (engRows[0]?.total > 0) actionRate = Math.round((Number(engRows[0].completed) / Number(engRows[0].total)) * 100);
+            } catch (e) { /* non-fatal */ }
+
+            // Build pillar bars
+            const pillarBarHtml = assessment ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:10px;color:#6a6a84;letter-spacing:1px;margin-bottom:12px;">
+    <tr>
+      <td width="20%" style="text-align:center;${weakest==='Time'?'color:#D4A847;font-weight:bold;':''}">T:${assessment.time_total||0}</td>
+      <td width="20%" style="text-align:center;${weakest==='People'?'color:#D4A847;font-weight:bold;':''}">P:${assessment.people_total||0}</td>
+      <td width="20%" style="text-align:center;${weakest==='Influence'?'color:#D4A847;font-weight:bold;':''}">I:${assessment.influence_total||0}</td>
+      <td width="20%" style="text-align:center;${weakest==='Numbers'?'color:#D4A847;font-weight:bold;':''}">N:${assessment.numbers_total||0}</td>
+      <td width="20%" style="text-align:center;${weakest==='Knowledge'?'color:#D4A847;font-weight:bold;':''}">K:${assessment.knowledge_total||0}</td>
+    </tr>
+    <tr>
+      <td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;height:4px;"><div style="width:${Math.round(((assessment.time_total||0)/50)*100)}%;background:${weakest==='Time'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+      <td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;height:4px;"><div style="width:${Math.round(((assessment.people_total||0)/50)*100)}%;background:${weakest==='People'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+      <td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;height:4px;"><div style="width:${Math.round(((assessment.influence_total||0)/50)*100)}%;background:${weakest==='Influence'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+      <td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;height:4px;"><div style="width:${Math.round(((assessment.numbers_total||0)/50)*100)}%;background:${weakest==='Numbers'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+      <td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;height:4px;"><div style="width:${Math.round(((assessment.knowledge_total||0)/50)*100)}%;background:${weakest==='Knowledge'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+    </tr>
+    </table>` : '';
+
+            // Personalized coaching phase description
+            const phase = coachingDay <= 8 ? 'Daily Coaching' : coachingDay <= 16 ? 'Deep Dive' : coachingDay <= 20 ? 'Advanced' : 'Weekly Check-In';
+
+            // Reply-aware greeting
+            let greeting = `Before you close out today &mdash; how did your ${weakest} work go?`;
+            if (lastReply && lastReply.mood === 'struggling') {
+              greeting = `Yesterday you said you were struggling. That honesty matters. How was today?`;
+            } else if (lastReply && lastReply.action_completed) {
+              greeting = `You completed yesterday's action step. Did you build on that today?`;
+            } else if (lastReply && !lastReply.action_completed) {
+              greeting = `Yesterday's action step is still there. Even 5 minutes counts. How was today?`;
+            }
+
+            // Streak section
+            const streakHtml = replyStreak >= 2 ? `
+    <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:12px 20px;margin:0 0 16px;text-align:center;">
+      <span style="font-size:24px;font-weight:900;color:#D4A847;">${replyStreak}</span>
+      <span style="font-size:13px;color:#a1a1aa;"> day check-in streak</span>
+      <span style="font-size:11px;color:#52525b;display:block;margin-top:4px;">Action completion rate: ${actionRate}%</span>
+    </div>` : '';
+
+            // Devotional section (connected to their pillar when possible)
+            let devotionalHtml = '';
+            if (devotional) {
+              const pillarConnection = (devotional.themes || []).some(t =>
+                (weakest === 'People' && ['family','love','relationships','trust'].includes(t)) ||
+                (weakest === 'Numbers' && ['money','provision','poverty','work'].includes(t)) ||
+                (weakest === 'Time' && ['patience','waiting','seasons','time'].includes(t)) ||
+                (weakest === 'Influence' && ['leadership','faith','courage','obedience'].includes(t)) ||
+                (weakest === 'Knowledge' && ['wisdom','learning','growth','truth'].includes(t))
+              );
+              devotionalHtml = `
+    <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px 24px;margin:0 0 20px;">
+      <p style="color:#D4A847;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 4px;">Today's Word</p>
+      <p style="color:#71717a;font-size:11px;margin:0 0 12px;">Day ${devotional.day_number} &mdash; ${escapeHtml(devotional.chapter_title || '')}</p>
+      ${pillarConnection ? `<p style="color:#D4A847;font-size:12px;font-style:italic;margin:0 0 8px;">This connects to your ${weakest} journey.</p>` : ''}
+      <p style="color:#e4e4e7;font-size:14px;font-style:italic;line-height:1.6;margin:0 0 8px;">"${escapeHtml(devotional.scripture_text || '')}"</p>
+      <p style="color:#71717a;font-size:12px;margin:0 0 12px;">&mdash; ${escapeHtml(devotional.scripture_reference || '')}</p>
+      <p style="color:#a1a1aa;font-size:13px;line-height:1.6;margin:0 0 12px;">${escapeHtml((devotional.action_step || '').substring(0, 200))}</p>
+      <a href="${BASE_URL}/daily-word" style="color:#D4A847;font-size:13px;text-decoration:none;">Read full devotional &rarr;</a>
+    </div>`;
+            }
+
+            // Dynamic subject line based on their state
+            let subject = `${firstName} — Day ${coachingDay} of your ${weakest} journey`;
+            if (replyStreak >= 3) subject = `${firstName} — ${replyStreak}-day streak. Your ${weakest} is changing.`;
+            else if (lastReply && lastReply.mood === 'struggling') subject = `${firstName} — still here, still in your corner`;
+            else if (lastReply && lastReply.action_completed) subject = `${firstName} — you showed up yesterday. How about today?`;
 
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;"><tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
-<tr><td style="text-align:center;padding-bottom:24px;">
+<tr><td style="text-align:center;padding-bottom:16px;">
   <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;margin-bottom:8px;">VALUE TO VICTORY</div>
-  <div style="font-family:Georgia,serif;font-size:26px;font-style:italic;color:#ffffff;">Evening Check-In</div>
+  <div style="font-family:Georgia,serif;font-size:22px;font-style:italic;color:#ffffff;">Evening Check-In &mdash; ${phase}</div>
+  <div style="font-size:12px;color:#52525b;margin-top:4px;">Day ${coachingDay} &middot; Focus: ${weakest} (${weakestScore}/50) &middot; Score: ${masterScore} (${scoreRange})</div>
 </td></tr>
-<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:40px 32px;">
-  <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 20px;">${firstName},</p>
-  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 8px;">Before you close out today &mdash; run through the Honest 24:</p>
-  <div style="background:#111118;border-left:3px solid #D4A847;padding:16px 20px;margin:16px 0 16px;border-radius:0 8px 8px 0;">
-    <p style="color:#D4A847;font-size:15px;font-weight:bold;margin:0 0 8px;">Your Growth Window Check</p>
-    <p style="color:#a1a1aa;font-size:14px;line-height:1.8;margin:0;">You had roughly 4-5 hours of discretionary time today. Answer honestly:</p>
-    <p style="color:#e4e4e7;font-size:14px;line-height:1.8;margin:8px 0 0;">1. How many of those hours went toward something that compounds?<br/>2. What ate the time that should have been yours?<br/>3. Did you do your 90-minute block? Even 10 minutes?</p>
-  </div>
-  <div style="background:#111118;border:1px solid #27272a;padding:14px 20px;margin:0 0 24px;border-radius:8px;">
+<tr><td style="padding:0 0 16px;">
+  ${pillarBarHtml}
+</td></tr>
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:32px 28px;">
+  <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 16px;">${firstName},</p>
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 16px;">${greeting}</p>
+
+  ${streakHtml}
+
+  <!-- Growth Window -->
+  <div style="background:#111118;border-left:3px solid #D4A847;padding:14px 18px;margin:0 0 16px;border-radius:0 8px 8px 0;">
+    <p style="color:#D4A847;font-size:14px;font-weight:bold;margin:0 0 6px;">Your Honest 24</p>
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:10px;color:#71717a;letter-spacing:1px;">WORK</div><div style="font-size:18px;color:#e4e4e7;font-weight:bold;">9-10h</div></td>
-    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:10px;color:#71717a;letter-spacing:1px;">OBLIGATIONS</div><div style="font-size:18px;color:#e4e4e7;font-weight:bold;">2-3h</div></td>
-    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:10px;color:#D4A847;letter-spacing:1px;font-weight:bold;">GROWTH</div><div style="font-size:18px;color:#D4A847;font-weight:bold;">4-5h</div></td>
-    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:10px;color:#71717a;letter-spacing:1px;">SLEEP</div><div style="font-size:18px;color:#e4e4e7;font-weight:bold;">6-7h</div></td>
+    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:9px;color:#71717a;letter-spacing:1px;">WORK</div><div style="font-size:16px;color:#e4e4e7;font-weight:bold;">9-10h</div></td>
+    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:9px;color:#71717a;letter-spacing:1px;">OBLIGAT.</div><div style="font-size:16px;color:#e4e4e7;font-weight:bold;">2-3h</div></td>
+    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:9px;color:#D4A847;letter-spacing:1px;font-weight:bold;">GROWTH</div><div style="font-size:16px;color:#D4A847;font-weight:bold;">4-5h</div></td>
+    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:9px;color:#71717a;letter-spacing:1px;">SLEEP</div><div style="font-size:16px;color:#e4e4e7;font-weight:bold;">6-7h</div></td>
     </tr></table>
-    <p style="color:#52525b;font-size:11px;text-align:center;margin:8px 0 0;">The gold number is what you control. Everything else is locked. How did you spend it?</p>
-  </div>
-  <div style="text-align:center;margin:0 0 24px;">
-    <a href="${BASE_URL}/coaching-reply?email=${encodeURIComponent(member.email)}&day=${member.current_day}" style="display:inline-block;padding:12px 28px;border:2px solid #D4A847;color:#D4A847;font-size:14px;font-weight:bold;text-decoration:none;border-radius:8px;">Log Today's Check-In &rarr;</a>
+    <p style="color:#52525b;font-size:11px;text-align:center;margin:6px 0 0;">How much of your growth window went to ${weakest} today?</p>
   </div>
 
-  <hr style="border:none;border-top:1px solid #27272a;margin:24px 0;"/>
-
-  <!-- FEEDBACK SECTION -->
-  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px 24px;margin:0 0 20px;">
-    <p style="color:#D4A847;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;">We Want to Hear From You</p>
-    <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0 0 16px;">Your feedback shapes everything we build. Tell us what's working, what's not, or what you wish existed.</p>
-    <table width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td width="50%" style="padding-right:6px;">
-        <a href="${feedbackUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:12px 8px;border-radius:8px;">Share What Helped</a>
-      </td>
-      <td width="50%" style="padding-left:6px;">
-        <a href="${bugUrl}" style="display:block;text-align:center;background:#18181b;border:1px solid #ef4444;color:#ef4444;font-size:13px;font-weight:bold;text-decoration:none;padding:12px 8px;border-radius:8px;">Report an Issue</a>
-      </td>
-    </tr></table>
+  <!-- Check-in CTA -->
+  <div style="text-align:center;margin:0 0 20px;">
+    <a href="${BASE_URL}/coaching-reply?email=${encodeURIComponent(email)}&day=${coachingDay}" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;border-radius:8px;">Log Today's Check-In &rarr;</a>
   </div>
 
   <hr style="border:none;border-top:1px solid #27272a;margin:20px 0;"/>
 
-  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px 24px;margin:0;">
-    <p style="color:#D4A847;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;">A Note from Shawn</p>
-    <p style="color:#e4e4e7;font-size:15px;line-height:1.7;margin:0 0 12px;font-style:italic;">Every single one of you taking this assessment and showing up every day &mdash; that matters. You're not just checking a box. You're choosing to look at yourself honestly, and that takes guts. I built this because I needed it first. Now I get to watch it help you too. That's the whole point.</p>
-    <p style="color:#a1a1aa;font-size:14px;margin:0;">&mdash; Shawn Decker</p>
-  </div>
+  ${devotionalHtml}
+
+  <!-- Feedback -->
+  <table width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td width="50%" style="padding-right:6px;">
+      <a href="${feedbackUrl}" style="display:block;text-align:center;background:#18181b;border:1px solid #D4A847;color:#D4A847;font-size:12px;font-weight:bold;text-decoration:none;padding:10px 8px;border-radius:8px;">Share What Helped</a>
+    </td>
+    <td width="50%" style="padding-left:6px;">
+      <a href="${bugUrl}" style="display:block;text-align:center;background:#18181b;border:1px solid #52525b;color:#71717a;font-size:12px;font-weight:bold;text-decoration:none;padding:10px 8px;border-radius:8px;">Report an Issue</a>
+    </td>
+  </tr></table>
 </td></tr>
-<tr><td style="text-align:center;padding-top:24px;">
-  <a href="${BASE_URL}/member" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Open Your Dashboard</a>
+<tr><td style="text-align:center;padding-top:20px;">
+  <a href="${BASE_URL}/member" style="display:inline-block;background:#18181b;border:1px solid #27272a;color:#a1a1aa;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:8px;">Open Dashboard</a>
 </td></tr>
-<tr><td style="text-align:center;padding-top:24px;">
+<tr><td style="text-align:center;padding-top:20px;">
   <p style="color:#52525b;font-size:12px;margin:0;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p>
   <p style="color:#3f3f46;font-size:11px;margin:8px 0 0;"><a href="${unsubUrl}" style="color:#3f3f46;text-decoration:underline;">Unsubscribe from evening emails</a></p>
 </td></tr>
@@ -6294,14 +6390,14 @@ This link expires in 24 hours.
 
             await transporter.sendMail({
               from: `"Shawn @ Value Engine" <${process.env.GMAIL_USER}>`,
-              to: member.email,
-              subject: `${firstName} — how did you spend your growth window today?`,
+              to: email,
+              subject,
               html,
             });
 
-            results.push({ email: member.email, status: 'sent' });
+            results.push({ email, status: 'sent', day: coachingDay, weakest, streak: replyStreak });
             sentCount++;
-            await logEmail(sql, { recipient: member.email, emailType: 'accountability', subject: `${firstName} — how did you spend your growth window today?` });
+            await logEmail(sql, { recipient: email, emailType: 'accountability', subject, metadata: { day: coachingDay, weakest, streak: replyStreak } });
           } catch (sendErr) {
             console.error(`Accountability email error for ${maskEmail(member.email)}:`, sendErr.message);
             results.push({ email: member.email, status: 'error', error: sendErr.message });
