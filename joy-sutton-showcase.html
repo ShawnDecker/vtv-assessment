@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Joy Sutton | VTV Ecosystem Showcase</title>
+<link rel="icon" type="image/png" href="/favicon.png"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--gold:#D4A847;--gold-dark:#b8942e;--bg:#050508;--card:#111114;--border:#1e1e24;--text:#fff;--muted:#a1a1aa;--dim:#71717a}
+  body{font-family:'Satoshi',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+  a{color:var(--gold);text-decoration:none}
+
+  /* Hero */
+  .hero{text-align:center;padding:4rem 1.5rem 3rem;background:linear-gradient(180deg,rgba(212,168,71,0.06) 0%,transparent 80%);position:relative}
+  .hero::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+  .hero-badge{display:inline-block;font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);background:rgba(212,168,71,0.1);border:1px solid rgba(212,168,71,0.2);padding:0.35rem 1.25rem;border-radius:2rem;font-weight:700;margin-bottom:1.5rem}
+  .hero h1{font-family:'Instrument Serif',serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:400;line-height:1.2;margin-bottom:1rem}
+  .hero h1 em{color:var(--gold);font-style:italic}
+  .hero-sub{font-size:1rem;color:var(--muted);max-width:600px;margin:0 auto 2rem}
+  .hero-for{font-size:0.85rem;color:var(--dim);margin-top:1rem}
+  .hero-for strong{color:var(--gold)}
+
+  /* Section */
+  .section{max-width:900px;margin:0 auto;padding:3rem 1.5rem}
+  .section-label{font-size:0.6rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:0.5rem}
+  .section h2{font-family:'Instrument Serif',serif;font-size:1.8rem;font-weight:400;margin-bottom:1rem}
+  .section h2 em{color:var(--gold);font-style:italic}
+  .section p{color:var(--muted);margin-bottom:1rem}
+
+  /* Stats row */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1rem;margin:2rem 0}
+  .stat{text-align:center;background:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem 0.5rem}
+  .stat-num{font-size:2rem;font-weight:900;color:var(--gold);line-height:1}
+  .stat-label{font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);margin-top:0.35rem}
+
+  /* Vision cards */
+  .vision-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin:2rem 0}
+  .vision-card{background:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.5rem;transition:border-color 0.3s}
+  .vision-card:hover{border-color:rgba(212,168,71,0.4)}
+  .vision-icon{font-size:1.5rem;margin-bottom:0.75rem}
+  .vision-card h3{font-size:0.95rem;font-weight:700;margin-bottom:0.5rem}
+  .vision-card p{font-size:0.8rem;color:var(--muted);line-height:1.6}
+
+  /* Income model */
+  .income-flow{display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;margin:2rem 0}
+  .flow-step{background:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem 1.25rem;text-align:center;flex:1;min-width:140px;max-width:200px}
+  .flow-step .num{font-size:1.5rem;font-weight:900;color:var(--gold)}
+  .flow-step .label{font-size:0.7rem;color:var(--muted);margin-top:0.25rem}
+  .flow-arrow{display:flex;align-items:center;color:var(--gold);font-size:1.5rem;font-weight:300}
+
+  /* Portfolio */
+  .portfolio-section{background:linear-gradient(180deg,transparent,rgba(212,168,71,0.03));padding:3rem 0}
+  .portfolio-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin:1.5rem 0}
+  .port-card{background:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem 1.5rem;transition:transform 0.2s,border-color 0.3s}
+  .port-card:hover{transform:translateY(-2px);border-color:rgba(212,168,71,0.3)}
+  .port-card .tag{font-size:0.55rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);font-weight:700;background:rgba(212,168,71,0.1);display:inline-block;padding:0.2rem 0.6rem;border-radius:1rem;margin-bottom:0.5rem}
+  .port-card h3{font-size:0.95rem;font-weight:700;margin-bottom:0.25rem}
+  .port-card .role{font-size:0.72rem;color:var(--dim);margin-bottom:0.75rem}
+  .port-links{display:flex;flex-wrap:wrap;gap:0.4rem}
+  .port-link{font-size:0.68rem;font-weight:600;color:var(--gold);padding:0.3rem 0.65rem;background:rgba(212,168,71,0.08);border:1px solid rgba(212,168,71,0.2);border-radius:4px;transition:background 0.2s}
+  .port-link:hover{background:rgba(212,168,71,0.18)}
+
+  /* Joy concept */
+  .joy-section{background:linear-gradient(135deg,rgba(212,168,71,0.05),rgba(139,92,246,0.03));border-top:1px solid rgba(212,168,71,0.15);border-bottom:1px solid rgba(212,168,71,0.15)}
+  .joy-concept{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:2rem 0}
+  .joy-card{background:rgba(255,255,255,0.03);border:1px solid rgba(212,168,71,0.2);border-radius:0.75rem;padding:1.25rem;text-align:center}
+  .joy-card h4{font-size:0.85rem;font-weight:700;margin-bottom:0.35rem;color:var(--gold)}
+  .joy-card p{font-size:0.75rem;color:var(--muted)}
+
+  /* Pillar bar */
+  .pillars{display:flex;gap:0.5rem;margin:2rem 0;flex-wrap:wrap;justify-content:center}
+  .pillar{flex:1;min-width:100px;text-align:center;padding:1rem 0.5rem;border-radius:0.5rem;border:1px solid var(--border)}
+  .pillar .letter{font-size:2rem;font-weight:900;line-height:1}
+  .pillar .name{font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);margin-top:0.25rem}
+  .p-time .letter{color:#D4A847}.p-people .letter{color:#3b82f6}.p-influence .letter{color:#a855f7}.p-numbers .letter{color:#22c55e}.p-knowledge .letter{color:#f97316}
+
+  /* CTA */
+  .cta-box{text-align:center;padding:3rem 1.5rem;margin:2rem auto;max-width:600px}
+  .cta-box h2{font-family:'Instrument Serif',serif;font-size:1.8rem;margin-bottom:0.75rem}
+  .cta-btn{display:inline-block;padding:0.85rem 2.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#000;font-weight:800;font-size:1rem;border-radius:0.5rem;transition:transform 0.2s,box-shadow 0.2s}
+  .cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(212,168,71,0.3)}
+
+  /* Residual model */
+  .residual-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:2rem 0}
+  .res-card{background:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.5rem;text-align:center}
+  .res-card .amount{font-size:1.75rem;font-weight:900;color:var(--gold)}
+  .res-card .period{font-size:0.7rem;color:var(--dim);margin-bottom:0.5rem}
+  .res-card .desc{font-size:0.78rem;color:var(--muted)}
+
+  /* Footer */
+  .footer{text-align:center;padding:2rem;font-size:0.7rem;color:var(--dim);border-top:1px solid var(--border)}
+
+  /* Divider */
+  .divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:2rem 0}
+
+  @media(max-width:600px){
+    .hero h1{font-size:1.8rem}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .flow-arrow{display:none}
+    .income-flow{flex-direction:column;align-items:center}
+    .flow-step{max-width:100%}
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ HERO ═══ -->
+<div class="hero">
+  <div class="hero-badge">Confidential Media Brief</div>
+  <h1>The <em>Value Engine</em> That's<br>Changing How People <em>Win</em></h1>
+  <p class="hero-sub">A faith-based AI platform that measures what matters, coaches people to victory, and creates residual income for everyone in the ecosystem.</p>
+  <p class="hero-for">Prepared for <strong>Joy Sutton</strong> &mdash; Journalist, Media Strategist, Howard University Alumna</p>
+</div>
+
+<!-- ═══ THE PROBLEM ═══ -->
+<div class="section">
+  <div class="section-label">The Market Gap</div>
+  <h2>People Don't Know Their <em>Real Value</em></h2>
+  <p>Every year, millions spend thousands on self-help books, coaching, apps, and seminars that never stick. The problem isn't motivation &mdash; it's measurement. Without a score, you can't track growth. Without a system, coaches can't scale. Without data, churches can't serve their people. We're fixing all three.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-num">$15B</div><div class="stat-label">Life Coaching Market</div></div>
+    <div class="stat"><div class="stat-num">281</div><div class="stat-label">Assessment Questions</div></div>
+    <div class="stat"><div class="stat-num">50</div><div class="stat-label">Scored Dimensions</div></div>
+    <div class="stat"><div class="stat-num">5</div><div class="stat-label">Core Pillars</div></div>
+    <div class="stat"><div class="stat-num">4</div><div class="stat-label">Assessment Modes</div></div>
+    <div class="stat"><div class="stat-num">60+</div><div class="stat-label">API Endpoints</div></div>
+  </div>
+</div>
+
+<!-- ═══ THE P.I.N.K. FRAMEWORK ═══ -->
+<div class="section">
+  <div class="section-label">The Framework</div>
+  <h2>P.I.N.K. &mdash; Five Pillars of <em>Human Value</em></h2>
+  <p>Every person has value. Most people just don't know how to measure it. The P.I.N.K.T framework scores five pillars across 50 sub-categories, giving people their first real look at where they stand &mdash; and where to grow.</p>
+
+  <div class="pillars">
+    <div class="pillar p-time"><div class="letter">P</div><div class="name">Protect Your Time</div></div>
+    <div class="pillar p-people"><div class="letter">I</div><div class="name">Invest in People</div></div>
+    <div class="pillar p-influence"><div class="letter">N</div><div class="name">Navigate Influence</div></div>
+    <div class="pillar p-numbers"><div class="letter">K</div><div class="name">Know Your Numbers</div></div>
+    <div class="pillar p-knowledge"><div class="letter">T</div><div class="name">Transfer Knowledge</div></div>
+  </div>
+
+  <p>Four assessment modes &mdash; <strong>Individual</strong>, <strong>Relationship</strong>, <strong>Leadership</strong>, and <strong>Dating</strong> &mdash; each with overlay questions that go deeper into specific dimensions. Backed by a 281-question bank, AI-generated coaching, and daily accountability emails.</p>
+</div>
+
+<!-- ═══ CHANGING THE MARKET ═══ -->
+<div class="section">
+  <div class="section-label">The Vision</div>
+  <h2>We're Not Building an App. We're Building a <em>Movement.</em></h2>
+  <p>Traditional coaching is 1:1, expensive, and doesn't scale. Traditional self-help is generic and passive. We're building the middle ground &mdash; a platform where AI coaches at scale, assessments measure real growth, and every person in the ecosystem earns.</p>
+
+  <div class="vision-grid">
+    <div class="vision-card">
+      <div class="vision-icon">&#9775;</div>
+      <h3>AI Coaching at Scale</h3>
+      <p>Every member gets personalized morning coaching emails and evening accountability &mdash; completely autonomous, powered by their actual P.I.N.K. scores. Not generic motivation. Real data-driven guidance.</p>
+    </div>
+    <div class="vision-card">
+      <div class="vision-icon">&#128161;</div>
+      <h3>The Time Multiplier</h3>
+      <p>Our proprietary metric that measures how efficiently someone converts time into value. No other platform scores this. It's the "credit score" of personal development.</p>
+    </div>
+    <div class="vision-card">
+      <div class="vision-icon">&#128302;</div>
+      <h3>Values-Based Dating</h3>
+      <p>Aligned Hearts &mdash; the first dating platform powered by a real assessment engine. Compatibility isn't about what you like. It's about what you value. 3-axis scoring: pillar alignment, interest overlap, preference match.</p>
+    </div>
+    <div class="vision-card">
+      <div class="vision-icon">&#9968;</div>
+      <h3>Church Integration</h3>
+      <p>Pastors get real-time visibility into their congregation's growth. Anonymous, privacy-first &mdash; but powerful. Team assessments, couple tools, and faith-based challenges built in.</p>
+    </div>
+    <div class="vision-card">
+      <div class="vision-icon">&#128188;</div>
+      <h3>Enterprise Ready</h3>
+      <p>Leadership assessments, team reports, aggregate analytics. Every company talks about culture &mdash; we measure it. Per-person growth tracking across 50 dimensions.</p>
+    </div>
+    <div class="vision-card">
+      <div class="vision-icon">&#127968;</div>
+      <h3>White-Label Everything</h3>
+      <p>Churches, coaches, consultants, and corporations can brand the assessment as their own. Same engine, their brand. Built-in revenue share for everyone who brings people to the platform.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESIDUAL INCOME MODEL ═══ -->
+<div class="section">
+  <div class="section-label">The Income Revolution</div>
+  <h2>Everyone in the Ecosystem <em>Earns</em></h2>
+  <p>This isn't a pyramid. It's a platform. Every person who brings value gets paid. Coaches earn from their clients. Churches earn from their members. Affiliates earn from referrals. Web design clients get a revenue-generating website instead of a static brochure. We're replacing the dead-end "pay me once" model with a "let's grow together" model.</p>
+
+  <div class="residual-grid">
+    <div class="res-card">
+      <div class="amount">$29</div>
+      <div class="period">per month</div>
+      <div class="desc">VictoryPath membership &mdash; individual assessment, coaching emails, action plans, challenges, and full portal access</div>
+    </div>
+    <div class="res-card">
+      <div class="amount">$47</div>
+      <div class="period">per month</div>
+      <div class="desc">Value Builder &mdash; couple assessment, relationship matrix, love language, 30-day challenges, intimacy assessment, partner tools</div>
+    </div>
+    <div class="res-card">
+      <div class="amount">$497</div>
+      <div class="period">per month</div>
+      <div class="desc">Victory VIP &mdash; premium coaching, 1:1 sessions, leadership assessment, enterprise tools, white-label access, priority support</div>
+    </div>
+  </div>
+
+  <div class="income-flow">
+    <div class="flow-step"><div class="num">1</div><div class="label">You build someone a website</div></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-step"><div class="num">2</div><div class="label">Their site has a VTV assessment button</div></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-step"><div class="num">3</div><div class="label">Their visitors take the assessment</div></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-step"><div class="num">4</div><div class="label">Some become paying members</div></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-step"><div class="num">$</div><div class="label">You, the church, the coach &mdash; everyone earns residual</div></div>
+  </div>
+
+  <p style="text-align:center;font-size:0.85rem;color:var(--muted);margin-top:1.5rem">Every website we build isn't a cost &mdash; it's a revenue stream. Every church we onboard isn't a client &mdash; it's a distribution partner. This is how you change a market.</p>
+</div>
+
+<!-- ═══ WHAT WE'VE BUILT ═══ -->
+<div class="portfolio-section">
+<div class="section" style="padding-bottom:0">
+  <div class="section-label">Live Portfolio</div>
+  <h2>7 Clients. 17 Pages. 3 Churches. <em>One Platform.</em></h2>
+  <p>Everything below was designed, built, and deployed by our AI-powered development system. Each site integrates directly with the VTV assessment engine.</p>
+
+  <!-- Platform -->
+  <div style="margin-top:1.5rem">
+    <div class="section-label" style="margin-bottom:0.75rem">The Platform</div>
+    <div class="portfolio-grid">
+      <div class="port-card">
+        <div class="tag">Live SaaS</div>
+        <h3>Value to Victory Assessment</h3>
+        <div class="role">Full platform &mdash; 281 questions, 5 pillars, AI coaching, Stripe billing, dating, couple tools</div>
+        <div class="port-links">
+          <a class="port-link" href="https://assessment.valuetovictory.com" target="_blank">Live Site</a>
+          <a class="port-link" href="https://assessment.valuetovictory.com/member" target="_blank">Member Portal</a>
+          <a class="port-link" href="https://assessment.valuetovictory.com/faith-match" target="_blank">Aligned Hearts Dating</a>
+        </div>
+      </div>
+      <div class="port-card">
+        <div class="tag">Author Platform</div>
+        <h3>ShawnEDecker.com</h3>
+        <div class="role">6-page author site &mdash; speaking, books, podcast, coaching, ministry</div>
+        <div class="port-links">
+          <a class="port-link" href="https://shawnedecker.com" target="_blank">Live Site</a>
+        </div>
+      </div>
+      <div class="port-card">
+        <div class="tag">Main Site</div>
+        <h3>ValueToVictory.com</h3>
+        <div class="role">React 19 + Tailwind marketing site with assessment integration</div>
+        <div class="port-links">
+          <a class="port-link" href="https://valuetovictory.com" target="_blank">Live Site</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Personal Brands -->
+  <div style="margin-top:2rem">
+    <div class="section-label" style="margin-bottom:0.75rem">Personal Brand Sites</div>
+    <div class="portfolio-grid">
+      <div class="port-card">
+        <div class="tag">Educator</div>
+        <h3>Dr. Charnika P. Elliott</h3>
+        <div class="role">International Best-Selling Author, Certified Christian Life Coach, Noah-Christian Academy Founder</div>
+        <div class="port-links">
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/elliott-site/index.html" target="_blank">View Site</a>
+        </div>
+      </div>
+      <div class="port-card">
+        <div class="tag">Ministry</div>
+        <h3>Brendon Albiston</h3>
+        <div class="role">Ministry Leader, Gallup Certified Strengths Coach, Albiston Family Ministries</div>
+        <div class="port-links">
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/albiston-site/index.html" target="_blank">View Site</a>
+        </div>
+      </div>
+      <div class="port-card">
+        <div class="tag">Entrepreneur</div>
+        <h3>Steadman McLean</h3>
+        <div class="role">Multi-business owner &mdash; bail bonds, childcare, community leader</div>
+        <div class="port-links">
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/mclean-site/index.html" target="_blank">Hub</a>
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/mclean-site/bonds.html" target="_blank">Bail Bonds</a>
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/mclean-site/childcare.html" target="_blank">Childcare</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Churches -->
+  <div style="margin-top:2rem">
+    <div class="section-label" style="margin-bottom:0.75rem">Church Sites</div>
+    <div class="portfolio-grid">
+      <div class="port-card">
+        <div class="tag">Word of Faith</div>
+        <h3>Valley Word Church</h3>
+        <div class="role">Salem, VA &mdash; Drs. Eddie & Debbie Crabtree</div>
+        <div class="port-links">
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/vwc-site/index.html" target="_blank">Church</a>
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/vwc-site/pastor.html" target="_blank">Pastor</a>
+        </div>
+      </div>
+      <div class="port-card">
+        <div class="tag">Nondenominational</div>
+        <h3>Galilean House of Worship</h3>
+        <div class="role">Martinsville, VA &mdash; Bishop Michael & Lady Angela Penn</div>
+        <div class="port-links">
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/ghow-site/index.html" target="_blank">Church</a>
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/ghow-site/pastor.html" target="_blank">Pastor</a>
+        </div>
+      </div>
+      <div class="port-card">
+        <div class="tag">Nondenominational</div>
+        <h3>Jesus is Lord ~ Assembly of Love</h3>
+        <div class="role">Roanoke, VA &mdash; Bishop Steven A. & Elder LaVerne Norman</div>
+        <div class="port-links">
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/jlal-site/index.html" target="_blank">Church</a>
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/jlal-site/pastor.html" target="_blank">Pastor</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates -->
+  <div style="margin-top:2rem">
+    <div class="section-label" style="margin-bottom:0.75rem">Turnkey Business Templates</div>
+    <div class="portfolio-grid">
+      <div class="port-card">
+        <div class="tag">4 Templates</div>
+        <h3>Small Business Starter Pack</h3>
+        <div class="role">White-label websites for lawn care, auto repair, marriage coaching &mdash; each with VTV assessment integration and residual income built in</div>
+        <div class="port-links">
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/biz-templates/index.html" target="_blank">Template Hub</a>
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/biz-templates/lawn.html" target="_blank">Lawn Care</a>
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/biz-templates/mechanic.html" target="_blank">Auto Repair</a>
+          <a class="port-link" href="https://htmlpreview.github.io/?https://github.com/ShawnDecker/vtv-assessment/blob/biz-templates/marriage.html" target="_blank">Marriage Coach</a>
+        </div>
+      </div>
+      <div class="port-card">
+        <div class="tag">Industry</div>
+        <h3>Real Estate Assessment</h3>
+        <div class="role">Specialized P.I.N.K. assessment for real estate professionals &mdash; appraisers, agents, investors, property managers</div>
+        <div class="port-links">
+          <a class="port-link" href="https://assessment.valuetovictory.com/realestate" target="_blank">Live Page</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ JOY'S CONCEPT ═══ -->
+<div class="section joy-section" style="padding:3rem 1.5rem">
+  <div class="section-label">Custom Concept</div>
+  <h2>What This Looks Like for <em>Joy Sutton Media</em></h2>
+  <p>Joy, here's what we see when we look at your brand. You're already doing the work &mdash; empowerment, recovery storytelling, personal development content. The VTV platform is the engine that turns that content into a measurable, recurring-revenue ecosystem.</p>
+
+  <div class="joy-concept">
+    <div class="joy-card">
+      <h4>JoySuttonMedia.com</h4>
+      <p>Professional media portfolio built on the same design system as our platform &mdash; your brand, your voice, your story</p>
+    </div>
+    <div class="joy-card">
+      <h4>P.I.N.K. for Media</h4>
+      <p>Custom assessment mode for media professionals &mdash; measuring storytelling impact, audience growth, brand integrity</p>
+    </div>
+    <div class="joy-card">
+      <h4>SheShines Academy</h4>
+      <p>Your SheShines brand integrated with VTV &mdash; members take assessments, get coached, and you earn residual on every subscription</p>
+    </div>
+    <div class="joy-card">
+      <h4>Recovery Coverage</h4>
+      <p>Your American Addiction Centers journalism + VTV's assessment engine = the first data-driven recovery progress platform for storytelling</p>
+    </div>
+    <div class="joy-card">
+      <h4>Virginia Tech Connection</h4>
+      <p>Both VT alumni. Your Master's in Communications + our assessment engine = the academic credibility that corporate sponsors want</p>
+    </div>
+    <div class="joy-card">
+      <h4>Residual Revenue</h4>
+      <p>Every person who takes an assessment through your media channels, your SheShines community, or your content &mdash; you earn monthly</p>
+    </div>
+  </div>
+
+  <p style="text-align:center;margin-top:1.5rem;font-size:0.85rem">This isn't about building you a website. It's about building you a <strong style="color:var(--gold)">revenue-generating media ecosystem</strong> that grows while you sleep.</p>
+</div>
+
+<!-- ═══ THE TECH ═══ -->
+<div class="section">
+  <div class="section-label">Under the Hood</div>
+  <h2>Enterprise-Grade. <em>Solo-Built.</em></h2>
+  <p>The entire VTV platform &mdash; 30,000+ lines of code, 60+ API endpoints, 39 database tables, AI coaching, Stripe billing, dating algorithm, church tools, couple assessments &mdash; was designed and built by one person using AI-assisted development. That's the story.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-num">30K+</div><div class="stat-label">Lines of Code</div></div>
+    <div class="stat"><div class="stat-num">39</div><div class="stat-label">Database Tables</div></div>
+    <div class="stat"><div class="stat-num">17</div><div class="stat-label">Pages Built</div></div>
+    <div class="stat"><div class="stat-num">7</div><div class="stat-label">Active Clients</div></div>
+    <div class="stat"><div class="stat-num">3</div><div class="stat-label">Live Websites</div></div>
+    <div class="stat"><div class="stat-num">1</div><div class="stat-label">Builder</div></div>
+  </div>
+</div>
+
+<!-- ═══ CTA ═══ -->
+<div class="cta-box">
+  <h2>See It for <em>Yourself</em></h2>
+  <p style="color:var(--muted);margin-bottom:1.5rem">Take the P.I.N.K. assessment. It takes 5 minutes. You'll get a real score across 50 dimensions. Then you'll understand why this changes everything.</p>
+  <a class="cta-btn" href="https://assessment.valuetovictory.com">Take the Free Assessment &rarr;</a>
+  <p style="font-size:0.72rem;color:var(--dim);margin-top:1.25rem">Or reach out directly: <a href="mailto:valuetovictory@gmail.com">valuetovictory@gmail.com</a></p>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<div class="footer">
+  <p>Prepared for Joy Sutton &mdash; April 2026</p>
+  <p style="margin-top:0.35rem">Value to Victory &mdash; <a href="https://valuetovictory.com">valuetovictory.com</a></p>
+  <p style="margin-top:0.35rem">Built by Shawn E. Decker &bull; U.S. Navy Veteran &bull; Virginia Tech</p>
+  <p style="margin-top:0.5rem;font-size:0.6rem;color:#444">This document is confidential. All client work shown with permission.</p>
+</div>
+
+</body>
+</html>
