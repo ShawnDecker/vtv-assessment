@@ -415,13 +415,15 @@ function generateCoachingEmail(day, assessmentData, prescription, email) {
   const retakeUrl = BASE_URL;
   const reportUrl = `${BASE_URL}/report/${a.id}`;
 
-  // Pillar-specific content for 8+8+8 rule (Day 2)
+  // Pillar-specific content for the Honest 24 framework (Day 2)
+  // The 8+8+8 is the IDEAL. The Reality Audit is what actually happens.
+  // The Dynamic Calculator personalizes it.
   const rule888 = {
-    Time: "Your 8 hours of work aren't laser-focused — they're scattered. Your 8 hours for you? You're spending them on other people's priorities. Tomorrow, I want you to draw three columns on a piece of paper: WORK / ME / SLEEP. Be brutally honest about where each hour actually goes.",
-    People: "Your 8 hours for relationships are getting eaten by work overflow. When was the last time you spent a full hour — just ONE — with someone who matters? Not while checking your phone. Not while half-working. A real, full hour.",
-    Influence: "Your 8 work hours aren't building authority — they're maintaining. You're working 8 but influencing 0. The question isn't whether you're busy. It's whether anyone notices when you're not in the room.",
-    Numbers: "Your 8 work hours aren't tracked against actual income per hour. You're busy but not profitable. If I asked you right now what each hour of your work is worth in dollars, could you answer? Most can't.",
-    Knowledge: "Where in your 8+8+8 is learning? If it's not scheduled, it's not happening. You've got 8 hours for work, 8 for you, 8 for sleep — but learning isn't in any of those blocks. That's why your Knowledge score is where it is."
+    Time: "Let's be real about your 24 hours. The 8+8+8 is the target — 8 hours of focused work, 8 hours for you, 8 hours of sleep. But here's what actually happens: 1-2 hours commuting, 1 hour getting ready, 1-2 hours on meals and chores. That leaves you maybe 4-5 hours 'for you' — not 8. Your Time score tells me you're not even protecting those 4-5. Tomorrow, draw four columns: WORK / OBLIGATIONS / ME / SLEEP. Track every hour. The gap between where your time goes and where it should go is your biggest opportunity.",
+    People: "The 8+8+8 says you get 8 hours for you — but in reality, commuting, cooking, errands, and household obligations eat 3-4 of those hours. That leaves maybe 4-5 hours of discretionary time. How much of that goes to the people who matter? Be honest — most of it goes to screens. One real hour with someone who matters is worth more than 4 hours of scrolling in the same room.",
+    Influence: "The 8+8+8 says 8 hours of work. Reality? You work 9-10 including commute and lunch. The question is: how many of those hours build influence vs. just maintain your position? Most people spend 90% on maintenance and 10% on growth. Flip that ratio in just one hour a day and your Influence score changes within 30 days.",
+    Numbers: "Let's do the real math. You work 8-10 hours including commute. Sleep 6-7. Spend 2-3 on obligations. That leaves 4-5 hours. Now divide your total daily expenses by your actual productive hours. That's your real cost-per-hour. Most people have never calculated this. Do it right now — the number will either motivate you or terrify you. Both are useful.",
+    Knowledge: "Here's the honest breakdown: after work (9-10 hrs with commute), sleep (7 hrs), and obligations (2-3 hrs), you have roughly 4-5 hours of discretionary time. If learning isn't carved out of those 4-5 hours with a specific block, it's not happening. You can't learn passively. Schedule 30 minutes of deliberate learning inside your real available time — not your fantasy schedule."
   };
 
   // Pillar-specific 10-minute challenges (Day 4)
@@ -469,23 +471,34 @@ Tomorrow: The 8+8+8 Rule — and why your ${weakest} is stealing from the wrong 
       break;
 
     case 2:
-      subject = `The 8+8+8 Rule — and why your ${weakest} is stealing from the wrong 8`;
+      subject = `The Honest 24 — your day doesn't math the way you think it does`;
       body = `${firstName},
 
-The 8+8+8 Rule is simple: 8 hours for you (workouts, hobbies, friends) + 8 hours of laser-focused work + 8 hours of deep, guilt-free sleep.
+Let me wreck a popular framework for you: the 8+8+8 Rule. 8 hours work, 8 hours for you, 8 hours sleep. Clean. Simple. And mathematically dishonest.
 
-Most people know this. Almost nobody lives it. And your ${weakest} score tells me exactly where the breakdown is.
+Here's what a real 24 hours looks like for most people:
+
+THE HONEST 24:
+Sleep: 6-7 hours (you're not getting 8 — almost nobody does)
+Work + commute: 9-10 hours (your "8 hours" doesn't include getting there and back)
+Obligations: 2-3 hours (meals, errands, chores, kids, getting ready)
+ACTUAL DISCRETIONARY TIME: 4-5 hours
+
+That's the truth. You don't have 8 hours "for you." You have 4-5. And if your ${weakest} score is ${weakestScore}/50, I can tell you exactly where those 4-5 hours are going — they're being wasted on things that don't compound.
 
 ${rule888[weakest] || rule888.Time}
 
-Here's the thing — when one of your 8s is off, they all suffer. Your ${weakest} isn't just one pillar. It's the leak that's draining every other block of your day.
+THE THREE FRAMEWORKS COMBINED:
+1. THE IDEAL (8+8+8): This is the target you're building toward. Protect your sleep. Sharpen your work hours so 8 is enough. Guard your personal time ruthlessly.
+
+2. THE REALITY AUDIT: Track tomorrow using four columns — WORK / OBLIGATIONS / ME / SLEEP. No rounding. No lying to yourself. Write down every hour and see where you actually are.
+
+3. YOUR PERSONAL CALCULATOR: Take your actual waking hours (probably 17). Subtract work + commute (9-10). Subtract obligations (2-3). What's left? That number — probably 4 or 5 — is your GROWTH WINDOW. Every minute of ${weakest} improvement has to come from that window. So the question isn't "do I have time?" The question is "what am I spending my growth window on right now?"
 
 YOUR MOVE TODAY:
-Run the Time Audit using the 8+8+8 framework. Track tomorrow in three blocks. Write down every hour. No guessing. No rounding. Just truth.
+Run the Reality Audit. Four columns. Every hour. Tomorrow I'm going to give you the 1-3-5 Rule — your exact priorities based on what the audit reveals.
 
-At the end of the day, you'll see exactly where the bleed is happening. That awareness alone changes behavior.
-
-Tomorrow: The 1-3-5 Rule — I'm going to give you your exact 1, your 3, and your 5.
+The 8+8+8 is where you're headed. The Honest 24 is where you start.
 
 — Shawn`;
       break;
@@ -633,26 +646,32 @@ You now have all 4 rules:
 
 Today I'm combining them into one daily routine. Personalized to your scores. Print this out. Tape it to your mirror. Start tomorrow.
 
-YOUR DAILY SYSTEM:
+YOUR DAILY SYSTEM (Built on the Honest 24):
 
-6:00 AM — 8+8+8 Check
-Ask yourself: Is today structured for value or just activity? Are my three 8-hour blocks protected?
+6:00 AM — Reality Check
+You have approximately 4-5 hours of discretionary time today. Not 8. Accept that. Now ask: "What am I doing with my growth window today?"
 
 6:15 AM — 1-3-5 List
-Write down your 1 goal (improve ${weakest}), your 3 key tasks for today, and 5 quick wins you can knock out.
+Write down your 1 goal (improve ${weakest}), your 3 key tasks for today, and 5 quick wins you can knock out. These must fit inside your REAL available time — not a fantasy schedule.
 
 6:30 AM — Start Your 90/90/1 Block
 ${rule9090[weakest] || rule9090.Time}
-This is your non-negotiable 90 minutes. No phone. No email. No interruptions.
+This is your non-negotiable 90 minutes carved from your growth window. No phone. No email. No interruptions. This is 30-40% of your discretionary time — that's how much your ${weakest} matters.
 
 Throughout the Day — The 10-Minute Rule
-Whenever resistance hits — whenever you want to avoid ${weakest} work — set a timer for 10 minutes and just start. The resistance always breaks after the first round.
+Whenever resistance hits — whenever you want to avoid ${weakest} work — set a timer for 10 minutes and just start. The resistance always breaks after the first round. 10 minutes is 3% of your growth window. You can afford 3%.
 
-9:00 PM — Evening Review
-Did I invest in ${weakest} today? Did my 8+8+8 hold? What's my 1-3-5 for tomorrow?
+9:00 PM — Evening Accountability
+Three questions. Answer them honestly:
+1. How many of my 4-5 discretionary hours went toward ${weakest} today?
+2. What ate the time that should have been mine? (Scrolling? TV? Other people's emergencies?)
+3. What's my 1-3-5 for tomorrow?
 
-THE TRUTH ABOUT SYSTEMS:
-A system doesn't need to be complicated to work. It needs to be consistent. This one is designed around YOUR specific weakness, YOUR cross-pillar impact, and YOUR score. It's not generic advice. It's your playbook.
+THE HONEST MATH:
+90 minutes of your growth window = 30% of your discretionary time on ${weakest}
+That leaves 3+ hours for everything else you want to do
+Do this for 90 days and you'll gain ${targetScore - weakestScore} points on your ${weakest} score
+Your ${strongest} stops bleeding, your Master Score jumps, and people start noticing
 
 YOUR MOVE TODAY:
 Print this schedule. Or screenshot it. Put it somewhere you'll see it before 6 AM tomorrow. Then start.
@@ -5932,10 +5951,23 @@ This link expires in 24 hours.
 </td></tr>
 <tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:40px 32px;">
   <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 20px;">${firstName},</p>
-  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 8px;">Before you close out today &mdash; take 60 seconds and answer this honestly:</p>
-  <div style="background:#111118;border-left:3px solid #D4A847;padding:16px 20px;margin:16px 0 24px;border-radius:0 8px 8px 0;">
-    <p style="color:#D4A847;font-size:15px;font-weight:bold;margin:0 0 8px;">What did you actually accomplish today?</p>
-    <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">Not what you planned. Not what you wanted to do. What did you <em>do</em>? Write it down. Say it out loud. Own it &mdash; good or bad. That's where growth starts.</p>
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 8px;">Before you close out today &mdash; run through the Honest 24:</p>
+  <div style="background:#111118;border-left:3px solid #D4A847;padding:16px 20px;margin:16px 0 16px;border-radius:0 8px 8px 0;">
+    <p style="color:#D4A847;font-size:15px;font-weight:bold;margin:0 0 8px;">Your Growth Window Check</p>
+    <p style="color:#a1a1aa;font-size:14px;line-height:1.8;margin:0;">You had roughly 4-5 hours of discretionary time today. Answer honestly:</p>
+    <p style="color:#e4e4e7;font-size:14px;line-height:1.8;margin:8px 0 0;">1. How many of those hours went toward something that compounds?<br/>2. What ate the time that should have been yours?<br/>3. Did you do your 90-minute block? Even 10 minutes?</p>
+  </div>
+  <div style="background:#111118;border:1px solid #27272a;padding:14px 20px;margin:0 0 24px;border-radius:8px;">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:10px;color:#71717a;letter-spacing:1px;">WORK</div><div style="font-size:18px;color:#e4e4e7;font-weight:bold;">9-10h</div></td>
+    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:10px;color:#71717a;letter-spacing:1px;">OBLIGATIONS</div><div style="font-size:18px;color:#e4e4e7;font-weight:bold;">2-3h</div></td>
+    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:10px;color:#D4A847;letter-spacing:1px;font-weight:bold;">GROWTH</div><div style="font-size:18px;color:#D4A847;font-weight:bold;">4-5h</div></td>
+    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:10px;color:#71717a;letter-spacing:1px;">SLEEP</div><div style="font-size:18px;color:#e4e4e7;font-weight:bold;">6-7h</div></td>
+    </tr></table>
+    <p style="color:#52525b;font-size:11px;text-align:center;margin:8px 0 0;">The gold number is what you control. Everything else is locked. How did you spend it?</p>
+  </div>
+  <div style="text-align:center;margin:0 0 24px;">
+    <a href="${BASE_URL}/coaching-reply?email=${encodeURIComponent(member.email)}&day=${member.current_day}" style="display:inline-block;padding:12px 28px;border:2px solid #D4A847;color:#D4A847;font-size:14px;font-weight:bold;text-decoration:none;border-radius:8px;">Log Today's Check-In &rarr;</a>
   </div>
 
   <hr style="border:none;border-top:1px solid #27272a;margin:24px 0;"/>
@@ -5974,13 +6006,13 @@ This link expires in 24 hours.
             await transporter.sendMail({
               from: `"Shawn @ Value Engine" <${process.env.GMAIL_USER}>`,
               to: member.email,
-              subject: `${firstName}, what did you actually accomplish today?`,
+              subject: `${firstName} — how did you spend your growth window today?`,
               html,
             });
 
             results.push({ email: member.email, status: 'sent' });
             sentCount++;
-            await logEmail(sql, { recipient: member.email, emailType: 'accountability', subject: `${firstName}, what did you actually accomplish today?` });
+            await logEmail(sql, { recipient: member.email, emailType: 'accountability', subject: `${firstName} — how did you spend your growth window today?` });
           } catch (sendErr) {
             console.error(`Accountability email error for ${member.email}:`, sendErr.message);
             results.push({ email: member.email, status: 'error', error: sendErr.message });
