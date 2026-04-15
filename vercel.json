@@ -123,6 +123,14 @@
       "dest": "/about-pink.html"
     },
     {
+      "src": "/consult",
+      "dest": "/consult.html"
+    },
+    {
+      "src": "/book-call",
+      "dest": "/consult.html"
+    },
+    {
       "src": "/joy",
       "dest": "/joy-sutton-showcase.html"
     },
