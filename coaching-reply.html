@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+  <title>Coaching Check-In — The Value Engine</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+    .container{max-width:540px;margin:0 auto;padding:2rem 1.5rem 4rem}
+    .brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    h1{font-size:1.75rem;font-weight:700;margin-bottom:.5rem}
+    .subtitle{color:#a1a1aa;font-size:.95rem;margin-bottom:2rem;line-height:1.6}
+    .day-badge{display:inline-block;background:#D4A847;color:#0a0a0a;font-weight:700;font-size:.75rem;padding:.25rem .75rem;border-radius:1rem;margin-bottom:1rem}
+    .prompt-card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.5rem;margin-bottom:1.5rem}
+    .prompt-label{font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    .prompt-text{color:#d4d4d8;font-size:.95rem;line-height:1.6}
+    textarea{width:100%;min-height:140px;background:#18181b;border:1px solid #27272a;border-radius:.5rem;padding:1rem;color:#fff;font-family:'Satoshi',sans-serif;font-size:.95rem;line-height:1.6;resize:vertical;margin-bottom:.75rem}
+    textarea:focus{outline:none;border-color:#D4A847}
+    .mood-row{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+    .mood-btn{padding:.5rem 1rem;border:1px solid #27272a;border-radius:2rem;background:transparent;color:#a1a1aa;font-size:.85rem;cursor:pointer;transition:all .2s}
+    .mood-btn:hover,.mood-btn.active{border-color:#D4A847;color:#D4A847;background:rgba(212,168,71,0.1)}
+    .btn-gold{display:block;width:100%;padding:1rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;border:none;border-radius:.5rem;font-size:1rem;cursor:pointer}
+    .btn-gold:disabled{opacity:.5;cursor:not-allowed}
+    .success-msg{display:none;text-align:center;padding:2rem}
+    .success-msg h2{color:#D4A847;margin-bottom:.5rem}
+    .success-msg p{color:#a1a1aa;line-height:1.6}
+    .pillar-bars{display:flex;gap:.25rem;margin:1rem 0}
+    .pillar-bar{flex:1;text-align:center}
+    .pillar-bar-label{font-size:.6rem;color:#71717a;text-transform:uppercase;letter-spacing:.1em}
+    .pillar-bar-fill{height:6px;border-radius:3px;margin-top:.25rem}
+    .pillar-bar-score{font-size:.7rem;color:#a1a1aa;margin-top:.15rem}
+    .streak{display:flex;align-items:center;gap:.5rem;color:#D4A847;font-size:.85rem;margin-bottom:1rem}
+    .streak-count{font-size:1.5rem;font-weight:900}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">The Value Engine</div>
+    <div id="loading">Loading your coaching data...</div>
+
+    <div id="form-section" style="display:none">
+      <div class="day-badge" id="dayBadge">Day 1</div>
+      <h1>Daily Check-In</h1>
+      <p class="subtitle" id="greeting">How did today go?</p>
+
+      <!-- Pillar score visualization -->
+      <div class="pillar-bars" id="pillarBars"></div>
+
+      <!-- Streak counter -->
+      <div class="streak" id="streakSection" style="display:none">
+        <span class="streak-count" id="streakCount">0</span>
+        <span>day reply streak</span>
+      </div>
+
+      <!-- Today's prompt -->
+      <div class="prompt-card">
+        <div class="prompt-label" id="promptLabel">Today's Question</div>
+        <div class="prompt-text" id="promptText">What's one thing you did today for your weakest pillar?</div>
+      </div>
+
+      <!-- Response -->
+      <textarea id="replyText" placeholder="Be honest. This is between you and the system..."></textarea>
+
+      <!-- Mood selection -->
+      <div style="font-size:.8rem;color:#71717a;margin-bottom:.5rem">How are you feeling about your progress?</div>
+      <div class="mood-row" id="moodRow">
+        <button class="mood-btn" data-mood="struggling" onclick="selectMood(this)">Struggling</button>
+        <button class="mood-btn" data-mood="grinding" onclick="selectMood(this)">Grinding</button>
+        <button class="mood-btn" data-mood="steady" onclick="selectMood(this)">Steady</button>
+        <button class="mood-btn" data-mood="strong" onclick="selectMood(this)">Strong</button>
+        <button class="mood-btn" data-mood="unstoppable" onclick="selectMood(this)">Unstoppable</button>
+      </div>
+
+      <!-- Action items completed -->
+      <div style="font-size:.8rem;color:#71717a;margin-bottom:.5rem">Did you complete today's action step from the coaching email?</div>
+      <div class="mood-row" style="margin-bottom:2rem">
+        <button class="mood-btn" id="actionYes" onclick="selectAction(true)">Yes</button>
+        <button class="mood-btn" id="actionNo" onclick="selectAction(false)">Not yet</button>
+      </div>
+
+      <button class="btn-gold" id="submitBtn" onclick="submitReply()" disabled>Submit Check-In</button>
+    </div>
+
+    <div class="success-msg" id="successMsg">
+      <h2>Check-in recorded</h2>
+      <p id="successText">Your response has been saved. Tomorrow's coaching email will be tailored to what you shared today.</p>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get('email');
+    const day = parseInt(params.get('day') || '1');
+    let selectedMood = null;
+    let actionCompleted = null;
+    let assessmentData = null;
+
+    // Day-specific prompts based on coaching sequence phase
+    const prompts = {
+      1: { label: "Awareness Check", q: "After reading about your cross-pillar impact, what surprised you most about where your weakest pillar is bleeding into your strongest?" },
+      2: { label: "8+8+8 Audit", q: "You ran the time audit today. Where did you find the biggest gap between your three 8-hour blocks?" },
+      3: { label: "1-3-5 Reflection", q: "Write down the 1 goal you committed to. Did you do any of your 5 quick wins? Which ones?" },
+      4: { label: "10-Minute Sprint", q: "Did you do a 10-minute sprint today? What did you work on and how did it feel after?" },
+      5: { label: "90/90/1 Commitment", q: "Did you block your 90 minutes? What time did you choose and what will you do during that block?" },
+      6: { label: "Cross-Pillar Insight", q: "Looking at how your weakest pillar drags down your strongest — what specific situation this week proved that connection?" },
+      7: { label: "System Review", q: "You have the full daily system now. What part feels most natural? What part are you resisting?" },
+      8: { label: "Week 1 Honest Assessment", q: "Rate your Week 1 execution honestly from 1-10. What would make next week a 10?" },
+    };
+    const defaultPrompt = { label: "Daily Reflection", q: "What's one thing you did today that moved your weakest pillar forward? Be specific." };
+
+    async function loadData() {
+      if (!email) {
+        document.getElementById('loading').textContent = 'No email provided. Use the link from your coaching email.';
+        return;
+      }
+
+      try {
+        // Get coaching status
+        const statusRes = await fetch(`/api/coaching/status?email=${encodeURIComponent(email)}`);
+        const status = await statusRes.json();
+
+        // Get member data for pillar scores
+        const memberRes = await fetch(`/api/member?email=${encodeURIComponent(email)}`);
+        const member = await memberRes.json();
+
+        if (member.assessments && member.assessments.length > 0) {
+          assessmentData = member.assessments[0];
+        }
+
+        // Get reply history for streak
+        const replyRes = await fetch(`/api/coaching/replies?email=${encodeURIComponent(email)}`);
+        const replies = await replyRes.json();
+
+        // Set up UI
+        const currentDay = day || status.currentDay || 1;
+        document.getElementById('dayBadge').textContent = `Day ${currentDay}`;
+
+        const prompt = prompts[currentDay] || defaultPrompt;
+        document.getElementById('promptLabel').textContent = prompt.label;
+        document.getElementById('promptText').textContent = prompt.q;
+
+        if (assessmentData) {
+          const firstName = assessmentData.firstName || 'there';
+          const weakest = assessmentData.weakestPillar || 'your weakest pillar';
+          document.getElementById('greeting').textContent = `${firstName}, how's your ${weakest} work going?`;
+
+          // Build pillar bars
+          const pillars = [
+            { name: 'Time', score: assessmentData.timeTotal || 0, color: '#3b82f6' },
+            { name: 'People', score: assessmentData.peopleTotal || 0, color: '#8b5cf6' },
+            { name: 'Influence', score: assessmentData.influenceTotal || 0, color: '#f59e0b' },
+            { name: 'Numbers', score: assessmentData.numbersTotal || 0, color: '#10b981' },
+            { name: 'Knowledge', score: assessmentData.knowledgeTotal || 0, color: '#ef4444' },
+          ];
+          const barsHtml = pillars.map(p => {
+            const pct = Math.round((p.score / 50) * 100);
+            const isWeakest = p.name === assessmentData.weakestPillar;
+            return `<div class="pillar-bar">
+              <div class="pillar-bar-label" style="${isWeakest ? 'color:#D4A847;font-weight:700' : ''}">${p.name}</div>
+              <div style="background:#27272a;border-radius:3px;overflow:hidden">
+                <div class="pillar-bar-fill" style="width:${pct}%;background:${isWeakest ? '#D4A847' : p.color}"></div>
+              </div>
+              <div class="pillar-bar-score">${p.score}/50</div>
+            </div>`;
+          }).join('');
+          document.getElementById('pillarBars').innerHTML = barsHtml;
+        }
+
+        // Show reply streak
+        if (replies.streak > 0) {
+          document.getElementById('streakSection').style.display = 'flex';
+          document.getElementById('streakCount').textContent = replies.streak;
+        }
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('form-section').style.display = 'block';
+
+      } catch (err) {
+        document.getElementById('loading').textContent = 'Could not load your data. Please try the link from your latest coaching email.';
+      }
+    }
+
+    function selectMood(btn) {
+      document.querySelectorAll('.mood-row .mood-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedMood = btn.dataset.mood;
+      checkReady();
+    }
+
+    function selectAction(completed) {
+      actionCompleted = completed;
+      document.getElementById('actionYes').classList.toggle('active', completed);
+      document.getElementById('actionNo').classList.toggle('active', !completed);
+      checkReady();
+    }
+
+    function checkReady() {
+      const text = document.getElementById('replyText').value.trim();
+      document.getElementById('submitBtn').disabled = !(text.length > 5 && selectedMood);
+    }
+
+    document.getElementById('replyText').addEventListener('input', checkReady);
+
+    async function submitReply() {
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      try {
+        const res = await fetch('/api/coaching/reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            day,
+            response: document.getElementById('replyText').value.trim(),
+            mood: selectedMood,
+            actionCompleted,
+            weakestPillar: assessmentData?.weakestPillar || null,
+          })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById('form-section').style.display = 'none';
+          document.getElementById('successMsg').style.display = 'block';
+          if (data.insight) {
+            document.getElementById('successText').textContent = data.insight;
+          }
+
+          // Track in analytics
+          fetch('/api/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eventType: 'coaching_reply', metadata: { day, mood: selectedMood, actionCompleted } })
+          }).catch(() => {});
+
+          // Also report action completion to engagement tracker
+          if (actionCompleted) {
+            fetch('/api/agent/email/report-action', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, coaching_day: day })
+            }).catch(() => {});
+          }
+        } else {
+          btn.textContent = 'Error — Try Again';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        btn.textContent = 'Error — Try Again';
+        btn.disabled = false;
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

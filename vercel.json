@@ -291,6 +291,10 @@
       "dest": "/coaching.html"
     },
     {
+      "src": "/coaching-reply",
+      "dest": "/coaching-reply.html"
+    },
+    {
       "src": "/stuck",
       "dest": "/stuck.html"
     },

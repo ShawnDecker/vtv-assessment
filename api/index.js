@@ -70,6 +70,42 @@ function extractUser(req) {
   return null;
 }
 
+// ========== SECURITY: PIN Hashing (PBKDF2 — replaces SHA-256) ==========
+const PIN_SALT = process.env.PIN_SALT || '_vtv_salt_2026';
+const PIN_ITERATIONS = 100000;
+const PIN_KEYLEN = 64;
+const PIN_DIGEST = 'sha512';
+
+function hashPinSync(pin) {
+  return crypto.pbkdf2Sync(pin, PIN_SALT, PIN_ITERATIONS, PIN_KEYLEN, PIN_DIGEST).toString('hex');
+}
+
+function verifyPin(pin, storedHash) {
+  // Support legacy SHA-256 hashes (64 chars) and new PBKDF2 (128 chars)
+  if (storedHash.length === 64) {
+    // Legacy SHA-256 — verify but flag for upgrade
+    const legacyHash = crypto.createHash('sha256').update(pin + PIN_SALT).digest('hex');
+    return { valid: legacyHash === storedHash, needsUpgrade: true };
+  }
+  // New PBKDF2
+  const newHash = hashPinSync(pin);
+  return { valid: newHash === storedHash, needsUpgrade: false };
+}
+
+// ========== INPUT VALIDATION ==========
+function validateEmail(email) {
+  if (!email || typeof email !== 'string') return false;
+  return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim());
+}
+function validateLength(str, min, max) {
+  if (!str || typeof str !== 'string') return false;
+  return str.length >= min && str.length <= max;
+}
+function sanitizeString(str, maxLen = 1000) {
+  if (!str || typeof str !== 'string') return '';
+  return str.trim().substring(0, maxLen);
+}
+
 async function auditLog(sql, { action, actor, targetTable, targetId, oldValues, newValues, ip }) {
   try {
     await sql`INSERT INTO audit_log (action, actor, target_table, target_id, old_values, new_values, ip_address)
@@ -1027,12 +1063,37 @@ Write down your answers to the 3 questions above. Say them out loud. Share them 
 <tr><td style="background:#1a1a2e;border-radius:4px 4px 0 0;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">VALUE <span style="color:#d4a853;">TO</span> VICTORY</h1><p style="margin:4px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">${day <= 8 ? `Daily Coaching — Day ${day} of 8` : day <= 16 ? `Deep Dive — Week ${Math.ceil(day/7)}` : day <= 20 ? `Advanced — Week ${Math.ceil(day/7)}` : `Weekly Check-In — Week ${Math.ceil(day/7)}`}</p></td></tr></table>
 
+<!-- Pillar Score Bars -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:8px 40px 4px 40px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#6a6a84;letter-spacing:1px;">
+<tr>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'Time' ? 'color:#d4a853;font-weight:bold;' : ''}">T</td>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'People' ? 'color:#d4a853;font-weight:bold;' : ''}">P</td>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'Influence' ? 'color:#d4a853;font-weight:bold;' : ''}">I</td>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'Numbers' ? 'color:#d4a853;font-weight:bold;' : ''}">N</td>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'Knowledge' ? 'color:#d4a853;font-weight:bold;' : ''}">K</td>
+</tr>
+<tr>
+<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.time_total || 0)/50)*100)}%;background:${weakest === 'Time' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.people_total || 0)/50)*100)}%;background:${weakest === 'People' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.influence_total || 0)/50)*100)}%;background:${weakest === 'Influence' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.numbers_total || 0)/50)*100)}%;background:${weakest === 'Numbers' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.knowledge_total || 0)/50)*100)}%;background:${weakest === 'Knowledge' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+</tr>
+</table>
+</td></tr></table>
+
 <!-- Gold Divider -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#d4a853,transparent);"></div></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:4px 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#d4a853,transparent);"></div></td></tr></table>
 
 <!-- Body -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 32px 40px;">
 <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#c0c0d8;line-height:1.7;white-space:pre-wrap;">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\n/g, '</div><div style="height:16px;"></div><div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#c0c0d8;line-height:1.7;white-space:pre-wrap;">').replace(/YOUR MOVE TODAY:|YOUR 10-MINUTE CHALLENGE:|YOUR 90-MINUTE DAILY BLOCK:|YOUR DAILY SYSTEM:|YOUR 1 \(The Massive Goal\):|YOUR 3 \(Key Tasks\):|YOUR 5 \(Quick Wins for Today\):|YOUR FINAL MOVE:|THE CASCADE EFFECT:|THE TRUTH ABOUT SYSTEMS:|HERE'S WHY THIS WORKS:/g, match => `<strong style="color:#d4a853;text-transform:uppercase;letter-spacing:1px;font-size:13px;">${match}</strong>`)}</div>
+</td></tr></table>
+
+<!-- Check-In Reply Button -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px 16px 40px;text-align:center;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;border:2px solid #d4a853;" align="center"><a href="${BASE_URL}/coaching-reply?email=${encodeURIComponent(email)}&day=${day}" target="_blank" style="display:inline-block;padding:12px 32px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#d4a853;text-decoration:none;letter-spacing:1px;">Reply to Today's Challenge &rarr;</a></td></tr></table>
 </td></tr></table>
 
 ${day === 6 || day === 8 || day === 15 || day === 18 || day === 20 || ((day > 20) && ((day - 21) % 5 === 4)) ? `<!-- Retake CTA -->
@@ -1386,8 +1447,8 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Reset link has expired. Please request a new one.' });
       }
 
-      // Set the new PIN
-      const pinHash = crypto.createHash('sha256').update(newPin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+      // Set the new PIN (PBKDF2)
+      const pinHash = hashPinSync(newPin);
       await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW(), pin_reset_token = NULL, pin_reset_expires = NULL WHERE id = ${contact.id}`;
 
       // Generate JWT so they're logged in immediately
@@ -1428,11 +1489,16 @@ module.exports = async (req, res) => {
         const jwt = token ? verifyJWT(token) : null;
         const jwtValid = jwt && jwt.email === email;
 
-        // Option 2: Old PIN matches
+        // Option 2: Old PIN matches (supports legacy hash upgrade)
         let oldPinValid = false;
         if (oldPin) {
-          const oldPinHash = crypto.createHash('sha256').update(oldPin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
-          oldPinValid = oldPinHash === contact.pin_hash;
+          const result = verifyPin(oldPin, contact.pin_hash);
+          oldPinValid = result.valid;
+          if (result.valid && result.needsUpgrade) {
+            // Upgrade legacy hash in-place
+            const upgradedHash = hashPinSync(oldPin);
+            await sql`UPDATE contacts SET pin_hash = ${upgradedHash} WHERE id = ${contact.id}`;
+          }
         }
 
         if (!jwtValid && !oldPinValid) {
@@ -1440,7 +1506,7 @@ module.exports = async (req, res) => {
         }
       }
 
-      const pinHash = crypto.createHash('sha256').update(pin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+      const pinHash = hashPinSync(pin);
       await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE id = ${contact.id}`;
       return res.json({ success: true, message: 'PIN set successfully' });
     }
@@ -1452,18 +1518,24 @@ module.exports = async (req, res) => {
       const pin = (b.pin || '').trim();
       if (!email || !pin) return res.status(400).json({ error: 'Email and PIN required' });
 
-      const pinHash = crypto.createHash('sha256').update(pin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
-
       const rows = await sql`SELECT id, first_name, pin_hash FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
       if (rows.length === 0) return res.json({ verified: false, error: 'No account found' });
 
-      // If no PIN set, auto-set it for them (first login)
+      // If no PIN set, auto-set it for them (first login) — use PBKDF2
       if (!rows[0].pin_hash) {
-        // For Amanda's account or any account without a PIN, set it now
-        await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE id = ${rows[0].id}`;
+        const newPinHash = hashPinSync(pin);
+        await sql`UPDATE contacts SET pin_hash = ${newPinHash}, pin_set_at = NOW() WHERE id = ${rows[0].id}`;
         // Continue to login (don't return needsPin — just log them in)
-      } else if (rows[0].pin_hash !== pinHash) {
-        return res.json({ verified: false, error: 'Incorrect PIN' });
+      } else {
+        const pinResult = verifyPin(pin, rows[0].pin_hash);
+        if (!pinResult.valid) {
+          return res.json({ verified: false, error: 'Incorrect PIN' });
+        }
+        // Auto-upgrade legacy SHA-256 hash to PBKDF2
+        if (pinResult.needsUpgrade) {
+          const upgradedHash = hashPinSync(pin);
+          await sql`UPDATE contacts SET pin_hash = ${upgradedHash} WHERE id = ${rows[0].id}`;
+        }
       }
 
       // Generate JWT token for authenticated sessions
@@ -1736,6 +1808,12 @@ module.exports = async (req, res) => {
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       try {
+        // Ensure deletion_requested_at column exists
+        try { await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS deletion_requested_at TIMESTAMPTZ`; } catch(e) {}
+
+        // Mark the contact's deletion request timestamp
+        try { await sql`UPDATE contacts SET deletion_requested_at = NOW() WHERE LOWER(email) = ${email}`; } catch(e) {}
+
         // IMMEDIATELY unsubscribe from all email sequences to prevent bounces
         try { await sql`UPDATE coaching_sequences SET unsubscribed = TRUE WHERE LOWER(email) = ${email}`; } catch(e) {}
         try { await sql`UPDATE devotional_progress SET opted_out = TRUE WHERE LOWER(email) = ${email}`; } catch(e) {}
@@ -1767,6 +1845,25 @@ module.exports = async (req, res) => {
         console.error('Delete request error:', e.message);
         return res.status(500).json({ error: 'Failed to submit deletion request' });
       }
+    }
+
+    // POST /api/admin/process-deletions — Auto-process deletion requests older than 48 hours
+    if (req.method === 'POST' && url === '/admin/process-deletions') {
+      // Find contacts with deletion_requested_at > 48 hours ago
+      const pending = await sql`SELECT id, email, first_name FROM contacts WHERE deletion_requested_at IS NOT NULL AND deletion_requested_at < NOW() - INTERVAL '48 hours' AND deleted_at IS NULL`;
+
+      const results = [];
+      for (const c of pending) {
+        try {
+          // Soft delete — set deleted_at, anonymize PII
+          await sql`UPDATE contacts SET deleted_at = NOW(), first_name = 'Deleted', last_name = 'User', phone = NULL, pin_hash = NULL WHERE id = ${c.id}`;
+          await sql`UPDATE user_profiles SET membership_tier = 'free', stripe_customer_id = NULL, stripe_subscription_id = NULL WHERE contact_id = ${c.id}`;
+          // Audit
+          await sql`INSERT INTO audit_log (action, actor, target_table, target_id, new_values) VALUES ('account_deleted', 'system_auto', 'contacts', ${c.id}, ${JSON.stringify({email: c.email, reason: '48hr_auto_deletion'})}::jsonb)`;
+          results.push({ id: c.id, email: c.email, status: 'deleted' });
+        } catch(e) { results.push({ id: c.id, error: e.message }); }
+      }
+      return res.json({ processed: results.length, results });
     }
 
     // POST /api/member/preferences — Save user preferences
@@ -1814,6 +1911,44 @@ module.exports = async (req, res) => {
         console.error('Get preferences error:', e.message);
         return res.json({ preferences: {} });
       }
+    }
+
+    // GET /api/member/export — GDPR data export (requires JWT)
+    if (req.method === 'GET' && url === '/member/export') {
+      const user = extractUser(req);
+      if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+      const contactId = user.contactId;
+
+      // Gather all user data
+      const contact = await sql`SELECT id, first_name, last_name, email, phone, created_at FROM contacts WHERE id = ${contactId}`;
+      const profile = await sql`SELECT * FROM user_profiles WHERE contact_id = ${contactId}`;
+      const assessments = await sql`SELECT id, mode, depth, master_score, score_range, time_total, people_total, influence_total, numbers_total, knowledge_total, completed_at FROM assessments WHERE contact_id = ${contactId} ORDER BY id DESC`;
+      const preferences = await sql`SELECT preferences FROM user_profiles WHERE contact_id = ${contactId}`;
+
+      let datingProfile = null;
+      try { const dp = await sql`SELECT display_name, gender, age, faith, bio, created_at FROM dating_profiles WHERE contact_id = ${contactId}`; if (dp.length) datingProfile = dp[0]; } catch(e) {}
+
+      let teamMemberships = [];
+      try { teamMemberships = await sql`SELECT t.team_name, tm.role, tm.joined_at FROM team_members tm JOIN teams t ON t.id = tm.team_id WHERE tm.contact_id = ${contactId}`; } catch(e) {}
+
+      const exportData = {
+        exported_at: new Date().toISOString(),
+        format_version: '1.0',
+        contact: contact[0] || null,
+        profile: profile[0] || null,
+        assessments,
+        dating_profile: datingProfile,
+        team_memberships: teamMemberships,
+        preferences: preferences[0]?.preferences || null
+      };
+
+      // Audit log
+      try { await sql`INSERT INTO audit_log (action, actor, target_table, target_id, ip_address) VALUES ('data_export', ${user.email || 'user'}, 'contacts', ${contactId}, ${clientIP})`; } catch(e) {}
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename="vtv-data-export.json"');
+      return res.json(exportData);
     }
 
     // POST /api/affiliate/apply — Create partner profile
@@ -1963,8 +2098,7 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Email is required' });
       }
       const cleanEmail = b.email.trim().toLowerCase();
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(cleanEmail)) {
+      if (!validateEmail(cleanEmail)) {
         return res.status(400).json({ error: 'Please enter a valid email address.' });
       }
 
@@ -1992,9 +2126,26 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Email is required to save your assessment results. Please enter your email and try again.' });
       }
       const cleanEmail = b.email.trim().toLowerCase();
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(cleanEmail)) {
+      if (!validateEmail(cleanEmail)) {
         return res.status(400).json({ error: 'Please enter a valid email address.' });
+      }
+
+      // Validate payload size — reject oversized bodies
+      const bodyStr = JSON.stringify(b);
+      if (bodyStr.length > 50000) {
+        return res.status(400).json({ error: 'Payload too large' });
+      }
+
+      // Validate answer values are numbers 1-5
+      const answerFields = ['timeAwareness','timeAllocation','timeProtection','timeLeverage','fiveHourLeak','valuePerHour','timeInvestment','downtimeQuality','foresight','timeReallocation','trustInvestment','boundaryQuality','networkDepth','relationalRoi','peopleAudit','allianceBuilding','loveBankDeposits','communicationClarity','restraintPractice','valueReplacement','leadershipLevel','integrityAlignment','professionalCredibility','empatheticListening','gravitationalCenter','microHonesties','wordManagement','personalResponsibility','adaptiveInfluence','influenceMultiplier','financialAwareness','goalSpecificity','investmentLogic','measurementHabit','costVsValue','numberOneClarity','smallImprovements','negativeMath','incomeMultiplier','negotiationSkill','learningHours','applicationRate','biasAwareness','highestBestUse','supplyAndDemand','substitutionRisk','doubleJeopardy','knowledgeCompounding','weightedAnalysis','perceptionVsPerspective'];
+      for (const field of answerFields) {
+        if (b[field] !== undefined) {
+          const val = Number(b[field]);
+          if (isNaN(val) || val < 1 || val > 5) {
+            return res.status(400).json({ error: `Invalid answer value for ${field}. Must be 1-5.` });
+          }
+          b[field] = val; // normalize to number
+        }
       }
 
       // Upsert contact with validated email
@@ -2831,6 +2982,18 @@ Don't guess. Run the system.
           VALUES (${eventType}, ${b.contactId || null}, ${b.sessionId || null}, ${JSON.stringify(b.metadata || {})}::jsonb, ${ipHash}, ${(req.headers['user-agent'] || '').substring(0, 255)}, ${(req.headers.referer || '').substring(0, 500)})`;
       } catch (e) { /* analytics table may not exist yet — non-fatal */ }
       return res.json({ tracked: true });
+    }
+
+    // POST /api/error-report — Client-side error tracking
+    if (req.method === 'POST' && url === '/error-report') {
+      const b = req.body || {};
+      try {
+        await sql`INSERT INTO audit_log (action, actor, target_table, new_values, ip_address)
+          VALUES ('client_error', ${b.page || 'unknown'}, 'frontend',
+                  ${JSON.stringify({ message: (b.message || '').substring(0, 500), stack: (b.stack || '').substring(0, 1000), url: b.url, userAgent: (req.headers['user-agent'] || '').substring(0, 200) })}::jsonb,
+                  ${clientIP})`;
+      } catch(e) {}
+      return res.json({ ok: true });
     }
 
     // GET /api/analytics/funnel — Funnel conversion data (last 90 days)
@@ -3949,7 +4112,7 @@ ${roadmapHtml}
       if (!email || !newPin) return res.status(400).json({ error: 'email and pin required' });
       if (newPin.length < 4 || newPin.length > 32) return res.status(400).json({ error: 'PIN must be 4-32 characters' });
 
-      const pinHash = crypto.createHash('sha256').update(newPin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+      const pinHash = hashPinSync(newPin);
       const rows = await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE LOWER(email) = ${email} RETURNING id, email, first_name`;
       if (rows.length === 0) return res.status(404).json({ error: 'No contact found with that email' });
       await auditLog(sql, { action: 'admin_reset_pin', actor: 'admin', targetTable: 'contacts', targetId: rows[0].id, newValues: { email }, ip: clientIP });
@@ -3991,9 +4154,10 @@ ${roadmapHtml}
       if (rows.length === 0) return res.json({ found: false });
 
       const result = { found: true, email: rows[0].email, firstName: rows[0].first_name, hasPin: !!rows[0].pin_hash, pinSetAt: rows[0].pin_set_at };
-      if (pin) {
-        const testHash = crypto.createHash('sha256').update(pin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
-        result.pinMatches = testHash === rows[0].pin_hash;
+      if (pin && rows[0].pin_hash) {
+        const pinCheck = verifyPin(pin, rows[0].pin_hash);
+        result.pinMatches = pinCheck.valid;
+        result.hashType = pinCheck.needsUpgrade ? 'legacy-sha256' : 'pbkdf2';
       }
       return res.json(result);
     }
@@ -5562,6 +5726,148 @@ This link expires in 24 hours.
       }
     }
 
+    // ========== COACHING REPLY SYSTEM ==========
+
+    // POST /api/coaching/reply — Capture coaching check-in response from web form
+    if (req.method === 'POST' && url === '/coaching/reply') {
+      try {
+        const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+        const email = (b.email || '').toLowerCase().trim();
+        const day = parseInt(b.day) || 0;
+        const response = (b.response || '').trim();
+        const mood = b.mood || 'neutral';
+        const actionCompleted = b.actionCompleted === true;
+        const weakestPillar = b.weakestPillar || null;
+
+        if (!email || !response) return res.status(400).json({ error: 'email and response required' });
+
+        // Ensure coaching_replies table exists
+        await sql`CREATE TABLE IF NOT EXISTS coaching_replies (
+          id SERIAL PRIMARY KEY,
+          contact_id INTEGER,
+          email TEXT NOT NULL,
+          coaching_day INTEGER,
+          response TEXT NOT NULL,
+          mood TEXT DEFAULT 'neutral',
+          action_completed BOOLEAN DEFAULT false,
+          weakest_pillar TEXT,
+          sentiment TEXT DEFAULT 'neutral',
+          key_themes TEXT[] DEFAULT '{}',
+          coaching_insight TEXT,
+          created_at TIMESTAMP DEFAULT NOW()
+        )`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_coaching_replies_email ON coaching_replies(email)`;
+
+        // Get contact ID
+        const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+        const contactId = contactRows.length > 0 ? contactRows[0].id : null;
+
+        // Simple sentiment analysis based on mood + keywords
+        let sentiment = mood === 'struggling' ? 'negative' : mood === 'unstoppable' || mood === 'strong' ? 'positive' : 'neutral';
+        const negativeWords = ['stuck', 'can\'t', 'failed', 'didn\'t', 'struggle', 'hard', 'impossible', 'overwhelm', 'quit', 'give up'];
+        const positiveWords = ['did it', 'completed', 'progress', 'better', 'improved', 'growth', 'proud', 'committed', 'breakthrough', 'realized'];
+        const lowerResp = response.toLowerCase();
+        const negHits = negativeWords.filter(w => lowerResp.includes(w)).length;
+        const posHits = positiveWords.filter(w => lowerResp.includes(w)).length;
+        if (negHits > posHits) sentiment = 'negative';
+        else if (posHits > negHits) sentiment = 'positive';
+
+        // Extract key themes
+        const themes = [];
+        if (lowerResp.includes('time') || lowerResp.includes('schedule') || lowerResp.includes('calendar')) themes.push('time_management');
+        if (lowerResp.includes('money') || lowerResp.includes('financial') || lowerResp.includes('budget')) themes.push('finances');
+        if (lowerResp.includes('relationship') || lowerResp.includes('partner') || lowerResp.includes('family')) themes.push('relationships');
+        if (lowerResp.includes('learn') || lowerResp.includes('read') || lowerResp.includes('study')) themes.push('learning');
+        if (lowerResp.includes('lead') || lowerResp.includes('team') || lowerResp.includes('influence')) themes.push('leadership');
+        if (lowerResp.includes('pray') || lowerResp.includes('god') || lowerResp.includes('faith') || lowerResp.includes('church')) themes.push('faith');
+
+        // Generate personalized insight based on their response
+        let insight = 'Your response has been saved. Tomorrow\'s coaching email will reflect what you shared.';
+        if (sentiment === 'negative' && !actionCompleted) {
+          insight = `Struggling is part of the process. The fact that you showed up to check in today means you\'re still in it. Tomorrow\'s email will address exactly where you\'re stuck with your ${weakestPillar || 'weakest pillar'}.`;
+        } else if (sentiment === 'positive' && actionCompleted) {
+          insight = `Strong work. You completed the action step AND you\'re feeling good about it. That\'s rare. Tomorrow\'s email will build on this momentum — expect something that pushes you further.`;
+        } else if (actionCompleted && sentiment !== 'positive') {
+          insight = `You did the work even though you\'re not feeling great about it. That\'s discipline, not motivation. And discipline is what changes scores. Tomorrow\'s email will show you why what you did today matters more than you think.`;
+        } else if (!actionCompleted && sentiment === 'positive') {
+          insight = `Good energy, but the action step didn\'t happen. Energy without action is just enthusiasm. Tomorrow\'s email will give you a smaller, faster version of today\'s step. No excuses.`;
+        }
+
+        // Save reply
+        await sql`INSERT INTO coaching_replies (contact_id, email, coaching_day, response, mood, action_completed, weakest_pillar, sentiment, key_themes, coaching_insight)
+          VALUES (${contactId}, ${email}, ${day}, ${response}, ${mood}, ${actionCompleted}, ${weakestPillar}, ${sentiment}, ${themes}, ${insight})`;
+
+        // Update engagement score based on reply
+        try {
+          await sql`UPDATE email_engagement SET action_completed = ${actionCompleted}
+            WHERE email = ${email} AND coaching_day = ${day} AND action_completed = false`;
+          // Boost engagement score for replying
+          await sql`UPDATE coaching_sequences SET engagement_score = LEAST(1.0, COALESCE(engagement_score, 0) + 0.15)
+            WHERE email = ${email}`;
+        } catch (e) { /* non-fatal */ }
+
+        // Track analytics
+        try {
+          await sql`INSERT INTO analytics_events (event_type, contact_id, metadata)
+            VALUES ('coaching_reply', ${contactId}, ${JSON.stringify({ day, mood, sentiment, actionCompleted, themes })}::jsonb)`;
+        } catch (e) { /* non-fatal */ }
+
+        return res.json({ success: true, insight, sentiment, themes });
+      } catch (replyErr) {
+        console.error('[coaching/reply] Error:', replyErr.message);
+        return res.status(500).json({ error: 'Failed to save reply' });
+      }
+    }
+
+    // GET /api/coaching/replies?email=X — Get reply history and streak for a user
+    if (req.method === 'GET' && url.startsWith('/coaching/replies')) {
+      try {
+        const params = new URL('http://x' + req.url).searchParams;
+        const email = (params.get('email') || '').toLowerCase().trim();
+        if (!email) return res.status(400).json({ error: 'email required' });
+
+        // Check if table exists
+        let replies = [];
+        let streak = 0;
+        try {
+          replies = await sql`SELECT coaching_day, mood, action_completed, sentiment, key_themes, coaching_insight, created_at
+            FROM coaching_replies WHERE email = ${email} ORDER BY coaching_day DESC LIMIT 30`;
+
+          // Calculate streak — consecutive days with replies
+          if (replies.length > 0) {
+            const days = replies.map(r => r.coaching_day).sort((a, b) => b - a);
+            streak = 1;
+            for (let i = 0; i < days.length - 1; i++) {
+              if (days[i] - days[i + 1] === 1) streak++;
+              else break;
+            }
+          }
+        } catch (e) { /* table may not exist */ }
+
+        // Mood distribution
+        const moodCounts = {};
+        replies.forEach(r => { moodCounts[r.mood] = (moodCounts[r.mood] || 0) + 1; });
+
+        // Action completion rate
+        const actionsCompleted = replies.filter(r => r.action_completed).length;
+        const actionRate = replies.length > 0 ? Math.round((actionsCompleted / replies.length) * 100) : 0;
+
+        return res.json({
+          replies: replies.slice(0, 10),
+          streak,
+          totalReplies: replies.length,
+          moodDistribution: moodCounts,
+          actionCompletionRate: actionRate,
+          latestMood: replies.length > 0 ? replies[0].mood : null,
+          latestSentiment: replies.length > 0 ? replies[0].sentiment : null,
+        });
+      } catch (err) {
+        return res.json({ replies: [], streak: 0, totalReplies: 0, error: err.message });
+      }
+    }
+
+    // ========== END COACHING REPLY SYSTEM ==========
+
     // GET /api/accountability/send — evening accountability + platform updates email
     if (req.method === 'GET' && url === '/accountability/send') {
       try {
@@ -5714,10 +6020,11 @@ This link expires in 24 hours.
       await ensureFeedbackResponseTable();
       const b = req.body || {};
       const email = (b.email || '').toLowerCase().trim();
-      const response = (b.response || '').trim();
+      const response = sanitizeString(b.response, 5000);
       const category = b.category || 'feedback';
       const severity = b.severity || (category === 'bug' ? 'medium' : 'low');
       if (!email || !response) return res.status(400).json({ error: 'email and response required' });
+      if (!validateEmail(email)) return res.status(400).json({ error: 'Invalid email address' });
       let contactId = null, firstName = null;
       try { const c = await sql`SELECT id, first_name FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`; if (c.length > 0) { contactId = c[0].id; firstName = c[0].first_name; } } catch(e) {}
       const row = await sql`INSERT INTO user_feedback (contact_id, email, first_name, category, feedback_type, question, response, severity, page_url, device_info)
@@ -6975,6 +7282,23 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           const recentClicks = engagement.filter(e => e.clicked_at).length;
           const recentActions = engagement.filter(e => e.action_completed).length;
 
+          // === OBSERVE: Get latest coaching reply ===
+          let latestReply = null;
+          let replyStreak = 0;
+          try {
+            const replies = await sql`SELECT * FROM coaching_replies WHERE email = ${email} ORDER BY coaching_day DESC LIMIT 5`;
+            if (replies.length > 0) {
+              latestReply = replies[0];
+              // Calculate reply streak
+              const replyDays = replies.map(r => r.coaching_day).sort((a, b) => b - a);
+              replyStreak = 1;
+              for (let i = 0; i < replyDays.length - 1; i++) {
+                if (replyDays[i] - replyDays[i + 1] <= 2) replyStreak++; // Allow 2-day gap for Phase 2+ cadence
+                else break;
+              }
+            }
+          } catch (e) { /* coaching_replies table may not exist yet */ }
+
           // Check for assessment retake
           const retake = await sql`SELECT id FROM assessments
             WHERE contact_id = ${seq.contact_id}
@@ -6982,14 +7306,17 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             ORDER BY completed_at DESC LIMIT 1`;
           const hasRetaken = retake.length > 0;
 
-          // === CLASSIFY: Assign persona ===
+          // === CLASSIFY: Assign persona (now includes reply data) ===
           let persona = 'standard';
+          const replyBonus = latestReply ? 0.2 : 0;
+          const streakBonus = replyStreak >= 3 ? 0.15 : replyStreak >= 2 ? 0.1 : 0;
           const engagementScore = engagement.length > 0
-            ? ((recentOpens * 0.3 + recentClicks * 0.3 + recentActions * 0.3 + (hasRetaken ? 0.1 : 0)) / Math.max(engagement.length, 1))
+            ? Math.min(1.0, ((recentOpens * 0.25 + recentClicks * 0.25 + recentActions * 0.2 + replyBonus + streakBonus + (hasRetaken ? 0.1 : 0)) / Math.max(engagement.length, 1)))
             : 0.5; // Default for new users
 
-          if (recentOpens >= 3 && recentClicks >= 2) persona = 'fast_mover';
-          else if (recentOpens <= 1 && recentClicks === 0 && engagement.length >= 2) persona = 'disengaged';
+          if (replyStreak >= 3 || (recentOpens >= 3 && recentClicks >= 2)) persona = 'fast_mover';
+          else if (latestReply && latestReply.sentiment === 'negative' && latestReply.mood === 'struggling') persona = 'struggling';
+          else if (recentOpens <= 1 && recentClicks === 0 && engagement.length >= 2 && !latestReply) persona = 'disengaged';
 
           // Check if high performer
           const latestAssessment = await sql`SELECT score_range FROM assessments
@@ -7067,14 +7394,26 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           // Generate email with variant awareness
           let emailContent = generateCoachingEmail(day, assessment, prescription, email);
 
-          // Modify subject line based on variant
+          // Modify subject line based on variant + reply data
           let subject = emailContent.subject || `Day ${day}: Your Value Engine Coaching`;
-          if (variant === 'nudge') {
-            subject = `⚡ Quick win for today — Day ${day}`;
+          if (latestReply && latestReply.mood === 'struggling') {
+            subject = `${seq.first_name || 'Hey'} — I heard you. Here's what to do next.`;
+            variant = 'empathy';
+          } else if (latestReply && latestReply.action_completed && latestReply.sentiment === 'positive') {
+            subject = `${seq.first_name || 'You'} crushed Day ${day - 1}. Day ${day} is bigger.`;
+            variant = 'momentum';
+          } else if (latestReply && !latestReply.action_completed) {
+            subject = `The step you skipped yesterday? It takes 10 minutes.`;
+            variant = 'nudge';
+          } else if (replyStreak >= 3) {
+            subject = `${replyStreak}-day streak. This is how scores change.`;
+            variant = 'streak';
+          } else if (variant === 'nudge') {
+            subject = `Quick win for today — Day ${day}`;
           } else if (variant === 're_engage') {
             subject = `Did you know this about your ${assessment.weakest_pillar || 'weakest'} score?`;
           } else if (variant === 'momentum') {
-            subject = `🔥 You're on fire — Day ${day} momentum builder`;
+            subject = `You're building momentum — Day ${day}`;
           }
 
           // Create engagement record BEFORE sending
