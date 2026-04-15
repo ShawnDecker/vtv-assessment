@@ -5520,7 +5520,8 @@ This link expires in 24 hours.
         return res.json({
           enrolled: true,
           currentDay: seq.current_day,
-          totalDays: 8,
+          totalDays: 'ongoing',
+          phase: seq.current_day <= 8 ? 'daily' : seq.current_day <= 16 ? 'deep-dive' : seq.current_day <= 20 ? 'advanced' : 'weekly',
           lastSentAt: seq.last_sent_at,
           startedAt: seq.started_at,
           unsubscribed: seq.unsubscribed,
