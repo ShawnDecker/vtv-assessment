@@ -307,6 +307,10 @@
       "dest": "/dating-admin.html"
     },
     {
+      "src": "/media-overview",
+      "dest": "/media-overview.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
