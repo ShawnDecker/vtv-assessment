@@ -84,6 +84,15 @@ if exist "%USERPROFILE%\.claude\plugins\marketplaces\thedotmack" (
     echo  [OK] Removed plugin files
 )
 
+REM Step 5: Remove VTV Team Skill
+if exist "%USERPROFILE%\.claude\skills\vtv-team" (
+    echo  [i] Removing VTV Team Skill...
+    rmdir /s /q "%USERPROFILE%\.claude\skills\vtv-team"
+    echo  [OK] Removed VTV Team Skill
+) else (
+    echo  [--] VTV Team Skill not found, skipping
+)
+
 echo.
 echo  ============================================
 echo   Uninstall complete
