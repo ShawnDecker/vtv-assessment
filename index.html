@@ -16,20 +16,20 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Droid Sans','Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .4s,color .4s}
 :root{
-  --bg:#161616;--text:#f7f7f7;--sec:#c8c8c8;--muted:#a4a4a4;
-  --plum:#2A1040;--plum-g:rgba(42,16,64,.08);
-  --rose:#D45371;--rose-g:rgba(212,83,113,.1);
-  --gold:#D4A847;--gold-g:rgba(212,168,71,.1);--gold-d:#B8942E;
-  --teal:#0D9488;--teal-g:rgba(13,148,136,.08);
-  --border:#2a2a2a;--card:#1e1e1e;--shadow:0 1px 3px rgba(0,0,0,.2),0 8px 24px rgba(0,0,0,.15);
+  --bg:#161616;--text:#f7f7f7;--sec:#d0d0d0;--muted:#a4a4a4;
+  --plum:#C898D8;--plum-g:rgba(200,152,216,.1);
+  --rose:#D45371;--rose-g:rgba(212,83,113,.12);
+  --gold:#D4A847;--gold-g:rgba(212,168,71,.12);--gold-d:#D4A847;
+  --teal:#2DD4BF;--teal-g:rgba(45,212,191,.1);
+  --border:#333;--card:#1e1e1e;--shadow:0 1px 3px rgba(0,0,0,.2),0 8px 24px rgba(0,0,0,.15);
   --hero:linear-gradient(160deg,#0a0a0a 0%,#161616 40%,#1a1018 100%);
   --fade:cubic-bezier(.22,1,.36,1)
 }
 [data-theme="light"]{
   --bg:#FDF8F2;--text:#1A1428;--sec:#3A2A48;--muted:#6A5A78;
-  --plum:#2A1040;--plum-g:rgba(42,16,64,.06);
+  --plum:#4A2060;--plum-g:rgba(74,32,96,.06);
   --rose:#D45371;--rose-g:rgba(212,83,113,.08);
-  --gold:#D4A847;--gold-g:rgba(212,168,71,.1);--gold-d:#B8942E;
+  --gold:#B8942E;--gold-g:rgba(184,148,46,.1);--gold-d:#A07828;
   --teal:#0D9488;--teal-g:rgba(13,148,136,.08);
   --border:#E0D8D0;--card:#fff;--shadow:0 1px 3px rgba(42,16,64,.05),0 8px 24px rgba(42,16,64,.04);
   --hero:linear-gradient(160deg,#1A0A28 0%,#2A1040 40%,#3A1858 100%)
@@ -61,10 +61,8 @@ body{font-family:'Droid Sans','Inter',sans-serif;background:var(--bg);color:var(
 .badges{display:flex;flex-wrap:wrap;gap:.25rem;justify-content:center;margin:.5rem 0}
 .badge{padding:.2rem .6rem;border-radius:2rem;font-size:.44rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
 .badge-plum{background:var(--plum-g);color:var(--plum);border:1px solid rgba(42,16,64,.1)}
-[data-theme="dark"] .badge-plum{color:var(--plum)}
 .badge-rose{background:var(--rose-g);color:var(--rose);border:1px solid rgba(139,26,74,.1)}
 .badge-gold{background:var(--gold-g);color:var(--gold-d);border:1px solid rgba(212,168,71,.1)}
-[data-theme="dark"] .badge-gold{color:var(--gold)}
 .badge-teal{background:var(--teal-g);color:var(--teal);border:1px solid rgba(13,148,136,.1)}
 .nav-pills{display:flex;gap:.25rem;justify-content:center;margin:1rem 0;flex-wrap:wrap}
 .nav-pills a{padding:.4rem .8rem;background:var(--card);border:1px solid var(--border);border-radius:2rem;text-decoration:none;color:var(--text);font-family:'Fjalla One',sans-serif;font-size:.58rem;font-weight:400;text-transform:uppercase;letter-spacing:.08em;transition:all .2s var(--fade);box-shadow:var(--shadow)}
@@ -73,7 +71,6 @@ body{font-family:'Droid Sans','Inter',sans-serif;background:var(--bg);color:var(
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin:1rem 0}
 .stat{background:var(--card);border:1px solid var(--border);border-radius:.65rem;padding:.7rem .4rem;text-align:center;box-shadow:var(--shadow)}
 .stat .num{font-family:'Abril Fatface','Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--rose)}
-[data-theme="dark"] .stat .num{color:#E05888}
 .stat .lbl{font-size:.44rem;color:var(--muted);margin-top:.1rem}
 .scripture{position:relative;margin:1.5rem 0;padding:1.3rem 1.3rem 1.3rem 1.8rem;background:var(--card);border-left:3px solid var(--rose);border-radius:0 .75rem .75rem 0;box-shadow:var(--shadow);font-family:'Abril Fatface','Playfair Display',serif;font-style:italic;font-size:.86rem;color:var(--text);line-height:1.75}
 .scripture::before{content:'\201C';position:absolute;top:-.1rem;left:.4rem;font-size:3rem;color:var(--rose);opacity:.15}
@@ -93,9 +90,7 @@ body{font-family:'Droid Sans','Inter',sans-serif;background:var(--bg);color:var(
 .gc .tg{display:inline-block;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;padding:.18rem .55rem;border-radius:2rem;font-weight:700;margin-bottom:.4rem}
 .tg-rose{background:var(--rose-g);color:var(--rose);border:1px solid rgba(139,26,74,.1)}
 .tg-gold{background:var(--gold-g);color:var(--gold-d);border:1px solid rgba(212,168,71,.1)}
-[data-theme="dark"] .tg-gold{color:var(--gold)}
 .tg-plum{background:var(--plum-g);color:var(--plum);border:1px solid rgba(42,16,64,.1)}
-[data-theme="dark"] .tg-plum{color:var(--plum)}
 .tg-teal{background:var(--teal-g);color:var(--teal);border:1px solid rgba(13,148,136,.1)}
 .btn{display:inline-flex;align-items:center;gap:.3rem;padding:.55rem 1.3rem;background:linear-gradient(135deg,var(--rose),#6A1040);color:#fff;font-size:.7rem;font-weight:700;border-radius:.5rem;text-decoration:none;box-shadow:0 2px 8px rgba(139,26,74,.25);transition:all .2s var(--fade)}
 .btn:hover{box-shadow:0 4px 16px rgba(139,26,74,.35)}
@@ -331,7 +326,7 @@ body{font-family:'Droid Sans','Inter',sans-serif;background:var(--bg);color:var(
     <a href="https://thejoysutton.com" target="_blank">thejoysutton.com</a> &bull; <a href="https://instagram.com/joysuttonmedia" target="_blank">@joysuttonmedia</a><br>
     Sutton Impact, LLC &bull; American Addiction Centers &bull; Howard University &bull; Virginia Tech<br>
     &copy; 2026 Joy Sutton Media. All rights reserved.<br>
-    <span style="font-size:.45rem;color:rgba(0,0,0,.2)">Site designed by <a href="https://valuetovictory.com" style="color:rgba(0,0,0,.25)">Value to Victory</a></span>
+    <span style="font-size:.45rem;color:var(--muted);opacity:.4">Site designed by <a href="https://valuetovictory.com" style="color:var(--rose);opacity:.5">Value to Victory</a></span>
   </div>
 </div>
 
