@@ -643,9 +643,361 @@ I'm in your corner.
 P.S. If you want to go deeper — structured accountability, monthly progress tracking, and direct coaching access — check out our membership options at valuetovictory.com/pricing. But the 4 rules above? Those are free. And they work.`;
       break;
 
+    // ===== PHASE 2: DEEP DIVES (Days 9-16, sent every other day) =====
+    case 9:
+      subject = `Week 2 starts now — let's go deeper on ${weakest}`;
+      body = `${firstName},
+
+You finished Week 1. Most people never get that far.
+
+But here's the thing — knowing the 4 rules isn't the same as living them. Week 1 was awareness. Week 2 is depth.
+
+This week I'm going deeper on your ${weakest} (${weakestScore}/50). Not the theory. The specifics. The sub-categories that are pulling your score down and exactly what to do about each one.
+
+Your weakest sub-category is ${weakestSub}. That's not just a label — it's the specific behavior pattern that's costing you the most.
+
+HERE'S WHAT'S COMING THIS WEEK:
+• Deep dive into ${weakestSub} — what it really means and why it's stuck
+• The "Opposite Action" technique — doing the thing your score says you avoid
+• A mid-week accountability check that you can't fake
+• Your first progress measurement since Day 1
+
+THE RULE FOR WEEK 2:
+Every morning before you check your phone, ask yourself: "What's one thing I can do for my ${weakest} today that I wouldn't have done two weeks ago?"
+
+Write the answer down. Then do it. That's the whole system.
+
+YOUR MOVE TODAY:
+Open your report and look at your ${weakest} sub-categories. Rank them. Which one feels most uncomfortable? That's your starting point.
+
+${reportUrl}
+
+— Shawn`;
+      break;
+
+    case 10:
+      subject = `The Opposite Action technique for ${weakestSub}`;
+      body = `${firstName},
+
+Your weakest sub-category is ${weakestSub}. Score: ${prescription.weakestSubScore || 1}/5.
+
+Here's a pattern I see over and over: the thing you most need to improve is the thing you most naturally avoid. Your brain has built a highway around it. You don't even notice you're avoiding it anymore.
+
+THE OPPOSITE ACTION TECHNIQUE:
+1. Identify the behavior your low ${weakestSub} score reveals
+2. Ask: "What would someone who scores 5/5 on this do today?"
+3. Do that thing. Even if it feels wrong. Even if it feels forced.
+
+The discomfort IS the signal that you're growing. Comfort is maintenance. Discomfort is improvement.
+
+${weakest === 'Time' ? `For ${weakestSub}: If you're avoiding structure, build it. If you're avoiding delegation, delegate something today. If you're avoiding tracking, track every hour tomorrow.` : ''}${weakest === 'People' ? `For ${weakestSub}: If you're avoiding hard conversations, have one today. If you're avoiding vulnerability, share something real. If you're avoiding boundaries, set one.` : ''}${weakest === 'Influence' ? `For ${weakestSub}: If you're avoiding visibility, post something today. If you're avoiding feedback, ask for it. If you're avoiding leadership, lead something small.` : ''}${weakest === 'Numbers' ? `For ${weakestSub}: If you're avoiding your bank statement, open it. If you're avoiding goal-setting, set one today. If you're avoiding tracking, start a spreadsheet.` : ''}${weakest === 'Knowledge' ? `For ${weakestSub}: If you're avoiding learning, spend 20 minutes on it today. If you're avoiding application, apply one thing you already know. If you're avoiding self-assessment, be honest about what you don't know.` : ''}
+
+YOUR MOVE TODAY:
+One Opposite Action. Just one. Something your old self would have avoided. Do it before the end of the day and you'll feel the shift.
+
+— Shawn`;
+      break;
+
+    case 11:
+      subject = `Mid-week check: Are you running the system or just reading emails?`;
+      body = `${firstName},
+
+Honest question — and I need you to answer it before you read another word:
+
+Have you actually done any of the exercises from the last 10 days?
+
+Not "thought about it." Not "planned to." Actually did.
+
+If yes — good. You're in the minority. Keep going.
+
+If no — that's the data point that matters most. Because knowing your ${weakest} is ${weakestScore}/50 and doing nothing about it is worse than not knowing at all. At least ignorance has an excuse. Awareness without action is a choice.
+
+I'm not saying this to guilt you. I'm saying it because I've seen what happens when people actually run the system vs. people who just read about it. The gap is massive.
+
+THE 3-QUESTION ACCOUNTABILITY CHECK:
+1. Did I do my 90-minute block at least 3 times this week? (Yes/No)
+2. Did I use the 10-Minute Rule when I hit resistance? (Yes/No)
+3. Is my 1-3-5 list written down somewhere I see daily? (Yes/No)
+
+If you got 2 or more Yes answers — you're on track.
+If you got 1 or fewer — you're consuming, not executing. And consuming doesn't change scores.
+
+YOUR MOVE TODAY:
+If you haven't started — start with ONE 10-minute sprint on ${weakest}. Right now. Not after this email. Not after lunch. Now.
+
+If you have started — do your 90-minute block today and track it. Write down what you did and how it felt.
+
+— Shawn`;
+      break;
+
+    case 12:
+      subject = `The compound effect: small ${weakest} wins add up fast`;
+      body = `${firstName},
+
+Day 12. You're almost through Week 2. Let me show you something about how progress actually works.
+
+Your ${weakest} score is ${weakestScore}/50. To get to ${targetScore}, you need to gain ${targetScore - weakestScore} points.
+
+That sounds like a lot. But here's how the compound effect works:
+
+WEEK 1: You learned the system (awareness = +0 points, but priceless)
+WEEK 2: You started doing Opposite Actions (+1-2 points)
+WEEK 3-4: Habits start forming, behavior shifts (+3-5 points)
+MONTH 2: Other people notice (+5-8 points)
+MONTH 3: It's just who you are now (+8-12 points)
+
+The math: if you improve ${weakestSub} by just 1 point, your entire ${weakest} score rises. And because of the cross-pillar effect, your ${strongest} stops bleeding too. One sub-category improvement creates a cascade.
+
+${crossHeadline}
+
+THIS IS THE COMPOUND EFFECT IN ACTION:
+1% improvement per day = 37x improvement in a year. You don't need 37x. You need ${targetScore - weakestScore} points. That's achievable in 90 days if you show up.
+
+YOUR MOVE TODAY:
+Write down one small win from this week related to ${weakest}. Even if it's tiny. "I tracked my time for one day." "I had that hard conversation." "I opened my bank statement." Small wins compound.
+
+— Shawn`;
+      break;
+
+    // ===== PHASE 3: ADVANCED STRATEGIES (Days 13-20, sent every 3 days) =====
+    case 13:
+      subject = `Your ${strongest} is being held hostage by your ${weakest}`;
+      body = `${firstName},
+
+Two weeks in. Let's talk about something most coaching programs ignore completely: the cross-pillar effect.
+
+Your ${strongest} score is ${strongestScore}/50. That's your best pillar. But it's not performing at its real potential because your ${weakest} (${weakestScore}/50) is dragging it down.
+
+${crossHeadline}
+
+${crossExplanation}
+
+Think of it like this: your ${strongest} is a sports car, and your ${weakest} is flat tires. The engine is fine. The horsepower is there. But you can't get to top speed on flat tires.
+
+THE UNLOCK:
+Every point you add to ${weakest} doesn't just improve ${weakest}. It unlocks performance in ${strongest} that's been trapped. You're not building from zero — you're removing the cap.
+
+${primaryImpact.subCategoryLinks ? `THE SPECIFIC CONNECTIONS:\n${primaryImpact.subCategoryLinks.map(l => `• Your ${l.from} (${weakest}) directly limits your ${l.to} (${strongest})`).join('\n')}` : ''}
+
+YOUR MOVE TODAY:
+Look at your ${strongest} pillar scores. Identify the one sub-category that should be higher but isn't. Then ask: "Is my ${weakest} the reason this is stuck?" The answer is almost always yes.
+
+${reportUrl}
+
+— Shawn`;
+      break;
+
+    case 14:
+      subject = `The 5 people around you are your real score`;
+      body = `${firstName},
+
+Jim Rohn said you're the average of the five people you spend the most time with. I think it goes deeper than that.
+
+Your VALUE is the average of the five people you spend the most time with. And your ${weakest} score (${weakestScore}/50) is partially a reflection of who's in your circle.
+
+THE PEOPLE AUDIT:
+List the 5 people you spent the most time with this week. For each one, answer:
+1. Do they challenge me to grow, or do they keep me comfortable?
+2. Do they model strength in ${weakest}? Or are they weak there too?
+3. If I told them about the 90/90/1 rule, would they support it or mock it?
+
+This isn't about cutting people off. It's about being intentional. Your environment shapes your behavior more than your willpower does.
+
+THE UPGRADE:
+You don't need to replace anyone. You need to ADD one person who is strong where you are weak. One person who models what a high ${weakest} score looks like. One mentor, one peer, one example.
+
+YOUR MOVE TODAY:
+Text or call one person who you think could be your accountability partner for the next 60 days. Tell them what you're working on. Ask them to check in weekly. That one conversation can change the trajectory.
+
+— Shawn`;
+      break;
+
+    case 15:
+      subject = `3 weeks in — it's time to measure what changed`;
+      body = `${firstName},
+
+Three weeks ago your Master Score was ${masterScore} (${scoreRange}). Your ${weakest} was ${weakestScore}/50.
+
+It's time to measure.
+
+Not because the number is everything — but because measurement creates accountability. And accountability is what separates people who improve from people who just "try."
+
+I want you to retake the assessment today. Same pillars. New questions. Real data.
+
+HERE'S WHAT TO EXPECT:
+• If your score went UP: The system is working. Keep running it. Don't stop because it's working — that's the trap.
+• If your score stayed the SAME: You now know more than you did. The awareness is real. But action needs to increase.
+• If your score went DOWN: That's actually possible and it's not bad. Sometimes understanding exposes gaps you were hiding from yourself. A lower score with higher awareness beats a higher score with no clue.
+
+THE HONEST TRUTH:
+Most people won't retake it because they're afraid of the number. That fear IS the reason their score is what it is. Face the number. Own it. Then work it.
+
+YOUR MOVE TODAY:
+Retake the assessment. Takes about 7 minutes for the quick version.
+
+${retakeUrl}
+
+Once you're done, compare your reports side by side. Look at which sub-categories moved and which didn't. That's your roadmap for the next 60 days.
+
+— Shawn`;
+      break;
+
+    case 16:
+      subject = `What your morning routine says about your ${weakest}`;
+      body = `${firstName},
+
+The first 60 minutes of your day predict the next 15 hours. I'm not being philosophical — it's behavioral science. Your morning either sets you up for growth or for maintenance.
+
+Here's what a high-${weakest} person does in their first hour:
+${weakest === 'Time' ? `• Reviews their calendar BEFORE checking email\n• Identifies the #1 priority before touching their phone\n• Blocks their 90-minute focus window for the day\n• Deletes or delegates at least one thing from yesterday's overflow` : ''}${weakest === 'People' ? `• Sends one intentional message to someone who matters\n• Reviews their People Audit — who needs attention today?\n• Blocks time for one real conversation (not text, not Slack)\n• Checks in with their accountability partner` : ''}${weakest === 'Influence' ? `• Creates one piece of content or insight to share\n• Reviews their professional visibility — what did they contribute this week?\n• Identifies one opportunity to lead or teach today\n• Works on their credibility in their space for 30 minutes` : ''}${weakest === 'Numbers' ? `• Checks their numbers — revenue, expenses, income per hour\n• Reviews progress toward their financial goals\n• Identifies one cost to cut or one income stream to grow\n• Updates their tracking system` : ''}${weakest === 'Knowledge' ? `• Spends 30 minutes in deliberate learning (not scrolling)\n• Applies one thing they learned yesterday\n• Identifies one knowledge gap that's costing them\n• Teaches someone else what they know (teaching = mastery)` : ''}
+
+COMPARE THAT TO YOUR CURRENT MORNING:
+Be honest. What do the first 60 minutes of your day actually look like? If the answer is "phone, email, react" — that's why your ${weakest} is ${weakestScore}/50. You're starting every day in maintenance mode.
+
+YOUR MOVE TODAY:
+Tomorrow morning, try the high-${weakest} routine. Just one morning. Set your alarm 30 minutes earlier if you need to. One day. See how it feels.
+
+— Shawn`;
+      break;
+
+    case 17:
+      subject = `The income-per-hour question you're avoiding`;
+      body = `${firstName},
+
+Quick math. Don't skip this.
+
+Take your monthly income. Divide by hours worked. That's your income per hour.
+
+Now ask: is that number going UP or DOWN over the last 12 months?
+
+This matters because your Master Score (${masterScore}) and your income per hour are correlated. Not perfectly — but strongly. Because the 5 pillars (Time, People, Influence, Numbers, Knowledge) are the 5 levers that determine what your time is worth.
+
+${weakest === 'Numbers' ? `Your Numbers score (${weakestScore}/50) tells me you probably don't know this number off the top of your head. That's the problem. What you don't measure, you can't improve.` : `Even though ${weakest} is your focus, every pillar connects to your income per hour. Your ${weakest} score of ${weakestScore}/50 means there's unrealized income hiding in that pillar.`}
+
+THE VALUE PER HOUR FRAMEWORK:
+1. Calculate your current $/hour (be honest)
+2. Identify what activities earn above that rate (high-value)
+3. Identify what activities earn below that rate (low-value)
+4. Systematically eliminate, delegate, or reduce low-value hours
+5. Replace them with high-value hours
+
+This is the Time Multiplier from the book. It's not about working more hours. It's about making each hour worth more.
+
+YOUR MOVE TODAY:
+Calculate your income per hour. Write it down. Look at it. Then ask: "What would have to change for this number to double?" The answer probably lives in your ${weakest} pillar.
+
+— Shawn`;
+      break;
+
+    case 18:
+      subject = `Month 1 almost done — the real test starts now`;
+      body = `${firstName},
+
+You're approaching the end of Month 1. Here's what the data says happens right now:
+
+• 70% of people who start a self-improvement program quit in the first 30 days
+• The ones who make it past 30 days are 5x more likely to hit 90 days
+• The ones who hit 90 days rarely go back
+
+You're at the inflection point. The next 7 days determine whether this becomes a chapter in your story or just another email sequence you read.
+
+YOUR CURRENT STATUS:
+Started: ${new Date(a.completed_at || Date.now()).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+Master Score: ${masterScore} (${scoreRange})
+Focus: ${weakest} (${weakestScore}/50)
+Target: ${targetScore}/50
+Days in the system: ${day}
+
+THE 30-DAY CHECKPOINT:
+1. Have you retaken the assessment since Day 1? (If not — do it today)
+2. Are you doing your 90-minute blocks consistently? (3+ per week = on track)
+3. Has anyone noticed a change in you? (External validation = real progress)
+4. Do you FEEL different about ${weakest}? (Awareness shift = leading indicator)
+
+If you answered YES to 2+ of these — you're ahead of 70% of people who started this journey.
+
+YOUR MOVE TODAY:
+Retake the assessment if you haven't already. Then visit your dashboard and look at your progress.
+
+${retakeUrl}
+
+— Shawn`;
+      break;
+
+    // ===== PHASE 4: WEEKLY ONGOING (Days 19+, sent weekly) =====
+    case 19:
+      subject = `Your ${weakest} score is a choice now, not a circumstance`;
+      body = `${firstName},
+
+When you first took the assessment, your ${weakest} score (${weakestScore}/50) felt like a discovery. Something you didn't know about yourself.
+
+Now it's different. Now you know. You've had the framework. You've had the tools. You've had almost three weeks of coaching specifically on this pillar.
+
+At this point, your ${weakest} score isn't a circumstance. It's a choice. Every day you decide whether to work on it or not. And that's actually the most powerful position you can be in — because choices can change. Circumstances feel permanent. Choices feel like freedom.
+
+THE WEEKLY SYSTEM (going forward):
+From here on, I'm going to check in weekly. Not daily — because at this point, you either have the habits or you don't. And if you don't, daily emails aren't what's missing. Action is.
+
+Each week I'll send you:
+• One insight about your pillar scores
+• One challenge for the week
+• One accountability question
+
+THIS WEEK'S CHALLENGE:
+Spend 90 minutes on ${weakest} work every day this week. No excuses. 7 days straight. Track it. If you miss a day, add 30 minutes to the next day.
+
+— Shawn`;
+      break;
+
+    case 20:
+      subject = `Weekly check-in: What moved this week?`;
+      body = `${firstName},
+
+End of the week. Three questions:
+
+1. WHAT MOVED?
+What specific action did you take for your ${weakest} this week? Not what you planned. What you actually did.
+
+2. WHAT RESISTED?
+Where did you hit a wall? What did you avoid? That resistance is information — it's pointing directly at the thing that needs the most attention.
+
+3. WHAT'S NEXT?
+Based on this week, what's the ONE thing you're committing to next week?
+
+THE NUMBERS:
+Your Master Score on Day 1: ${masterScore}
+Your ${weakest} on Day 1: ${weakestScore}/50
+Days since you started: ${day}
+
+If you haven't retaken the assessment yet — this is your weekly reminder. The number won't lie to you. And you need the feedback loop.
+
+${retakeUrl}
+
+YOUR MOVE THIS WEEK:
+Write down your answers to the 3 questions above. Say them out loud. Share them with someone. Accountability turns intentions into actions.
+
+— Shawn`;
+      break;
+
     default:
-      subject = `Your coaching update from The Value Engine`;
-      body = `${firstName},\n\nKeep running the system. Your ${weakest} is where the leverage is.\n\n— Shawn`;
+      // Days 21+ — rotating weekly content
+      const weekNum = Math.floor((day - 19) / 1) + 5; // Week 5, 6, 7...
+      const rotatingTopics = [
+        { subj: `Are you still avoiding ${weakestSub}?`, theme: 'sub-category focus',
+          content: `The sub-category that was pulling your score down on Day 1 was ${weakestSub}. That's still where the biggest leverage is.\n\nThis week's focus: One deliberate action per day specifically targeting ${weakestSub}. Not the whole pillar. Just this one sub-category. Precision beats effort.` },
+        { subj: `Your ${strongest} wants to thank your ${weakest}`, theme: 'cross-pillar',
+          content: `Remember the cross-pillar effect? ${crossHeadline}\n\nEvery point you've added to ${weakest} has unlocked potential in ${strongest}. Even if you can't see it yet in a score, it's happening in your behavior. The connections are real.` },
+        { subj: `The 90-day mark is approaching — are you ready?`, theme: '90-day milestone',
+          content: `The 90/90/1 Rule isn't a suggestion. It's a commitment. 90 minutes a day, 90 days, 1 focus: ${weakest}.\n\nIf you started when you took the assessment, you're getting close. If you started late, that's fine — the clock starts when you decide it starts. What matters is consistency, not perfection.` },
+        { subj: `What would a ${masterScore + 20} version of you do today?`, theme: 'future self',
+          content: `Your Master Score is ${masterScore}. Imagine the version of you at ${masterScore + 20}. That person has a ${weakest} score of ${targetScore} or higher.\n\nWhat does that person's morning look like? How do they handle the thing you're avoiding? What decisions do they make that you haven't made yet?\n\nThat's not a fantasy. That's a blueprint. Close the gap.` },
+        { subj: `Monthly retake reminder — let's see the real numbers`, theme: 'retake prompt',
+          content: `It's time to retake the assessment. Not because I told you to — but because the data doesn't lie and you need the feedback.\n\nYour original scores:\n• Master: ${masterScore} (${scoreRange})\n• ${weakest}: ${weakestScore}/50\n• ${strongest}: ${strongestScore}/50\n\nRetake now and compare: ${retakeUrl}\n\nIf the score went up — the system works. If it didn't — the system works, you just need to run it more consistently.` },
+      ];
+      const topicIndex = (day - 21) % rotatingTopics.length;
+      const topic = rotatingTopics[Math.max(0, topicIndex)];
+      subject = topic.subj;
+      body = `${firstName},\n\nWeek ${weekNum} check-in.\n\n${topic.content}\n\nYOUR MOVE THIS WEEK:\nOne action. One commitment. One thing you can point to on Friday and say "I did that for my ${weakest}."\n\nI'm still in your corner.\n\n— Shawn`;
   }
 
   // Build HTML version with dark/gold styling matching existing emails
@@ -654,7 +1006,7 @@ P.S. If you want to go deeper — structured accountability, monthly progress tr
 
 <!-- Header -->
 <tr><td style="background:#1a1a2e;border-radius:4px 4px 0 0;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">VALUE <span style="color:#d4a853;">TO</span> VICTORY</h1><p style="margin:4px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">Daily Coaching — Day ${day} of 8</p></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">VALUE <span style="color:#d4a853;">TO</span> VICTORY</h1><p style="margin:4px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">${day <= 8 ? `Daily Coaching — Day ${day} of 8` : day <= 16 ? `Deep Dive — Week ${Math.ceil(day/7)}` : day <= 20 ? `Advanced — Week ${Math.ceil(day/7)}` : `Weekly Check-In — Week ${Math.ceil(day/7)}`}</p></td></tr></table>
 
 <!-- Gold Divider -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#d4a853,transparent);"></div></td></tr></table>
@@ -664,7 +1016,7 @@ P.S. If you want to go deeper — structured accountability, monthly progress tr
 <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#c0c0d8;line-height:1.7;white-space:pre-wrap;">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\n/g, '</div><div style="height:16px;"></div><div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#c0c0d8;line-height:1.7;white-space:pre-wrap;">').replace(/YOUR MOVE TODAY:|YOUR 10-MINUTE CHALLENGE:|YOUR 90-MINUTE DAILY BLOCK:|YOUR DAILY SYSTEM:|YOUR 1 \(The Massive Goal\):|YOUR 3 \(Key Tasks\):|YOUR 5 \(Quick Wins for Today\):|YOUR FINAL MOVE:|THE CASCADE EFFECT:|THE TRUTH ABOUT SYSTEMS:|HERE'S WHY THIS WORKS:/g, match => `<strong style="color:#d4a853;text-transform:uppercase;letter-spacing:1px;font-size:13px;">${match}</strong>`)}</div>
 </td></tr></table>
 
-${day === 6 || day === 8 ? `<!-- Retake CTA -->
+${day === 6 || day === 8 || day === 15 || day === 18 || day === 20 || ((day > 20) && ((day - 21) % 5 === 4)) ? `<!-- Retake CTA -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px 32px 40px;text-align:center;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;background:linear-gradient(135deg,#d4a853,#c89030);" align="center"><a href="${retakeUrl}" target="_blank" style="display:inline-block;padding:14px 40px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:800;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Retake the Assessment &rarr;</a></td></tr></table>
 </td></tr></table>` : ''}
@@ -4980,13 +5332,13 @@ This link expires in 24 hours.
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
-        // Find all active sequences: not unsubscribed, day < 8, last_sent_at is null or before today
+        // Find all active sequences: not unsubscribed, eligible for next email
+        // Cadence: Days 1-8 daily, Days 9-16 every 2 days, Days 17-20 every 3 days, Days 21+ weekly (7 days)
         // JOIN contacts to skip orphaned sequences (deleted accounts)
         const sequences = await sql`
           SELECT cs.* FROM coaching_sequences cs
           INNER JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
           WHERE cs.unsubscribed = FALSE
-            AND cs.current_day < 8
             AND (cs.last_sent_at IS NULL OR cs.last_sent_at < ${todayStart.toISOString()})
           ORDER BY cs.id
         `;
@@ -5018,6 +5370,20 @@ This link expires in 24 hours.
               results.push({ email: seq.email, status: 'skipped', reason: 'assessment was today (day 0)' });
               skippedCount++;
               continue;
+            }
+
+            // Cadence control: Phase 1 (days 0-8) = daily, Phase 2 (9-16) = every 2 days,
+            // Phase 3 (17-20) = every 3 days, Phase 4 (21+) = weekly
+            if (seq.last_sent_at) {
+              const lastSent = new Date(seq.last_sent_at);
+              const daysSinceLast = Math.floor((todayStart.getTime() - lastSent.getTime()) / (1000 * 60 * 60 * 24));
+              const currentDay = seq.current_day;
+              const minDaysBetween = currentDay < 8 ? 1 : currentDay < 16 ? 2 : currentDay < 20 ? 3 : 7;
+              if (daysSinceLast < minDaysBetween) {
+                results.push({ email: seq.email, status: 'skipped', reason: `cadence: need ${minDaysBetween} days between emails (phase ${currentDay < 8 ? 1 : currentDay < 16 ? 2 : currentDay < 20 ? 3 : 4}), only ${daysSinceLast} elapsed` });
+                skippedCount++;
+                continue;
+              }
             }
 
             // Respect 3-per-day email limit — check emails sent today to this user
@@ -5175,7 +5541,7 @@ This link expires in 24 hours.
           SELECT cs.email, cs.current_day, c.first_name
           FROM coaching_sequences cs
           JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
-          WHERE cs.unsubscribed = FALSE AND cs.current_day <= 8
+          WHERE cs.unsubscribed = FALSE
           ORDER BY cs.id
         `;
 
@@ -6554,7 +6920,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           SELECT cs.*, c.first_name, c.email as contact_email, c.id as contact_id
           FROM coaching_sequences cs
           JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
-          WHERE cs.unsubscribed = false AND cs.current_day < 8
+          WHERE cs.unsubscribed = false
           AND (cs.last_sent_at IS NULL OR cs.last_sent_at < ${todayStart.toISOString()})
           LIMIT 50`;
 
