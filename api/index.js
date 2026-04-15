@@ -136,6 +136,20 @@ function sanitizeString(str, maxLen = 1000) {
   return str.trim().substring(0, maxLen);
 }
 
+// HTML escape for safe interpolation into email templates (prevents stored XSS)
+function escapeHtml(str) {
+  if (!str || typeof str !== 'string') return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Mask email for logging (PII protection) — shows first 2 chars + domain
+function maskEmail(email) {
+  if (!email || typeof email !== 'string') return '[no-email]';
+  const [local, domain] = email.split('@');
+  if (!domain) return email.substring(0, 2) + '***';
+  return local.substring(0, 2) + '***@' + domain;
+}
+
 async function auditLog(sql, { action, actor, targetTable, targetId, oldValues, newValues, ip }) {
   try {
     await sql`INSERT INTO audit_log (action, actor, target_table, target_id, old_values, new_values, ip_address)
@@ -152,16 +166,14 @@ const ALLOWED_ORIGINS = [
   'https://assessment.valuetovictory.com',
   'https://shawnedecker.com',
   'https://www.shawnedecker.com',
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://localhost:4173',
+  ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'] : []),
 ];
 
 function getCorsOrigin(req) {
   const origin = req.headers.origin || '';
   if (ALLOWED_ORIGINS.includes(origin)) return origin;
-  // Allow Vercel preview deployments
-  if (origin.endsWith('.vercel.app') && origin.includes('vtv-assessment')) return origin;
+  // Allow Vercel preview deployments — only exact project subdomains
+  if (origin.endsWith('.vercel.app') && /^https:\/\/vtv-assessment[a-z0-9-]*\.vercel\.app$/.test(origin)) return origin;
   return ALLOWED_ORIGINS[0]; // Default to main domain
 }
 
@@ -425,7 +437,7 @@ function generatePrescription(a) {
 
 function generateCoachingEmail(day, assessmentData, prescription, email) {
   const a = assessmentData;
-  const firstName = a.first_name || 'there';
+  const firstName = escapeHtml(a.first_name || 'there');
   const weakest = prescription.weakestPillar;
   const strongest = prescription.strongestPillar;
   const weakestScore = prescription.weakestScore;
@@ -1608,7 +1620,7 @@ module.exports = async (req, res) => {
       if (email && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
         (async () => {
           try {
-            const firstName = rows[0].first_name || 'there';
+            const firstName = escapeHtml(rows[0].first_name || 'there');
             // Fetch latest assessments for this contact
             const assessments = await sql`
               SELECT id, completed_at, master_score, score_range, weakest_pillar, depth,
@@ -1738,7 +1750,7 @@ module.exports = async (req, res) => {
               subject: `New sign-in to your Value Engine account — ${dateStr}`,
               html: signInHtml,
             });
-            console.log(`Sign-in email sent to ${email} for contact ${contactId}`);
+            console.log(`Sign-in email sent to ${maskEmail(email)} for contact ${contactId}`);
             await logEmail(sql, { recipient: email, emailType: 'sign_in', subject: `New sign-in to your Value Engine account — ${dateStr}`, contactId });
           } catch (signInEmailErr) {
             console.error('Sign-in email error (non-fatal):', signInEmailErr.message);
@@ -2348,7 +2360,7 @@ module.exports = async (req, res) => {
         const rows = await sql`INSERT INTO contacts (first_name, last_name, email, phone, created_at) VALUES (${b.firstName || ''}, ${b.lastName || ''}, ${cleanEmail}, ${b.phone || null}, ${new Date().toISOString()}) RETURNING *`;
         contact = rows[0];
       }
-      console.log(`Contact upserted: ${contact.id} (${cleanEmail}) - ${contact.first_name} ${contact.last_name}`);
+      console.log(`Contact upserted: ${contact.id} (${maskEmail(cleanEmail)})`);
 
       // Dynamic scoring: if questionIds provided, compute pillar totals from question_bank
       let tt, pt, it, nt, kt;
@@ -2590,7 +2602,7 @@ Don't guess. Run the system.
             text: emailBody,
           });
           emailSent = true;
-          console.log(`Auto-email sent to ${contactEmail} for assessment ${assessment.id}`);
+          console.log(`Auto-email sent to ${maskEmail(contactEmail)} for assessment ${assessment.id}`);
           await logEmail(sql, { recipient: contactEmail, emailType: 'assessment_report', subject, contactId: contact.id, assessmentId: assessment.id, metadata: { score: masterScore, range: scoreRange } });
         } catch (emailErr) {
           console.error('Auto-email FAILED for', contactEmail, ':', emailErr.message);
@@ -2608,7 +2620,7 @@ Don't guess. Run the system.
               text: emailBody,
             });
             emailSent = true;
-            console.log(`Auto-email RETRY succeeded for ${contactEmail}`);
+            console.log(`Auto-email RETRY succeeded for ${maskEmail(contactEmail)}`);
             await logEmail(sql, { recipient: contactEmail, emailType: 'assessment_report', subject, contactId: contact.id, assessmentId: assessment.id, metadata: { score: masterScore, range: scoreRange, retry: true } });
           } catch (retryErr) {
             console.error('Auto-email RETRY also failed for', contactEmail, ':', retryErr.message);
@@ -2632,7 +2644,7 @@ Don't guess. Run the system.
             current_day = 0,
             last_sent_at = NULL,
             started_at = NOW()`;
-        console.log(`Coaching sequence enrolled/reset for ${cleanEmail}, assessment ${assessment.id}`);
+        console.log(`Coaching sequence enrolled/reset for ${maskEmail(cleanEmail)}, assessment ${assessment.id}`);
       } catch (coachErr) {
         console.error('Coaching enroll error (non-fatal):', coachErr.message);
       }
@@ -2647,8 +2659,10 @@ Don't guess. Run the system.
       return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name }, emailSent, emailError: !emailSent ? 'Your results are saved but the email delivery encountered an issue. You can view your report at the link below.' : null, depth: assessmentDepth, focusPillar: assessmentFocusPillar });
     }
 
-    // POST /api/teams — Create team with optional company CMA fields for fast org integration
+    // POST /api/teams — Create team (JWT required)
     if (req.method === 'POST' && url === '/teams') {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const b = req.body || {};
       const code = Math.random().toString(36).substring(2, 10);
       const companyDomain = (b.companyDomain || b.company_domain || '').toLowerCase().replace('@', '').trim();
@@ -2852,12 +2866,14 @@ Don't guess. Run the system.
         if (result.length === 0) return res.status(404).json({ error: 'Member not found in this team' });
         return res.json({ success: true, member: result[0] });
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
-    // POST /api/teams/:id/settings — Update company CMA settings for an existing team
+    // POST /api/teams/:id/settings — Update company CMA settings (JWT required)
     if (req.method === 'POST' && url.match(/^\/teams\/\d+\/settings$/)) {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const teamId = parseInt(url.split('/')[2]);
       const b = req.body || {};
       try {
@@ -2897,13 +2913,14 @@ Don't guess. Run the system.
 
         return res.json({ success: true, settings: result[0], autoImported });
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
-    // POST /api/teams/:id/import — Bulk import members (CSV-style: email, department, role, goals)
-    // Company admin sends a list of employees. They get member numbers but identities stay masked in reports.
+    // POST /api/teams/:id/import — Bulk import members (JWT required)
     if (req.method === 'POST' && url.match(/^\/teams\/\d+\/import$/)) {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const teamId = parseInt(url.split('/')[2]);
       const b = req.body || {};
       const members = b.members || []; // Array of { email, department?, roleTitle?, goals?, customCode? }
@@ -2979,7 +2996,7 @@ Don't guess. Run the system.
           note: 'Pre-registered members will be fully linked when they complete their first assessment. Identities remain anonymous in all team reports.'
         });
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
@@ -3085,12 +3102,16 @@ Don't guess. Run the system.
 
         return res.json(report);
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
-    // POST /api/teams/:id/send-report — Send anonymized aggregate report to company CMA email
+    // POST /api/teams/:id/send-report — Send report (JWT or admin API key required)
     if (req.method === 'POST' && url.match(/^\/teams\/\d+\/send-report$/)) {
+      const jwtUser = extractUser(req);
+      const apiKey = req.headers['x-api-key'] || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!jwtUser && !(validKey && apiKey === validKey)) return res.status(401).json({ error: 'Authentication required.' });
       const teamId = parseInt(url.split('/')[2]);
       try {
         const team = await sql`SELECT * FROM teams WHERE id = ${teamId} LIMIT 1`;
@@ -3141,7 +3162,7 @@ Don't guess. Run the system.
         await logEmail(sql, { recipient: cmaEmail, emailType: 'team_report', subject: `${teamName} — P.I.N.K. Value Engine Team Report`, metadata: { teamId, teamName } });
         return res.json({ success: true, sentTo: cmaEmail, generatedAt: reportData.generatedAt });
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
@@ -3198,7 +3219,7 @@ Don't guess. Run the system.
         `;
         return res.json({ funnel, totals });
       } catch (e) {
-        return res.json({ error: 'Analytics not initialized. Run /api/migrate-analytics first.', details: e.message });
+        console.error('Analytics error:', e.message); return res.json({ error: 'Analytics not initialized' });
       }
     }
 
@@ -3259,15 +3280,29 @@ Don't guess. Run the system.
     }
 
     // ========== ADMIN ENDPOINTS — REQUIRE API KEY ==========
-    // POST /api/admin/pin-login — Short PIN login returns session token (not raw API key)
+    // POST /api/admin/pin-login — Short PIN login with DB-backed brute-force lockout
     if (req.method === 'POST' && url === '/admin/pin-login') {
       const { pin } = req.body || {};
       const validPin = process.env.ADMIN_PIN;
       if (!validPin) return res.status(500).json({ error: 'ADMIN_PIN not configured' });
+
+      // Brute-force protection: check failed attempts in last 15 minutes
+      const MAX_ATTEMPTS = 5;
+      const LOCKOUT_MINUTES = 15;
+      try {
+        const recentFails = await sql`SELECT COUNT(*) as cnt FROM audit_log WHERE action = 'pin_login_failed' AND created_at > NOW() - INTERVAL '${sql.unsafe(String(LOCKOUT_MINUTES))} minutes' AND ip_address = ${clientIP}`;
+        if (Number(recentFails[0]?.cnt || 0) >= MAX_ATTEMPTS) {
+          return res.status(429).json({ error: `Too many failed attempts. Try again in ${LOCKOUT_MINUTES} minutes.` });
+        }
+      } catch(e) { /* audit_log may not exist — allow login */ }
+
       if (!pin || pin.trim() !== validPin) {
+        // Log failed attempt
+        try { await auditLog(sql, { action: 'pin_login_failed', actor: 'unknown', ip: clientIP }); } catch(e) {}
         return res.status(401).json({ error: 'Invalid PIN' });
       }
-      // Return a time-limited admin JWT instead of raw API key
+      // Success — log it and return token + API key
+      try { await auditLog(sql, { action: 'pin_login_success', actor: 'admin', ip: clientIP }); } catch(e) {}
       const adminToken = createJWT({ role: 'admin', iat: Math.floor(Date.now() / 1000) });
       return res.json({ success: true, token: adminToken, apiKey: process.env.ADMIN_API_KEY || '' });
     }
@@ -3287,15 +3322,19 @@ Don't guess. Run the system.
       return res.json(teams);
     }
 
-    // GET /api/admin/contacts
+    // GET /api/admin/contacts (single query — no N+1)
     if (req.method === 'GET' && url === '/admin/contacts') {
-      const allContacts = await sql`SELECT * FROM contacts ORDER BY created_at DESC`;
-      const enriched = [];
-      for (const c of allContacts) {
-        const ca = await sql`SELECT * FROM assessments WHERE contact_id = ${c.id} ORDER BY completed_at DESC`;
-        enriched.push({ ...c, firstName: c.first_name, lastName: c.last_name, latestAssessment: ca.length > 0 ? mapAssessment(ca[0]) : null, assessmentCount: ca.length });
-      }
-      return res.json(enriched);
+      const enriched = await sql`
+        SELECT c.*,
+          (SELECT COUNT(*) FROM assessments WHERE contact_id = c.id) as assessment_count,
+          (SELECT row_to_json(a.*) FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as latest_assessment
+        FROM contacts c ORDER BY c.created_at DESC LIMIT 500
+      `;
+      return res.json(enriched.map(c => ({
+        ...c, firstName: c.first_name, lastName: c.last_name,
+        assessmentCount: Number(c.assessment_count || 0),
+        latestAssessment: c.latest_assessment ? mapAssessment(c.latest_assessment) : null,
+      })));
     }
 
     // GET /api/admin/contacts/:id
@@ -3372,7 +3411,7 @@ Don't guess. Run the system.
         await cascadeDeleteContact(id);
         return res.json({ success: true, deleted: { email: rows[0].email, id } });
       } catch(e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
@@ -3384,7 +3423,7 @@ Don't guess. Run the system.
         for (const id of ids) { await cascadeDeleteContact(id); }
         return res.json({ success: true, deleted: ids.length });
       } catch(e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
@@ -3547,7 +3586,7 @@ Don't guess. Run the system.
           avgScore: Math.round(Number(q.avg_score) * 10) / 10,
         })));
       } catch (e) {
-        return res.json({ error: 'Question bank not initialized. Run /api/migrate-question-system first.', details: e.message });
+        console.error('Question bank error:', e.message); return res.json({ error: 'Question bank not initialized' });
       }
     }
 
@@ -3799,7 +3838,7 @@ Don't guess. Run the system.
         recipientEmail = b.overrideEmail;
       }
 
-      const firstName = a.first_name || 'there';
+      const firstName = escapeHtml(a.first_name || 'there');
       const masterScore = a.master_score;
       const scoreRange = a.score_range;
       const weakestPillar = a.weakest_pillar;
@@ -4142,7 +4181,7 @@ ${roadmapHtml}
         const c = rows[0];
         return res.json({ enrolled: true, challengeId: c.id, day90Date: c.day_90_date, enrolledAt: c.enrolled_at });
       } catch (e) {
-        return res.status(500).json({ error: 'Could not enroll. Ensure migration has been run.', details: e.message });
+        console.error('Enrollment error:', e.message); return res.status(500).json({ error: 'Could not enroll. Please try again.' });
       }
     }
 
@@ -4214,7 +4253,7 @@ ${roadmapHtml}
           current: currentScore,
         });
       } catch (e) {
-        return res.json({ enrolled: false, error: 'Challenge system not initialized. Run migration first.', details: e.message });
+        console.error('Challenge error:', e.message); return res.json({ enrolled: false, error: 'Challenge system not initialized' });
       }
     }
 
@@ -4455,7 +4494,7 @@ ${roadmapHtml}
           inserted
         });
       } catch(e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
@@ -4486,7 +4525,7 @@ ${roadmapHtml}
           topWeakestSubCategories: topWeakSubs,
         });
       } catch (e) {
-        return res.json({ error: 'Feedback table not initialized. Run migration first.', details: e.message });
+        console.error('Feedback error:', e.message); return res.json({ error: 'Feedback table not initialized' });
       }
     }
 
@@ -5190,7 +5229,7 @@ ${roadmapHtml}
       if (aRows.length === 0) return res.status(404).json({ error: 'Assessment not found' });
       const a = aRows[0];
 
-      const firstName = a.first_name || 'there';
+      const firstName = escapeHtml(a.first_name || 'there');
       const name = (a.first_name || '') + ' ' + (a.last_name || '');
       const masterScore = a.master_score;
       const scoreRange = a.score_range;
@@ -5704,7 +5743,7 @@ This link expires in 24 hours.
         }
         return res.json({ enrolled, total: users.length });
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
@@ -5838,11 +5877,11 @@ This link expires in 24 hours.
 
             results.push({ email: seq.email, status: 'sent', day: nextDay });
             sentCount++;
-            console.log(`Coaching email Day ${nextDay} sent to ${seq.email}`);
+            console.log(`Coaching email Day ${nextDay} sent to ${maskEmail(seq.email)}`);
             await logEmail(sql, { recipient: seq.email, emailType: 'coaching', subject: emailContent.subject, assessmentId: seq.assessment_id, metadata: { day: nextDay } });
 
           } catch (sendErr) {
-            console.error(`Coaching email error for ${seq.email}:`, sendErr.message);
+            console.error(`Coaching email error for ${maskEmail(seq.email)}:`, sendErr.message);
             results.push({ email: seq.email, status: 'error', error: sendErr.message });
           }
         }
@@ -6131,17 +6170,22 @@ This link expires in 24 hours.
       return res.json({ sent: results.filter(r => r.status === 'sent').length, failed: results.filter(r => r.status === 'failed').length, results });
     }
 
-    // GET /api/accountability/send — evening accountability + platform updates email
+    // GET /api/accountability/send — evening accountability + platform updates email (with daily dedup)
     if (req.method === 'GET' && url === '/accountability/send') {
       if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         await ensureCoachingTable(sql);
 
+        // Dedup: skip anyone who already got an accountability email today
         const members = await sql`
           SELECT cs.email, cs.current_day, c.first_name
           FROM coaching_sequences cs
           JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
           WHERE cs.unsubscribed = FALSE
+            AND LOWER(cs.email) NOT IN (
+              SELECT LOWER(recipient) FROM email_log
+              WHERE email_type = 'accountability' AND created_at::date = CURRENT_DATE
+            )
           ORDER BY cs.id
         `;
 
@@ -6179,7 +6223,7 @@ This link expires in 24 hours.
 
         for (const member of members) {
           try {
-            const firstName = member.first_name || 'Friend';
+            const firstName = escapeHtml(member.first_name || 'Friend');
             const unsubToken = Buffer.from(member.email).toString('base64');
             const unsubUrl = `${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(member.email)}&token=${unsubToken}`;
 
@@ -6259,7 +6303,7 @@ This link expires in 24 hours.
             sentCount++;
             await logEmail(sql, { recipient: member.email, emailType: 'accountability', subject: `${firstName} — how did you spend your growth window today?` });
           } catch (sendErr) {
-            console.error(`Accountability email error for ${member.email}:`, sendErr.message);
+            console.error(`Accountability email error for ${maskEmail(member.email)}:`, sendErr.message);
             results.push({ email: member.email, status: 'error', error: sendErr.message });
             await logEmail(sql, { recipient: member.email, emailType: 'accountability', status: 'failed', metadata: { error: sendErr.message } });
           }
@@ -6268,7 +6312,7 @@ This link expires in 24 hours.
         return res.json({ sent: sentCount, total: members.length, results });
       } catch (acctErr) {
         console.error('[accountability/send] Error:', acctErr);
-        return res.status(500).json({ error: 'Accountability send failed', details: acctErr.message });
+        return res.status(500).json({ error: 'Accountability send failed' });
       }
     }
 
@@ -6835,7 +6879,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         const results = [];
         for (const c of contacts) {
           try {
-            const firstName = c.first_name || 'Friend';
+            const firstName = escapeHtml(c.first_name || 'Friend');
             const feedbackUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(c.email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('Can you tell us something the Value Engine helped you with today?')}`;
             const bugUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(c.email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
@@ -6891,7 +6935,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           } catch(e) { results.push({ email:c.email, status:'error', error:e.message }); }
         }
         return res.json({ sent:sentCount, total:contacts.length, results });
-      } catch(e) { return res.status(500).json({ error:e.message }); }
+      } catch(e) { console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' }); }
     }
 
     // GET /api/send-vt-pitch — Send Virginia Tech partnership pitch
@@ -7152,6 +7196,15 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
     }
 
     // ========== AGENT SYSTEM — SELF-LEARNING MULTI-AGENT LOOP ==========
+    // Agent dashboard requires JWT or API key (no longer public)
+    if (url === '/agent/dashboard') {
+      const jwtUser = extractUser(req);
+      const apiKey = req.headers['x-api-key'] || new URL('http://x' + req.url).searchParams.get('key') || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!jwtUser && !(validKey && apiKey === validKey)) {
+        return res.status(401).json({ error: 'Authentication required. Please log in or provide API key.' });
+      }
+    }
     // All /agent/* routes require API key EXCEPT tracking endpoints (embedded in emails)
     if (url.startsWith('/agent') && !url.startsWith('/agent/email/track-open') && !url.startsWith('/agent/email/track-click') && url !== '/agent/dashboard') {
       const apiKey = req.headers['x-api-key'] || new URL('http://x' + req.url).searchParams.get('key') || '';
@@ -8105,7 +8158,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         return res.json({ received: true, event, timestamp: ts });
       } catch (whErr) {
         console.error('[vercel-budget] Error:', whErr);
-        return res.status(500).json({ error: whErr.message });
+        return res.status(500).json({ error: 'Webhook processing failed' });
       }
     }
 
@@ -8127,7 +8180,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         const dayIndex = ((diffDays % 60) + 60) % 60;
         const dev = devotionals[dayIndex] || devotionals[0];
 
-        // Get subscribers
+        // Get subscribers (with daily dedup — skip anyone already sent today)
         let subscribers = [];
         try {
           subscribers = await sql`
@@ -8138,6 +8191,10 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             WHERE c.email IS NOT NULL AND c.email != ''
               AND (dp.id IS NOT NULL OR up.membership_tier IN ('individual','couple','premium'))
               AND (dp.opted_out IS NULL OR dp.opted_out = false)
+              AND LOWER(c.email) NOT IN (
+                SELECT LOWER(recipient) FROM email_log
+                WHERE email_type = 'devotional' AND created_at::date = CURRENT_DATE
+              )
             ORDER BY c.id ASC
           `;
         } catch(e) {
@@ -8168,7 +8225,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
         for (const sub of subscribers) {
           try {
-            const firstName = sub.first_name || 'Friend';
+            const firstName = escapeHtml(sub.first_name || 'Friend');
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 16px;"><tr><td align="center">
@@ -8236,7 +8293,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         return res.json({ sent: sentCount, total: subscribers.length, day: dev.day_number, title: dev.title, results });
       } catch(devErr) {
         console.error('[devotional/send] Error:', devErr);
-        return res.status(500).json({ error: devErr.message });
+        console.error('[devotional/send] Error:', devErr.message); return res.status(500).json({ error: 'Devotional send failed' });
       }
     }
 

@@ -189,7 +189,9 @@ function toggleSection(id) {
 }
 
 async function api(path) {
-  const r = await fetch(`${API}${path}`);
+  var _t = localStorage.getItem('vtv_token');
+  var _headers = _t ? {'Authorization': 'Bearer ' + _t} : {};
+  const r = await fetch(`${API}${path}`, { headers: _headers });
   if (!r.ok) throw new Error(`${r.status}`);
   return r.json();
 }

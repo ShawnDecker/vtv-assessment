@@ -2162,9 +2162,10 @@
     btn.textContent = 'Importing…';
 
     try {
+      var _t = localStorage.getItem('vtv_token');
       const res = await fetch('/api/teams/' + teamId + '/import', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(_t ? {'Authorization': 'Bearer ' + _t} : {}) },
         body: JSON.stringify({ csv })
       });
       const data = await res.json();
@@ -2253,7 +2254,8 @@
     btn.textContent = 'Sending…';
 
     try {
-      const res = await fetch('/api/teams/' + teamId + '/send-report', { method: 'POST' });
+      var _t = localStorage.getItem('vtv_token');
+      const res = await fetch('/api/teams/' + teamId + '/send-report', { method: 'POST', headers: _t ? {'Authorization': 'Bearer ' + _t} : {} });
       if (res.ok) {
         toast('Report sent to CMA email!', 'success');
       } else {
