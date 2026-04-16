@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Book Your Detail | Clark Detail Co. — Mobile Car Detailing</title>
+<meta name="description" content="Book mobile car detailing in Roanoke Valley. Mitchell Clark brings professional detailing to your location. Same-day appointments available."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0B0B0F;--surface:#141419;--surface2:#1C1C24;--blue:#0099FF;--silver:#C0C8D0;--red:#E53E3E;--text:#E8E8EC;--muted:#8A8A9A;--border:#2A2A35;--radius:10px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+body.light{--bg:#F5F5F7;--surface:#FFFFFF;--surface2:#EAEAEF;--text:#1A1A2E;--muted:#5A5A6E;--border:#D0D0DA}
+h1,h2,h3,h4{font-family:'Montserrat',sans-serif;line-height:1.2}
+a{color:var(--blue);text-decoration:none}
+.container{max-width:960px;margin:0 auto;padding:0 20px}
+
+/* Nav */
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 0;position:sticky;top:0;z-index:100}
+nav .inner{display:flex;justify-content:space-between;align-items:center;max-width:960px;margin:0 auto;padding:0 20px}
+nav .brand{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.05rem;color:var(--text)}
+nav .links{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+nav .links a{font-size:.88rem;font-weight:500;color:var(--muted);transition:color .2s}
+nav .links a:hover,nav .links a.active{color:var(--blue)}
+.theme-toggle{background:none;border:1px solid var(--border);color:var(--muted);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:border-color .2s}
+.theme-toggle:hover{border-color:var(--blue);color:var(--blue)}
+
+/* Hero */
+.hero{text-align:center;padding:60px 20px 40px}
+.hero h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;margin-bottom:12px}
+.hero h1 span{color:var(--blue)}
+.hero p{font-size:1.1rem;color:var(--muted);max-width:480px;margin:0 auto}
+
+/* Form Card */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:36px 32px;margin:0 auto 60px;max-width:700px}
+.form-card h2{font-size:1.3rem;margin-bottom:6px}
+.form-card .sub{color:var(--muted);font-size:.9rem;margin-bottom:28px}
+.field{margin-bottom:20px}
+.field label{display:block;font-weight:500;font-size:.88rem;margin-bottom:6px;color:var(--silver)}
+.field input,.field select,.field textarea{width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.95rem;font-family:'Inter',sans-serif;transition:border-color .2s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue)}
+.field textarea{resize:vertical;min-height:70px}
+.radio-group,.check-group{display:flex;flex-wrap:wrap;gap:10px}
+.radio-group label,.check-group label{display:flex;align-items:center;gap:6px;font-size:.9rem;color:var(--text);cursor:pointer;background:var(--surface2);padding:8px 14px;border-radius:8px;border:1px solid var(--border);transition:border-color .2s}
+.radio-group input:checked+span,.check-group input:checked+span{color:var(--blue)}
+.radio-group label:has(input:checked),.check-group label:has(input:checked){border-color:var(--blue)}
+.radio-group input,.check-group input{accent-color:var(--blue)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:540px){.row2{grid-template-columns:1fr}}
+.btn-submit{width:100%;padding:14px;background:var(--blue);color:#fff;font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.05rem;border:none;border-radius:8px;cursor:pointer;transition:background .2s;margin-top:8px}
+.btn-submit:hover{background:#007acc}
+
+/* Steps */
+.steps{padding:50px 20px 60px}
+.steps h2{text-align:center;font-size:1.6rem;margin-bottom:36px}
+.steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;max-width:900px;margin:0 auto}
+@media(max-width:700px){.steps-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.steps-grid{grid-template-columns:1fr}}
+.step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 18px;text-align:center}
+.step .num{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--blue);color:#fff;font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:14px}
+.step h4{font-size:.95rem;margin-bottom:6px}
+.step p{font-size:.82rem;color:var(--muted)}
+
+/* Service Area */
+.area{padding:50px 20px;text-align:center}
+.area h2{font-size:1.5rem;margin-bottom:10px}
+.area .sub{color:var(--muted);margin-bottom:24px;font-size:.95rem}
+.area-tags{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:700px;margin:0 auto 18px}
+.area-tags span{background:var(--surface);border:1px solid var(--border);padding:7px 16px;border-radius:20px;font-size:.88rem;color:var(--silver)}
+.area .note{color:var(--muted);font-size:.85rem;font-style:italic;margin-top:14px}
+
+/* Contact Card */
+.contact-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);max-width:480px;margin:0 auto 60px;padding:32px;text-align:center}
+.contact-card h3{font-size:1.25rem;margin-bottom:4px}
+.contact-card .phone{display:inline-block;font-family:'Montserrat',sans-serif;font-size:1.5rem;font-weight:700;color:var(--blue);margin:14px 0;padding:10px 28px;border:2px solid var(--blue);border-radius:var(--radius);transition:background .2s}
+.contact-card .phone:hover{background:var(--blue);color:#fff}
+.contact-card .addr{color:var(--muted);font-size:.9rem;margin-bottom:6px}
+.contact-card .hours{font-size:.9rem;color:var(--silver);margin-top:10px;line-height:1.7}
+.contact-card .sameday{color:var(--blue);font-weight:500;font-size:.88rem;margin-top:10px}
+
+/* Footer */
+footer{border-top:1px solid var(--border);padding:28px 20px;text-align:center;font-size:.82rem;color:var(--muted)}
+footer a{color:var(--blue)}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:36px;max-width:440px;width:100%;text-align:center}
+.modal h3{font-size:1.3rem;margin-bottom:14px}
+.modal .ref{color:var(--blue);font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.1rem;margin:8px 0}
+.modal .total{font-size:1.6rem;font-family:'Montserrat',sans-serif;font-weight:800;color:var(--blue);margin:12px 0}
+.modal p{color:var(--muted);font-size:.92rem;margin:6px 0}
+.modal .close-btn{margin-top:20px;padding:10px 32px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-family:'Montserrat',sans-serif;font-weight:600;cursor:pointer;font-size:.95rem}
+</style>
+</head>
+<body>
+<!-- Nav -->
+<nav><div class="inner">
+<div class="brand">Clark Detail Co.</div>
+<div class="links">
+<a href="index.html">Home</a>
+<a href="services.html">Services &amp; Pricing</a>
+<a href="gallery.html">Gallery</a>
+<a href="book.html" class="active">Book Now</a>
+<button class="theme-toggle" onclick="document.body.classList.toggle('light');this.textContent=document.body.classList.contains('light')?'&#9790;':'&#9728;'" aria-label="Toggle theme">&#9728;</button>
+</div>
+</div></nav>
+
+<!-- Hero -->
+<section class="hero">
+<h1>Book Your <span>Detail</span></h1>
+<p>Same-day appointments available. We come to you.</p>
+</section>
+
+<!-- Booking Form -->
+<form class="form-card container" id="bookingForm" onsubmit="return handleSubmit(event)">
+<h2>Request an Appointment</h2>
+<p class="sub">Fill out the form below and Mitchell will call to confirm within 2 hours.</p>
+
+<div class="field"><label>Your Name *</label><input type="text" name="name" required placeholder="Full name"/></div>
+<div class="row2">
+<div class="field"><label>Phone Number *</label><input type="tel" name="phone" required placeholder="(540) 555-0000"/></div>
+<div class="field"><label>Email (optional)</label><input type="email" name="email" placeholder="you@email.com"/></div>
+</div>
+<div class="field"><label>Your Address * &mdash; Where should we come?</label><input type="text" name="address" required placeholder="123 Main St, Salem, VA"/></div>
+<div class="field"><label>Vehicle Year / Make / Model *</label><input type="text" name="vehicle" required placeholder="2022 Toyota Camry"/></div>
+
+<div class="field"><label>Vehicle Type *</label>
+<div class="radio-group">
+<label><input type="radio" name="vtype" value="sedan" required/><span>Sedan</span></label>
+<label><input type="radio" name="vtype" value="suv"/><span>SUV / Truck</span></label>
+<label><input type="radio" name="vtype" value="van"/><span>Van / Large</span></label>
+</div></div>
+
+<div class="field"><label>Service Requested *</label>
+<select name="service" required>
+<option value="">-- Select a Service --</option>
+<option value="basic">Basic Clean ($75 - $95)</option>
+<option value="interior">Interior Detail ($149 - $199)</option>
+<option value="exterior">Exterior Detail ($179 - $229)</option>
+<option value="full">Full Detail ($279 - $349)</option>
+<option value="ceramic">Ceramic Coating ($599 - $899)</option>
+<option value="paint">Paint Correction ($249 - $399)</option>
+<option value="custom">Custom / Other</option>
+</select></div>
+
+<div class="row2">
+<div class="field"><label>Preferred Date *</label><input type="date" name="date" required/></div>
+<div class="field"><label>Preferred Time *</label>
+<select name="time" required>
+<option value="">-- Select --</option>
+<option value="morning">Morning (8 - 11 AM)</option>
+<option value="midday">Midday (11 AM - 2 PM)</option>
+<option value="afternoon">Afternoon (2 - 5 PM)</option>
+</select></div>
+</div>
+
+<div class="field"><label>Add-Ons</label>
+<div class="check-group">
+<label><input type="checkbox" name="addon" value="headlight"/><span>Headlight Restoration (+$49)</span></label>
+<label><input type="checkbox" name="addon" value="pet"/><span>Pet Hair Removal (+$39)</span></label>
+<label><input type="checkbox" name="addon" value="odor"/><span>Odor Elimination (+$59)</span></label>
+<label><input type="checkbox" name="addon" value="engine"/><span>Engine Bay Detail (+$49)</span></label>
+<label><input type="checkbox" name="addon" value="scratch"/><span>Scratch Touch-Up (+$29)</span></label>
+</div></div>
+
+<div class="field"><label>Special Notes</label><textarea name="notes" placeholder="Anything Mitchell should know? Large vehicle, heavy pet hair, specific concerns..."></textarea></div>
+<button type="submit" class="btn-submit">Request Appointment</button>
+</form>
+
+<!-- How It Works -->
+<section class="steps">
+<h2>How It Works</h2>
+<div class="steps-grid">
+<div class="step"><div class="num">1</div><h4>Book Online</h4><p>Fill out the form above with your vehicle and service details.</p></div>
+<div class="step"><div class="num">2</div><h4>Confirm</h4><p>Mitchell calls to confirm details, timing, and final price.</p></div>
+<div class="step"><div class="num">3</div><h4>We Show Up</h4><p>Fully equipped mobile unit arrives at your location.</p></div>
+<div class="step"><div class="num">4</div><h4>Drive Happy</h4><p>Spotless car, guaranteed satisfaction.</p></div>
+</div>
+</section>
+
+<!-- Service Area -->
+<section class="area">
+<h2>We Come to You &mdash; Anywhere in the Roanoke Valley</h2>
+<p class="sub">Professional mobile detailing at your home, office, or wherever you need us.</p>
+<div class="area-tags">
+<span>Cloverdale</span><span>Salem</span><span>Roanoke</span><span>Vinton</span><span>Hollins</span>
+<span>Cave Spring</span><span>Daleville</span><span>Troutville</span><span>Fincastle</span><span>Blue Ridge</span>
+</div>
+<p class="note">Outside our service area? Call us &mdash; we may still be able to help.</p>
+</section>
+
+<!-- Contact Card -->
+<section class="container" style="padding:10px 20px 60px">
+<div class="contact-card">
+<h3>Mitchell Clark</h3>
+<p class="addr">396 Tinkerview Dr, Cloverdale, VA 24077</p>
+<a href="tel:5405980286" class="phone">(540) 598-0286</a>
+<div class="hours">Mon &ndash; Sat: 7 AM &ndash; 7 PM<br/>Sunday: By Appointment</div>
+<p class="sameday">Same-day appointments available when schedule permits</p>
+</div>
+</section>
+
+<!-- Footer -->
+<footer>Clark Detail Co. &bull; Cloverdale, VA &bull; <a href="tel:5405980286">(540) 598-0286</a> &bull; Site designed by <a href="https://valuetovictory.com" target="_blank">Value to Victory</a></footer>
+
+<!-- Confirmation Modal -->
+<div class="modal-overlay" id="modal">
+<div class="modal">
+<h3>Appointment Request Submitted!</h3>
+<div class="ref" id="modalRef"></div>
+<div class="total" id="modalTotal"></div>
+<p id="modalPhone"></p>
+<p style="margin-top:12px;font-size:.85rem;color:var(--muted)">This is an estimate. Final price confirmed by Mitchell.</p>
+<button class="close-btn" onclick="document.getElementById('modal').classList.remove('show')">Done</button>
+</div>
+</div>
+
+<script>
+// Pricing data: [sedan, suv, van]
+const PRICES={basic:[75,85,95],interior:[149,174,199],exterior:[179,204,229],full:[279,314,349],ceramic:[599,749,899],paint:[249,324,399],custom:[0,0,0]};
+const ADDONS={headlight:49,pet:39,odor:59,engine:49,scratch:29};
+const VTYPE_IDX={sedan:0,suv:1,van:2};
+
+function handleSubmit(e){
+  e.preventDefault();
+  const f=e.target;
+  const name=f.name.value.trim();
+  const phone=f.phone.value.trim();
+  const vtype=f.vtype.value;
+  const service=f.service.value;
+  // Calculate total
+  let total=0;
+  if(service&&service!=='custom'){
+    total=PRICES[service][VTYPE_IDX[vtype]||0];
+  }
+  const checked=f.querySelectorAll('input[name="addon"]:checked');
+  checked.forEach(c=>{total+=ADDONS[c.value]||0;});
+  // Reference number
+  const ref='CD-'+String(Math.floor(10000+Math.random()*90000));
+  // Populate modal
+  document.getElementById('modalRef').textContent=ref;
+  document.getElementById('modalTotal').textContent=service==='custom'?'Custom Quote':'Estimated Total: $'+total;
+  document.getElementById('modalPhone').textContent='Mitchell will call you at '+phone+' within 2 hours to confirm.';
+  document.getElementById('modal').classList.add('show');
+  return false;
+}
+// Set min date to today
+(function(){var d=document.querySelector('input[type="date"]');if(d){var t=new Date();d.min=t.toISOString().split('T')[0];}})();
+</script>
+</body>
+</html>
