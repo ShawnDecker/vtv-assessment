@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chris Goodloe — Vegas Concierge & Private Transportation</title>
-  <meta name="description" content="Think Vegas. Think Chris. Private car service, nightlife VIP, full concierge — 20+ years of Las Vegas hospitality experience." />
+  <meta name="description" content="Think Vegas. Think Chris. Private car service, nightlife VIP, full concierge — 32 years of Las Vegas hospitality experience." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -151,8 +151,8 @@
   <!-- Stats -->
   <div class="container">
     <section class="stats reveal">
-      <div class="stat-box"><div class="num">20+</div><div class="label">Years Hospitality</div></div>
-      <div class="stat-box"><div class="num">10-15%</div><div class="label">Less Than Rideshare</div></div>
+      <div class="stat-box"><div class="num">32</div><div class="label">Years Hospitality</div></div>
+      <div class="stat-box"><div class="num">Fair</div><div class="label">Honest Pricing</div></div>
       <div class="stat-box"><div class="num">24/7</div><div class="label">Available</div></div>
       <div class="stat-box"><div class="num">Vegas+</div><div class="label">& Surrounding Areas</div></div>
     </section>
@@ -166,9 +166,9 @@
     <!-- About -->
     <section class="about reveal">
       <h2>The Man Behind <span>The Experience</span></h2>
-      <p>For over 20 years, Chris Goodloe lived and breathed Las Vegas hospitality from the inside out. As a casino host, he built relationships with high rollers, coordinated unforgettable nights, and learned what makes people feel truly taken care of. He spent 15 years in timeshare, mastering the art of selling experiences that people actually want. Hospitality is not just a career for Chris -- it is DNA.</p>
+      <p>For 32 years, Chris Goodloe has lived and breathed Las Vegas hospitality from the inside out. As a casino host, he built relationships with high rollers, coordinated unforgettable nights, and learned what makes people feel truly taken care of. His 15 years in timeshare mean he knows how to get you access to shows, attractions, stays, and perks that most visitors never see. Hospitality is not just a career for Chris -- it is DNA.</p>
       <p>But Chris was never just a nine-to-five guy. On the side, he built businesses in insurance (licensed in life and health), network marketing, and anything that let him serve people directly. The entrepreneurial engine was always running, always looking for the next way to add value.</p>
-      <p>Now the day job is done. Chris walked away from the clock to build something bigger -- a full-service Vegas experience ecosystem that gives visitors and locals more for less. Private rides that beat rideshare prices. VIP nightlife with no cover and no games. Airbnb bundles with a car at your door. This is what happens when 20 years of insider knowledge meets full-time focus.</p>
+      <p>Now the day job is done. Chris walked away from the clock to build something bigger -- a full-service Vegas experience ecosystem built on personal relationships. Private car service with fair, transparent pricing. VIP nightlife with no cover and no games. Airbnb bundles with a car at your door. This is what happens when 32 years of insider knowledge meets full-time focus.</p>
     </section>
   </div>
 
@@ -186,7 +186,7 @@
         <div class="service-card">
           <div class="icon">&#128663;</div>
           <h4>Private Car Service</h4>
-          <p>No surge pricing. Ever. Show your rideshare screenshot and we beat it by 10-15%. Cash, Venmo, Zelle -- pay however works for you. Clean rides, on time, every time.</p>
+          <p>No surge pricing. Ever. Fair, transparent rates you can count on. Cash, Venmo, Zelle -- pay however works for you. Clean rides, on time, every time.</p>
         </div>
         <div class="service-card">
           <div class="icon">&#127881;</div>
@@ -202,7 +202,12 @@
         <div class="service-card">
           <div class="icon">&#127920;</div>
           <h4>Full Concierge</h4>
-          <p>20 years of Vegas insider knowledge working for you. Restaurants, shows, events, deals -- whatever you need, Chris makes it happen. Just ask.</p>
+          <p>32 years of Vegas insider knowledge working for you. Restaurants, shows, events, deals -- whatever you need, Chris makes it happen. Just ask.</p>
+        </div>
+        <div class="service-card" style="border-color:var(--pink);background:linear-gradient(135deg,rgba(255,107,157,0.06),rgba(212,168,71,0.04));">
+          <div class="icon">&#127183;</div>
+          <h4>Vegas Perks &amp; Discounts</h4>
+          <p>Up to 85% off select shows. Free slot play. Gaming chips. VIP attractions. Complimentary 3-day, 2-night Vegas stays. Chris's licensed connections mean you get the real Vegas experience -- at a fraction of the price. Ask about the bonus gift.</p>
         </div>
         <div class="service-card" style="border-color:var(--gold);grid-column:1/-1;background:linear-gradient(135deg,rgba(212,168,71,0.06),rgba(0,212,255,0.04));">
           <div class="icon">&#128081;</div>
@@ -261,8 +266,10 @@
     /* Scroll Reveal */
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
-    }, { threshold: 0.12 });
+    }, { threshold: 0.08 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    /* Fallback: reveal all after 1.5s in case observer doesn't fire (htmlpreview proxy) */
+    setTimeout(() => { document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible')); }, 1500);
   </script>
 </body>
 </html>
