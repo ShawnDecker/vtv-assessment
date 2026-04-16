@@ -3450,6 +3450,199 @@ Don't guess. Run the system.
       });
     }
 
+    // GET /api/admin/client-digest — Per-client status digest with replies, mood, progress
+    // Shows: every active person, their latest reply, mood, action rate, coaching day, scores
+    if (req.method === 'GET' && url === '/admin/client-digest') {
+      try {
+        // Get all active coaching sequences with assessment + contact data
+        const clients = await sql`
+          SELECT cs.email, cs.current_day, cs.last_sent_at, cs.started_at,
+            cs.engagement_score, cs.persona,
+            c.first_name, c.last_name, c.id as contact_id,
+            a.master_score, a.score_range, a.weakest_pillar,
+            a.time_total, a.people_total, a.influence_total, a.numbers_total, a.knowledge_total,
+            a.time_multiplier
+          FROM coaching_sequences cs
+          JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
+          LEFT JOIN assessments a ON a.id = cs.assessment_id
+          WHERE cs.unsubscribed = FALSE
+          ORDER BY cs.last_sent_at DESC
+        `;
+
+        const digest = [];
+        for (const client of clients) {
+          // Get their replies
+          let replies = [];
+          let replyStreak = 0;
+          let actionRate = 0;
+          try {
+            replies = await sql`SELECT coaching_day, response, mood, action_completed, sentiment, key_themes, coaching_insight, created_at
+              FROM coaching_replies WHERE email = ${client.email} ORDER BY coaching_day DESC LIMIT 10`;
+            if (replies.length > 0) {
+              const days = replies.map(r => r.coaching_day).sort((a, b) => b - a);
+              replyStreak = 1;
+              for (let i = 0; i < days.length - 1; i++) {
+                if (days[i] - days[i + 1] <= 2) replyStreak++; else break;
+              }
+              const actioned = replies.filter(r => r.action_completed).length;
+              actionRate = Math.round((actioned / replies.length) * 100);
+            }
+          } catch (e) { /* table may not exist */ }
+
+          // Get their feedback
+          let feedback = [];
+          try {
+            feedback = await sql`SELECT category, response, created_at FROM user_feedback WHERE email = ${client.email} ORDER BY created_at DESC LIMIT 5`;
+          } catch (e) { /* non-fatal */ }
+
+          // Get email engagement stats
+          let opens = 0, clicks = 0, totalEmails = 0;
+          try {
+            const eng = await sql`SELECT COUNT(*) as total, SUM(CASE WHEN opened_at IS NOT NULL THEN 1 ELSE 0 END) as opens, SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) as clicks FROM email_engagement WHERE email = ${client.email}`;
+            totalEmails = Number(eng[0]?.total || 0);
+            opens = Number(eng[0]?.opens || 0);
+            clicks = Number(eng[0]?.clicks || 0);
+          } catch (e) { /* non-fatal */ }
+
+          // Days since start
+          const daysSinceStart = Math.floor((Date.now() - new Date(client.started_at).getTime()) / (1000*60*60*24));
+
+          // Determine status color
+          const latestReply = replies[0] || null;
+          let status = 'active';
+          if (latestReply?.mood === 'struggling' || latestReply?.sentiment === 'negative') status = 'needs_attention';
+          else if (replyStreak >= 3) status = 'thriving';
+          else if (totalEmails > 3 && opens === 0) status = 'disengaged';
+
+          digest.push({
+            name: `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.email,
+            email: client.email,
+            status,
+            coachingDay: client.current_day,
+            daysSinceStart,
+            phase: client.current_day <= 8 ? 'daily' : client.current_day <= 16 ? 'deep-dive' : client.current_day <= 20 ? 'advanced' : 'weekly',
+            scores: {
+              master: client.master_score,
+              range: client.score_range,
+              weakest: client.weakest_pillar,
+              time: client.time_total, people: client.people_total,
+              influence: client.influence_total, numbers: client.numbers_total,
+              knowledge: client.knowledge_total, multiplier: client.time_multiplier,
+            },
+            engagement: {
+              persona: client.persona || 'standard',
+              engagementScore: client.engagement_score || 0,
+              emailsSent: totalEmails, opens, clicks,
+              openRate: totalEmails > 0 ? Math.round((opens/totalEmails)*100) : 0,
+            },
+            replies: {
+              total: replies.length,
+              streak: replyStreak,
+              actionRate,
+              latestMood: latestReply?.mood || null,
+              latestSentiment: latestReply?.sentiment || null,
+              latest: latestReply ? {
+                day: latestReply.coaching_day,
+                response: latestReply.response,
+                mood: latestReply.mood,
+                actionCompleted: latestReply.action_completed,
+                themes: latestReply.key_themes,
+                date: latestReply.created_at,
+              } : null,
+              history: replies.slice(0, 5).map(r => ({
+                day: r.coaching_day, mood: r.mood, actionCompleted: r.action_completed,
+                response: r.response.substring(0, 200) + (r.response.length > 200 ? '...' : ''),
+                date: r.created_at,
+              })),
+            },
+            feedback: feedback.map(f => ({
+              category: f.category,
+              response: f.response.substring(0, 200),
+              date: f.created_at,
+            })),
+            lastEmailAt: client.last_sent_at,
+          });
+        }
+
+        // Sort: needs_attention first, then thriving, then active, then disengaged
+        const statusOrder = { needs_attention: 0, thriving: 1, active: 2, disengaged: 3 };
+        digest.sort((a, b) => (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99));
+
+        return res.json({
+          generated: new Date().toISOString(),
+          totalClients: digest.length,
+          needsAttention: digest.filter(d => d.status === 'needs_attention').length,
+          thriving: digest.filter(d => d.status === 'thriving').length,
+          disengaged: digest.filter(d => d.status === 'disengaged').length,
+          clients: digest,
+        });
+      } catch (digestErr) {
+        console.error('[admin/client-digest] Error:', digestErr);
+        return res.status(500).json({ error: digestErr.message });
+      }
+    }
+
+    // GET /api/admin/replies — All coaching replies across all users (newest first)
+    if (req.method === 'GET' && url.startsWith('/admin/replies')) {
+      try {
+        const params = new URL('http://x' + req.url).searchParams;
+        const limit = Math.min(parseInt(params.get('limit') || '50'), 200);
+        const mood = params.get('mood'); // filter by mood
+        const since = params.get('since'); // filter by date
+
+        let replies;
+        if (mood) {
+          replies = await sql`SELECT cr.*, c.first_name, c.last_name
+            FROM coaching_replies cr
+            LEFT JOIN contacts c ON cr.contact_id = c.id
+            WHERE cr.mood = ${mood}
+            ORDER BY cr.created_at DESC LIMIT ${limit}`;
+        } else if (since) {
+          replies = await sql`SELECT cr.*, c.first_name, c.last_name
+            FROM coaching_replies cr
+            LEFT JOIN contacts c ON cr.contact_id = c.id
+            WHERE cr.created_at >= ${since}
+            ORDER BY cr.created_at DESC LIMIT ${limit}`;
+        } else {
+          replies = await sql`SELECT cr.*, c.first_name, c.last_name
+            FROM coaching_replies cr
+            LEFT JOIN contacts c ON cr.contact_id = c.id
+            ORDER BY cr.created_at DESC LIMIT ${limit}`;
+        }
+
+        // Summary stats
+        const stats = await sql`SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN mood = 'struggling' THEN 1 ELSE 0 END) as struggling,
+          SUM(CASE WHEN mood = 'strong' OR mood = 'unstoppable' THEN 1 ELSE 0 END) as strong,
+          SUM(CASE WHEN action_completed THEN 1 ELSE 0 END) as actions_completed,
+          SUM(CASE WHEN sentiment = 'crisis' THEN 1 ELSE 0 END) as crisis_flags
+          FROM coaching_replies`;
+
+        return res.json({
+          total: Number(stats[0]?.total || 0),
+          struggling: Number(stats[0]?.struggling || 0),
+          strong: Number(stats[0]?.strong || 0),
+          actionsCompleted: Number(stats[0]?.actions_completed || 0),
+          crisisFlags: Number(stats[0]?.crisis_flags || 0),
+          replies: replies.map(r => ({
+            name: `${r.first_name || ''} ${r.last_name || ''}`.trim() || r.email,
+            email: r.email,
+            day: r.coaching_day,
+            response: r.response,
+            mood: r.mood,
+            actionCompleted: r.action_completed,
+            sentiment: r.sentiment,
+            themes: r.key_themes,
+            insight: r.coaching_insight,
+            date: r.created_at,
+          })),
+        });
+      } catch (repliesErr) {
+        return res.status(500).json({ error: repliesErr.message });
+      }
+    }
+
     // GET /api/admin/export (CSV)
     if (req.method === 'GET' && url === '/admin/export') {
       const all = await sql`SELECT a.*, c.first_name, c.last_name, c.email, c.phone FROM assessments a JOIN contacts c ON a.contact_id = c.id ORDER BY a.completed_at DESC`;
