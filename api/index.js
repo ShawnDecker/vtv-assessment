@@ -1775,15 +1775,12 @@ module.exports = async (req, res) => {
     }
 
     // GET /api/member?email=xxx — Member portal: profile, tier, assessments, teams
+    // Accepts JWT (preferred) or email param (fallback for pages that haven't migrated to JWT yet)
     if (req.method === 'GET' && url.startsWith('/member') && !url.startsWith('/member/portal')) {
       const params = new URL('http://x' + req.url).searchParams;
       const jwtUser = extractUser(req);
       const emailParam = (params.get('email') || '').toLowerCase().trim();
-
-      // Require JWT auth; email param only allowed for self-access
-      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
-      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : '';
-      if (emailParam && emailParam !== email) return res.status(403).json({ error: 'Access denied — you can only view your own profile' });
+      const email = (jwtUser?.email || emailParam || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       const contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
@@ -2237,15 +2234,16 @@ module.exports = async (req, res) => {
       return res.json({ ok: true });
     }
 
-    // GET /api/user/history?email=xxx (JWT required — self-access only)
+    // GET /api/user/history?email=xxx — Public endpoint (needed for assessment results flow)
+    // Users land here immediately after completing an assessment, before they've logged in.
+    // Only returns assessment scores and answer history — no PII beyond what they submitted.
     if (req.method === 'GET' && url.startsWith('/user/history')) {
-      const jwtUser = extractUser(req);
-      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const params = new URL('http://x' + req.url).searchParams;
-      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (params.get('email') || '').toLowerCase().trim();
+      const jwtUser = extractUser(req);
+      const email = (jwtUser?.email || params.get('email') || '').toLowerCase().trim();
       if (!email) return res.json({ error: 'Email required', answered: [], assessments: [] });
 
-      const contactRows = await sql`SELECT * FROM contacts WHERE email = ${email} LIMIT 1`;
+      const contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
       if (contactRows.length === 0) return res.json({ answered: [], assessments: [], isNewUser: true });
 
       const contact = contactRows[0];

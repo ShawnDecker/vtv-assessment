@@ -1503,6 +1503,13 @@
       });
       var data = await res.json();
       if (data.verified) {
+        // CRITICAL: Save JWT token so all subsequent API calls are authenticated
+        if (data.token) localStorage.setItem('vtv_token', data.token);
+        if (data.contactId) localStorage.setItem('vtv_contact_id', String(data.contactId));
+        if (data.tier) localStorage.setItem('vtv_tier', data.tier);
+        if (data.firstName) localStorage.setItem('vtv_first_name', data.firstName);
+        localStorage.setItem('vtv_member_email', currentEmail);
+        localStorage.setItem('ve_email', currentEmail);
         await loadFullDashboard();
       } else {
         errEl.textContent = data.error || 'Incorrect PIN. Try again.';
