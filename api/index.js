@@ -1303,7 +1303,7 @@ module.exports = async (req, res) => {
       let isReturningUser = false;
 
       if (email) {
-        const contactRows = await sql`SELECT * FROM contacts WHERE email = ${email} LIMIT 1`;
+        const contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = LOWER(${email}) LIMIT 1`;
         if (contactRows.length > 0) {
           contact = contactRows[0];
           const history = await sql`SELECT question_id, answered_at FROM answer_history WHERE contact_id = ${contact.id} ORDER BY answered_at ASC`;
@@ -2297,7 +2297,7 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Please enter a valid email address.' });
       }
 
-      let contactRows = await sql`SELECT * FROM contacts WHERE email = ${cleanEmail} LIMIT 1`;
+      let contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = LOWER(${cleanEmail}) LIMIT 1`;
       let contact;
       if (contactRows.length > 0) {
         contact = contactRows[0];
@@ -2344,7 +2344,7 @@ module.exports = async (req, res) => {
       }
 
       // Upsert contact with validated email
-      let contactRows = await sql`SELECT * FROM contacts WHERE email = ${cleanEmail} LIMIT 1`;
+      let contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = LOWER(${cleanEmail}) LIMIT 1`;
       let contact;
       if (contactRows.length > 0) {
         contact = contactRows[0];
@@ -3475,7 +3475,7 @@ Don't guess. Run the system.
           let actionRate = 0;
           try {
             replies = await sql`SELECT coaching_day, response, mood, action_completed, sentiment, key_themes, coaching_insight, created_at
-              FROM coaching_replies WHERE email = ${client.email} ORDER BY coaching_day DESC LIMIT 10`;
+              FROM coaching_replies WHERE LOWER(email) = LOWER(${client.email}) ORDER BY coaching_day DESC LIMIT 10`;
             if (replies.length > 0) {
               const days = replies.map(r => r.coaching_day).sort((a, b) => b - a);
               replyStreak = 1;
@@ -3490,13 +3490,13 @@ Don't guess. Run the system.
           // Get their feedback
           let feedback = [];
           try {
-            feedback = await sql`SELECT category, response, created_at FROM user_feedback WHERE email = ${client.email} ORDER BY created_at DESC LIMIT 5`;
+            feedback = await sql`SELECT category, response, created_at FROM user_feedback WHERE LOWER(email) = LOWER(${client.email}) ORDER BY created_at DESC LIMIT 5`;
           } catch (e) { /* non-fatal */ }
 
           // Get email engagement stats
           let opens = 0, clicks = 0, totalEmails = 0;
           try {
-            const eng = await sql`SELECT COUNT(*) as total, SUM(CASE WHEN opened_at IS NOT NULL THEN 1 ELSE 0 END) as opens, SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) as clicks FROM email_engagement WHERE email = ${client.email}`;
+            const eng = await sql`SELECT COUNT(*) as total, SUM(CASE WHEN opened_at IS NOT NULL THEN 1 ELSE 0 END) as opens, SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) as clicks FROM email_engagement WHERE LOWER(email) = LOWER(${client.email})`;
             totalEmails = Number(eng[0]?.total || 0);
             opens = Number(eng[0]?.opens || 0);
             clicks = Number(eng[0]?.clicks || 0);
@@ -4382,7 +4382,7 @@ ${roadmapHtml}
       const email = params.get('email');
       if (!email) return res.status(400).json({ error: 'email required' });
 
-      const contactRows = await sql`SELECT * FROM contacts WHERE email = ${email} LIMIT 1`;
+      const contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = LOWER(${email}) LIMIT 1`;
       if (contactRows.length === 0) return res.status(404).json({ error: 'Contact not found' });
       const contact = contactRows[0];
 
@@ -6006,7 +6006,7 @@ This link expires in 24 hours.
             try {
               const emailsTodayRows = await sql`
                 SELECT COUNT(*) as cnt FROM coaching_sequences
-                WHERE email = ${seq.email}
+                WHERE LOWER(email) = LOWER(${seq.email})
                   AND last_sent_at >= ${todayStart.toISOString()}
               `;
               emailsTodayCount = Number(emailsTodayRows[0]?.cnt || 0);
@@ -6128,7 +6128,7 @@ This link expires in 24 hours.
         if (!email) return res.status(400).json({ error: 'email parameter required' });
 
         await ensureCoachingTable(sql);
-        const rows = await sql`SELECT * FROM coaching_sequences WHERE email = ${email} ORDER BY created_at DESC LIMIT 1`;
+        const rows = await sql`SELECT * FROM coaching_sequences WHERE LOWER(email) = LOWER(${email}) ORDER BY created_at DESC LIMIT 1`;
         if (rows.length === 0) return res.json({ enrolled: false });
 
         const seq = rows[0];
@@ -6232,7 +6232,7 @@ This link expires in 24 hours.
         // Update engagement score based on reply
         try {
           await sql`UPDATE email_engagement SET action_completed = ${actionCompleted}
-            WHERE email = ${email} AND coaching_day = ${day} AND action_completed = false`;
+            WHERE LOWER(email) = LOWER(${email}) AND coaching_day = ${day} AND action_completed = false`;
           // Boost engagement score for replying
           await sql`UPDATE coaching_sequences SET engagement_score = LEAST(1.0, COALESCE(engagement_score, 0) + 0.15)
             WHERE email = ${email}`;
@@ -6263,7 +6263,7 @@ This link expires in 24 hours.
         let streak = 0;
         try {
           replies = await sql`SELECT coaching_day, mood, action_completed, sentiment, key_themes, coaching_insight, created_at
-            FROM coaching_replies WHERE email = ${email} ORDER BY coaching_day DESC LIMIT 30`;
+            FROM coaching_replies WHERE LOWER(email) = LOWER(${email}) ORDER BY coaching_day DESC LIMIT 30`;
 
           // Calculate streak — consecutive days with replies
           if (replies.length > 0) {
@@ -6435,7 +6435,7 @@ This link expires in 24 hours.
             let lastReply = null;
             let replyStreak = 0;
             try {
-              const replies = await sql`SELECT * FROM coaching_replies WHERE email = ${email} ORDER BY coaching_day DESC LIMIT 5`;
+              const replies = await sql`SELECT * FROM coaching_replies WHERE LOWER(email) = LOWER(${email}) ORDER BY coaching_day DESC LIMIT 5`;
               if (replies.length > 0) {
                 lastReply = replies[0];
                 replyStreak = 1;
@@ -7903,7 +7903,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
           // === OBSERVE: Get engagement history ===
           const engagement = await sql`SELECT * FROM email_engagement
-            WHERE email = ${email} ORDER BY sent_at DESC LIMIT 7`;
+            WHERE LOWER(email) = LOWER(${email}) ORDER BY sent_at DESC LIMIT 7`;
 
           const recentOpens = engagement.filter(e => e.opened_at).length;
           const recentClicks = engagement.filter(e => e.clicked_at).length;
@@ -7913,7 +7913,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           let latestReply = null;
           let replyStreak = 0;
           try {
-            const replies = await sql`SELECT * FROM coaching_replies WHERE email = ${email} ORDER BY coaching_day DESC LIMIT 5`;
+            const replies = await sql`SELECT * FROM coaching_replies WHERE LOWER(email) = LOWER(${email}) ORDER BY coaching_day DESC LIMIT 5`;
             if (replies.length > 0) {
               latestReply = replies[0];
               // Calculate reply streak
