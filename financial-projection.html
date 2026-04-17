@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>VTV Financial Projections — $50K Start + Milestone Funding</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Satoshi',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;line-height:1.6}
+    .container{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 4rem}
+    .brand{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    h1{font-family:'Instrument Serif',serif;font-size:2.2rem;font-weight:400;margin-bottom:.5rem}
+    h1 em{font-style:italic;color:#D4A847}
+    h2{font-family:'Instrument Serif',serif;font-size:1.4rem;font-weight:400;margin-bottom:.75rem;color:#fff}
+    h3{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:#D4A847;font-weight:700;margin-bottom:.5rem}
+    .lead{color:#a1a1aa;font-size:.9rem;margin-bottom:2rem;line-height:1.7}
+    .confidential{text-align:center;background:#1a1410;border:1px solid rgba(212,168,71,.2);border-radius:.5rem;padding:.6rem;font-size:.65rem;color:#D4A847;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:1.5rem}
+    .section{margin-bottom:2.5rem}
+    .card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1.25rem;margin-bottom:1rem}
+    .chart-wrap{position:relative;width:100%;height:420px;margin:.75rem 0}
+    .chart-wrap-sm{height:280px}
+    .highlight{background:linear-gradient(135deg,rgba(212,168,71,.08),rgba(212,168,71,.03));border:1px solid rgba(212,168,71,.25);border-radius:.75rem;padding:1.25rem;margin-bottom:1rem}
+    .highlight-green{background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(74,222,128,.03));border:1px solid rgba(74,222,128,.25);border-radius:.75rem;padding:1.25rem;margin-bottom:1rem}
+    .highlight-title{font-weight:700;color:#D4A847;margin-bottom:.3rem;font-size:.9rem}
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1.25rem}
+    .stat-grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:.6rem;margin-bottom:1.25rem}
+    .stat{text-align:center;background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1rem .5rem}
+    .stat-num{font-size:1.4rem;font-weight:900;color:#D4A847}
+    .stat-label{font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:#a1a1aa;margin-top:.2rem}
+    .stat-num.green{color:#4ade80}
+    .stat-num.red{color:#ef4444}
+    .stat-num.cyan{color:#22d3ee}
+    .metric-row{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #1e1e21;align-items:center}
+    .metric-row:last-child{border:none}
+    .metric-label{color:#a1a1aa;font-size:.8rem}
+    .metric-value{color:#fff;font-weight:700;font-size:.8rem}
+    .metric-value.green{color:#4ade80}
+    .metric-value.gold{color:#D4A847}
+    .metric-value.red{color:#ef4444}
+    .metric-value.cyan{color:#22d3ee}
+    .legend-custom{display:flex;flex-wrap:wrap;gap:.6rem;margin:.75rem 0}
+    .legend-item{display:flex;align-items:center;gap:.3rem;font-size:.7rem;color:#a1a1aa}
+    .legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem}
+    .divider{border:none;border-top:1px solid #27272a;margin:2rem 0}
+    .milestone-card{background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:1rem;text-align:center;position:relative;overflow:hidden}
+    .milestone-card.unlocked{border-color:rgba(74,222,128,.4)}
+    .milestone-card.locked{border-color:#27272a;opacity:.7}
+    .milestone-card.active{border-color:rgba(212,168,71,.5);box-shadow:0 0 20px rgba(212,168,71,.1)}
+    .milestone-phase{font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:.3rem}
+    .milestone-amount{font-size:1.5rem;font-weight:900;line-height:1}
+    .milestone-trigger{font-size:.65rem;color:#a1a1aa;margin-top:.4rem;line-height:1.4}
+    .milestone-status{display:inline-block;font-size:.5rem;font-weight:700;padding:.15rem .5rem;border-radius:1rem;letter-spacing:.05em;text-transform:uppercase;margin-top:.4rem}
+    .status-now{background:#166534;color:#4ade80}
+    .status-next{background:rgba(212,168,71,.2);color:#D4A847}
+    .status-future{background:#27272a;color:#71717a}
+    .footer{text-align:center;padding:1.5rem 0;border-top:1px solid #27272a;font-size:.7rem;color:#71717a;margin-top:1.5rem}
+    .print-btn{position:fixed;bottom:1.5rem;right:1.5rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;border:none;padding:.6rem 1.2rem;border-radius:.5rem;font-weight:700;font-size:.8rem;cursor:pointer;z-index:100;box-shadow:0 4px 15px rgba(0,0,0,.4)}
+    .waterfall-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
+    .waterfall-label{width:160px;font-size:.72rem;color:#a1a1aa;flex-shrink:0;text-align:right}
+    .waterfall-bar-wrap{flex:1;height:22px;position:relative}
+    .waterfall-bar{height:100%;border-radius:3px;display:flex;align-items:center;padding:0 .5rem;font-size:.6rem;font-weight:700;min-width:30px}
+    .waterfall-amount{font-size:.72rem;font-weight:700;color:#fff;width:70px;flex-shrink:0}
+    @media(max-width:768px){
+      .stat-grid,.stat-grid-5{grid-template-columns:repeat(2,1fr)}
+      .two-col,.three-col{grid-template-columns:1fr}
+      .chart-wrap{height:320px}
+    }
+    @media print{
+      body{background:#fff;color:#111}
+      .card,.stat,.highlight,.highlight-green,.milestone-card{border-color:#ddd;background:#f9f9f9}
+      .stat-num,.highlight-title,.brand,h3,.milestone-amount{color:#8B6914}
+      .print-btn{display:none}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="confidential">Confidential Financial Projections &mdash; April 2026</div>
+
+  <div class="brand">Value to Victory, LLC</div>
+  <h1>$50K Start &rarr; <em>Milestone-Funded Growth</em></h1>
+  <p class="lead">This model starts with $50,000 in capital and $12K+/mo in existing FitCarna revenue. Additional funding unlocks only when milestones are hit &mdash; proving traction before deploying capital. Revenue funds operations; investment accelerates scale.</p>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!--  MILESTONE FUNDING ROADMAP                   -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="section">
+    <h3>Milestone-Based Funding Tranches</h3>
+    <h2>Capital Unlocks When Metrics Are Hit</h2>
+
+    <div class="stat-grid-5">
+      <div class="milestone-card active">
+        <div class="milestone-phase" style="color:#4ade80">Phase 0 &mdash; Now</div>
+        <div class="milestone-amount" style="color:#4ade80">$50K</div>
+        <div class="milestone-trigger">Existing capital<br>+ $12K/mo FitCarna revenue</div>
+        <div class="milestone-status status-now">Active</div>
+      </div>
+      <div class="milestone-card locked">
+        <div class="milestone-phase" style="color:#D4A847">Phase 1 &mdash; Mo 4</div>
+        <div class="milestone-amount" style="color:#D4A847">$100K</div>
+        <div class="milestone-trigger">Hit $25K MRR<br>+ 200 platform users</div>
+        <div class="milestone-status status-next">Milestone</div>
+      </div>
+      <div class="milestone-card locked">
+        <div class="milestone-phase" style="color:#D4A847">Phase 2 &mdash; Mo 8</div>
+        <div class="milestone-amount" style="color:#D4A847">$200K</div>
+        <div class="milestone-trigger">Hit $50K MRR<br>+ 1st enterprise pilot</div>
+        <div class="milestone-status status-next">Milestone</div>
+      </div>
+      <div class="milestone-card locked">
+        <div class="milestone-phase" style="color:#71717a">Phase 3 &mdash; Mo 14</div>
+        <div class="milestone-amount" style="color:#a1a1aa">$400K</div>
+        <div class="milestone-trigger">Hit $85K MRR<br>+ 3 enterprise clients</div>
+        <div class="milestone-status status-future">Milestone</div>
+      </div>
+      <div class="milestone-card locked">
+        <div class="milestone-phase" style="color:#71717a">Phase 4 &mdash; Mo 20</div>
+        <div class="milestone-amount" style="color:#a1a1aa">$1.0M</div>
+        <div class="milestone-trigger">Hit $130K MRR<br>+ Series A ready</div>
+        <div class="milestone-status status-future">Milestone</div>
+      </div>
+    </div>
+
+    <div class="highlight">
+      <div class="highlight-title">Total Potential Deployment: $1.75M &mdash; But Only Earned Through Performance</div>
+      <p style="font-size:.78rem;color:#d4d4d8">No investor writes a $1.75M check on Day 1. $50K starts the engine. FitCarna&rsquo;s $12K+/mo covers operating costs immediately. Each funding tranche unlocks only after the previous milestone is verified &mdash; reducing investor risk at every stage. If any milestone is missed, capital stops deploying until metrics catch up.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SUMMARY STATS -->
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-num">$50K</div><div class="stat-label">Starting Capital</div></div>
+    <div class="stat"><div class="stat-num green">$12K+</div><div class="stat-label">Day 1 MRR (FitCarna)</div></div>
+    <div class="stat"><div class="stat-num green">$155K</div><div class="stat-label">Month 24 MRR</div></div>
+    <div class="stat"><div class="stat-num cyan">5</div><div class="stat-label">Funding Tranches</div></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!--  CHART 1: MASTER OVERVIEW                    -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="section">
+    <h3>Capital + Revenue vs Expenses &mdash; 24 Months</h3>
+    <h2>Funding Injections Layered on Top of Growing Revenue</h2>
+    <div class="card">
+      <div class="legend-custom">
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Monthly Expenses</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div>Monthly Revenue</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#D4A847"></div>Cash Position</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#22d3ee"></div>Funding Injection</div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="masterChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ════════════════════════════════════════════ -->
+  <!--  CHART 2: REVENUE STREAMS (STACKED AREA)    -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="section">
+    <h3>Revenue Streams &mdash; Stacked by Vertical</h3>
+    <h2>Each Vertical Builds on the Last</h2>
+    <div class="card">
+      <div class="legend-custom">
+        <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div>FitCarna Coaching</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#22d3ee"></div>B2C Subscriptions</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#D4A847"></div>Dating Vertical</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div>Enterprise / B2B</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f472b6"></div>Licensing &amp; Book-to-System</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fb923c"></div>1:1 / VIP Coaching</div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="revenueChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Revenue milestones callout -->
+    <div class="highlight-green">
+      <div class="highlight-title" style="color:#4ade80">Revenue Unlocks Funding &mdash; Not the Other Way Around</div>
+      <div class="metric-row"><div class="metric-label">Month 1</div><div class="metric-value green">$14.5K MRR &mdash; FitCarna ($12K) + coaching ($2K) + early subs ($500)</div></div>
+      <div class="metric-row"><div class="metric-label">Month 4 &rarr; Phase 1 unlocks</div><div class="metric-value gold">$25K+ MRR triggers $100K tranche</div></div>
+      <div class="metric-row"><div class="metric-label">Month 8 &rarr; Phase 2 unlocks</div><div class="metric-value gold">$50K+ MRR triggers $200K tranche</div></div>
+      <div class="metric-row"><div class="metric-label">Month 14 &rarr; Phase 3 unlocks</div><div class="metric-value gold">$85K+ MRR triggers $400K tranche</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Month 20 &rarr; Phase 4 unlocks</div><div class="metric-value gold">$130K+ MRR triggers $1.0M (Series A bridge)</div></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ════════════════════════════════════════════ -->
+  <!--  CHART 3: EXPENSE BREAKDOWN (STACKED)       -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="section">
+    <h3>Expense Breakdown &mdash; Grows With Funding</h3>
+    <h2>Lean Until Milestones Prove Scale</h2>
+    <div class="card">
+      <div class="legend-custom">
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Engineering &amp; Product</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div>Sales &amp; Marketing</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div>Enterprise &amp; B2B</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div>Operations &amp; Infra</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#71717a"></div>Legal / IP / Reserve</div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="expenseChart"></canvas>
+      </div>
+    </div>
+
+    <div class="highlight">
+      <div class="highlight-title">Spend Scales With Proof &mdash; Not Promises</div>
+      <div class="metric-row"><div class="metric-label">Phase 0 (Mo 1&ndash;3): $50K + Revenue</div><div class="metric-value">~$15K/mo &mdash; founder-led, FitCarna covers ops, minimal marketing</div></div>
+      <div class="metric-row"><div class="metric-label">Phase 1 (Mo 4&ndash;7): +$100K</div><div class="metric-value">~$28K/mo &mdash; first contractor, dating launch, paid ads begin</div></div>
+      <div class="metric-row"><div class="metric-label">Phase 2 (Mo 8&ndash;13): +$200K</div><div class="metric-value">~$48K/mo &mdash; first FT hire, enterprise pilots, mobile app dev</div></div>
+      <div class="metric-row"><div class="metric-label">Phase 3 (Mo 14&ndash;19): +$400K</div><div class="metric-value">~$72K/mo &mdash; sales team, enterprise scaling, SOC 2, patents</div></div>
+      <div class="metric-row" style="border:none"><div class="metric-label">Phase 4 (Mo 20&ndash;24): +$1.0M</div><div class="metric-value">~$95K/mo &mdash; full team, national marketing, Series A prep</div></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ════════════════════════════════════════════ -->
+  <!--  CHART 4: CASH POSITION + INVESTOR VALUE    -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="section">
+    <h3>Cash Position &amp; Investor Value Over Time</h3>
+    <h2>Milestone Injections Keep the Engine Funded</h2>
+    <div class="two-col">
+      <div class="card">
+        <div class="chart-wrap chart-wrap-sm">
+          <canvas id="cashFlowChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chart-wrap chart-wrap-sm">
+          <canvas id="roiChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ════════════════════════════════════════════ -->
+  <!--  CHART 5: UNIT ECONOMICS                    -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="section">
+    <h3>Unit Economics &mdash; Improving Over Time</h3>
+    <h2>CAC, LTV, and LTV:CAC Ratio</h2>
+    <div class="card">
+      <div class="chart-wrap chart-wrap-sm">
+        <canvas id="unitEconChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ════════════════════════════════════════════ -->
+  <!--  WATERFALL: WHERE DOES EACH DOLLAR GO?      -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="section">
+    <h3>Capital Waterfall &mdash; Every Dollar Accounted For</h3>
+    <h2>$50K Initial + $1.7M Milestone Capital = $1.75M Total</h2>
+    <div class="card" id="waterfallCard"></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ════════════════════════════════════════════ -->
+  <!--  DATA TABLE                                  -->
+  <!-- ════════════════════════════════════════════ -->
+  <div class="section">
+    <h3>Monthly Financial Detail</h3>
+    <h2>24-Month Projection &mdash; Milestone-Funded Model</h2>
+    <div class="card" style="overflow-x:auto">
+      <table id="dataTable" style="width:100%;border-collapse:collapse;font-size:.65rem;white-space:nowrap">
+        <thead>
+          <tr style="border-bottom:2px solid #D4A847">
+            <th style="text-align:left;padding:.4rem .5rem;color:#D4A847;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase">Month</th>
+            <th style="text-align:right;padding:.4rem .5rem;color:#22d3ee;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase">Funding In</th>
+            <th style="text-align:right;padding:.4rem .5rem;color:#4ade80;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase">Revenue</th>
+            <th style="text-align:right;padding:.4rem .5rem;color:#ef4444;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase">Expenses</th>
+            <th style="text-align:right;padding:.4rem .5rem;color:#D4A847;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase">Net</th>
+            <th style="text-align:right;padding:.4rem .5rem;color:#a1a1aa;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase">Cash</th>
+            <th style="text-align:right;padding:.4rem .5rem;color:#a1a1aa;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase">Cumul. Rev</th>
+          </tr>
+        </thead>
+        <tbody id="dataBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DISCLAIMER -->
+  <div style="font-size:.65rem;color:#52525b;line-height:1.5;padding:1rem;border:1px solid #1e1e21;border-radius:.5rem;margin-top:1rem">
+    <strong>Disclaimer:</strong> Financial projections are forward-looking estimates based on bottom-up unit economics (CAC $35&ndash;$60, ARPU $42/mo B2C, $208/seat/yr enterprise, 85%+ retention). Milestone funding is contingent on verified metric achievement. Actual results may vary. These projections do not constitute guarantees of future performance.
+  </div>
+
+  <div class="footer">
+    <p>Confidential &mdash; Value to Victory, LLC &mdash; valuetovictory@gmail.com</p>
+  </div>
+</div>
+
+<button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+
+<script>
+// ═══════════════════════════════════════════
+// MILESTONE-FUNDED FINANCIAL MODEL
+// ═══════════════════════════════════════════
+const MONTHS = 24;
+const labels = Array.from({length: MONTHS}, (_, i) => 'Mo ' + (i + 1));
+
+// Funding tranches (month index, amount)
+const TRANCHES = [
+  { month: 0, amount: 50000, label: 'Phase 0: Seed' },
+  { month: 3, amount: 100000, label: 'Phase 1: $25K MRR hit' },
+  { month: 7, amount: 200000, label: 'Phase 2: $50K MRR hit' },
+  { month: 13, amount: 400000, label: 'Phase 3: $85K MRR hit' },
+  { month: 19, amount: 1000000, label: 'Phase 4: $130K MRR hit' }
+];
+
+// Build funding injection array
+const fundingIn = Array(MONTHS).fill(0);
+TRANCHES.forEach(t => { fundingIn[t.month] = t.amount; });
+
+// ── EXPENSE MODEL ──
+// Scales up ONLY when funding arrives
+function getExpenses(month) {
+  const m = month + 1;
+  let eng, mkt, ent, ops, legal;
+
+  if (m <= 3) {
+    // Phase 0: $50K + FitCarna revenue only. Founder does everything.
+    eng = 3000; mkt = 2000; ent = 0; ops = 8500; legal = 1500;
+  } else if (m <= 7) {
+    // Phase 1: +$100K unlocked. First contractor, dating launch, small ad spend.
+    eng = 8000; mkt = 6000; ent = 1000; ops = 9000; legal = 2000;
+  } else if (m <= 13) {
+    // Phase 2: +$200K unlocked. First FT hire, enterprise pilots, mobile dev.
+    eng = 18000; mkt = 12000; ent = 5000; ops = 10000; legal = 3000;
+  } else if (m <= 19) {
+    // Phase 3: +$400K unlocked. Sales team, scaling, SOC 2, patents.
+    eng = 22000; mkt = 20000; ent = 12000; ops = 12000; legal = 6000;
+  } else {
+    // Phase 4: +$1M unlocked. Full team, national marketing, Series A prep.
+    eng = 28000; mkt = 28000; ent = 16000; ops = 14000; legal = 9000;
+  }
+
+  return { eng, mkt, ent, ops, legal, total: eng + mkt + ent + ops + legal };
+}
+
+// ── REVENUE MODEL ──
+// FitCarna starts at $12K/mo, grows to $65K. Other verticals layer in.
+function getRevenue(month) {
+  const m = month + 1;
+
+  // FitCarna: $12K Day 1, linear to $65K by Mo 18, then holds
+  const fitcarna = Math.min(65000, 12000 + (m - 1) * 3100);
+
+  // B2C Subscriptions: very slow pre-funding, accelerates with marketing spend
+  const b2c = m <= 3 ? 300 + (m - 1) * 200
+    : m <= 7 ? 900 + (m - 3) * 1500
+    : m <= 13 ? 6900 + (m - 7) * 2500
+    : m <= 19 ? 21900 + (m - 13) * 3200
+    : 41100 + (m - 19) * 3800;
+
+  // Dating: launches Mo 4 with Phase 1 funding
+  const dating = m <= 4 ? 0
+    : m <= 7 ? (m - 4) * 1000
+    : m <= 13 ? 3000 + (m - 7) * 2000
+    : m <= 19 ? 15000 + (m - 13) * 2800
+    : 31800 + (m - 19) * 3200;
+
+  // Enterprise: first pilot Mo 8 with Phase 2 funding
+  const enterprise = m <= 8 ? 0
+    : m <= 13 ? (m - 8) * 1800
+    : m <= 19 ? 9000 + (m - 13) * 3500
+    : 30000 + (m - 19) * 4000;
+
+  // Licensing: starts Mo 10
+  const licensing = m <= 10 ? 0
+    : m <= 15 ? (m - 10) * 1200
+    : m <= 21 ? 6000 + (m - 15) * 1800
+    : 16800 + (m - 21) * 2000;
+
+  // 1:1 / VIP Coaching
+  const coaching = m <= 1 ? 2000
+    : m <= 6 ? 2000 + (m - 1) * 600
+    : m <= 12 ? 5000 + (m - 6) * 500
+    : 8000 + (m - 12) * 400;
+
+  return {
+    fitcarna, b2c, dating, enterprise, licensing, coaching,
+    total: fitcarna + b2c + dating + enterprise + licensing + coaching
+  };
+}
+
+// Build data arrays
+const expData = { eng: [], mkt: [], ent: [], ops: [], legal: [], total: [] };
+const revData = { fitcarna: [], b2c: [], dating: [], enterprise: [], licensing: [], coaching: [], total: [] };
+const cashPosition = [];
+const netMonthly = [];
+const cumulRevenue = [];
+const cumulExpense = [];
+const cumulFunding = [];
+let cash = 0;
+let cumRev = 0;
+let cumExp = 0;
+let cumFund = 0;
+
+for (let i = 0; i < MONTHS; i++) {
+  const e = getExpenses(i);
+  const r = getRevenue(i);
+
+  expData.eng.push(e.eng); expData.mkt.push(e.mkt); expData.ent.push(e.ent);
+  expData.ops.push(e.ops); expData.legal.push(e.legal); expData.total.push(e.total);
+
+  revData.fitcarna.push(r.fitcarna); revData.b2c.push(r.b2c); revData.dating.push(r.dating);
+  revData.enterprise.push(r.enterprise); revData.licensing.push(r.licensing);
+  revData.coaching.push(r.coaching); revData.total.push(r.total);
+
+  cash = cash + fundingIn[i] + r.total - e.total;
+  cumRev += r.total;
+  cumExp += e.total;
+  cumFund += fundingIn[i];
+  cashPosition.push(cash);
+  netMonthly.push(r.total - e.total);
+  cumulRevenue.push(cumRev);
+  cumulExpense.push(cumExp);
+  cumulFunding.push(cumFund);
+}
+
+// Chart.js defaults
+Chart.defaults.color = '#a1a1aa';
+Chart.defaults.borderColor = '#27272a';
+Chart.defaults.font.family = 'Satoshi, sans-serif';
+Chart.defaults.font.size = 11;
+
+const fmt = v => '$' + (Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'K' : v.toFixed(0));
+
+// Funding annotation lines
+const fundingAnnotations = {};
+TRANCHES.forEach((t, idx) => {
+  if (t.month > 0) {
+    fundingAnnotations['line' + idx] = {
+      type: 'line',
+      xMin: t.month,
+      xMax: t.month,
+      borderColor: 'rgba(34,211,238,.5)',
+      borderWidth: 2,
+      borderDash: [4, 3],
+      label: {
+        display: true,
+        content: '+' + fmt(t.amount),
+        position: 'start',
+        backgroundColor: 'rgba(34,211,238,.15)',
+        color: '#22d3ee',
+        font: { size: 9, weight: 700 },
+        padding: 3
+      }
+    };
+  }
+});
+
+// ═══════════════════════════════════════════
+// CHART 1: MASTER OVERVIEW
+// ═══════════════════════════════════════════
+new Chart(document.getElementById('masterChart'), {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'Funding Injection',
+        data: fundingIn.map(v => v > 0 ? v : null),
+        backgroundColor: 'rgba(34,211,238,.6)',
+        borderColor: '#22d3ee',
+        borderWidth: 1,
+        borderRadius: 3,
+        order: 3
+      },
+      {
+        label: 'Monthly Revenue',
+        data: revData.total,
+        backgroundColor: 'rgba(74,222,128,.65)',
+        borderColor: '#4ade80',
+        borderWidth: 1,
+        borderRadius: 3,
+        order: 3
+      },
+      {
+        label: 'Monthly Expenses',
+        data: expData.total.map(v => -v),
+        backgroundColor: 'rgba(239,68,68,.65)',
+        borderColor: '#ef4444',
+        borderWidth: 1,
+        borderRadius: 3,
+        order: 3
+      },
+      {
+        label: 'Cash Position',
+        data: cashPosition,
+        type: 'line',
+        borderColor: '#D4A847',
+        backgroundColor: 'rgba(212,168,71,.08)',
+        borderWidth: 2.5,
+        pointRadius: 3,
+        pointBackgroundColor: '#D4A847',
+        fill: true,
+        tension: 0.3,
+        yAxisID: 'y2',
+        order: 1
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const v = ctx.raw;
+            if (v === null) return null;
+            return ctx.dataset.label + ': ' + fmt(Math.abs(v));
+          }
+        }
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: {
+        title: { display: true, text: 'Monthly Cash Flow', color: '#71717a' },
+        ticks: { callback: v => fmt(Math.abs(v)) },
+        grid: { color: '#1e1e21' }
+      },
+      y2: {
+        position: 'right',
+        title: { display: true, text: 'Cash Position', color: '#D4A847' },
+        ticks: { callback: v => fmt(v), color: '#D4A847' },
+        grid: { display: false }
+      }
+    }
+  }
+});
+
+// ═══════════════════════════════════════════
+// CHART 2: REVENUE STREAMS (STACKED AREA)
+// ═══════════════════════════════════════════
+new Chart(document.getElementById('revenueChart'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      { label: 'FitCarna Coaching', data: revData.fitcarna, backgroundColor: 'rgba(74,222,128,.5)', borderColor: '#4ade80', fill: true, tension: 0.3, borderWidth: 1.5 },
+      { label: 'B2C Subscriptions', data: revData.b2c, backgroundColor: 'rgba(34,211,238,.4)', borderColor: '#22d3ee', fill: true, tension: 0.3, borderWidth: 1.5 },
+      { label: 'Dating Vertical', data: revData.dating, backgroundColor: 'rgba(212,168,71,.4)', borderColor: '#D4A847', fill: true, tension: 0.3, borderWidth: 1.5 },
+      { label: 'Enterprise / B2B', data: revData.enterprise, backgroundColor: 'rgba(167,139,250,.4)', borderColor: '#a78bfa', fill: true, tension: 0.3, borderWidth: 1.5 },
+      { label: 'Licensing & BTS', data: revData.licensing, backgroundColor: 'rgba(244,114,182,.35)', borderColor: '#f472b6', fill: true, tension: 0.3, borderWidth: 1.5 },
+      { label: '1:1 / VIP Coaching', data: revData.coaching, backgroundColor: 'rgba(251,146,60,.35)', borderColor: '#fb923c', fill: true, tension: 0.3, borderWidth: 1.5 }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      annotation: { annotations: fundingAnnotations },
+      tooltip: {
+        callbacks: {
+          label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw),
+          afterBody: items => {
+            const idx = items[0].dataIndex;
+            const fund = fundingIn[idx];
+            let extra = '\nTotal MRR: ' + fmt(revData.total[idx]);
+            if (fund > 0) extra += '\n*** +' + fmt(fund) + ' funding unlocked ***';
+            return extra;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { stacked: true, ticks: { callback: v => fmt(v) }, grid: { color: '#1e1e21' }, title: { display: true, text: 'Monthly Recurring Revenue', color: '#71717a' } }
+    }
+  }
+});
+
+// ═══════════════════════════════════════════
+// CHART 3: EXPENSE BREAKDOWN (STACKED BAR)
+// ═══════════════════════════════════════════
+new Chart(document.getElementById('expenseChart'), {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [
+      { label: 'Engineering & Product', data: expData.eng, backgroundColor: 'rgba(239,68,68,.8)', borderRadius: 2 },
+      { label: 'Sales & Marketing', data: expData.mkt, backgroundColor: 'rgba(249,115,22,.8)', borderRadius: 2 },
+      { label: 'Enterprise & B2B', data: expData.ent, backgroundColor: 'rgba(251,191,36,.8)', borderRadius: 2 },
+      { label: 'Operations & Infra', data: expData.ops, backgroundColor: 'rgba(167,139,250,.8)', borderRadius: 2 },
+      { label: 'Legal / IP / Reserve', data: expData.legal, backgroundColor: 'rgba(113,113,122,.8)', borderRadius: 2 }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      annotation: { annotations: fundingAnnotations },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } }
+    },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: { stacked: true, ticks: { callback: v => fmt(v) }, grid: { color: '#1e1e21' }, title: { display: true, text: 'Monthly Spend', color: '#71717a' } }
+    }
+  }
+});
+
+// ═══════════════════════════════════════════
+// CHART 4a: CASH POSITION WITH INJECTIONS
+// ═══════════════════════════════════════════
+new Chart(document.getElementById('cashFlowChart'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      { label: 'Cash Position', data: cashPosition, borderColor: '#D4A847', backgroundColor: 'rgba(212,168,71,.12)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 2 },
+      { label: 'Cumul. Funding In', data: cumulFunding, borderColor: '#22d3ee', borderDash: [5, 3], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0 },
+      { label: 'Cumul. Revenue', data: cumulRevenue, borderColor: '#4ade80', borderDash: [5, 3], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3 }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: { display: true, text: 'Cash Position + Cumulative Flows', color: '#D4A847', font: { size: 12, weight: 700 } },
+      legend: { labels: { usePointStyle: true, pointStyle: 'line', font: { size: 10 } } },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { ticks: { callback: v => fmt(v) }, grid: { color: '#1e1e21' } }
+    }
+  }
+});
+
+// ═══════════════════════════════════════════
+// CHART 4b: INVESTOR VALUE (MILESTONE MODEL)
+// ═══════════════════════════════════════════
+const investorEquity = 0.25;
+const companyValue = revData.total.map(mrr => mrr * 12 * 8);
+const investorValue = companyValue.map(v => v * investorEquity);
+const totalInvested = [];
+let runningInvest = 0;
+for (let i = 0; i < MONTHS; i++) {
+  runningInvest += fundingIn[i];
+  totalInvested.push(runningInvest);
+}
+
+new Chart(document.getElementById('roiChart'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      { label: 'Investor Equity Value', data: investorValue, borderColor: '#D4A847', backgroundColor: 'rgba(212,168,71,.12)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 2 },
+      { label: 'Capital Deployed', data: totalInvested, borderColor: '#ef4444', borderDash: [6, 3], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0 }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: { display: true, text: 'Investor Equity Value (25% at 8x ARR)', color: '#D4A847', font: { size: 12, weight: 700 } },
+      legend: { labels: { usePointStyle: true, pointStyle: 'line', font: { size: 10 } } },
+      tooltip: {
+        callbacks: {
+          label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw),
+          afterBody: items => {
+            const idx = items[0].dataIndex;
+            const roi = totalInvested[idx] > 0 ? ((investorValue[idx] - totalInvested[idx]) / totalInvested[idx] * 100).toFixed(0) : '0';
+            return 'ROI: ' + roi + '% on ' + fmt(totalInvested[idx]) + ' deployed';
+          }
+        }
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { ticks: { callback: v => fmt(v) }, grid: { color: '#1e1e21' } }
+    }
+  }
+});
+
+// ═══════════════════════════════════════════
+// CHART 5: UNIT ECONOMICS
+// ═══════════════════════════════════════════
+const cacData = labels.map((_, i) => {
+  const m = i + 1;
+  if (m <= 3) return 0; // organic only
+  if (m <= 7) return 55;
+  if (m <= 13) return 48;
+  if (m <= 19) return 42;
+  return 35;
+});
+const ltvData = labels.map((_, i) => {
+  const m = i + 1;
+  const arpu = 42;
+  const retMonths = m <= 3 ? 8 : m <= 7 ? 10 : m <= 13 ? 14 : m <= 19 ? 18 : 22;
+  return arpu * retMonths;
+});
+const ltvCacRatio = cacData.map((cac, i) => cac > 0 ? ltvData[i] / cac : 0);
+
+new Chart(document.getElementById('unitEconChart'), {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [
+      { label: 'CAC ($)', data: cacData, backgroundColor: 'rgba(239,68,68,.6)', borderRadius: 2, yAxisID: 'y' },
+      { label: 'LTV ($)', data: ltvData, backgroundColor: 'rgba(74,222,128,.6)', borderRadius: 2, yAxisID: 'y' },
+      { label: 'LTV:CAC Ratio', data: ltvCacRatio, type: 'line', borderColor: '#D4A847', borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: '#D4A847', fill: false, tension: 0.3, yAxisID: 'y2' }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { usePointStyle: true } },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            if (ctx.dataset.label === 'LTV:CAC Ratio') return ctx.raw > 0 ? 'LTV:CAC: ' + ctx.raw.toFixed(1) + 'x' : 'Organic (no paid CAC)';
+            return ctx.dataset.label + ': $' + ctx.raw.toFixed(0);
+          }
+        }
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { ticks: { callback: v => '$' + v }, grid: { color: '#1e1e21' }, title: { display: true, text: 'Dollars', color: '#71717a' } },
+      y2: { position: 'right', ticks: { callback: v => v > 0 ? v.toFixed(0) + 'x' : '', color: '#D4A847' }, grid: { display: false }, title: { display: true, text: 'LTV:CAC Ratio', color: '#D4A847' } }
+    }
+  }
+});
+
+// ═══════════════════════════════════════════
+// WATERFALL CHART (HTML-based)
+// ═══════════════════════════════════════════
+const waterfallData = [
+  { label: 'Initial Capital', amount: 50000, color: '#22d3ee' },
+  { label: 'Phase 1 (+Mo 4)', amount: 100000, color: '#22d3ee' },
+  { label: 'Phase 2 (+Mo 8)', amount: 200000, color: '#22d3ee' },
+  { label: 'Phase 3 (+Mo 14)', amount: 400000, color: '#22d3ee' },
+  { label: 'Phase 4 (+Mo 20)', amount: 1000000, color: '#22d3ee' },
+  { label: '', amount: 0, color: 'transparent', divider: true },
+  { label: 'Engineering & Product', amount: -540000, color: '#ef4444' },
+  { label: 'Sales & Marketing', amount: -420000, color: '#f97316' },
+  { label: 'Enterprise & B2B', amount: -180000, color: '#fbbf24' },
+  { label: 'Operations & Infra', amount: -260000, color: '#a78bfa' },
+  { label: 'Legal / IP / Reserve', amount: -100000, color: '#71717a' },
+  { label: '', amount: 0, color: 'transparent', divider: true },
+  { label: '24-Mo Revenue Generated', amount: cumRev, color: '#4ade80' },
+  { label: 'Mo 24 Cash Position', amount: cashPosition[23], color: '#D4A847' }
+];
+
+const maxVal = Math.max(...waterfallData.map(d => Math.abs(d.amount)));
+const wfCard = document.getElementById('waterfallCard');
+waterfallData.forEach(d => {
+  if (d.divider) {
+    wfCard.innerHTML += '<div style="border-top:1px solid #27272a;margin:.6rem 0"></div>';
+    return;
+  }
+  const pct = Math.abs(d.amount) / maxVal * 100;
+  const sign = d.amount >= 0 ? '+' : '-';
+  wfCard.innerHTML += '<div class="waterfall-row">' +
+    '<div class="waterfall-label">' + d.label + '</div>' +
+    '<div class="waterfall-bar-wrap"><div class="waterfall-bar" style="width:' + Math.max(pct, 3) + '%;background:' + d.color + ';color:#0a0a0a">' + fmt(Math.abs(d.amount)) + '</div></div>' +
+    '<div class="waterfall-amount" style="color:' + d.color + '">' + sign + fmt(Math.abs(d.amount)) + '</div>' +
+    '</div>';
+});
+
+// ═══════════════════════════════════════════
+// DATA TABLE
+// ═══════════════════════════════════════════
+const tbody = document.getElementById('dataBody');
+for (let i = 0; i < MONTHS; i++) {
+  const net = fundingIn[i] + revData.total[i] - expData.total[i];
+  const isFunding = fundingIn[i] > 0;
+  const revenueExceedsExpense = revData.total[i] >= expData.total[i];
+  const prevNet = i > 0 ? revData.total[i-1] - expData.total[i-1] : -1;
+  const isBreakeven = revenueExceedsExpense && prevNet < 0;
+  const rowBg = isFunding ? 'background:rgba(34,211,238,.06)' : isBreakeven ? 'background:rgba(74,222,128,.08)' : '';
+  const netColor = net >= 0 ? '#4ade80' : '#ef4444';
+
+  let label = labels[i];
+  if (isFunding) label += ' (+' + fmt(fundingIn[i]) + ')';
+  if (isBreakeven) label += ' (Rev > Burn)';
+
+  tbody.innerHTML += '<tr style="border-bottom:1px solid #1e1e21;' + rowBg + '">' +
+    '<td style="padding:.35rem .5rem;color:#d4d4d8;font-weight:' + (isFunding || isBreakeven ? '700' : '400') + '">' + label + '</td>' +
+    '<td style="text-align:right;padding:.35rem .5rem;color:' + (isFunding ? '#22d3ee' : '#3f3f46') + '">' + (isFunding ? '+' + fmt(fundingIn[i]) : '—') + '</td>' +
+    '<td style="text-align:right;padding:.35rem .5rem;color:#4ade80">' + fmt(revData.total[i]) + '</td>' +
+    '<td style="text-align:right;padding:.35rem .5rem;color:#ef4444">' + fmt(expData.total[i]) + '</td>' +
+    '<td style="text-align:right;padding:.35rem .5rem;color:' + netColor + ';font-weight:700">' + (net >= 0 ? '+' : '-') + fmt(Math.abs(net)) + '</td>' +
+    '<td style="text-align:right;padding:.35rem .5rem;color:#D4A847">' + fmt(cashPosition[i]) + '</td>' +
+    '<td style="text-align:right;padding:.35rem .5rem;color:#a1a1aa">' + fmt(cumulRevenue[i]) + '</td>' +
+    '</tr>';
+}
+</script>
+</body>
+</html>
