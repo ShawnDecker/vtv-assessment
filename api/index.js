@@ -1957,12 +1957,11 @@ module.exports = async (req, res) => {
       }
     }
 
-    // GET /api/member/preferences?email=X — Retrieve user preferences (JWT required)
+    // GET /api/member/preferences?email=X — Retrieve user preferences (accepts JWT or email)
     if (req.method === 'GET' && url.startsWith('/member/preferences')) {
       const jwtUser = extractUser(req);
-      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const params = new URL('http://x' + req.url).searchParams;
-      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (params.get('email') || '').toLowerCase().trim();
+      const email = (jwtUser?.email || params.get('email') || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       try {
@@ -3222,12 +3221,11 @@ Don't guess. Run the system.
     }
 
     // ========== PRIVACY PREFERENCES ==========
-    // GET /api/privacy?email=xxx&teamId=xxx — Get privacy prefs (JWT required)
+    // GET /api/privacy?email=xxx&teamId=xxx — Get privacy prefs (accepts JWT or email)
     if (req.method === 'GET' && url.startsWith('/privacy')) {
       const jwtUser = extractUser(req);
-      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const params = new URL('http://x' + req.url).searchParams;
-      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (params.get('email') || '').toLowerCase().trim();
+      const email = (jwtUser?.email || params.get('email') || '').toLowerCase().trim();
       const teamId = params.get('teamId');
       if (!email) return res.status(400).json({ error: 'email required' });
 
