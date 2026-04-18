@@ -7,3 +7,5 @@ desktop.ini
 Thumbs.db
 ehthumbs.db
 .env*.local
+.claude/
+.DS_Store
