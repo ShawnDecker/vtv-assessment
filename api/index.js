@@ -1775,7 +1775,9 @@ module.exports = async (req, res) => {
     }
 
     // GET /api/member?email=xxx — Member portal: profile, tier, assessments, teams
-    // Accepts JWT (preferred) or email param (fallback for pages that haven't migrated to JWT yet)
+    // JWT path returns full profile. Email-only path (coaching email deep-links)
+    // returns a narrow, non-PII response: firstName + latest assessment pillar
+    // scores only. No stripe IDs, teams, phone, email, last name, or tier data.
     if (req.method === 'GET' && url.startsWith('/member') && !url.startsWith('/member/portal')) {
       const params = new URL('http://x' + req.url).searchParams;
       const jwtUser = extractUser(req);
@@ -1787,6 +1789,27 @@ module.exports = async (req, res) => {
       if (contactRows.length === 0) return res.json({ found: false });
 
       const contact = contactRows[0];
+
+      if (!jwtUser) {
+        const latest = await sql`
+          SELECT completed_at, mode, master_score, weakest_pillar, focus_pillar,
+                 time_total, people_total, influence_total, numbers_total, knowledge_total
+          FROM assessments WHERE contact_id = ${contact.id}
+          ORDER BY completed_at DESC LIMIT 1
+        `;
+        return res.json({
+          found: true,
+          contact: { firstName: contact.first_name },
+          assessments: latest.map(a => ({
+            completedAt: a.completed_at, mode: a.mode,
+            masterScore: a.master_score,
+            weakestPillar: a.weakest_pillar, focusPillar: a.focus_pillar,
+            timeTotal: a.time_total, peopleTotal: a.people_total,
+            influenceTotal: a.influence_total, numbersTotal: a.numbers_total,
+            knowledgeTotal: a.knowledge_total,
+          })),
+        });
+      }
 
       // Get user profile (membership tier)
       let profile = { membership_tier: 'free' };
