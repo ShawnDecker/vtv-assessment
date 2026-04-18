@@ -1,0 +1,15 @@
+# Gitleaks false-positive fingerprints. Verified 2026-04-18.
+# Format: <commit-sha>:<file>:<rule-id>:<line>
+#
+# Real leaks (commit 8e1981ba .env.stripe) are NOT in this ignore list —
+# they must be rotated + history-purged, not allowlisted.
+
+# Documentation placeholder "YOUR_ADMIN_KEY" in curl examples
+71c20748da7adb6ea3119b098bd3c2064aed794a:scripts/SOCIAL-SETUP.md:curl-auth-header:67
+71c20748da7adb6ea3119b098bd3c2064aed794a:scripts/SOCIAL-SETUP.md:curl-auth-header:80
+
+# Coaching advice array — regex matched a closing-bracket pattern, not a key
+0bedd0130d53d11c2d56ab74c535bb45965f5218:api/index.js:generic-api-key:5103
+
+# Route check `hash.indexOf('#/capture')` — not a GCP key
+658c2e42633f0367b8abd5024f461d69bb4eb02d:index.html:gcp-api-key:225

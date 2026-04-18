@@ -1781,7 +1781,12 @@ module.exports = async (req, res) => {
     if (req.method === 'GET' && url.startsWith('/member') && !url.startsWith('/member/portal')) {
       const params = new URL('http://x' + req.url).searchParams;
       const jwtUser = extractUser(req);
-      const emailParam = (params.get('email') || '').toLowerCase().trim();
+      const rawEmail = params.get('email') || '';
+      // Zod-style email shape check — reject obviously malformed inputs early
+      if (rawEmail && (rawEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail))) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+      const emailParam = rawEmail.toLowerCase().trim();
       const email = (jwtUser?.email || emailParam || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 

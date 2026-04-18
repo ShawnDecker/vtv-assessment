@@ -20,7 +20,20 @@ const parsed = safeParse(memberQuery, Object.fromEntries(params));
 if (!parsed.ok) return res.status(400).json({ error: parsed.error });
 ```
 
-Not yet wired to existing endpoints — migrate opportunistically as endpoints are touched.
+Wired in `GET /api/member` (inline email-shape check). Migrate other endpoints opportunistically as they're touched.
+
+## Known false positives
+
+Kept here so future Claude sessions don't re-investigate them:
+
+| Tool | Location | Why it's a false positive |
+|---|---|---|
+| Semgrep `raw-html-format` | [api/free-book-signup.js:108](api/free-book-signup.js) | User name is escaped via `escHtml()` on line 9 before template interpolation. Semgrep doesn't trace the escape function. |
+| gitleaks `curl-auth-header` × 2 | [scripts/SOCIAL-SETUP.md:67,80](scripts/SOCIAL-SETUP.md) | Documentation placeholders (`YOUR_ADMIN_KEY` literal string). Fingerprinted in `.gitleaksignore`. |
+| gitleaks `generic-api-key` | [api/index.js:5103](api/index.js) | Matched a closing-bracket pattern inside a coaching-advice array, not a real key. Fingerprinted. |
+| gitleaks `gcp-api-key` | [index.html:225](index.html) | Matched `hash.indexOf('#/capture')` route check, not a GCP key. Fingerprinted. |
+
+Real leaks (`.env.stripe` at commit 8e1981ba) are **not** allowlisted — they require credential rotation + history purge.
 
 ## Tightening later (tier 2)
 
