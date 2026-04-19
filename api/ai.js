@@ -22,6 +22,60 @@ const LOCAL_MODELS = {
 const OLLAMA_HOST = process.env.OLLAMA_HOST || process.env.OLLAMA_URL || 'http://localhost:11434';
 const CLOUD_URL = 'https://ai-gateway.vercel.sh/v1/chat/completions';
 
+// ========== TIERED CLOUD MODEL ROUTER ==========
+// Picks a model tier per action. CLOUD_AI_MODEL env var still wins if set
+// (preserves existing behavior). Approximate per-million-token prices in
+// cents, used only for ai_calls.cost_cents estimation — update as pricing
+// changes. Set COST_* env vars to override.
+const TIER_MODELS = {
+  small:    process.env.AI_MODEL_SMALL    || 'anthropic/claude-haiku-4.5',
+  mid:      process.env.AI_MODEL_MID      || 'anthropic/claude-sonnet-4.6',
+  frontier: process.env.AI_MODEL_FRONTIER || 'anthropic/claude-opus-4.7',
+};
+const TIER_COST_CENTS_PER_MTOK = {
+  small:    { in: Number(process.env.COST_SMALL_IN_CENTS    || 80),    out: Number(process.env.COST_SMALL_OUT_CENTS    || 400)    },
+  mid:      { in: Number(process.env.COST_MID_IN_CENTS      || 300),   out: Number(process.env.COST_MID_OUT_CENTS      || 1500)   },
+  frontier: { in: Number(process.env.COST_FRONTIER_IN_CENTS || 1500),  out: Number(process.env.COST_FRONTIER_OUT_CENTS || 7500)   },
+};
+const ACTION_TIER = {
+  'coaching-insight':    'mid',       // personal + faith-sensitive → Sonnet
+  'assessment-summary':  'small',     // structured narrative → Haiku
+  'email-draft':         'mid',
+  'content-generate':    'small',
+  'devotional-generate': 'small',
+};
+function pickCloudModel(action) {
+  // 1. Explicit CLOUD_AI_MODEL env var wins (back-compat).
+  if (process.env.CLOUD_AI_MODEL) return { model: process.env.CLOUD_AI_MODEL, tier: 'override' };
+  // 2. Per-action tier map.
+  const tier = ACTION_TIER[action] || 'small';
+  return { model: TIER_MODELS[tier], tier };
+}
+function estimateCostCents(tier, usage) {
+  const t = TIER_COST_CENTS_PER_MTOK[tier];
+  if (!t) return null;
+  const tin  = Number(usage?.prompt_tokens     || usage?.input_tokens  || 0);
+  const tout = Number(usage?.completion_tokens || usage?.output_tokens || 0);
+  return (tin * t.in + tout * t.out) / 1_000_000;
+}
+
+// ========== TELEMETRY ==========
+// Best-effort logger. Never throws — failure to log must not break the call.
+async function logAiCall(sql, row) {
+  try {
+    await sql`INSERT INTO ai_calls
+      (action, route_tier, provider, model, tokens_in, tokens_out, cost_cents, latency_ms, contact_id, status, error_message, metadata)
+      VALUES
+      (${row.action}, ${row.route_tier || null}, ${row.provider}, ${row.model},
+       ${row.tokens_in || null}, ${row.tokens_out || null}, ${row.cost_cents || null},
+       ${row.latency_ms || null}, ${row.contact_id || null}, ${row.status || 'ok'},
+       ${row.error_message || null}, ${JSON.stringify(row.metadata || {})}::jsonb)`;
+  } catch (e) {
+    // Table may not exist yet (run migrations/007-ai-calls.sql). Log to stderr and move on.
+    if (!logAiCall._warned) { console.warn('ai_calls logging disabled:', e.message); logAiCall._warned = true; }
+  }
+}
+
 // ========== HEALTH CHECK: Is Ollama running? ==========
 async function isOllamaAvailable() {
   try {
@@ -31,13 +85,13 @@ async function isOllamaAvailable() {
 }
 
 // ========== CLOUD AI HELPER ==========
-async function callCloudAI(apiKey, systemPrompt, userPrompt) {
-  const cloudModel = process.env.CLOUD_AI_MODEL || 'anthropic/claude-sonnet-4.5';
+async function callCloudAI(apiKey, systemPrompt, userPrompt, action) {
+  const picked = pickCloudModel(action);
   const aiResponse = await fetch(CLOUD_URL, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: cloudModel,
+      model: picked.model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
@@ -48,12 +102,16 @@ async function callCloudAI(apiKey, systemPrompt, userPrompt) {
   });
   if (!aiResponse.ok) {
     const errText = await aiResponse.text();
-    throw new Error('AI Gateway error: ' + errText);
+    const err = new Error('AI Gateway error: ' + errText);
+    err.tier = picked.tier;
+    err.model = picked.model;
+    throw err;
   }
   const aiData = await aiResponse.json();
   return {
     content: aiData.choices?.[0]?.message?.content || '',
-    model: aiData.model || cloudModel,
+    model: aiData.model || picked.model,
+    tier: picked.tier,
     usage: aiData.usage || {}
   };
 }
@@ -78,6 +136,83 @@ module.exports = async (req, res) => {
   if (!action) return res.status(400).json({ error: 'action required' });
 
   const AI_KEY = process.env.AI_GATEWAY_API_KEY;
+
+  // === ACTION: ai-metrics — rollup of ai_calls for the dashboard ===
+  if (action === 'ai-metrics') {
+    try {
+      const since = context?.sinceHours ? Number(context.sinceHours) : 168;
+      const rows = await sql`
+        SELECT
+          COALESCE(route_tier, 'unknown') AS tier,
+          model,
+          COUNT(*)::int                           AS calls,
+          SUM(COALESCE(tokens_in, 0))::bigint     AS tokens_in,
+          SUM(COALESCE(tokens_out, 0))::bigint    AS tokens_out,
+          ROUND(SUM(COALESCE(cost_cents, 0))::numeric, 2) AS cost_cents,
+          ROUND(AVG(COALESCE(latency_ms, 0))::numeric, 0) AS avg_latency_ms,
+          SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END)::int    AS errors,
+          SUM(CASE WHEN status = 'fallback' THEN 1 ELSE 0 END)::int AS fallbacks
+        FROM ai_calls
+        WHERE created_at > NOW() - (${since} || ' hours')::interval
+        GROUP BY route_tier, model
+        ORDER BY calls DESC
+      `;
+      return res.json({ since_hours: since, rows });
+    } catch (e) {
+      // Table not yet created (migration 007 not run). Return empty rollup.
+      return res.json({ since_hours: 0, rows: [], note: 'ai_calls table not present — run migrations/007-ai-calls.sql' });
+    }
+  }
+
+  // === ACTION: similar-users — k-nearest-neighbor by pillar profile ===
+  // Uses L2 distance on the 5 pillar totals + master_score. No pgvector
+  // extension needed; scales fine to ~50k assessments on Neon.
+  if (action === 'similar-users') {
+    if (!contactId && !assessmentId) {
+      return res.status(400).json({ error: 'contactId or assessmentId required' });
+    }
+    const k = Math.max(1, Math.min(Number(context?.k || 10), 100));
+    let anchorRows;
+    if (assessmentId) {
+      anchorRows = await sql`SELECT * FROM assessments WHERE id = ${assessmentId} LIMIT 1`;
+    } else {
+      anchorRows = await sql`SELECT * FROM assessments WHERE contact_id = ${contactId} ORDER BY completed_at DESC LIMIT 1`;
+    }
+    if (!anchorRows.length) return res.json({ anchor: null, neighbors: [] });
+    const a = anchorRows[0];
+    const neighbors = await sql`
+      SELECT
+        a2.id           AS assessment_id,
+        a2.contact_id,
+        a2.master_score,
+        a2.score_range,
+        a2.weakest_pillar,
+        a2.time_total, a2.people_total, a2.influence_total, a2.numbers_total, a2.knowledge_total,
+        SQRT(
+          POWER(a2.time_total      - ${a.time_total      || 0}, 2) +
+          POWER(a2.people_total    - ${a.people_total    || 0}, 2) +
+          POWER(a2.influence_total - ${a.influence_total || 0}, 2) +
+          POWER(a2.numbers_total   - ${a.numbers_total   || 0}, 2) +
+          POWER(a2.knowledge_total - ${a.knowledge_total || 0}, 2) +
+          POWER((a2.master_score - ${a.master_score || 0}) / 5.0, 2)
+        )::real AS distance
+      FROM assessments a2
+      WHERE a2.id <> ${a.id}
+      ORDER BY distance ASC
+      LIMIT ${k}
+    `;
+    return res.json({
+      anchor: {
+        assessment_id: a.id, contact_id: a.contact_id,
+        master_score: a.master_score, weakest_pillar: a.weakest_pillar,
+        pillars: {
+          time: a.time_total, people: a.people_total, influence: a.influence_total,
+          numbers: a.numbers_total, knowledge: a.knowledge_total,
+        }
+      },
+      k, neighbors
+    });
+  }
 
   // === ACTION: health — Check AI provider status ===
   if (action === 'health') {
@@ -202,6 +337,8 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
     let content = '';
     let modelUsed = '';
     let usage = {};
+    let tierUsed = null;
+    const callStartedAt = Date.now();
 
     if (useLocal) {
       // Call Ollama local AI
@@ -225,15 +362,37 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
         const ollamaData = await ollamaRes.json();
         content = ollamaData.message?.content || '';
         modelUsed = `ollama/${ollamaModel}`;
+        tierUsed = 'local';
         usage = { prompt_tokens: ollamaData.prompt_eval_count, completion_tokens: ollamaData.eval_count };
+        logAiCall(sql, {
+          action, route_tier: 'local', provider: 'ollama', model: ollamaModel,
+          tokens_in: usage.prompt_tokens, tokens_out: usage.completion_tokens,
+          cost_cents: 0, latency_ms: Date.now() - callStartedAt,
+          contact_id: contactId, status: 'ok',
+        });
       } catch (ollamaErr) {
         // Fallback to cloud if local fails
         console.warn('Ollama failed, falling back to cloud:', ollamaErr.message);
+        logAiCall(sql, {
+          action, route_tier: 'local', provider: 'ollama', model: ollamaModel,
+          latency_ms: Date.now() - callStartedAt, contact_id: contactId,
+          status: 'error', error_message: String(ollamaErr.message).slice(0, 500),
+        });
         if (AI_KEY) {
-          const fallback = await callCloudAI(AI_KEY, systemPrompt, userPrompt);
+          const fbStartedAt = Date.now();
+          const fallback = await callCloudAI(AI_KEY, systemPrompt, userPrompt, action);
           content = fallback.content;
           modelUsed = fallback.model + ' (ollama-fallback)';
+          tierUsed = fallback.tier;
           usage = fallback.usage;
+          logAiCall(sql, {
+            action, route_tier: fallback.tier, provider: 'cloud', model: fallback.model,
+            tokens_in: usage.prompt_tokens || usage.input_tokens,
+            tokens_out: usage.completion_tokens || usage.output_tokens,
+            cost_cents: estimateCostCents(fallback.tier, usage),
+            latency_ms: Date.now() - fbStartedAt, contact_id: contactId,
+            status: 'fallback', metadata: { reason: 'ollama-fallback' },
+          });
         } else {
           return res.status(502).json({ error: 'Local AI failed and no cloud API key configured', detail: ollamaErr.message });
         }
@@ -241,10 +400,28 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
     } else {
       // Call Vercel AI Gateway (Claude)
       if (!AI_KEY) return res.status(500).json({ error: 'AI Gateway not configured. Set AI_GATEWAY_API_KEY or use AI_PROVIDER=local.' });
-      const result = await callCloudAI(AI_KEY, systemPrompt, userPrompt);
-      content = result.content;
-      modelUsed = result.model;
-      usage = result.usage;
+      try {
+        const result = await callCloudAI(AI_KEY, systemPrompt, userPrompt, action);
+        content = result.content;
+        modelUsed = result.model;
+        tierUsed = result.tier;
+        usage = result.usage;
+        logAiCall(sql, {
+          action, route_tier: result.tier, provider: 'cloud', model: result.model,
+          tokens_in: usage.prompt_tokens || usage.input_tokens,
+          tokens_out: usage.completion_tokens || usage.output_tokens,
+          cost_cents: estimateCostCents(result.tier, usage),
+          latency_ms: Date.now() - callStartedAt, contact_id: contactId, status: 'ok',
+        });
+      } catch (cloudErr) {
+        logAiCall(sql, {
+          action, route_tier: cloudErr.tier || null, provider: 'cloud',
+          model: cloudErr.model || 'unknown',
+          latency_ms: Date.now() - callStartedAt, contact_id: contactId,
+          status: 'error', error_message: String(cloudErr.message).slice(0, 500),
+        });
+        throw cloudErr;
+      }
     }
 
     // Trigger n8n webhook if configured (fire-and-forget)
@@ -260,7 +437,7 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
       } catch {}
     }
 
-    return res.json({ action, content, model: modelUsed, usage, provider: useLocal ? 'ollama' : 'cloud' });
+    return res.json({ action, content, model: modelUsed, tier: tierUsed, usage, provider: useLocal ? 'ollama' : 'cloud' });
 
   } catch (err) {
     return res.status(500).json({ error: 'AI service error' });

@@ -465,6 +465,84 @@ function timeAgo(ts) {
   return Math.floor(hrs / 24) + 'd ago';
 }
 
+// ========== AI COST TELEMETRY PANEL (additive, degrades gracefully) ==========
+async function loadAiMetrics() {
+  const { jwt, key } = getAuth();
+  const headers = { 'Content-Type': 'application/json' };
+  if (jwt) headers['Authorization'] = 'Bearer ' + jwt;
+  if (key) headers['x-api-key'] = key;
+  try {
+    const r = await fetch('/api/ai', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action: 'ai-metrics', context: { sinceHours: 168 } })
+    });
+    if (!r.ok) return; // silently skip — panel just doesn't render
+    const data = await r.json();
+    renderAiMetrics(data);
+  } catch (_) { /* skip */ }
+}
+function renderAiMetrics(data) {
+  const container = document.getElementById('aiMetricsPanel');
+  if (!container) return;
+  if (data.note) {
+    container.innerHTML = '<div class="section-title">AI Cost (last 7d)</div>' +
+      '<div class="card" style="padding:14px;"><p style="color:#a1a1aa;font-size:12px;">' +
+      data.note + '</p></div>';
+    return;
+  }
+  const rows = data.rows || [];
+  if (!rows.length) {
+    container.innerHTML = '<div class="section-title">AI Cost (last 7d)</div>' +
+      '<div class="card" style="padding:14px;"><p style="color:#71717a;font-size:12px;">No AI calls logged in the last 7 days.</p></div>';
+    return;
+  }
+  const totals = rows.reduce((acc, r) => {
+    acc.calls += Number(r.calls || 0);
+    acc.tokens += Number(r.tokens_in || 0) + Number(r.tokens_out || 0);
+    acc.cost += Number(r.cost_cents || 0);
+    acc.errors += Number(r.errors || 0);
+    return acc;
+  }, { calls: 0, tokens: 0, cost: 0, errors: 0 });
+  let html = '<div class="section-title">AI Cost (last 7d)</div>';
+  html += '<div class="stat-row">';
+  html += '<div class="health-card"><div class="svc">Calls</div><div class="ms">' + totals.calls + '</div></div>';
+  html += '<div class="health-card"><div class="svc">Tokens</div><div class="ms">' + totals.tokens.toLocaleString() + '</div></div>';
+  html += '<div class="health-card"><div class="svc">Cost</div><div class="ms">$' + (totals.cost / 100).toFixed(2) + '</div></div>';
+  html += '<div class="health-card"><div class="svc">Errors</div><div class="ms">' + totals.errors + '</div></div>';
+  html += '</div>';
+  html += '<div class="card" style="padding:0;overflow:hidden;">';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+  html += '<thead><tr style="background:#18181b;color:#D4A847;"><th style="padding:8px;text-align:left;">Tier</th><th style="padding:8px;text-align:left;">Model</th><th style="padding:8px;text-align:right;">Calls</th><th style="padding:8px;text-align:right;">Tokens</th><th style="padding:8px;text-align:right;">$</th><th style="padding:8px;text-align:right;">Avg ms</th></tr></thead>';
+  html += '<tbody>';
+  for (const r of rows) {
+    html += '<tr style="border-top:1px solid #27272a;">';
+    html += '<td style="padding:8px;">' + (r.tier || '') + '</td>';
+    html += '<td style="padding:8px;color:#a1a1aa;">' + (r.model || '') + '</td>';
+    html += '<td style="padding:8px;text-align:right;">' + r.calls + '</td>';
+    html += '<td style="padding:8px;text-align:right;">' + (Number(r.tokens_in || 0) + Number(r.tokens_out || 0)).toLocaleString() + '</td>';
+    html += '<td style="padding:8px;text-align:right;">$' + (Number(r.cost_cents || 0) / 100).toFixed(3) + '</td>';
+    html += '<td style="padding:8px;text-align:right;">' + (r.avg_latency_ms || 0) + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+// Inject panel placeholder after first dashboard render.
+const _origRender = render;
+render = function(data) {
+  _origRender(data);
+  const live = document.getElementById('liveData');
+  if (live && !document.getElementById('aiMetricsPanel')) {
+    const panel = document.createElement('div');
+    panel.id = 'aiMetricsPanel';
+    panel.style.marginTop = '16px';
+    live.appendChild(panel);
+    loadAiMetrics();
+  }
+};
+
 // Load on page open
 loadDashboard();
 </script>
