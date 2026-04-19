@@ -175,6 +175,21 @@
 const API_BASE = '';
 const API = API_BASE + '/api/agent';
 
+// Pick up ?key= from URL and persist for the session so the link can be bookmarked.
+(function bootstrapKey(){
+  try {
+    const q = new URLSearchParams(window.location.search);
+    const k = q.get('key');
+    if (k) sessionStorage.setItem('vtv_agent_key', k);
+  } catch (_) {}
+})();
+
+function getAuth() {
+  const jwt = localStorage.getItem('vtv_token') || '';
+  const key = sessionStorage.getItem('vtv_agent_key') || '';
+  return { jwt, key };
+}
+
 function toggleSection(id) {
   const body = document.getElementById(id);
   const toggle = document.getElementById(id + '-toggle');
@@ -189,11 +204,50 @@ function toggleSection(id) {
 }
 
 async function api(path) {
-  var _t = localStorage.getItem('vtv_token');
-  var _headers = _t ? {'Authorization': 'Bearer ' + _t} : {};
-  const r = await fetch(`${API}${path}`, { headers: _headers });
+  const { jwt, key } = getAuth();
+  const headers = {};
+  if (jwt) headers['Authorization'] = 'Bearer ' + jwt;
+  if (key) headers['x-api-key'] = key;
+  const sep = path.includes('?') ? '&' : '?';
+  const qs = key ? `${sep}key=${encodeURIComponent(key)}` : '';
+  const r = await fetch(`${API}${path}${qs}`, { headers });
+  if (r.status === 401) {
+    const body = await r.json().catch(() => ({}));
+    const err = new Error('401');
+    err.code = 401;
+    err.detail = body.error || 'Authentication required';
+    throw err;
+  }
   if (!r.ok) throw new Error(`${r.status}`);
   return r.json();
+}
+
+function renderAuthPrompt(detail) {
+  const el = document.getElementById('liveData');
+  const hasJwt = !!localStorage.getItem('vtv_token');
+  el.innerHTML = `
+    <div class="card" style="padding:20px;">
+      <p style="color:#ef4444;font-weight:bold;margin-bottom:8px;">401 — ${detail}</p>
+      <p style="color:#a1a1aa;font-size:12px;margin-bottom:14px;">
+        The agent dashboard requires either a logged-in member session or an admin API key.
+        ${hasJwt ? 'A JWT was found in local storage but the server rejected it (likely expired).' : 'No JWT found in local storage.'}
+      </p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="/member" style="background:#D4A847;color:#0a0a0a;padding:10px 14px;border-radius:6px;font-weight:bold;text-align:center;">Log in as member</a>
+        <button id="keyPromptBtn" style="background:#27272a;color:#e4e4e7;padding:10px 14px;border-radius:6px;border:1px solid #3f3f46;cursor:pointer;">Enter admin API key</button>
+      </div>
+      <p style="color:#52525b;font-size:11px;margin-top:12px;">
+        Tip: you can also open this dashboard with <code style="background:#18181b;padding:1px 4px;border-radius:3px;">?key=YOUR_KEY</code> in the URL and it will be remembered for this session.
+      </p>
+    </div>`;
+  const btn = document.getElementById('keyPromptBtn');
+  if (btn) btn.onclick = function() {
+    const v = prompt('Paste admin API key:');
+    if (v) {
+      sessionStorage.setItem('vtv_agent_key', v.trim());
+      loadDashboard();
+    }
+  };
 }
 
 async function loadDashboard() {
@@ -204,6 +258,10 @@ async function loadDashboard() {
     const data = await api('/dashboard');
     render(data);
   } catch (err) {
+    if (err.code === 401) {
+      renderAuthPrompt(err.detail || 'Authentication required');
+      return;
+    }
     el.innerHTML = `<div class="card"><p style="color:#ef4444;">Could not load live data: ${err.message}</p><p style="color:#71717a;font-size:11px;margin-top:6px;">The links above still work. Live stats require the API to be responding.</p></div>`;
   }
 }

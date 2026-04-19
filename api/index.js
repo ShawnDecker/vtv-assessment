@@ -7489,7 +7489,14 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
       const apiKey = req.headers['x-api-key'] || new URL('http://x' + req.url).searchParams.get('key') || '';
       const validKey = process.env.ADMIN_API_KEY || '';
       if (!jwtUser && !(validKey && apiKey === validKey)) {
-        return res.status(401).json({ error: 'Authentication required. Please log in or provide API key.' });
+        const reason = !validKey
+          ? 'Admin API key not configured on server; JWT session required.'
+          : (apiKey ? 'API key rejected.' : 'No JWT session and no API key provided.');
+        return res.status(401).json({
+          error: 'Authentication required',
+          detail: reason,
+          accepts: ['Authorization: Bearer <jwt>', 'x-api-key: <admin_key>', '?key=<admin_key>']
+        });
       }
     }
     // All /agent/* routes require API key EXCEPT tracking endpoints (embedded in emails)
