@@ -1775,12 +1775,34 @@ module.exports = async (req, res) => {
     }
 
     // GET /api/member?email=xxx — Member portal: profile, tier, assessments, teams
-    // Accepts JWT (preferred) or email param (fallback for pages that haven't migrated to JWT yet)
+    // Requires JWT (member) OR admin API key. Email param must match the JWT identity
+    // to prevent cross-account reads. Admin API key can query any email.
     if (req.method === 'GET' && url.startsWith('/member') && !url.startsWith('/member/portal')) {
       const params = new URL('http://x' + req.url).searchParams;
       const jwtUser = extractUser(req);
       const emailParam = (params.get('email') || '').toLowerCase().trim();
-      const email = (jwtUser?.email || emailParam || '').toLowerCase().trim();
+
+      const apiKey = req.headers['x-api-key'] || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      const isAdmin = validKey && apiKey === validKey;
+
+      if (!isAdmin) {
+        if (!jwtUser || !jwtUser.email) {
+          return res.status(401).json({
+            error: 'Authentication required',
+            detail: 'JWT session required. Log in via /member to obtain a token.'
+          });
+        }
+        const jwtEmail = String(jwtUser.email).toLowerCase().trim();
+        if (emailParam && emailParam !== jwtEmail) {
+          return res.status(403).json({
+            error: 'Forbidden',
+            detail: 'Cannot read member data for a different account.'
+          });
+        }
+      }
+
+      const email = (jwtUser?.email || (isAdmin ? emailParam : '') || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       const contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
