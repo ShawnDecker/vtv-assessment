@@ -37,7 +37,7 @@ The Value to Victory (VTV) platform is a comprehensive personal development and 
 
 ### 4. Coaching System
 - **Automated Emails:** 8-day personalized coaching sequence
-- **Cron Schedule:** Daily at 5:47 AM EST (coaching), 7:47 PM EST (accountability)
+- **Cron Schedule:** Daily — coaching at 5:47 AM EST (10:47 UTC), accountability at 7:47 PM EST (00:47 UTC next day). Vercel cron runs in UTC and does NOT observe DST, so during EDT (mid-March–early November) these fire at 6:47 AM / 8:47 PM wall-clock. To hold the EDT wall-clock time instead, shift the UTC schedule by one hour when DST begins.
 - **Adaptive:** Persona classification (fast_mover, standard, disengaged, high_performer)
 - **Tracking:** Open/click tracking pixels, engagement scoring
 

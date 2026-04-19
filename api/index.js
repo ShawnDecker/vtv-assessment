@@ -62,8 +62,15 @@ function checkRateLimit(ip, category = 'default') {
 }
 
 // ========== SECURITY: JWT Token Generation & Verification ==========
-const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_API_KEY;
-if (!JWT_SECRET) console.error('CRITICAL: JWT_SECRET not set — auth will fail');
+// JWT_SECRET and ADMIN_API_KEY must be distinct secrets. Previously JWT_SECRET
+// fell back to ADMIN_API_KEY, which meant any admin-key compromise also made
+// every JWT forgeable. Reject that coupling explicitly.
+const JWT_SECRET = process.env.JWT_SECRET || '';
+if (!JWT_SECRET) {
+  console.error('CRITICAL: JWT_SECRET not set — auth will fail');
+} else if (process.env.ADMIN_API_KEY && JWT_SECRET === process.env.ADMIN_API_KEY) {
+  console.error('CRITICAL: JWT_SECRET equals ADMIN_API_KEY — rotate one of them; admin-key compromise forges all JWTs');
+}
 const JWT_EXPIRY = 7 * 24 * 60 * 60; // 7 days in seconds
 
 function createJWT(payload) {
@@ -169,11 +176,18 @@ const ALLOWED_ORIGINS = [
   ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'] : []),
 ];
 
+// Preview deployments: only allow if explicitly opted in via env var.
+// Comma-separated exact origins in VERCEL_PREVIEW_ALLOWED_ORIGINS, e.g.:
+//   VERCEL_PREVIEW_ALLOWED_ORIGINS=https://vtv-assessment-pr-42.vercel.app
+// The previous regex allowed any vtv-assessment*.vercel.app, including any
+// preview deploy triggered from any branch — publicly reachable.
+const PREVIEW_ALLOWED = (process.env.VERCEL_PREVIEW_ALLOWED_ORIGINS || '')
+  .split(',').map(s => s.trim()).filter(Boolean);
+
 function getCorsOrigin(req) {
   const origin = req.headers.origin || '';
   if (ALLOWED_ORIGINS.includes(origin)) return origin;
-  // Allow Vercel preview deployments — only exact project subdomains
-  if (origin.endsWith('.vercel.app') && /^https:\/\/vtv-assessment[a-z0-9-]*\.vercel\.app$/.test(origin)) return origin;
+  if (PREVIEW_ALLOWED.includes(origin)) return origin;
   return ALLOWED_ORIGINS[0]; // Default to main domain
 }
 
@@ -1262,9 +1276,16 @@ module.exports = async (req, res) => {
   const sql = neon(process.env.DATABASE_URL);
   const url = req.url.replace(/^\/api/, '');
 
-  // Determine rate limit category
+  // Determine rate limit category.
+  // Account-enumeration vectors (has-pin, check-email) go in 'auth' bucket so
+  // they inherit the 10 req/min cap instead of the 60 req/min default.
   const rateCategory = url.startsWith('/admin') ? 'admin'
-    : (url.includes('/verify-pin') || url.includes('/set-pin') || url.includes('/pin-login') || url.includes('/forgot-pin') || url.includes('/reset-pin')) ? 'auth'
+    : (
+        url.includes('/verify-pin') || url.includes('/set-pin') ||
+        url.includes('/pin-login') || url.includes('/forgot-pin') ||
+        url.includes('/reset-pin') || url.includes('/has-pin') ||
+        url.includes('/check-email')
+      ) ? 'auth'
     : url === '/assessment' ? 'assessment'
     : 'default';
   const rateCheck = checkRateLimit(clientIP, rateCategory);
@@ -3706,11 +3727,32 @@ Don't guess. Run the system.
           WHERE c.hubspot_synced IS NULL OR c.hubspot_synced = 0
           ORDER BY c.created_at DESC LIMIT ${limit}`;
 
-      let synced = 0, failed = 0;
+      // Load privacy_preferences for this batch so we can gate pillar-derived
+      // fields. Baseline CRM fields (email, name, phone, tier) are always OK.
+      // Assessment-derived fields (master_score, score_range, weakest_pillar)
+      // require the relevant share_* flag to be true.
+      const contactIds = contacts.map(c => c.id);
+      let prefsByContact = {};
+      try {
+        const prefRows = contactIds.length
+          ? await sql`SELECT contact_id, share_time, share_people, share_influence,
+                       share_numbers, share_knowledge, share_prescriptions
+                       FROM privacy_preferences WHERE contact_id = ANY(${contactIds})`
+          : [];
+        for (const p of prefRows) prefsByContact[p.contact_id] = p;
+      } catch (e) { /* privacy_preferences table may not exist yet — default to most-restrictive */ }
+
+      let synced = 0, failed = 0, fieldsStripped = 0;
       const errors = [];
 
       for (const contact of contacts) {
         try {
+          const prefs = prefsByContact[contact.id] || {};
+          const canShareAggregate = !!(prefs.share_time && prefs.share_people &&
+            prefs.share_influence && prefs.share_numbers && prefs.share_knowledge);
+          const weakestKey = (contact.weakest_pillar || '').toLowerCase();
+          const canShareWeakest = !!prefs[`share_${weakestKey}`];
+
           // Search HubSpot for existing contact by email
           const searchRes = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
             method: 'POST',
@@ -3726,13 +3768,21 @@ Don't guess. Run the system.
             firstname: contact.first_name || '',
             lastname: contact.last_name || '',
             phone: contact.phone || '',
-            vtv_master_score: contact.latest_score ? String(contact.latest_score) : '',
-            vtv_score_tier: contact.latest_tier || '',
-            vtv_weakest_pillar: contact.weakest_pillar || '',
             vtv_membership_tier: contact.membership_tier || 'free',
             vtv_assessment_count: String(contact.assessment_count || 0),
             vtv_last_assessment: contact.last_assessment_date || '',
           };
+          if (canShareAggregate && contact.latest_score) {
+            properties.vtv_master_score = String(contact.latest_score);
+            properties.vtv_score_tier = contact.latest_tier || '';
+          } else if (contact.latest_score) {
+            fieldsStripped++;
+          }
+          if (canShareWeakest && contact.weakest_pillar) {
+            properties.vtv_weakest_pillar = contact.weakest_pillar;
+          } else if (contact.weakest_pillar) {
+            fieldsStripped++;
+          }
 
           if (searchData.total > 0) {
             // Update existing contact
@@ -3762,10 +3812,10 @@ Don't guess. Run the system.
 
       // Log sync event to analytics
       try {
-        await sql`INSERT INTO analytics_events (event_type, metadata) VALUES ('hubspot_sync', ${JSON.stringify({ synced, failed, total: contacts.length })}::jsonb)`;
+        await sql`INSERT INTO analytics_events (event_type, metadata) VALUES ('hubspot_sync', ${JSON.stringify({ synced, failed, total: contacts.length, fieldsStripped })}::jsonb)`;
       } catch (e) { /* analytics table may not exist yet */ }
 
-      return res.json({ synced, failed, total: contacts.length, errors: errors.slice(0, 10) });
+      return res.json({ synced, failed, total: contacts.length, fieldsStripped, errors: errors.slice(0, 10) });
     }
 
     // GET /api/admin/question-bank
