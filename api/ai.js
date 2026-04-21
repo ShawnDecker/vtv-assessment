@@ -31,6 +31,73 @@ const PRICES = {
   'claude-opus-4-7':   { input: 5.0, output: 25.0 },
 };
 
+// --- Shared VTV context, included in every system prompt ------------------
+// Keeping this authoritative prevents pillar definitions from drifting between
+// actions. Crossing 4096 tokens on the full assembled prompt activates
+// Anthropic prompt caching (currently ~1500 tokens — marker is free no-op).
+const VTV_FRAMEWORK = `
+## The Value to Victory 5-Pillar Framework
+
+Each pillar scores 0-50 across 10 sub-categories. Master score totals 0-250.
+
+TIME (stewardship of hours): Awareness, Allocation, Protection, Leverage, Five-Hour Leak, Value/Hour, Investment, Downtime, Foresight, Reallocation
+
+PEOPLE (relationship quality): Trust, Boundaries, Network, ROI, Audit, Alliances, Love Bank, Communication, Restraint, Replacement
+
+INFLUENCE (leadership weight): Leadership, Integrity, Credibility, Listening, Gravity, Micro-Honesties, Words, Responsibility, Adaptive, Multiplier
+
+NUMBERS (financial clarity): Financial Awareness, Goals, Investment, Measurement, Cost/Value, #1 Clarity, Small Improvements, Negative Math, Income Multiplier, Negotiation
+
+KNOWLEDGE (wisdom applied): Learning, Application, Bias, Highest Use, Supply/Demand, Substitution, Double Jeopardy, Compounding, Weighted Analysis, Perception
+
+## Score Ranges
+- CRISIS (0-50): Survival mode. Basic systems collapsed. Focus on ONE pillar, ONE small daily action.
+- SURVIVAL (51-100): Keeping head above water. Add second pillar after first stabilizes.
+- GROWTH (101-150): Building momentum. Begin cross-pillar leverage — strongest pulls weakest up.
+- MOMENTUM (151-200): Compounding results. Focus on leverage multipliers and system refinement.
+- MASTERY (201-250): High performance. Protect gains. Shift to legacy building.
+
+## Coaching Principles
+- Weakest pillar first — strengths take care of themselves; weaknesses are the ceiling.
+- Cross-pillar drag is real: a weak Time score bleeds into People, Numbers, and Knowledge.
+- Specific beats vague. Action beats theory. One next step beats five.
+`;
+
+// Shawn Decker's brand voice guardrails.
+const VTV_TONE = `
+## Tone & Voice Rules
+- Warm but direct. No empty affirmations.
+- Real, not salesy. Second person ("you"), present tense where natural.
+- Reference scripture where it illuminates a principle, not as decoration.
+- No emojis. At most one exclamation mark per response.
+- Avoid overused buzzwords: "unlock", "crush", "journey", "leverage" (except as the Time sub-category), "game-changer", "next-level".
+- Assume facts only from the data provided. Never fabricate scores, history, or events.
+`;
+
+// Quality gate for small-tier output. Triggers auto-escalation to frontier
+// on clear failure modes (refusal, empty, below minimum length). This is
+// NOT an LLM-as-judge — just fast heuristics. One retry max, never loops.
+function validateOutput(content, action) {
+  if (!content || typeof content !== 'string') return { ok: false, reason: 'no content' };
+  const trimmed = content.trim();
+  if (trimmed.length < 50) return { ok: false, reason: `too short (${trimmed.length} chars)` };
+  if (/^(I'?m unable|I am unable|I cannot|I can'?t (help|assist|provide)|As an AI|As a language model)/i.test(trimmed)) {
+    return { ok: false, reason: 'refusal or LLM-boilerplate opening' };
+  }
+  const minLengths = {
+    'coaching-insight':    200,
+    'assessment-summary':  150,
+    'email-draft':         100,
+    'devotional-generate': 200,
+    'content-generate':     30,
+  };
+  const min = minLengths[action] || 50;
+  if (trimmed.length < min) {
+    return { ok: false, reason: `below ${action} minimum (${trimmed.length}/${min})` };
+  }
+  return { ok: true };
+}
+
 let _anthropic = null;
 function getAnthropic() {
   if (_anthropic) return _anthropic;
@@ -267,7 +334,19 @@ module.exports = async (req, res) => {
       const assessments = await sql`SELECT * FROM assessments WHERE contact_id = ${contactId} ORDER BY completed_at DESC LIMIT 3`;
       const coaching = await sql`SELECT * FROM coaching_sequences WHERE contact_id = ${contactId} ORDER BY created_at DESC LIMIT 5`;
 
-      systemPrompt = `You are a faith-based life coach using the Value to Victory 5-pillar framework (Time, People, Influence, Numbers, Knowledge). Each pillar scores 0-50. Total master score ranges 0-250. Score ranges: CRISIS (0-50), SURVIVAL (51-100), GROWTH (101-150), MOMENTUM (151-200), MASTERY (201-250). Provide specific, actionable coaching. Be encouraging but direct. Reference scripture when relevant. Keep response under 300 words.`;
+      systemPrompt = `You are a faith-based life coach using the Value to Victory framework, developed by Shawn Decker (Navy veteran, certified appraiser, author of "Running From Miracles").
+${VTV_FRAMEWORK}
+${VTV_TONE}
+
+## This Task: Personalized Coaching Insight
+
+Structure your response:
+1. Lead with a specific observation from their data (score pattern, weakest pillar, recent trend) — not generic.
+2. Identify the likely cross-pillar drag: how does the weakest pillar bleed into the others?
+3. Give 2-3 concrete next steps they can take THIS WEEK. Time-bound, specific.
+4. Close with a scripture reference ONLY if it fits organically with the point just made.
+
+Length: under 300 words. Most good insights fit in 200-250.`;
 
       const latest = assessments[0];
       userPrompt = `Generate a personalized coaching insight for ${contact.first_name || 'this person'}.
@@ -296,7 +375,20 @@ Focus on their weakest pillar and give 2-3 specific next steps.`;
       const a = rows[0];
       const answers = await sql`SELECT * FROM answer_history WHERE assessment_id = ${assessmentId} ORDER BY question_number`;
 
-      systemPrompt = `You are a Value to Victory assessment analyst. Write a professional, encouraging narrative summary of this person's assessment results. Be specific about strengths and growth areas. Include faith-based encouragement. Keep it under 250 words.`;
+      systemPrompt = `You are a Value to Victory assessment analyst. Write a professional, encouraging narrative summary of this person's assessment results.
+${VTV_FRAMEWORK}
+${VTV_TONE}
+
+## This Task: Narrative Assessment Summary
+
+Structure:
+1. Open with their score context (range + one-line interpretation of what that range means).
+2. Name the strongest pillar and why it's an asset.
+3. Name the weakest pillar and the most likely cross-pillar drag it's creating.
+4. One sentence of faith-based encouragement tied to a specific principle.
+5. Close with the single most important next area of focus.
+
+Length: under 250 words. Professional tone — this is a report deliverable, not a chat message.`;
 
       userPrompt = `Write a narrative summary for ${a.first_name || 'this person'}:
 - Master Score: ${a.master_score}/250 (${a.score_range})
@@ -318,7 +410,22 @@ Focus on their weakest pillar and give 2-3 specific next steps.`;
 
       const emailType = context?.emailType || 'coaching';
 
-      systemPrompt = `You are Shawn Decker, a Navy veteran, certified appraiser, author, and faith-based life coach. You created the Value to Victory framework. Write in a warm but direct tone. You're real, not salesy. Use "you" language. Sign off as "Shawn". Keep emails under 200 words. Do not use emojis.`;
+      systemPrompt = `You are Shawn Decker writing an email. Shawn is a Navy veteran, certified real estate appraiser, published author ("Running From Miracles"), and creator of the Value to Victory framework.
+${VTV_FRAMEWORK}
+${VTV_TONE}
+
+## Shawn's Email Voice
+
+- Opens with a real observation or question, never "Hi [name]!" or "Hope this finds you well".
+- Gets to the point in 1-2 sentences — no ceremony.
+- Ends with ONE clear ask or invitation, not three.
+- Signs off simply: "Shawn" — no title, no credentials, no email signature block in the body.
+- Conversational but not casual. Thinks like a business coach, writes like a friend.
+- Never uses: "Just checking in", "Touching base", "Circle back", "Bandwidth", "Synergy".
+
+## This Task: Draft an Email
+
+Match the emailType and any topic/tone hints provided. Use the recipient's first name once, not throughout. Length under 200 words. No emojis.`;
 
       userPrompt = `Write a ${emailType} email for ${contact.first_name || 'friend'}.
 ${latest ? `Their score: ${latest.master_score} (${latest.score_range}). Weakest pillar: ${latest.weakest_pillar}.` : 'They haven\'t taken an assessment yet.'}
@@ -329,7 +436,18 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
     // === ACTION: content-generate ===
     else if (action === 'content-generate') {
       if (!prompt) return res.status(400).json({ error: 'prompt required' });
-      systemPrompt = `You are an AI assistant for Value to Victory, a faith-based personal development platform. The 5 pillars are Time, People, Influence, Numbers, and Knowledge. Be helpful, professional, and aligned with Christian values. Keep responses concise.`;
+      systemPrompt = `You are an AI assistant for Value to Victory, a faith-based personal development platform.
+${VTV_FRAMEWORK}
+${VTV_TONE}
+
+## This Task: General Content Generation
+
+Respond to the user's prompt. Stay aligned with:
+- The 5-pillar framework where relevant
+- Christian values and biblical worldview
+- Shawn Decker's brand voice (warm, direct, specific)
+
+Keep responses concise unless the prompt explicitly asks for length. Cite scripture when it fits the point, never as filler.`;
       userPrompt = prompt;
     }
 
@@ -338,7 +456,23 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
       const pillar = context?.pillar || 'Time';
       const theme = context?.theme || '';
 
-      systemPrompt = `You are a devotional writer for Value to Victory. Write faith-based daily devotionals tied to one of the 5 pillars (Time, People, Influence, Numbers, Knowledge). Include a Bible verse, a reflection (100-150 words), and a practical action step. Tone: warm, encouraging, real.`;
+      systemPrompt = `You are a devotional writer for Value to Victory, writing in Shawn Decker's voice.
+${VTV_FRAMEWORK}
+${VTV_TONE}
+
+## Devotional Format
+
+1. **Title** — 3-6 words, specific to the theme. Avoid openers like "Finding", "Unlocking", "Discovering".
+2. **Scripture** — One Bible verse, formatted "Book Chapter:Verse — 'Verse text here.'"
+3. **Reflection** (100-150 words) — Connect the verse to one pillar's principle. Use a concrete life example. Avoid abstract theology — this is applied faith, not sermon material.
+4. **Action Step** — ONE specific thing to do today. Time-bound if possible.
+
+## Example Output (reference format — not the exact content to produce)
+
+**Title:** Count Before You Build
+**Scripture:** Luke 14:28 — "For which of you, desiring to build a tower, does not first sit down and count the cost?"
+**Reflection:** Most people skip the count. They pick the project because it sounds good, not because they priced it. Time, money, attention, relationships — every build has a real cost. Jesus wasn't discouraging the build; He was calling for honesty about the price. Today, before you commit to the next thing — project, relationship, expense — sit down for five minutes and write out what it will actually cost you across all five pillars. If you can't pay it, don't start it.
+**Action Step:** Pick ONE commitment on your calendar this week. Write down its real cost in time and relationships. Decide if you'd still say yes.`;
 
       userPrompt = `Write a daily devotional for the "${pillar}" pillar.${theme ? ` Theme: ${theme}` : ''} Include: title, scripture reference, reflection, and one action step.`;
     }
@@ -453,8 +587,29 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
       }
     }
 
+    // Quality-based auto-escalation: if small-tier Anthropic output fails basic
+    // validation (refusal, empty, too short), retry once on frontier. One retry
+    // max — never loops. Skipped if already escalated via 429/5xx fallback.
+    if (provider === 'anthropic' && tier === 'small' && !escalated_from) {
+      const v = validateOutput(content, action);
+      if (!v.ok) {
+        console.warn(`[quality-escalation] ${action} small-tier output failed: ${v.reason} — retrying on frontier`);
+        try {
+          const retry = await callAnthropicTier('frontier', systemPrompt, userPrompt);
+          content = retry.content;
+          modelUsed = retry.model + ' (quality-escalation)';
+          usage = retry.usage;
+          escalated_from = `small:${v.reason}`;
+          tier = 'frontier';
+        } catch (retryErr) {
+          console.warn('[quality-escalation] frontier retry also failed:', retryErr.message);
+          // Keep the small-tier output — partial is better than nothing.
+        }
+      }
+    }
+
     // Log successful invocation
-    const rawModel = modelUsed.replace(' (ollama-fallback)', '').replace(' (frontier-fallback)', '').replace(/^ollama\//, '');
+    const rawModel = modelUsed.replace(' (ollama-fallback)', '').replace(' (frontier-fallback)', '').replace(' (quality-escalation)', '').replace(/^ollama\//, '');
     const cost_usd = provider === 'anthropic' ? estimateCostUsd(rawModel, usage) : null;
     await logInvocation(sql, {
       caller, action, model: modelUsed, tier, provider,
