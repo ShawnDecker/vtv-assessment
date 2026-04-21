@@ -1096,24 +1096,73 @@ Write down your answers to the 3 questions above. Say them out loud. Share them 
       break;
 
     default:
-      // Days 21+ — rotating weekly content
-      const weekNum = Math.floor((day - 19) / 1) + 5; // Week 5, 6, 7...
-      const rotatingTopics = [
-        { subj: `Are you still avoiding ${weakestSub}?`, theme: 'sub-category focus',
-          content: `The sub-category that was pulling your score down on Day 1 was ${weakestSub}. That's still where the biggest leverage is.\n\nThis week's focus: One deliberate action per day specifically targeting ${weakestSub}. Not the whole pillar. Just this one sub-category. Precision beats effort.` },
-        { subj: `Your ${strongest} wants to thank your ${weakest}`, theme: 'cross-pillar',
+      // Days 21+ — rotating weekly content. 20 topics total = 5 months of unique content.
+      const weekNum = Math.floor((day - 19) / 1) + 5;
+
+      // Pillar-specific deep dives for each weakest pillar
+      const pillarDeepDives = {
+        Time: [
+          { subj: `Your calendar is your confession`, content: `Your calendar shows what you actually believe about what matters. Pull up last week. Look at every hour. Did those hours reflect what you say your priorities are? This isn't about productivity. It's about integrity between your words and your time.` },
+          { subj: `The Sunday Reset — 20 minutes that changes the week`, content: `Every Sunday night, spend 20 minutes: (1) Review last week honestly — what ate your time? (2) Block next week's 90-minute ${weakest} sessions FIRST. (3) Everything else fills in around them. That's how high performers protect what matters.` },
+          { subj: `Delegation isn't weakness — avoidance is`, content: `You're doing tasks right now that someone else could do at 70% quality for 20% of what your hour is worth. Calculate your real hourly value. Then ask: what am I doing below that rate? That's where delegation starts.` },
+          { subj: `The energy audit — time tracked wrong`, content: `Time tracking misses the point. It's not when you worked — it's when you had energy. Track YOUR 3 peak hours this week. Protect those for ${weakestSub} work. The other hours? Email, meetings, logistics. Peak hours = needle movers.` },
+        ],
+        People: [
+          { subj: `The Five You Surround Yourself With`, content: `Jim Rohn said you become the average of the 5 people you spend the most time with. List yours. Be honest. Are they pulling you up, holding steady, or pulling down? You don't have to cut anyone off — but you DO get to choose who gets your best hours.` },
+          { subj: `The apology you've been avoiding`, content: `There's someone you need to make it right with. You know exactly who. Not because you did something terrible — but because something's unfinished. Your ${weakest} score reflects this. Handle it this week. One conversation. No defense. Just ownership.` },
+          { subj: `Your inner circle audit`, content: `List every person who's had access to your phone, time, or trust in the last 30 days. Rank them: Giver (pours in), Receiver (takes but gives when able), Exchanger (balanced), Taker (drains). Your ${weakestSub} score is pointing at the Takers. You know who they are.` },
+          { subj: `The hard conversation you keep rehearsing`, content: `You've been practicing the conversation in your head for weeks. Maybe months. Your brain runs it on loop because it's unfinished. This week, have it. Not perfectly. Not with a script. Just have it. The relief of the DONE version is worth every ounce of the dread.` },
+        ],
+        Influence: [
+          { subj: `Influence is deposited, not declared`, content: `You don't tell people you have influence. You show it through the thousand tiny ways you show up when no one's watching. Your ${weakest} score is saying the deposits have slowed. Make one deposit this week with no expectation of return.` },
+          { subj: `The credibility gap`, content: `Credibility = what people expect from you, met consistently over time. Where's the gap between what you say and what they get? Close that gap in ONE area this week. Small promises, kept. That's how trust compounds.` },
+          { subj: `Your voice is needed more than you think`, content: `Somewhere this week, you'll hold back an opinion that needed to be said. That silence costs you influence. Not because you need to be loud — but because withheld truth erodes presence. Speak once this week when it would've been easier to stay quiet.` },
+          { subj: `The leader you're avoiding becoming`, content: `Leadership isn't a title. It's a pattern of taking responsibility before anyone asks you to. Your ${weakestSub} score is pointing at the responsibility you're still dodging. What's one thing you could own this week that you've been waiting for someone else to handle?` },
+        ],
+        Numbers: [
+          { subj: `Open the statement you've been avoiding`, content: `There's a financial document, statement, or number you haven't looked at in over 30 days. You know which one. This week, open it. Not to fix it yet — just to look. Awareness is the first 80% of financial change.` },
+          { subj: `Your real hourly rate`, content: `Take your total income last month. Divide by actual hours worked (including the admin, commute, email, prep). That's your real hourly rate. It's probably lower than you think. Now ask: what activities drag that number down? That's where Numbers work starts.` },
+          { subj: `The leak you know about`, content: `There's one subscription, one habit, one recurring charge you KNOW is wasteful. You haven't cut it because it feels small. Small times 12 months is not small. This week, cut it. Put the money into your highest-value account.` },
+          { subj: `The conversation about money`, content: `If you have a partner, the money conversation is probably overdue. Not the budget — the vision. What would you do with 2x your current income? What would you stop doing? Talk about that. The tactics follow the vision.` },
+        ],
+        Knowledge: [
+          { subj: `Learning vs consuming`, content: `You consume a lot of content. But what did you APPLY in the last 7 days from something you learned? Consumption without application is entertainment. This week: one book chapter, one podcast, one article — and ONE implementation within 48 hours.` },
+          { subj: `The book you keep not finishing`, content: `There's a book on your shelf or Kindle you started months ago. You know which one. It's not that you're too busy. It's that finishing it would obligate you to change. This week, finish it OR give it away. Indecision is the drain.` },
+          { subj: `Teaching forces mastery`, content: `You don't know something until you can teach it. Pick one thing you've learned recently. Teach it to someone — a kid, a coworker, a friend. Even if they didn't ask. The act of explaining exposes every gap in your understanding. That's where real learning begins.` },
+          { subj: `The mentor you haven't asked`, content: `There's someone you admire who would probably answer 3 questions via email if you wrote thoughtfully. You haven't asked because you're worried about imposing. This week, write the email. Short. Specific. No pitch. Just 3 questions. The worst they can do is not respond.` },
+        ],
+      };
+
+      // Universal content (applies to anyone regardless of weakest pillar)
+      const universalTopics = [
+        { subj: `Your ${strongest} wants to thank your ${weakest}`,
           content: `Remember the cross-pillar effect? ${crossHeadline}\n\nEvery point you've added to ${weakest} has unlocked potential in ${strongest}. Even if you can't see it yet in a score, it's happening in your behavior. The connections are real.` },
-        { subj: `The 90-day mark is approaching — are you ready?`, theme: '90-day milestone',
+        { subj: `The 90-day mark is approaching`,
           content: `The 90/90/1 Rule isn't a suggestion. It's a commitment. 90 minutes a day, 90 days, 1 focus: ${weakest}.\n\nIf you started when you took the assessment, you're getting close. If you started late, that's fine — the clock starts when you decide it starts. What matters is consistency, not perfection.` },
-        { subj: `What would a ${masterScore + 20} version of you do today?`, theme: 'future self',
+        { subj: `What would a ${masterScore + 20} version of you do today?`,
           content: `Your Master Score is ${masterScore}. Imagine the version of you at ${masterScore + 20}. That person has a ${weakest} score of ${targetScore} or higher.\n\nWhat does that person's morning look like? How do they handle the thing you're avoiding? What decisions do they make that you haven't made yet?\n\nThat's not a fantasy. That's a blueprint. Close the gap.` },
-        { subj: `Monthly retake reminder — let's see the real numbers`, theme: 'retake prompt',
-          content: `It's time to retake the assessment. Not because I told you to — but because the data doesn't lie and you need the feedback.\n\nYour original scores:\n• Master: ${masterScore} (${scoreRange})\n• ${weakest}: ${weakestScore}/50\n• ${strongest}: ${strongestScore}/50\n\nRetake now and compare: ${retakeUrl}\n\nIf the score went up — the system works. If it didn't — the system works, you just need to run it more consistently.` },
+        { subj: `Monthly retake reminder`,
+          content: `Time to retake the assessment. Not because I said so — but because the data doesn't lie and you need the feedback.\n\nYour original scores:\n• Master: ${masterScore} (${scoreRange})\n• ${weakest}: ${weakestScore}/50\n• ${strongest}: ${strongestScore}/50\n\nRetake now and compare: ${retakeUrl}\n\nIf the score went up — the system works. If it didn't — the system works, you just need to run it more consistently.` },
+        { subj: `The growth window math (refresher)`,
+          content: `You have 4-5 hours of discretionary time per day. Not 8. That's your growth window. This week's question: are you still giving at least 90 minutes of that window to ${weakest} work? If not, today is the day you restart.` },
+        { subj: `The next level is decided this week`,
+          content: `Your assessment score moves in two directions: up when you're consistent, down when you drift. There's no neutral. This week alone has 5 decisions that will determine the direction. Choose the next-level decision each time, even when it's harder.` },
+        { subj: `Who are you becoming?`,
+          content: `You're 6+ weeks in. The person you are today is not the same as the person who took the original assessment. Identity shifts slow. Scores shift faster. But they point the same direction — up. Who are you becoming? Not what are you achieving. Who are you BECOMING.` },
+        { subj: `The community check-in`,
+          content: `Who else is running this system with you? If no one — that's your week's work. Find one person to share your ${weakest} goal with. Accountability isn't weakness; it's force multiplication. The Value to Victory group is there if you need a starting point.` },
       ];
-      const topicIndex = (day - 21) % rotatingTopics.length;
-      const topic = rotatingTopics[Math.max(0, topicIndex)];
+
+      // Combine: pillar deep dives + universal topics = 12-13 unique topics per pillar
+      const allTopics = [
+        ...(pillarDeepDives[weakest] || []),
+        ...universalTopics,
+      ];
+
+      const topicIndex = (day - 21) % allTopics.length;
+      const topic = allTopics[Math.max(0, topicIndex)];
       subject = topic.subj;
-      body = `${firstName},\n\nWeek ${weekNum} check-in.\n\n${topic.content}\n\nYOUR MOVE THIS WEEK:\nOne action. One commitment. One thing you can point to on Friday and say "I did that for my ${weakest}."\n\nI'm still in your corner.\n\n— Shawn`;
+      body = `${firstName},\n\nWeek ${weekNum} check-in. Day ${day} of your journey.\n\n${topic.content}\n\nYOUR MOVE THIS WEEK:\nOne action. One commitment. One thing you can point to on Friday and say "I did that for my ${weakest}."\n\nI'm still in your corner.\n\n— Shawn`;
   }
 
   // Build HTML version with dark/gold styling matching existing emails
@@ -3536,6 +3585,266 @@ Don't guess. Run the system.
         totalContacts: Number(totalC[0]?.count || 0),
         totalAssessments: Number(totalA[0]?.count || 0),
       });
+    }
+
+    // GET /api/action-plan/{assessmentId} — Generate personalized 30-day action plan
+    // Returns a day-by-day action plan tailored to user's weakest pillar + sub-category.
+    // This is what the $1.99 Action Plan Report unlocks (previously just 3 generic steps).
+    if (req.method === 'GET' && url.match(/^\/action-plan\/\d+$/)) {
+      const assessmentId = parseInt(url.split('/action-plan/')[1]);
+      try {
+        const aRows = await sql`SELECT a.*, c.first_name, c.last_name, c.email
+          FROM assessments a JOIN contacts c ON a.contact_id = c.id
+          WHERE a.id = ${assessmentId} LIMIT 1`;
+        if (aRows.length === 0) return res.status(404).json({ error: 'Assessment not found' });
+        const a = aRows[0];
+        const prescription = typeof a.prescription === 'string' ? JSON.parse(a.prescription) : (a.prescription || {});
+
+        const weakest = a.weakest_pillar || 'Time';
+        const weakestSub = prescription.weakestSubCategory || `${weakest} Awareness`;
+
+        // 30-day pillar-specific action tracks — 4-week progression
+        const actionLibrary = {
+          Time: {
+            week1: [
+              { day: 1, title: 'Run the Time Audit', steps: ['Track every hour for 24 hours. No rounding. No guessing.', 'Use the 4-column method: Work / Obligations / Growth / Sleep.', 'At day end, total each column. Write down the actual growth window hours.'] },
+              { day: 2, title: 'Find your Five-Hour Leak', steps: ['Review yesterday\'s audit. Circle activities that gave no return.', 'Total the wasted hours. That\'s your leak.', 'Pick ONE leak source to eliminate this week.'] },
+              { day: 3, title: 'Protect peak hours', steps: ['Identify your 3 highest-energy hours (usually morning).', 'Block them on tomorrow\'s calendar for ${weakest} work.', 'Tell one person they are non-negotiable.'] },
+              { day: 4, title: '10-minute sprint', steps: ['Set a timer for 10 minutes.', 'Work on ${weakestSub} with zero distractions.', '2-minute rest. Repeat once. Total: 22 minutes that changes your day.'] },
+              { day: 5, title: 'Delegation test', steps: ['List everything you did this week at below your hourly rate.', 'Pick one task to delegate or eliminate next week.', 'Cost of doing it yourself vs. cost of giving it up — choose freedom.'] },
+              { day: 6, title: '90-minute block', steps: ['Schedule one uninterrupted 90-minute session tomorrow.', 'Phone in another room. Door closed.', 'Work only on ${weakestSub} advancement.'] },
+              { day: 7, title: 'Week 1 review', steps: ['Look at the time you reclaimed. Total the hours.', 'What worked? What didn\'t? Write it down.', 'Commit to week 2 with specific calendar blocks.'] },
+            ],
+            week2: [
+              { day: 8, title: 'Morning priority lock', steps: ['Before checking phone, write down the ONE thing that must move today.', 'Block 60-90 min for it before any other task.', 'Don\'t break the streak.'] },
+              { day: 9, title: 'Energy mapping', steps: ['Rate your energy hourly today (1-5).', 'Tomorrow, align ${weakest} work with your high-energy slots.', 'Low-energy hours: email, admin, rest.'] },
+              { day: 10, title: 'The No list', steps: ['List 5 commitments you said yes to but shouldn\'t have this month.', 'Pick one to renegotiate or exit this week.', 'Practice: "I don\'t have capacity for that right now."'] },
+              { day: 11, title: 'Systematize', steps: ['Identify one recurring task you do weekly.', 'Document the steps in 5 minutes.', 'Next time, the doc runs you — not the other way around.'] },
+              { day: 12, title: 'Expand the 90', steps: ['If you\'ve been doing 90-minute blocks, add 15 minutes today.', 'If you haven\'t started, do 30 minutes. Something over nothing.', 'Consistency scales — intensity breaks.'] },
+              { day: 13, title: 'Friday audit', steps: ['Review this week\'s calendar honestly.', 'Which blocks did you protect? Which did you abandon?', 'Replace one broken block with a firmer boundary next week.'] },
+              { day: 14, title: 'Sabbath rest', steps: ['Do zero ${weakest} work today.', 'Sabbath is not laziness — it\'s intentional recovery.', 'Strong systems need rest. This is part of the plan.'] },
+            ],
+            week3: [
+              { day: 15, title: 'Retake check-in', steps: ['Retake the quick assessment.', 'Compare your Time pillar score vs. Day 1.', 'Any shift — even 1 point — is data.'] },
+              { day: 16, title: 'Automate one process', steps: ['Pick one task you do weekly.', 'Research: can software, a template, or delegation cut the time 50%?', 'Implement today. Reclaim those hours forever.'] },
+              { day: 17, title: 'The time donation', steps: ['Identify a high-leverage person in your life.', 'Gift them 30 minutes today — no agenda, no ask.', 'Relational capital compounds faster than productivity.'] },
+              { day: 18, title: 'Calendar stress test', steps: ['Look at next week\'s calendar.', 'Where will things break? What will steal your blocks?', 'Pre-fix those conflicts NOW, not when they happen.'] },
+              { day: 19, title: 'Saying goodbye to a leak', steps: ['Choose one ongoing commitment that\'s not bearing fruit.', 'Write the exit email / draft the conversation.', 'Send it this week. Mercy beats martyrdom.'] },
+              { day: 20, title: 'Systems audit', steps: ['List your 3 most-used tools/apps.', 'Which one is costing you more time than it saves?', 'Replace or remove it this weekend.'] },
+              { day: 21, title: 'Week 3 celebration', steps: ['Notice what\'s different than Day 1.', 'Write it down. Even if it feels small.', 'Tell one person what\'s shifting.'] },
+            ],
+            week4: [
+              { day: 22, title: 'Peak performance stack', steps: ['Identify what fueled your BEST day this month.', 'Rebuild the conditions tomorrow: same sleep, same energy, same hour.', 'Make it your default, not your exception.'] },
+              { day: 23, title: 'The 10% cut', steps: ['Look at one category of time spent (meetings, social, email).', 'Cut 10% from it this week. Just 10%.', 'Move those hours to ${weakestSub} work.'] },
+              { day: 24, title: 'Future self interview', steps: ['Write 3 questions a more-disciplined future you would ask today\'s you.', 'Answer honestly.', 'Let the answers shape tomorrow.'] },
+              { day: 25, title: 'Teach someone', steps: ['Share one time-protection principle with someone who asks.', 'Teaching exposes your own gaps — and cements your mastery.', 'Be the pattern you want around you.'] },
+              { day: 26, title: 'Margin check', steps: ['How much margin (unscheduled time) do you have this week?', 'If under 10%, something breaks soon.', 'Protect or create margin — it\'s where growth happens.'] },
+              { day: 27, title: 'Month recap', steps: ['Write down the 3 biggest time shifts you made this month.', 'Name one that saved you more than 5 hours.', 'Double down on that next month.'] },
+              { day: 28, title: 'Re-assessment prep', steps: ['Take the extensive P.I.N.K. assessment tomorrow.', 'Don\'t check against old scores until after you finish.', 'Honest answers = honest data.'] },
+              { day: 29, title: 'Full assessment retake', steps: ['Complete the full extensive assessment at valuetovictory.com.', 'Compare to your original scores.', 'Note where ${weakest} moved. That\'s what this month built.'] },
+              { day: 30, title: 'Next 30 days plan', steps: ['Based on your new scores, write 3 goals for next month.', 'Share them with one accountability person.', 'The system works — you just need to keep running it.'] },
+            ],
+          },
+          People: {
+            week1: [
+              { day: 1, title: 'People Audit', steps: ['List your 15-20 most-invested relationships.', 'Rank each: Giver / Receiver / Exchanger / Taker.', 'Note which ones drain your energy and which fuel you.'] },
+              { day: 2, title: 'The Forgotten Five', steps: ['Think of 5 people you\'ve lost touch with that matter.', 'Send a simple "thinking of you" text to one today. No agenda.', 'Reconnection is relational wealth.'] },
+              { day: 3, title: 'Love Bank deposit', steps: ['Do one act of service for someone close WITHOUT being asked.', 'Don\'t announce it. Don\'t expect thanks.', 'Trust compounds from unseen acts.'] },
+              { day: 4, title: 'Boundary setting', steps: ['Identify one relationship where you consistently overextend.', 'Decide what\'s acceptable and what\'s not — for YOU, not them.', 'Communicate ONE boundary clearly this week.'] },
+              { day: 5, title: 'Hard conversation', steps: ['Name the conversation you\'ve been avoiding.', 'Schedule it within 7 days.', 'Unfinished conversations are leaks in your ${weakest} pillar.'] },
+              { day: 6, title: 'Relational ROI', steps: ['Which 3 relationships return the most support/energy/growth?', 'Invest 30+ minutes in one this week.', 'Protect the ones that pour in.'] },
+              { day: 7, title: 'Week 1 review', steps: ['Note which relationships you fed and which went hungry.', 'Which feel different now?', 'Adjust next week\'s attention accordingly.'] },
+            ],
+            week2: [
+              { day: 8, title: 'Active listening', steps: ['In every conversation today, ask one follow-up question before responding.', 'Listen for what they\'re NOT saying.', 'Communication Clarity is a muscle.'] },
+              { day: 9, title: 'Speak truth', steps: ['Tell one person something real you\'ve been holding back.', 'Not a complaint. Not a secret. An honest observation or affirmation.', 'Truth builds trust.'] },
+              { day: 10, title: 'Cut a Taker', steps: ['Identify one relationship that consistently drains you with no return.', 'Reduce access this week — cancel, decline, reschedule.', 'Not cruel. Just honest about capacity.'] },
+              { day: 11, title: 'Alliance building', steps: ['Pick one person in your field who\'s 2 levels ahead of you.', 'Write them a short, specific message — no ask, just appreciation.', 'Networks grow through deposits, not withdrawals.'] },
+              { day: 12, title: 'Family anchor', steps: ['Spend 30 uninterrupted minutes with one family member.', 'No phone. No multitasking. Just them.', 'Family is the People pillar\'s foundation.'] },
+              { day: 13, title: 'Apology or restoration', steps: ['Is there someone you owe an apology or course-correction?', 'Handle it this week. Short. Honest. No defense.', 'The ${weakest} pillar rises fastest when old debts clear.'] },
+              { day: 14, title: 'Sabbath with people', steps: ['Gather with one person today for no reason other than presence.', 'No agenda. No productivity.', 'Relational rest counts.'] },
+            ],
+            week3: [
+              { day: 15, title: 'Retake check', steps: ['Retake the quick assessment.', 'Has People pillar moved?', 'Even 1-point shifts are real — they came from real work.'] },
+              { day: 16, title: 'Trust deposit', steps: ['Keep a small promise today that you could\'ve easily skipped.', 'Trust Investment is built in the tiny reliabilities.', 'No one else knows — but you and they do.'] },
+              { day: 17, title: 'Celebrate someone', steps: ['Publicly (or privately) acknowledge someone\'s growth or effort.', 'Specific, not generic.', 'People rise to honest celebration.'] },
+              { day: 18, title: 'The brave ask', steps: ['Ask for something you need — help, input, support — from someone who could give it.', 'Asking is relational strength, not weakness.', 'Most people love being asked.'] },
+              { day: 19, title: 'Forgiveness check', steps: ['Is there a grudge, resentment, or withheld forgiveness that\'s costing you?', 'Work toward release this week — internally first.', 'The ${weakest} pillar can\'t rise while anchored to old weight.'] },
+              { day: 20, title: 'Community audit', steps: ['Where are you isolated? Which room/group do you need to re-enter?', 'Re-enter one this week.', 'Community is ${weakestSub}\'s environment.'] },
+              { day: 21, title: 'Week 3 reflection', steps: ['Which 3 relationships feel stronger than Day 1?', 'What did you actually do differently?', 'Name the pattern. Repeat it.'] },
+            ],
+            week4: [
+              { day: 22, title: 'Depth over breadth', steps: ['Pick one relationship to go deeper with this week.', 'Ask a question you\'ve never asked them.', 'Listen for what comes.'] },
+              { day: 23, title: 'Gift a story', steps: ['Tell someone in your life about a moment THEY impacted.', 'Be specific. Name the date if you can.', 'Most people never hear the impact they had.'] },
+              { day: 24, title: 'Conflict repair', steps: ['If there\'s tension lingering with someone, address it directly this week.', 'Short, honest, solution-focused.', 'Unresolved conflict taxes every other pillar.'] },
+              { day: 25, title: 'Mentor check-in', steps: ['Reach out to someone who\'s poured into you.', 'Update them on what you\'re doing with what they gave.', 'Closing the loop is relational maturity.'] },
+              { day: 26, title: 'Family pattern', steps: ['Notice one generational pattern in your family you want to interrupt.', 'What\'s one action you\'ll take this week to break it?', 'You\'re the turning point.'] },
+              { day: 27, title: 'Recap and honor', steps: ['Write down the 3 relationships most changed this month.', 'Tell one of them.', 'Verbalize the shift.'] },
+              { day: 28, title: 'Re-assessment prep', steps: ['Take the full assessment tomorrow.', 'Answer honestly — especially the People sub-categories.', 'Data beats impression.'] },
+              { day: 29, title: 'Full assessment retake', steps: ['Complete the extensive P.I.N.K. assessment.', 'Review your People pillar score movement.', 'Match it to what you did — what worked?'] },
+              { day: 30, title: 'Next 30 days', steps: ['Pick the People sub-category you want to target next month.', 'Write 3 specific actions.', 'Share with accountability partner.'] },
+            ],
+          },
+          Influence: {
+            week1: [
+              { day: 1, title: 'Credibility audit', steps: ['List 3 recent promises you made.', 'Honest assessment: did you deliver? Partially? At all?', 'Credibility = consistency. No shortcut.'] },
+              { day: 2, title: 'Micro-integrity', steps: ['Do one small thing today that only you would know if you skipped.', 'Integrity Alignment builds invisibly first.', 'Small wins become character.'] },
+              { day: 3, title: 'Speak up once', steps: ['In one meeting/conversation, share a thought you would\'ve held back.', 'Tactfully. Clearly. Briefly.', 'Voice is a muscle. Use it.'] },
+              { day: 4, title: 'The quiet leader', steps: ['Lead something small today without declaring it.', 'Organize, clarify, or move something forward without seeking credit.', 'Real influence doesn\'t need a title.'] },
+              { day: 5, title: 'Deliver early', steps: ['Pick one deadline or commitment this week.', 'Deliver it ahead of schedule.', 'Early + quality = reputation.'] },
+              { day: 6, title: 'Active presence', steps: ['In every interaction today, be fully present — no phone, no split attention.', 'People feel presence more than they remember words.', 'Gravity starts with attention.'] },
+              { day: 7, title: 'Week 1 review', steps: ['Where did you lead this week?', 'Where did you defer when you should\'ve led?', 'Pattern-spot for next week.'] },
+            ],
+            week2: [
+              { day: 8, title: 'Teach something', steps: ['Explain one concept or skill to someone this week.', 'Teaching crystallizes your authority — AND their respect.', 'If you know it, give it.'] },
+              { day: 9, title: 'Receive feedback', steps: ['Ask one person for specific feedback on how you show up.', 'Don\'t defend. Just listen and thank them.', 'Blind spots are influence-killers.'] },
+              { day: 10, title: 'Own a mistake', steps: ['Name a recent mistake. Own it publicly (or at least to those affected).', 'No excuse. No blame.', 'Ownership increases trust faster than perfection.'] },
+              { day: 11, title: 'Keep your word (visibly)', steps: ['Whatever small thing you committed to — do it today.', 'Follow-through is the rarest professional quality.', 'Micro-reliability is leverage.'] },
+              { day: 12, title: 'Give credit', steps: ['Publicly acknowledge someone who helped you.', 'Specific. Genuine. Named.', 'Lifting others elevates you.'] },
+              { day: 13, title: 'Strategic no', steps: ['Decline one request that doesn\'t align with your priorities.', 'Kindly, clearly, without long explanation.', 'Boundaries ARE leadership.'] },
+              { day: 14, title: 'Sabbath', steps: ['Don\'t lead, produce, or manage today.', 'Rest is the most credible non-verbal message.', 'Real influence includes stopping.'] },
+            ],
+            week3: [
+              { day: 15, title: 'Retake check', steps: ['Retake quick assessment.', 'Has Influence pillar shifted?', 'Track the trend.'] },
+              { day: 16, title: 'Write something', steps: ['Post or publish ONE thought publicly today.', 'LinkedIn, email, blog, anywhere.', 'Ideas spread. You can\'t lead silently.'] },
+              { day: 17, title: 'Difficult decision', steps: ['There\'s a decision you\'ve been avoiding.', 'Make it this week.', 'Leadership is making calls before you feel ready.'] },
+              { day: 18, title: 'Mentor someone', steps: ['Share 15 minutes of your experience with someone earlier in their journey.', 'No payment needed. No pitch.', 'Influence flows when it\'s given freely.'] },
+              { day: 19, title: 'Ask a brave question', steps: ['In one conversation, ask the question others are avoiding.', 'Kindly. Directly.', 'The person who asks the real question has the floor.'] },
+              { day: 20, title: 'Refine your message', steps: ['Write out your core message in 3 sentences.', 'What do you want to be known for?', 'Clarity is magnetic.'] },
+              { day: 21, title: 'Week 3 reflection', steps: ['Where did you step into leadership this week?', 'Where did you still hide?', 'Next week — one more step forward.'] },
+            ],
+            week4: [
+              { day: 22, title: 'Build authority content', steps: ['Make one thing this week that showcases your knowledge.', 'Article, video, post, document — whatever fits.', 'Authority is proven, not claimed.'] },
+              { day: 23, title: 'Elevate someone visible', steps: ['Publicly recommend or introduce two people who should know each other.', 'Be the bridge.', 'Connectors hold disproportionate influence.'] },
+              { day: 24, title: 'Speak on your weak point', steps: ['Admit a limitation publicly or to peers.', 'Vulnerability + competence = trust.', 'Hiding weakness costs more than exposing it.'] },
+              { day: 25, title: 'Pattern interrupt', steps: ['Notice a habit in your leadership style that\'s stale.', 'Try the opposite today.', 'Growth lives outside your default moves.'] },
+              { day: 26, title: 'Serve without credit', steps: ['Help someone in a way no one will see.', 'Note how it feels.', 'That feeling is influence mastery.'] },
+              { day: 27, title: 'Recap and decide', steps: ['What shifted in your ${weakest} pillar this month?', 'What are you willing to commit to long-term?', 'Write it down.'] },
+              { day: 28, title: 'Re-assessment prep', steps: ['Retake the full extensive assessment tomorrow.', 'Answer from where you are today, not where you started.', 'Real data = real movement.'] },
+              { day: 29, title: 'Full assessment retake', steps: ['Complete the extensive P.I.N.K. assessment.', 'Compare Influence sub-categories to Day 1.', 'Where\'d the biggest jumps happen?'] },
+              { day: 30, title: 'Next 30 days', steps: ['Pick your new weakest Influence sub-category.', 'Define 3 actions for the next month.', 'The system works. Keep running it.'] },
+            ],
+          },
+          Numbers: {
+            week1: [
+              { day: 1, title: 'The Snapshot', steps: ['Open every financial account. Write every balance.', 'Add total income (month) and total outflow.', 'Net: surplus or deficit? That\'s your starting truth.'] },
+              { day: 2, title: 'Real hourly rate', steps: ['Total last month\'s income. Divide by actual hours worked (include commute, admin, prep).', 'That\'s your real hourly rate.', 'Now ask: what am I doing below that rate?'] },
+              { day: 3, title: 'Cut one leak', steps: ['Identify the dumbest subscription or recurring charge.', 'Cancel it today.', 'Redirect that money to an account that grows.'] },
+              { day: 4, title: 'The Number', steps: ['Calculate the one number that matters most for your next goal.', 'Income needed. Debt to eliminate. Amount to save.', 'Write it where you\'ll see it daily.'] },
+              { day: 5, title: 'One financial conversation', steps: ['If you have a partner, have a 20-minute money conversation.', 'If you don\'t, talk to a financial mentor or friend.', 'Money grows in the light.'] },
+              { day: 6, title: 'Income audit', steps: ['List every income source (active + passive).', 'Rank by amount AND reliability.', 'Where\'s the opportunity to add or strengthen?'] },
+              { day: 7, title: 'Week 1 review', steps: ['What changed about what you know about your money?', 'Awareness is 80% of the work.', 'Now apply it.'] },
+            ],
+            week2: [
+              { day: 8, title: 'Budget from zero', steps: ['Build next month\'s budget starting from zero — not your habits.', 'Every dollar gets a job.', 'No category = no dollars there.'] },
+              { day: 9, title: 'Measurement habit', steps: ['Log every expense for 3 days. All of them.', 'Review Friday.', 'Measurement changes behavior automatically.'] },
+              { day: 10, title: 'Price your time', steps: ['Task you dread: what would you pay someone to do it for you?', 'If the number\'s less than your hourly rate, delegate.', 'Your time is a financial asset.'] },
+              { day: 11, title: 'Debt plan', steps: ['List all debts, smallest to largest.', 'Pick the snowball or avalanche method.', 'Commit to one extra payment this week.'] },
+              { day: 12, title: 'One extra dollar earned', steps: ['Make one dollar beyond your usual income this week.', 'Sell something. Side skill. One-off.', 'Income is a skill — practice it.'] },
+              { day: 13, title: 'Cost-Value review', steps: ['Pick your 3 largest expenses.', 'Rate each on the return they give you.', 'Cut or reduce one this month.'] },
+              { day: 14, title: 'Sabbath', steps: ['No money decisions today.', 'Rest from the scoreboard.', 'Abundance mindset starts with presence.'] },
+            ],
+            week3: [
+              { day: 15, title: 'Retake check', steps: ['Retake quick assessment.', 'Numbers pillar movement?', 'Follow the trend.'] },
+              { day: 16, title: 'Investment logic', steps: ['What\'s one dollar amount you could invest this month in growth?', 'Book, course, tool, asset, skill.', 'Action beats analysis.'] },
+              { day: 17, title: 'Income multiplier', steps: ['Think about one skill that would double your hourly rate in 12 months.', 'Spend 30 minutes today starting that skill.', 'Income grows from capability, not hours.'] },
+              { day: 18, title: 'Negotiate once', steps: ['Find one bill, rate, or deal worth renegotiating.', 'Call or email this week.', 'Negotiation Skill is a sub-score that moves fast.'] },
+              { day: 19, title: 'Track net worth', steps: ['Assets minus debts. Write it down.', 'Start tracking monthly.', 'Net worth is the real scoreboard.'] },
+              { day: 20, title: 'One investment made', steps: ['Invest one small amount somewhere compounding this week.', 'Savings account, index fund, business asset.', 'Movement teaches more than planning.'] },
+              { day: 21, title: 'Week 3 reflection', steps: ['What\'s one financial behavior that changed?', 'Name it. Keep it.', 'Incremental shifts compound.'] },
+            ],
+            week4: [
+              { day: 22, title: 'Future income vision', steps: ['Write your target income in 24 months.', 'Now the habits that bridge today to then.', 'Vision drives numbers. Not the other way around.'] },
+              { day: 23, title: 'Fix the leakiest category', steps: ['Pick the spending category with the biggest gap between intention and reality.', 'Cut it in half for one week.', 'Then keep going.'] },
+              { day: 24, title: 'Teach one principle', steps: ['Share one money principle you\'ve applied with someone.', 'Teaching forces mastery.', 'Also: gift someone the truth.'] },
+              { day: 25, title: 'Small improvements', steps: ['Tiny financial upgrade: round up savings, autopay one bill, organize one account.', 'One tiny win.', 'Small = sustainable.'] },
+              { day: 26, title: 'Review + adjust', steps: ['Look at the budget you built on Day 8.', 'Where did reality diverge from plan?', 'Adjust for next month.'] },
+              { day: 27, title: 'Recap', steps: ['What\'s one number that looks different than 30 days ago?', 'Bank balance. Debt total. Savings. Hourly rate.', 'Write it down.'] },
+              { day: 28, title: 'Re-assessment prep', steps: ['Take full assessment tomorrow.', 'Honest Numbers answers only.', 'This is data, not judgment.'] },
+              { day: 29, title: 'Full assessment retake', steps: ['Complete extensive P.I.N.K. assessment.', 'Compare Numbers sub-scores to Day 1.', 'Biggest movers? Smallest?'] },
+              { day: 30, title: 'Next 30 days', steps: ['Pick your new weakest Numbers sub-category.', 'Define 3 specific money actions for next month.', 'Keep compounding.'] },
+            ],
+          },
+          Knowledge: {
+            week1: [
+              { day: 1, title: 'Learning audit', steps: ['What did you actually LEARN in the last 30 days?', 'Not what you consumed — what changed behavior.', 'If nothing, that\'s the data.'] },
+              { day: 2, title: 'Block learning time', steps: ['Schedule 30 minutes tomorrow purely for learning.', 'Same time, same place, repeated daily.', 'Consistency beats volume.'] },
+              { day: 3, title: 'Application Rate', steps: ['Learn one thing today. Apply it within 24 hours.', 'Application is where knowledge compounds.', 'Without application, it\'s entertainment.'] },
+              { day: 4, title: 'Finish one thing', steps: ['Find the book, course, or program you started but haven\'t finished.', 'Finish it this week OR give it away.', 'Indecision is the drain.'] },
+              { day: 5, title: 'One teacher', steps: ['Identify one expert in your field worth learning from.', 'Follow their work deeply this week.', 'Depth over breadth.'] },
+              { day: 6, title: 'Notes become action', steps: ['Review any notes you\'ve taken recently.', 'Circle 3 items that need action.', 'Do one today.'] },
+              { day: 7, title: 'Week 1 review', steps: ['What did you actually apply this week?', 'Honest.', 'Next week — raise the Application Rate.'] },
+            ],
+            week2: [
+              { day: 8, title: 'Teach what you learned', steps: ['Share one concept with someone this week.', 'Teaching exposes your understanding — and cements it.', 'If you can\'t explain it simply, you don\'t own it yet.'] },
+              { day: 9, title: 'Bias audit', steps: ['Name one belief you hold strongly that you\'ve never challenged.', 'Read one piece opposing your view.', 'Bias Awareness is a high-leverage sub-category.'] },
+              { day: 10, title: 'Apply to work', steps: ['Take one lesson from this month\'s learning and apply it at work.', 'Even small integration counts.', 'Knowledge proves itself in action.'] },
+              { day: 11, title: 'Weighted analysis', steps: ['Pick a decision you\'ve been stuck on.', 'List pros/cons with weights (1-10) for importance.', 'Clarity through structured thought.'] },
+              { day: 12, title: 'Compound reading', steps: ['Read one book chapter AND apply one insight within 48 hours.', 'Knowledge Compounding requires both halves.', 'Consumption + application = growth.'] },
+              { day: 13, title: 'Highest and best use', steps: ['Identify one task that\'s below your highest value.', 'Delegate or stop.', 'Your time = your knowledge leverage.'] },
+              { day: 14, title: 'Sabbath', steps: ['No new inputs today.', 'Integration requires rest.', 'Silence is also a teacher.'] },
+            ],
+            week3: [
+              { day: 15, title: 'Retake check', steps: ['Retake quick assessment.', 'Knowledge pillar movement?', 'Track it.'] },
+              { day: 16, title: 'Expert interview', steps: ['Reach out to someone 5+ years ahead of you.', 'Ask 3 specific questions. Keep it short.', 'Worst they can do is not respond.'] },
+              { day: 17, title: 'Substitution risk', steps: ['What\'s one thing you do that AI or someone else could automate?', 'Shift your focus to what\'s un-replaceable.', 'Future-proof your knowledge.'] },
+              { day: 18, title: 'Double jeopardy check', steps: ['What mistake have you made twice?', 'The second time wasn\'t bad luck — it was unlearned.', 'Commit to third-time prevention.'] },
+              { day: 19, title: 'Perception vs perspective', steps: ['Notice when you\'re perceiving (first reaction) vs. seeing full perspective.', 'Slow down today when you hit a reaction.', 'Perspective is the harder, higher skill.'] },
+              { day: 20, title: 'Skill stack', steps: ['What 3 skills combine uniquely in you?', 'That combination is your edge.', 'Deepen one this month.'] },
+              { day: 21, title: 'Week 3 reflection', steps: ['What did you learn AND apply this week?', 'That ratio is the Knowledge pillar in action.', 'Keep it rising.'] },
+            ],
+            week4: [
+              { day: 22, title: 'Curated input', steps: ['Cut one content source that feels educational but isn\'t transforming you.', 'Replace with one stronger source.', 'Your inputs become your thinking.'] },
+              { day: 23, title: 'Write to clarify', steps: ['Write 500 words on something you\'re learning.', 'Writing forces structured thought.', 'Share it or keep it — doesn\'t matter.'] },
+              { day: 24, title: 'Supply and demand', steps: ['Where is knowledge scarce that you could develop?', 'The less common your expertise, the higher the value.', 'Build toward rare + valuable.'] },
+              { day: 25, title: 'One decision, deeply', steps: ['Pick one decision this week.', 'Apply everything you\'ve learned to it.', 'Decisions are knowledge made visible.'] },
+              { day: 26, title: 'Feedback loop', steps: ['Ask one person how your thinking has changed over the past month.', 'External perspective reveals internal growth.', 'Hidden progress is still progress.'] },
+              { day: 27, title: 'Recap and commit', steps: ['What 3 things do you know now that you didn\'t 30 days ago?', 'Write them down.', 'Commit to teaching one next month.'] },
+              { day: 28, title: 'Re-assessment prep', steps: ['Take full assessment tomorrow.', 'Answer Knowledge sub-categories honestly.', 'Growth shows up in the questions, too.'] },
+              { day: 29, title: 'Full assessment retake', steps: ['Complete extensive P.I.N.K. assessment.', 'Compare Knowledge sub-scores to Day 1.', 'Biggest movers tell you what worked.'] },
+              { day: 30, title: 'Next 30 days', steps: ['Pick the next Knowledge sub-category to develop.', 'Define 3 learning-into-action commitments.', 'Build the compound engine.'] },
+            ],
+          },
+        };
+
+        const track = actionLibrary[weakest] || actionLibrary.Time;
+        const allDays = [...track.week1, ...track.week2, ...track.week3, ...track.week4];
+
+        // Personalize each day's action steps with user's weakest + sub-category
+        const personalized = allDays.map(d => ({
+          day: d.day,
+          week: Math.ceil(d.day / 7),
+          title: d.title,
+          steps: d.steps.map(s => s.replace(/\$\{weakest\}/g, weakest).replace(/\$\{weakestSub\}/g, weakestSub)),
+        }));
+
+        return res.json({
+          assessmentId: a.id,
+          contact: { firstName: a.first_name, lastName: a.last_name, email: a.email },
+          assessment: {
+            masterScore: a.master_score,
+            scoreRange: a.score_range,
+            weakestPillar: weakest,
+            weakestSubCategory: weakestSub,
+            strongestPillar: prescription.strongestPillar,
+          },
+          plan: {
+            title: `30-Day ${weakest} Transformation Plan`,
+            subtitle: `Daily actions targeting ${weakestSub} — your biggest leverage point`,
+            weeks: [
+              { number: 1, title: 'Awareness + First Actions', days: personalized.slice(0, 7) },
+              { number: 2, title: 'Habit Formation', days: personalized.slice(7, 14) },
+              { number: 3, title: 'Compound Effect', days: personalized.slice(14, 21) },
+              { number: 4, title: 'Integration + Re-Assessment', days: personalized.slice(21, 30) },
+            ],
+          },
+          totalDays: 30,
+          generated: new Date().toISOString(),
+        });
+      } catch (planErr) {
+        console.error('[action-plan] Error:', planErr.message);
+        return res.status(500).json({ error: 'Failed to generate action plan' });
+      }
     }
 
     // GET /api/admin/client-digest — Per-client status digest with replies, mood, progress
@@ -8735,7 +9044,8 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         const dayIndex = ((diffDays % 60) + 60) % 60;
         const dev = devotionals[dayIndex] || devotionals[0];
 
-        // Get subscribers (with daily dedup — skip anyone already sent today)
+        // Get subscribers: active coaching users + paid members + explicit opt-ins
+        // Daily dedup — skip anyone already sent today
         let subscribers = [];
         try {
           subscribers = await sql`
@@ -8743,8 +9053,13 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             FROM contacts c
             LEFT JOIN devotional_progress dp ON dp.contact_id = c.id
             LEFT JOIN user_profiles up ON up.contact_id = c.id
+            LEFT JOIN coaching_sequences cs ON LOWER(cs.email) = LOWER(c.email)
             WHERE c.email IS NOT NULL AND c.email != ''
-              AND (dp.id IS NOT NULL OR up.membership_tier IN ('individual','couple','premium'))
+              AND (
+                dp.id IS NOT NULL
+                OR up.membership_tier IN ('individual','couple','premium')
+                OR (cs.id IS NOT NULL AND cs.unsubscribed = false)
+              )
               AND (dp.opted_out IS NULL OR dp.opted_out = false)
               AND LOWER(c.email) NOT IN (
                 SELECT LOWER(recipient) FROM email_log
@@ -8753,16 +9068,14 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             ORDER BY c.id ASC
           `;
         } catch(e) {
-          // If devotional tables don't exist, only send to paid members (not all contacts)
+          // Fallback: coaching_sequences members
           try {
             subscribers = await sql`
-              SELECT c.id as contact_id, c.email, c.first_name FROM contacts c
-              INNER JOIN user_profiles up ON up.contact_id = c.id
-              WHERE c.email IS NOT NULL AND c.email != ''
-                AND up.membership_tier IN ('individual','couple','premium')
+              SELECT DISTINCT c.id as contact_id, c.email, c.first_name FROM contacts c
+              INNER JOIN coaching_sequences cs ON LOWER(cs.email) = LOWER(c.email)
+              WHERE c.email IS NOT NULL AND c.email != '' AND cs.unsubscribed = false
               ORDER BY c.id ASC`;
           } catch(e2) {
-            // If user_profiles also doesn't exist, skip entirely
             subscribers = [];
           }
         }
@@ -8778,9 +9091,39 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         let sentCount = 0;
         const results = [];
 
+        // Precompute which pillar each devotional theme maps to
+        const themeToPillar = function(theme) {
+          if (!theme) return null;
+          const t = String(theme).toLowerCase();
+          if (['patience','waiting','seasons','time','urgency'].some(k => t.includes(k))) return 'Time';
+          if (['family','love','relationships','trust','friends','community'].some(k => t.includes(k))) return 'People';
+          if (['leadership','faith','courage','obedience','voice'].some(k => t.includes(k))) return 'Influence';
+          if (['money','provision','poverty','work','finances','wealth'].some(k => t.includes(k))) return 'Numbers';
+          if (['wisdom','learning','growth','truth','understanding'].some(k => t.includes(k))) return 'Knowledge';
+          return null;
+        };
+        const devotionalPillar = themeToPillar(dev.theme) || themeToPillar(dev.secondary_theme);
+
         for (const sub of subscribers) {
           try {
             const firstName = escapeHtml(sub.first_name || 'Friend');
+
+            // Look up the subscriber's weakest pillar for personalized connection
+            let userWeakestPillar = null;
+            try {
+              const aRows = await sql`SELECT weakest_pillar FROM assessments WHERE contact_id = ${sub.contact_id} ORDER BY completed_at DESC LIMIT 1`;
+              if (aRows.length > 0) userWeakestPillar = aRows[0].weakest_pillar;
+            } catch (e) { /* non-fatal */ }
+
+            // Build pillar-connection note if the devotional's theme matches their weakest pillar
+            let pillarNote = '';
+            if (devotionalPillar && userWeakestPillar && devotionalPillar === userWeakestPillar) {
+              pillarNote = `<div style="background:rgba(212,168,71,0.12);border-left:3px solid #D4A847;padding:12px 16px;margin:0 0 16px;border-radius:0 6px 6px 0;">
+                <p style="color:#D4A847;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 4px;">Connects to Your ${userWeakestPillar} Journey</p>
+                <p style="color:#e4e4e7;font-size:13px;line-height:1.5;margin:0;">Today's word speaks directly to the area your assessment flagged. Don't miss it.</p>
+              </div>`;
+            }
+
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 16px;"><tr><td align="center">
@@ -8792,6 +9135,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 </td></tr>
 <tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:36px 28px;">
   <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 16px;">${firstName},</p>
+  ${pillarNote}
   <div style="font-family:Georgia,serif;font-size:20px;color:#D4A847;font-style:italic;margin-bottom:4px;">${dev.title}</div>
   <div style="font-size:12px;color:#71717a;margin-bottom:20px;">Chapter: ${dev.chapter_title} &mdash; Theme: ${dev.theme}</div>
   <div style="background:#111118;border-left:3px solid #D4A847;padding:16px 20px;margin:0 0 24px;border-radius:0 8px 8px 0;">
@@ -8823,15 +9167,35 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 </td></tr>
 </table></td></tr></table></body></html>`;
 
+            // Engagement tracking
+            let devEngId = null;
+            try {
+              const devEng = await sql`
+                INSERT INTO email_engagement (contact_id, email, coaching_day, email_variant)
+                VALUES (${sub.contact_id}, ${sub.email.toLowerCase()}, ${dev.day_number}, 'devotional')
+                RETURNING id`;
+              devEngId = devEng[0]?.id;
+            } catch (e) { /* non-fatal */ }
+
+            let finalHtml = html;
+            if (devEngId) {
+              const trackBase = `${BASE_URL}/api/agent/email`;
+              finalHtml = finalHtml.replace(/href="(https?:\/\/[^"]+)"/g, function(m, u) {
+                return `href="${trackBase}/track-click?id=${devEngId}&url=${encodeURIComponent(u)}"`;
+              });
+              const pixel = `<img src="${trackBase}/track-open?id=${devEngId}" width="1" height="1" style="display:none" alt=""/>`;
+              finalHtml = finalHtml.includes('</body>') ? finalHtml.replace('</body>', pixel + '</body>') : finalHtml + pixel;
+            }
+
             await transporter.sendMail({
               from: `"Running From Miracles" <${process.env.GMAIL_USER}>`,
               to: sub.email,
               subject: `Day ${dev.day_number}: ${dev.title} — ${dev.scripture_reference}`,
-              html,
+              html: finalHtml,
             });
             sentCount++;
             results.push({ email: sub.email, status: 'sent' });
-            await logEmail(sql, { recipient: sub.email, emailType: 'devotional', subject: `Day ${dev.day_number}: ${dev.title}`, contactId: sub.contact_id, metadata: { day: dev.day_number, chapter: dev.chapter_title } });
+            await logEmail(sql, { recipient: sub.email, emailType: 'devotional', subject: `Day ${dev.day_number}: ${dev.title}`, contactId: sub.contact_id, metadata: { day: dev.day_number, chapter: dev.chapter_title, engagementId: devEngId, pillarMatch: !!pillarNote } });
 
             // Update progress
             try {
