@@ -6403,7 +6403,7 @@ This link expires in 24 hours.
           WHERE cs.unsubscribed = FALSE
             AND LOWER(cs.email) NOT IN (
               SELECT LOWER(recipient) FROM email_log
-              WHERE email_type = 'accountability' AND created_at::date = CURRENT_DATE
+              WHERE email_type = 'accountability' AND sent_at::date = CURRENT_DATE
             )
           ORDER BY cs.id
         `;
@@ -6625,7 +6625,7 @@ This link expires in 24 hours.
         return res.json({ sent: sentCount, total: members.length, results });
       } catch (acctErr) {
         console.error('[accountability/send] Error:', acctErr);
-        return res.status(500).json({ error: 'Accountability send failed' });
+        return res.status(500).json({ error: 'Accountability send failed', detail: acctErr.message });
       }
     }
 
@@ -8374,6 +8374,93 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           systemRegistry = await sql`SELECT * FROM system_registry ORDER BY category, system_type, system_name`;
         } catch(e) { /* table may not exist yet */ }
 
+        // === AI ROUTER STATUS + METRICS ===
+        const aiRouter = {
+          ollama: { host: null, reachable: false, models: [], error: null },
+          anthropic: { configured: !!process.env.ANTHROPIC_API_KEY },
+          provider_mode: process.env.AI_PROVIDER || 'cloud',
+          small_model: process.env.ZYRIX_SMALL_MODEL || 'claude-haiku-4-5',
+          frontier_model: process.env.ZYRIX_FRONTIER_MODEL || 'claude-opus-4-7',
+          tunnel_status: 'not-configured',
+          tunnel_advice: '',
+          metrics: null,
+        };
+
+        const ollamaHost = process.env.OLLAMA_HOST || process.env.OLLAMA_URL || 'http://localhost:11434';
+        aiRouter.ollama.host = ollamaHost;
+
+        // Probe Ollama from the Vercel function — tells us whether the tunnel actually works.
+        try {
+          const r = await fetch(`${ollamaHost}/api/tags`, { signal: AbortSignal.timeout(3000) });
+          if (r.ok) {
+            const d = await r.json();
+            aiRouter.ollama.reachable = true;
+            aiRouter.ollama.models = (d.models || []).map(m => m.name);
+          } else {
+            aiRouter.ollama.error = `HTTP ${r.status}`;
+          }
+        } catch (e) {
+          aiRouter.ollama.error = e.message || String(e);
+        }
+
+        // Classify the current routing state and write a plain-English explanation
+        // so the dashboard can guide the user to fix it.
+        const isLocalhost = /localhost|127\.0\.0\.1|::1/i.test(ollamaHost);
+        const isTryCloudflare = /trycloudflare\.com/i.test(ollamaHost);
+        if (isLocalhost) {
+          aiRouter.tunnel_status = 'not-configured';
+          aiRouter.tunnel_advice = "OLLAMA_HOST is still pointing at localhost, which Vercel cannot reach from its serverless environment. Every AI call is being answered by Anthropic at full cloud price, even though you have free local models installed. Download the Cloudflare Tunnel setup below, run the three scripts in order, then update Vercel env vars OLLAMA_HOST and AI_PROVIDER=auto. Expected cost reduction: 60-80% on coaching, assessment, devotional, and simple content-generate calls.";
+        } else if (isTryCloudflare) {
+          aiRouter.tunnel_status = 'quick-tunnel';
+          aiRouter.tunnel_advice = "Quick tunnel (trycloudflare.com) detected. These URLs rotate on every cloudflared restart and are UNAUTHENTICATED — fine for a smoke test but not for production. Run 3-named-tunnel-setup.ps1 from the Cloudflare Tunnel package to create a persistent named tunnel tied to a hostname you control.";
+        } else if (aiRouter.ollama.reachable) {
+          aiRouter.tunnel_status = 'named-tunnel-active';
+          aiRouter.tunnel_advice = "Named tunnel is live. Vercel can reach your Ollama and the tier router will route action-specific calls to local models (free) before falling back to Anthropic.";
+        } else {
+          aiRouter.tunnel_status = 'misconfigured';
+          aiRouter.tunnel_advice = `OLLAMA_HOST is set to a remote URL but Vercel cannot reach it: ${aiRouter.ollama.error}. Check: (1) Is cloudflared running on the source machine? Try "Get-Service Cloudflared" in PowerShell. (2) Is the DNS record still pointing at the tunnel? (3) Is the source machine awake and has Ollama started? AI calls will fall back to Anthropic until this is fixed.`;
+        }
+
+        // Metrics from model_invocations — table may not exist yet
+        try {
+          const last24h = await sql`
+            SELECT
+              COUNT(*)::int AS calls,
+              COALESCE(SUM(tokens_in + tokens_out), 0)::int AS tokens,
+              COALESCE(SUM(cost_usd), 0)::float AS cost_usd,
+              ROUND(AVG(latency_ms))::int AS avg_latency_ms,
+              COUNT(*) FILTER (WHERE cache_read_tokens > 0)::int AS cache_hits,
+              COUNT(*) FILTER (WHERE success = false)::int AS errors,
+              COUNT(*) FILTER (WHERE escalated_from IS NOT NULL)::int AS escalations
+            FROM model_invocations WHERE created_at > NOW() - INTERVAL '24 hours'`;
+
+          const byTier = await sql`
+            SELECT tier, COUNT(*)::int AS calls, COALESCE(SUM(cost_usd), 0)::float AS cost_usd
+            FROM model_invocations WHERE created_at > NOW() - INTERVAL '7 days'
+            GROUP BY tier ORDER BY calls DESC`;
+
+          const byModel = await sql`
+            SELECT model, tier, provider, COUNT(*)::int AS calls, COALESCE(SUM(cost_usd), 0)::float AS cost_usd
+            FROM model_invocations WHERE created_at > NOW() - INTERVAL '7 days'
+            GROUP BY model, tier, provider ORDER BY calls DESC LIMIT 10`;
+
+          const recentErrors = await sql`
+            SELECT action, model, tier, error_message, created_at
+            FROM model_invocations WHERE success = false
+            ORDER BY created_at DESC LIMIT 5`;
+
+          aiRouter.metrics = {
+            last_24h: last24h[0] || {},
+            by_tier_7d: byTier,
+            by_model_7d: byModel,
+            recent_errors: recentErrors,
+          };
+        } catch (metricErr) {
+          aiRouter.metrics = {
+            note: 'No AI invocations logged yet. The model_invocations table bootstraps on the first /api/ai call after deploy.',
+          };
+        }
+
         return res.json({
           agents: agentRuns,
           health,
@@ -8381,7 +8468,8 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           pages: topInsights,
           rules,
           recentDecisions,
-          systems: systemRegistry
+          systems: systemRegistry,
+          aiRouter,
         });
       } catch (dashErr) {
         return res.status(500).json({ error: dashErr.message });

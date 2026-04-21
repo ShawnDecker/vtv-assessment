@@ -212,6 +212,93 @@ function render(data) {
   const el = document.getElementById('liveData');
   let html = '';
 
+  // === AI ROUTER (local ↔ cloud) ===
+  if (data.aiRouter) {
+    const ar = data.aiRouter;
+    html += '<div class="section-title">AI Router &mdash; Local &harr; Cloud</div>';
+
+    const statusMap = {
+      'named-tunnel-active': { badge: 'b-green', label: 'Named Tunnel Active', emoji: '&#10003;' },
+      'quick-tunnel':        { badge: 'b-yellow', label: 'Quick Tunnel (testing)', emoji: '&#9888;' },
+      'not-configured':      { badge: 'b-red', label: 'Cloud-Only (tunnel not set up)', emoji: '&#10007;' },
+      'misconfigured':       { badge: 'b-red', label: 'Tunnel Misconfigured', emoji: '&#10007;' },
+      'cloud-only':          { badge: 'b-yellow', label: 'Cloud-Only', emoji: '&#8505;' },
+    };
+    const s = statusMap[ar.tunnel_status] || statusMap['cloud-only'];
+
+    html += `<div class="card">
+      <div class="name">${s.emoji} Status: <span class="badge ${s.badge}">${s.label}</span></div>
+      <div class="detail" style="margin-top:10px;line-height:1.6;">${ar.tunnel_advice || ''}</div>`;
+
+    if (ar.tunnel_status === 'not-configured' || ar.tunnel_status === 'misconfigured' || ar.tunnel_status === 'quick-tunnel') {
+      const ctaLabel = ar.tunnel_status === 'quick-tunnel' ? 'Upgrade to Named Tunnel' : 'Set Up Cloudflare Tunnel';
+      html += `<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+        <a class="install-btn" href="/cloudflare-tunnel.zip" download>&#128229; Download ${ctaLabel}</a>
+        <div style="font-size:11px;color:#71717a;line-height:1.6;flex:1;min-width:200px;">
+          Unzip on any Windows machine running Ollama. Open PowerShell in the folder.
+          Run <code>.\\1-install-cloudflared.ps1</code>, then <code>.\\2-quick-test.ps1</code>,
+          then <code>.\\3-named-tunnel-setup.ps1</code>. README.md has the full runbook.
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+
+    // Environment snapshot
+    html += '<div class="stat-row" style="margin-top:10px;">';
+    const ollamaColor = ar.ollama.reachable ? '#22c55e' : '#ef4444';
+    html += `<div class="stat-box"><div class="num" style="color:${ollamaColor}">${ar.ollama.reachable ? 'UP' : 'DOWN'}</div><div class="label">Ollama</div></div>`;
+    html += `<div class="stat-box"><div class="num">${(ar.ollama.models || []).length}</div><div class="label">Local Models</div></div>`;
+    html += `<div class="stat-box"><div class="num">${ar.anthropic.configured ? '&#10003;' : '&#10007;'}</div><div class="label">Anthropic Key</div></div>`;
+    html += `<div class="stat-box"><div class="num" style="font-size:14px;">${ar.provider_mode}</div><div class="label">Mode</div></div>`;
+    html += '</div>';
+
+    // Metrics (24h)
+    if (ar.metrics && ar.metrics.last_24h && (ar.metrics.last_24h.calls || 0) > 0) {
+      const m = ar.metrics.last_24h;
+      html += '<div class="section-title" style="font-size:11px;margin-top:18px;">Last 24 Hours</div>';
+      html += '<div class="stat-row">';
+      html += stat(m.calls || 0, 'AI Calls');
+      html += stat('$' + (m.cost_usd || 0).toFixed(4), 'Cost USD');
+      html += stat((m.avg_latency_ms || 0) + 'ms', 'Avg Latency');
+      html += stat(m.cache_hits || 0, 'Cache Hits');
+      html += stat(m.escalations || 0, 'Escalations');
+      html += stat(m.errors || 0, 'Errors');
+      html += '</div>';
+
+      if (ar.metrics.by_tier_7d && ar.metrics.by_tier_7d.length) {
+        html += '<div class="section-title" style="font-size:11px;">7-Day Tier Distribution</div>';
+        html += '<table><tr><th>Tier</th><th>Calls</th><th>Cost (USD)</th></tr>';
+        for (const row of ar.metrics.by_tier_7d) {
+          html += `<tr><td>${row.tier || '&mdash;'}</td><td>${row.calls}</td><td>$${(row.cost_usd || 0).toFixed(4)}</td></tr>`;
+        }
+        html += '</table>';
+      }
+
+      if (ar.metrics.by_model_7d && ar.metrics.by_model_7d.length) {
+        html += '<div class="section-title" style="font-size:11px;">7-Day Model Breakdown</div>';
+        html += '<table><tr><th>Model</th><th>Provider</th><th>Tier</th><th>Calls</th><th>Cost</th></tr>';
+        for (const row of ar.metrics.by_model_7d) {
+          html += `<tr><td>${row.model}</td><td>${row.provider || '&mdash;'}</td><td>${row.tier || '&mdash;'}</td><td>${row.calls}</td><td>$${(row.cost_usd || 0).toFixed(4)}</td></tr>`;
+        }
+        html += '</table>';
+      }
+
+      if (ar.metrics.recent_errors && ar.metrics.recent_errors.length) {
+        html += '<div class="section-title" style="font-size:11px;">Recent AI Errors</div>';
+        for (const e of ar.metrics.recent_errors) {
+          const emsg = (e.error_message || 'unknown error').substring(0, 200);
+          html += `<div class="card" style="border-color:#3b1114;">
+            <div class="name">${e.action || '?'} / ${e.model || '?'} <span class="badge b-red">${e.tier || 'n/a'}</span></div>
+            <div class="meta">${timeAgo(e.created_at)}</div>
+            <div class="detail" style="color:#ef4444;">${emsg}</div>
+          </div>`;
+        }
+      }
+    } else if (ar.metrics && ar.metrics.note) {
+      html += `<div class="card" style="margin-top:10px;"><div class="detail" style="color:#71717a;">${ar.metrics.note}</div></div>`;
+    }
+  }
+
   // === SYSTEM HEALTH ===
   if (data.health?.length) {
     html += '<div class="section-title">System Health</div>';
