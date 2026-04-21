@@ -12,7 +12,8 @@
     "cross-env": "^7.0.3",
     "dotenv": "^17.4.2",
     "nodemailer": "^8.0.5",
-    "stripe": "^22.0.1"
+    "stripe": "^22.0.1",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "express": "^5.1.0"

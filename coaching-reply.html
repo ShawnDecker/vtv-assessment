@@ -145,7 +145,7 @@
         document.getElementById('promptText').textContent = prompt.q;
 
         if (assessmentData) {
-          const firstName = assessmentData.firstName || 'there';
+          const firstName = (member && member.contact && member.contact.firstName) || assessmentData.firstName || 'there';
           const weakest = assessmentData.weakestPillar || 'your weakest pillar';
           document.getElementById('greeting').textContent = `${firstName}, how's your ${weakest} work going?`;
 
