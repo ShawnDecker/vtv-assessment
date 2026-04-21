@@ -58,17 +58,52 @@ async function callCloudAI(apiKey, systemPrompt, userPrompt) {
   };
 }
 
+// ========== AUTH HELPERS ==========
+// Inline JWT verify — matches createJWT / verifyJWT in api/index.js.
+// Kept local so api/ai.js stays independent (Vercel bundles each function separately).
+const crypto = require('crypto');
+function verifyJwtLocal(token) {
+  try {
+    const secret = process.env.JWT_SECRET || process.env.ADMIN_API_KEY;
+    if (!secret) return null;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const [h, b, s] = parts;
+    const expected = crypto.createHmac('sha256', secret).update(`${h}.${b}`).digest('base64url');
+    if (expected.length !== s.length) return null;
+    let diff = 0;
+    for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ s.charCodeAt(i);
+    if (diff !== 0) return null;
+    const payload = JSON.parse(Buffer.from(b, 'base64url').toString());
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch { return null; }
+}
+function extractJwtUser(req) {
+  const auth = req.headers.authorization || req.headers.Authorization || '';
+  const m = auth.match(/^Bearer\s+(.+)$/i);
+  if (!m) return null;
+  return verifyJwtLocal(m[1]);
+}
+
+// Actions a member JWT is allowed to invoke. Admin x-api-key can invoke any action.
+// Anything that generates content from a free prompt, or acts as a persona, stays admin-only
+// to prevent abuse / cost blow-up by authenticated users.
+const JWT_ALLOWED_ACTIONS = new Set(['health', 'coaching-insight', 'assessment-summary']);
+
 // ========== MAIN HANDLER ==========
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Auth
+  // Auth: x-api-key (admin, all actions) OR JWT Bearer (member, allowlisted actions + own data only)
   const apiKey = req.headers['x-api-key'] || '';
   const validKey = process.env.ADMIN_API_KEY || '';
-  if (!validKey || apiKey !== validKey) return res.status(401).json({ error: 'Unauthorized' });
+  const isAdmin = !!(validKey && apiKey === validKey);
+  const jwtUser = isAdmin ? null : extractJwtUser(req);
+  if (!isAdmin && !jwtUser) return res.status(401).json({ error: 'Unauthorized' });
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
@@ -76,6 +111,20 @@ module.exports = async (req, res) => {
   const { action, contactId, assessmentId, prompt, context } = req.body || {};
 
   if (!action) return res.status(400).json({ error: 'action required' });
+
+  // Member JWT scope enforcement — admin bypasses all of this
+  if (jwtUser) {
+    if (!JWT_ALLOWED_ACTIONS.has(action)) {
+      return res.status(403).json({ error: 'This action requires admin auth', allowed: [...JWT_ALLOWED_ACTIONS] });
+    }
+    if (action === 'coaching-insight' && contactId && String(contactId) !== String(jwtUser.contactId)) {
+      return res.status(403).json({ error: 'Can only request coaching insight for your own profile' });
+    }
+    if (action === 'assessment-summary' && assessmentId) {
+      const own = await sql`SELECT 1 FROM assessments WHERE id = ${assessmentId} AND contact_id = ${jwtUser.contactId} LIMIT 1`;
+      if (own.length === 0) return res.status(403).json({ error: 'Assessment does not belong to you' });
+    }
+  }
 
   const AI_KEY = process.env.AI_GATEWAY_API_KEY;
 
