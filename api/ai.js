@@ -124,9 +124,16 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   // Auth
+  // Some actions are public-safe (rule-based routing decisions that return no
+  // sensitive data). Those bypass the admin-key gate. Every other action
+  // continues to require x-api-key: ADMIN_API_KEY.
+  const PUBLIC_ACTIONS = new Set(['concierge-route']);
+  const requestedAction = String(req.body?.action || '');
   const apiKey = req.headers['x-api-key'] || '';
   const validKey = process.env.ADMIN_API_KEY || '';
-  if (!validKey || apiKey !== validKey) return res.status(401).json({ error: 'Unauthorized' });
+  if (!PUBLIC_ACTIONS.has(requestedAction)) {
+    if (!validKey || apiKey !== validKey) return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
@@ -136,6 +143,77 @@ module.exports = async (req, res) => {
   if (!action) return res.status(400).json({ error: 'action required' });
 
   const AI_KEY = process.env.AI_GATEWAY_API_KEY;
+
+  // === ACTION: concierge-route — Victory Concierge routing decision ===
+  // Public action (no admin key). Given a user's qualifier answers and an
+  // optional contactId, returns {agent, reason, route_url}. Deterministic
+  // rules only — no LLM call. Every decision is logged to ai_calls with
+  // action='concierge-route', provider='rule', model='rule-based' so the
+  // existing AI Cost dashboard can roll up which lanes are getting picked.
+  if (action === 'concierge-route') {
+    const role = String(context?.role || '').toLowerCase().trim();
+    const need = String(context?.primary_need || '').toLowerCase().trim();
+
+    let hasAssessment = false;
+    let weakest = null;
+    if (contactId) {
+      try {
+        const latest = await sql`SELECT weakest_pillar FROM assessments
+          WHERE contact_id = ${contactId}
+          ORDER BY completed_at DESC LIMIT 1`;
+        if (latest.length > 0) { hasAssessment = true; weakest = latest[0].weakest_pillar; }
+      } catch (_) { /* assessments table should exist; ignore read errors */ }
+    }
+
+    let agent, reason, route;
+    if (!hasAssessment) {
+      agent = 'Assessment';
+      reason = 'Start with the value assessment so the Concierge has signal to personalize on.';
+      route = '/';
+    } else if (role === 'couple' || role === 'couples' || role === 'relationship') {
+      agent = 'Relationship'; route = '/relationship-hub';
+      reason = 'Couple flow — starting you at the Relationship Hub.';
+    } else if (role === 'business' || role === 'team' || role === 'org') {
+      agent = 'Teams'; route = '/teams';
+      reason = 'Business / team flow — starting you at Teams.';
+    } else if (need === 'faith' || need === 'devotional' || need === 'spiritual') {
+      agent = 'Faith'; route = '/audiobook';
+      reason = 'Faith-first path — Running From Miracles + daily word.';
+    } else if (need === 'stuck' || need === 'feeling_stuck' || need === 'unstuck') {
+      agent = 'Stuck'; route = '/stuck';
+      reason = 'Quick unstuck diagnostic before we go deep.';
+    } else if (need === 'career' || need === 'coaching' || need === 'job') {
+      agent = 'Coaching'; route = '/coaching';
+      reason = 'Career / coaching lane.';
+    } else if (need === 'entrepreneur' || need === 'business_growth' || need === 'real_estate') {
+      agent = 'Growth'; route = '/consult';
+      reason = 'Entrepreneur / growth lane — book a consult.';
+    } else if (need === 'challenge' || need === 'events' || need === 'program') {
+      agent = 'Challenge'; route = '/challenge';
+      reason = '30/90-day challenge lane.';
+    } else {
+      const pillar = (weakest || 'time').toString().toLowerCase();
+      agent = 'PillarCoach'; route = '/framework/' + pillar;
+      reason = 'Pillar coach on your weakest pillar' + (weakest ? ': ' + weakest : '') + '.';
+    }
+
+    // Best-effort telemetry. Never blocks the response.
+    logAiCall(sql, {
+      action: 'concierge-route',
+      route_tier: 'rule',
+      provider: 'rule',
+      model: 'rule-based',
+      contact_id: contactId || null,
+      status: 'ok',
+      metadata: { role, need, weakest, agent, route, has_assessment: hasAssessment },
+    });
+
+    return res.json({
+      agent, reason, route_url: route,
+      has_assessment: hasAssessment,
+      weakest_pillar: weakest,
+    });
+  }
 
   // === ACTION: ai-metrics — rollup of ai_calls for the dashboard ===
   if (action === 'ai-metrics') {

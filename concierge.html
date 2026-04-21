@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Victory Concierge — Value to Victory</title>
+  <meta name="description" content="Three quick questions. We route you to the right starting point." />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="/og-image.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Satoshi', sans-serif; background:#0a0a0a; color:#e4e4e7; line-height:1.6; min-height:100vh; padding:0 0 80px; }
+    a { color:#D4A847; text-decoration:none; }
+    a:hover { text-decoration:underline; }
+
+    .hero { text-align:center; padding:3.5rem 1.25rem 2rem; background:linear-gradient(180deg, #0a0a0a 0%, #1a1510 60%, #0a0a0a 100%); border-bottom:1px solid rgba(212,168,71,0.2); }
+    .hero .eyebrow { font-size:0.7rem; letter-spacing:0.25em; text-transform:uppercase; color:#D4A847; margin-bottom:0.75rem; }
+    .hero h1 { font-family:'Instrument Serif', serif; font-size:2.5rem; font-style:italic; color:#fff; margin-bottom:0.75rem; line-height:1.15; }
+    .hero p { font-size:1rem; color:#a1a1aa; max-width:560px; margin:0 auto; }
+
+    .container { max-width:640px; margin:0 auto; padding:2rem 1.25rem 0; }
+
+    .step { background:#18181b; border:1px solid #27272a; border-radius:1rem; padding:1.5rem 1.25rem; margin-bottom:1rem; }
+    .step.is-done { border-color:rgba(212,168,71,0.35); background:#161616; }
+    .step.is-hidden { display:none; }
+    .step-label { font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:#D4A847; font-weight:700; margin-bottom:0.5rem; }
+    .step h2 { font-family:'Instrument Serif', serif; font-size:1.45rem; font-style:italic; color:#fff; margin-bottom:1rem; line-height:1.3; }
+
+    .choices { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; }
+    .choices.single-col { grid-template-columns:1fr; }
+    .choice { background:#0a0a0a; border:1px solid #3f3f46; color:#e4e4e7; padding:0.95rem 1rem; border-radius:0.625rem; text-align:left; font-size:0.95rem; cursor:pointer; transition:border-color .12s, background .12s; }
+    .choice:hover { border-color:#D4A847; background:#141414; }
+    .choice.is-picked { border-color:#D4A847; background:#1a1510; color:#fff; }
+    .choice .sub { display:block; font-size:0.78rem; color:#71717a; margin-top:0.15rem; font-weight:400; }
+
+    .email-row { display:flex; gap:0.5rem; flex-wrap:wrap; }
+    .email-input { flex:1; min-width:220px; background:#0a0a0a; border:1px solid #3f3f46; color:#e4e4e7; padding:0.85rem 1rem; border-radius:0.625rem; font-size:0.95rem; font-family:inherit; }
+    .email-input:focus { outline:none; border-color:#D4A847; }
+    .btn-secondary { background:transparent; border:1px solid #3f3f46; color:#a1a1aa; padding:0.85rem 1.25rem; border-radius:0.625rem; cursor:pointer; font-family:inherit; font-size:0.9rem; }
+    .btn-secondary:hover { border-color:#71717a; color:#e4e4e7; }
+
+    .result { background:#18181b; border:1px solid rgba(212,168,71,0.4); border-radius:1rem; padding:1.75rem 1.5rem; margin-top:0.5rem; }
+    .result .result-label { font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:#D4A847; font-weight:700; margin-bottom:0.5rem; }
+    .result h3 { font-family:'Instrument Serif', serif; font-size:1.6rem; font-style:italic; color:#fff; margin-bottom:0.5rem; }
+    .result .reason { font-size:0.95rem; color:#a1a1aa; margin-bottom:1.25rem; }
+    .result .cta { display:inline-block; padding:0.85rem 1.75rem; background:linear-gradient(135deg, #D4A847, #b8942e); color:#0a0a0a; font-weight:800; font-size:0.95rem; border-radius:0.5rem; text-decoration:none; transition:opacity .2s; }
+    .result .cta:hover { opacity:0.9; text-decoration:none; }
+    .result .footer-note { font-size:0.78rem; color:#52525b; margin-top:1rem; }
+    .result .footer-note a { color:#71717a; }
+
+    .muted { color:#71717a; font-size:0.8rem; margin-top:1rem; text-align:center; }
+    .err { color:#ef4444; font-size:0.85rem; margin-top:0.75rem; }
+
+    @media (max-width:480px) {
+      .hero h1 { font-size:2rem; }
+      .choices { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="eyebrow">Victory Concierge</div>
+    <h1>Three questions.<br>Then the right starting point.</h1>
+    <p>VTV has many doors. Instead of guessing, answer three quick questions and we'll open the one that fits.</p>
+  </div>
+
+  <div class="container">
+
+    <!-- STEP 1: ROLE -->
+    <div class="step" id="step-role">
+      <div class="step-label">Step 1 of 3</div>
+      <h2>Who's showing up today?</h2>
+      <div class="choices">
+        <button class="choice" data-q="role" data-v="individual">Just me<span class="sub">A solo path</span></button>
+        <button class="choice" data-q="role" data-v="couple">Me + my partner<span class="sub">Couple / relationship</span></button>
+        <button class="choice" data-q="role" data-v="business">Me + my team<span class="sub">Org / business / leadership</span></button>
+        <button class="choice" data-q="role" data-v="uncertain">Not sure yet<span class="sub">Surprise me</span></button>
+      </div>
+    </div>
+
+    <!-- STEP 2: PRIMARY NEED -->
+    <div class="step is-hidden" id="step-need">
+      <div class="step-label">Step 2 of 3</div>
+      <h2>What brought you here?</h2>
+      <div class="choices">
+        <button class="choice" data-q="primary_need" data-v="growth">Grow the 5 pillars<span class="sub">Time / People / Influence / Numbers / Knowledge</span></button>
+        <button class="choice" data-q="primary_need" data-v="feeling_stuck">I'm stuck<span class="sub">Diagnostic first</span></button>
+        <button class="choice" data-q="primary_need" data-v="career">Career / coaching<span class="sub">Talk to a coach</span></button>
+        <button class="choice" data-q="primary_need" data-v="entrepreneur">Entrepreneur / real estate<span class="sub">Growth + deal flow</span></button>
+        <button class="choice" data-q="primary_need" data-v="challenge">90-day challenge<span class="sub">Structured program</span></button>
+        <button class="choice" data-q="primary_need" data-v="faith">Faith / devotional<span class="sub">Running From Miracles</span></button>
+      </div>
+    </div>
+
+    <!-- STEP 3: RETURNING? -->
+    <div class="step is-hidden" id="step-email">
+      <div class="step-label">Step 3 of 3 · optional</div>
+      <h2>Have you taken a VTV assessment before?</h2>
+      <p style="color:#a1a1aa;font-size:0.9rem;margin-bottom:1rem;">If yes, your email lets us personalize on your last result. If not, skip it.</p>
+      <div class="email-row">
+        <input type="email" id="emailInput" class="email-input" placeholder="you@example.com" autocomplete="email" inputmode="email" />
+        <button class="btn-secondary" id="skipBtn" type="button">Skip</button>
+      </div>
+      <p class="err" id="errMsg" style="display:none;"></p>
+    </div>
+
+    <!-- RESULT -->
+    <div class="step is-hidden" id="step-result">
+      <div class="result">
+        <div class="result-label" id="resAgent">Agent</div>
+        <h3 id="resHeadline">Routing…</h3>
+        <p class="reason" id="resReason"></p>
+        <a class="cta" id="resCta" href="#">Open it</a>
+        <p class="footer-note">Not what you expected? <a href="#" id="restartLink">Start over</a>.</p>
+      </div>
+    </div>
+
+    <p class="muted">The Concierge routes. The work is still yours to do.</p>
+  </div>
+
+<script>
+(function(){
+  var state = { role: null, primary_need: null, email: null };
+
+  function byId(id){ return document.getElementById(id); }
+
+  // Step click handlers — event delegation on each step's .choices
+  document.querySelectorAll('.step .choice').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var q = btn.getAttribute('data-q');
+      var v = btn.getAttribute('data-v');
+      state[q] = v;
+      // Mark parent step done, advance to next
+      var step = btn.closest('.step');
+      step.classList.add('is-done');
+      step.querySelectorAll('.choice').forEach(function(b){ b.classList.remove('is-picked'); });
+      btn.classList.add('is-picked');
+      advance(q);
+    });
+  });
+
+  byId('skipBtn').addEventListener('click', function(){ state.email = null; submit(); });
+
+  byId('emailInput').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); handleEmail(); }
+  });
+  byId('emailInput').addEventListener('blur', handleEmail);
+
+  byId('restartLink').addEventListener('click', function(e){
+    e.preventDefault();
+    location.reload();
+  });
+
+  function handleEmail(){
+    var v = (byId('emailInput').value || '').trim();
+    if (!v) return; // skip button handles empty
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+      showErr('Please enter a valid email or press Skip.');
+      return;
+    }
+    state.email = v.toLowerCase();
+    submit();
+  }
+  function showErr(msg){ var e = byId('errMsg'); e.textContent = msg; e.style.display = 'block'; }
+  function clearErr(){ byId('errMsg').style.display = 'none'; }
+
+  function advance(justAnswered){
+    if (justAnswered === 'role') {
+      byId('step-need').classList.remove('is-hidden');
+      byId('step-need').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (justAnswered === 'primary_need') {
+      byId('step-email').classList.remove('is-hidden');
+      byId('step-email').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(function(){ byId('emailInput').focus(); }, 320);
+    }
+  }
+
+  async function submit(){
+    clearErr();
+    byId('step-result').classList.remove('is-hidden');
+    byId('resHeadline').textContent = 'Routing…';
+    byId('resReason').textContent = 'Picking the right lane for you.';
+    byId('resCta').style.display = 'none';
+    byId('step-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    var contactId = null;
+    // If the user gave an email and we have a stored contact_id in localStorage
+    // (set after a prior verify-pin), thread it through so the server can look
+    // up prior assessment context.
+    try {
+      var stored = localStorage.getItem('vtv_contact_id');
+      if (stored && state.email) contactId = Number(stored);
+    } catch(_) {}
+
+    var body = {
+      action: 'concierge-route',
+      contactId: contactId,
+      context: {
+        role: state.role,
+        primary_need: state.primary_need,
+      }
+    };
+
+    try {
+      var r = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var data = await r.json();
+      renderResult(data);
+    } catch (err) {
+      // Graceful fallback: if the API fails, point the user at /stuck as a safe default.
+      renderResult({
+        agent: 'Fallback',
+        reason: 'The Concierge hit a snag — sending you to a safe starting point.',
+        route_url: '/stuck',
+        fallback: true,
+      });
+    }
+  }
+
+  function renderResult(data){
+    var labels = {
+      Assessment:   'Assessment Agent',
+      PillarCoach:  'Pillar Coach',
+      Relationship: 'Relationship Agent',
+      Teams:        'Teams Agent',
+      Challenge:    'Challenge Agent',
+      Coaching:     'Coaching Agent',
+      Growth:       'Growth Agent',
+      Stuck:        'Unstuck Diagnostic',
+      Faith:        'Faith / Devotional',
+      Fallback:     'Safe Default',
+    };
+    byId('resAgent').textContent = labels[data.agent] || data.agent || 'Agent';
+    byId('resHeadline').textContent = headlineFor(data.agent);
+    byId('resReason').textContent = data.reason || '';
+    var cta = byId('resCta');
+    cta.href = data.route_url || '/';
+    cta.textContent = ctaFor(data.agent);
+    cta.style.display = 'inline-block';
+  }
+  function headlineFor(agent){
+    switch(agent){
+      case 'Assessment':   return 'Start with the 5-pillar assessment.';
+      case 'PillarCoach':  return 'Go deep on your weakest pillar.';
+      case 'Relationship': return 'Open the Relationship Hub.';
+      case 'Teams':        return 'Set up your team assessment.';
+      case 'Challenge':    return 'Start a 90-day challenge.';
+      case 'Coaching':     return 'Talk to a coach.';
+      case 'Growth':       return 'Book a growth consult.';
+      case 'Stuck':        return 'Run the unstuck diagnostic.';
+      case 'Faith':        return 'Open the devotional path.';
+      default:             return 'Here’s where to start.';
+    }
+  }
+  function ctaFor(agent){
+    switch(agent){
+      case 'Assessment':   return 'Start the assessment';
+      case 'Relationship': return 'Open Relationship Hub';
+      case 'Teams':        return 'Open Teams';
+      case 'Coaching':     return 'Open Coaching';
+      case 'Growth':       return 'Book the consult';
+      case 'Challenge':    return 'Open Challenge';
+      case 'Stuck':        return 'Run the diagnostic';
+      case 'Faith':        return 'Open devotional';
+      case 'PillarCoach':  return 'Open the pillar';
+      default:             return 'Continue';
+    }
+  }
+})();
+</script>
+</body>
+</html>
