@@ -1,61 +1,171 @@
 const { neon } = require('@neondatabase/serverless');
 
-// ========== AI MODEL CONFIGURATION ==========
-// Task-to-model routing: assigns the best local model per task type.
-// Optimized for laptops with 8-16GB RAM.
-//
-// Model recommendations by hardware:
-//   8GB RAM  → phi3:mini (3.8B) or mistral:7b
-//   16GB RAM → llama3.1:8b (default) or mistral:7b
-//   32GB+    → llama3.1:70b for coaching/summaries
-//
-// Override any model via env vars (e.g., LOCAL_MODEL_COACHING=mistral:7b)
+// ============================================================================
+// ZYRIX AI ROUTING — api/ai.js
+// Tier router: routes between Haiku 4.5 (small/cheap) and Opus 4.7 (frontier)
+// based on action + complexity signals. Falls back Opus → Haiku on 429/5xx.
+// Ollama local path preserved for dev/non-customer tasks.
+// Logs every call to model_invocations for cost/latency visibility.
+// ============================================================================
 
+// --- Local Ollama models ---------------------------------------------------
+// Updated 2026-04-20 to match models actually installed on the dev machine.
+// Override any via env vars (e.g., LOCAL_MODEL_COACHING=mistral-small).
 const LOCAL_MODELS = {
-  'coaching-insight':    process.env.LOCAL_MODEL_COACHING    || 'llama3.1:8b',
-  'assessment-summary':  process.env.LOCAL_MODEL_SUMMARY     || 'mistral:7b',
-  'email-draft':         process.env.LOCAL_MODEL_EMAIL       || 'mistral:7b',
-  'content-generate':    process.env.LOCAL_MODEL_CONTENT     || 'llama3.1:8b',
-  'devotional-generate': process.env.LOCAL_MODEL_DEVOTIONAL  || 'llama3.1:8b',
+  'coaching-insight':    process.env.LOCAL_MODEL_COACHING    || 'qwen3:8b',
+  'assessment-summary':  process.env.LOCAL_MODEL_SUMMARY     || 'mistral-small',
+  'email-draft':         process.env.LOCAL_MODEL_EMAIL       || 'qwen3:8b',
+  'content-generate':    process.env.LOCAL_MODEL_CONTENT     || 'qwen3:8b',
+  'devotional-generate': process.env.LOCAL_MODEL_DEVOTIONAL  || 'mistral-small',
+};
+const OLLAMA_HOST = process.env.OLLAMA_HOST || process.env.OLLAMA_URL || 'http://localhost:11434';
+
+// --- Anthropic tier router -------------------------------------------------
+const SMALL_MODEL    = process.env.ZYRIX_SMALL_MODEL    || 'claude-haiku-4-5';
+const FRONTIER_MODEL = process.env.ZYRIX_FRONTIER_MODEL || 'claude-opus-4-7';
+
+// USD per 1M tokens (April 2026 list prices).
+const PRICES = {
+  'claude-haiku-4-5':  { input: 1.0, output: 5.0 },
+  'claude-sonnet-4-6': { input: 3.0, output: 15.0 },
+  'claude-opus-4-7':   { input: 5.0, output: 25.0 },
 };
 
-const OLLAMA_HOST = process.env.OLLAMA_HOST || process.env.OLLAMA_URL || 'http://localhost:11434';
-const CLOUD_URL = 'https://ai-gateway.vercel.sh/v1/chat/completions';
+let _anthropic = null;
+function getAnthropic() {
+  if (_anthropic) return _anthropic;
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return null;
+  const Anthropic = require('@anthropic-ai/sdk');
+  _anthropic = new Anthropic({ apiKey: key });
+  return _anthropic;
+}
 
-// ========== HEALTH CHECK: Is Ollama running? ==========
+// Per-action tier defaults. context.tier override wins. Complexity signals
+// escalate content-generate to frontier when the prompt looks hard.
+function pickTier(action, prompt, context) {
+  if (context?.tier === 'small' || context?.tier === 'frontier') return context.tier;
+  const defaults = {
+    'coaching-insight':    'small',
+    'assessment-summary':  'small',
+    'devotional-generate': 'small',
+    'content-generate':    'small',
+    'email-draft':         'frontier',   // writes as Shawn's persona — accuracy matters
+  };
+  let tier = defaults[action] || 'small';
+  if (action === 'content-generate' && prompt) {
+    if (prompt.length > 2500) tier = 'frontier';
+    if (/analyze|strategy|comprehensive|deep dive|step[- ]by[- ]step/i.test(prompt)) tier = 'frontier';
+  }
+  return tier;
+}
+
+async function callAnthropicTier(tier, systemPrompt, userPrompt, opts = {}) {
+  const client = getAnthropic();
+  if (!client) {
+    const e = new Error('ANTHROPIC_API_KEY not set');
+    e.status = 500;
+    throw e;
+  }
+  const model = tier === 'frontier' ? FRONTIER_MODEL : SMALL_MODEL;
+  const start = Date.now();
+
+  // cache_control is a no-op below each model's minimum cacheable prefix
+  // (4096 tokens for Haiku/Opus, 2048 for Sonnet). Current system prompts
+  // are ~500 tokens — caching activates automatically once prompts grow
+  // past 4K. The marker is cheap to leave in now.
+  const params = {
+    model,
+    max_tokens: opts.max_tokens || 1024,
+    system: [{
+      type: 'text',
+      text: systemPrompt,
+      cache_control: { type: 'ephemeral' },
+    }],
+    messages: [{ role: 'user', content: userPrompt }],
+  };
+
+  const response = await client.messages.create(params);
+  const latency_ms = Date.now() - start;
+  const textBlock = (response.content || []).find(b => b.type === 'text');
+  const content = textBlock?.text || '';
+  const u = response.usage || {};
+  const usage = {
+    input_tokens:       u.input_tokens || 0,
+    output_tokens:      u.output_tokens || 0,
+    cache_read_tokens:  u.cache_read_input_tokens || 0,
+    cache_write_tokens: u.cache_creation_input_tokens || 0,
+  };
+  return { content, model, tier, latency_ms, usage };
+}
+
+// Cache reads ~0.1x base input price, cache writes ~1.25x (5-min TTL).
+function estimateCostUsd(model, usage) {
+  const p = PRICES[model];
+  if (!p || !usage) return null;
+  const inputCost =
+      (usage.input_tokens       * p.input
+     + usage.cache_write_tokens * p.input * 1.25
+     + usage.cache_read_tokens  * p.input * 0.1) / 1_000_000;
+  const outputCost = (usage.output_tokens * p.output) / 1_000_000;
+  return +(inputCost + outputCost).toFixed(6);
+}
+
+// --- Telemetry: model_invocations table ------------------------------------
+// Self-migrates on first call per function cold-start. Failure non-fatal.
+let _telemetryReady = false;
+async function ensureModelInvocationsTable(sql) {
+  if (_telemetryReady) return;
+  try {
+    await sql`CREATE TABLE IF NOT EXISTS model_invocations (
+      id SERIAL PRIMARY KEY,
+      caller TEXT,
+      action TEXT,
+      model TEXT NOT NULL,
+      tier TEXT,
+      provider TEXT DEFAULT 'anthropic',
+      tokens_in INTEGER DEFAULT 0,
+      tokens_out INTEGER DEFAULT 0,
+      cache_read_tokens INTEGER DEFAULT 0,
+      cache_write_tokens INTEGER DEFAULT 0,
+      cost_usd NUMERIC(10, 6),
+      latency_ms INTEGER,
+      success BOOLEAN DEFAULT TRUE,
+      escalated_from TEXT,
+      error_message TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_model_invocations_created ON model_invocations(created_at DESC)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_model_invocations_model ON model_invocations(model)`;
+    _telemetryReady = true;
+  } catch (e) {
+    console.error('[model_invocations] migration failed (non-fatal):', e.message);
+  }
+}
+
+async function logInvocation(sql, f) {
+  try {
+    await sql`INSERT INTO model_invocations
+      (caller, action, model, tier, provider, tokens_in, tokens_out,
+       cache_read_tokens, cache_write_tokens, cost_usd, latency_ms,
+       success, escalated_from, error_message)
+      VALUES
+      (${f.caller || null}, ${f.action}, ${f.model}, ${f.tier || null},
+       ${f.provider || 'anthropic'}, ${f.tokens_in || 0}, ${f.tokens_out || 0},
+       ${f.cache_read_tokens || 0}, ${f.cache_write_tokens || 0},
+       ${f.cost_usd}, ${f.latency_ms || 0},
+       ${f.success !== false}, ${f.escalated_from || null}, ${f.error_message || null})`;
+  } catch (e) {
+    console.warn('[model_invocations] log failed (non-fatal):', e.message);
+  }
+}
+
+// --- Ollama availability check --------------------------------------------
 async function isOllamaAvailable() {
   try {
     const resp = await fetch(`${OLLAMA_HOST}/api/tags`, { signal: AbortSignal.timeout(2000) });
     return resp.ok;
   } catch { return false; }
-}
-
-// ========== CLOUD AI HELPER ==========
-async function callCloudAI(apiKey, systemPrompt, userPrompt) {
-  const cloudModel = process.env.CLOUD_AI_MODEL || 'anthropic/claude-sonnet-4.5';
-  const aiResponse = await fetch(CLOUD_URL, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: cloudModel,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      max_tokens: 1024,
-      temperature: 0.7,
-    }),
-  });
-  if (!aiResponse.ok) {
-    const errText = await aiResponse.text();
-    throw new Error('AI Gateway error: ' + errText);
-  }
-  const aiData = await aiResponse.json();
-  return {
-    content: aiData.choices?.[0]?.message?.content || '',
-    model: aiData.model || cloudModel,
-    usage: aiData.usage || {}
-  };
 }
 
 // ========== AUTH HELPERS ==========
@@ -87,8 +197,6 @@ function extractJwtUser(req) {
 }
 
 // Actions a member JWT is allowed to invoke. Admin x-api-key can invoke any action.
-// Anything that generates content from a free prompt, or acts as a persona, stays admin-only
-// to prevent abuse / cost blow-up by authenticated users.
 const JWT_ALLOWED_ACTIONS = new Set(['health', 'coaching-insight', 'assessment-summary']);
 
 // ========== MAIN HANDLER ==========
@@ -112,7 +220,7 @@ module.exports = async (req, res) => {
 
   if (!action) return res.status(400).json({ error: 'action required' });
 
-  // Member JWT scope enforcement — admin bypasses all of this
+  // Member JWT scope enforcement — admin bypasses
   if (jwtUser) {
     if (!JWT_ALLOWED_ACTIONS.has(action)) {
       return res.status(403).json({ error: 'This action requires admin auth', allowed: [...JWT_ALLOWED_ACTIONS] });
@@ -126,9 +234,9 @@ module.exports = async (req, res) => {
     }
   }
 
-  const AI_KEY = process.env.AI_GATEWAY_API_KEY;
+  const caller = isAdmin ? 'admin' : `member:${jwtUser?.contactId || '?'}`;
 
-  // === ACTION: health — Check AI provider status ===
+  // === ACTION: health — AI provider status (no LLM call) ===
   if (action === 'health') {
     const ollamaUp = await isOllamaAvailable();
     let ollamaModels = [];
@@ -140,9 +248,8 @@ module.exports = async (req, res) => {
       } catch {}
     }
     return res.json({
-      provider: process.env.AI_PROVIDER || 'cloud',
       ollama: { available: ollamaUp, host: OLLAMA_HOST, models: ollamaModels },
-      cloud: { configured: !!AI_KEY, model: process.env.CLOUD_AI_MODEL || 'anthropic/claude-sonnet-4.5' },
+      anthropic: { configured: !!process.env.ANTHROPIC_API_KEY, small: SMALL_MODEL, frontier: FRONTIER_MODEL },
       taskModels: LOCAL_MODELS,
     });
   }
@@ -240,21 +347,27 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
       return res.status(400).json({ error: `Unknown action: ${action}. Valid: health, coaching-insight, assessment-summary, email-draft, content-generate, devotional-generate` });
     }
 
-    // ========== DETERMINE PROVIDER ==========
-    // Priority: per-request context.provider > env AI_PROVIDER > 'cloud'
+    // ========== ROUTE TO PROVIDER ==========
+    // Priority: context.provider > AI_PROVIDER env > 'cloud'
     const requestProvider = context?.provider;
     const envProvider = process.env.AI_PROVIDER || 'cloud';
     const useLocal = requestProvider === 'ollama' || requestProvider === 'local'
       || (envProvider === 'local')
       || (envProvider === 'auto' && await isOllamaAvailable());
 
+    await ensureModelInvocationsTable(sql);
+
     let content = '';
     let modelUsed = '';
     let usage = {};
+    let tier = null;
+    let provider = null;
+    let escalated_from = null;
+    const reqStart = Date.now();
 
     if (useLocal) {
-      // Call Ollama local AI
-      const ollamaModel = context?.model || LOCAL_MODELS[action] || process.env.OLLAMA_MODEL || 'llama3.1:8b';
+      // Ollama local path
+      const ollamaModel = context?.model || LOCAL_MODELS[action] || process.env.OLLAMA_MODEL || 'qwen3:8b';
       try {
         const ollamaRes = await fetch(`${OLLAMA_HOST}/api/chat`, {
           method: 'POST',
@@ -274,27 +387,86 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
         const ollamaData = await ollamaRes.json();
         content = ollamaData.message?.content || '';
         modelUsed = `ollama/${ollamaModel}`;
-        usage = { prompt_tokens: ollamaData.prompt_eval_count, completion_tokens: ollamaData.eval_count };
+        usage = {
+          input_tokens:  ollamaData.prompt_eval_count || 0,
+          output_tokens: ollamaData.eval_count || 0,
+        };
+        tier = 'local';
+        provider = 'ollama';
       } catch (ollamaErr) {
-        // Fallback to cloud if local fails
-        console.warn('Ollama failed, falling back to cloud:', ollamaErr.message);
-        if (AI_KEY) {
-          const fallback = await callCloudAI(AI_KEY, systemPrompt, userPrompt);
-          content = fallback.content;
-          modelUsed = fallback.model + ' (ollama-fallback)';
-          usage = fallback.usage;
-        } else {
-          return res.status(502).json({ error: 'Local AI failed and no cloud API key configured', detail: ollamaErr.message });
+        // Fallback: Anthropic tier router
+        console.warn('Ollama failed, falling back to Anthropic:', ollamaErr.message);
+        tier = pickTier(action, prompt, context);
+        try {
+          const r = await callAnthropicTier(tier, systemPrompt, userPrompt);
+          content = r.content;
+          modelUsed = r.model + ' (ollama-fallback)';
+          usage = r.usage;
+          provider = 'anthropic';
+          escalated_from = 'ollama';
+        } catch (err) {
+          await logInvocation(sql, {
+            caller, action, model: 'unknown', tier, provider: 'anthropic',
+            latency_ms: Date.now() - reqStart, success: false,
+            error_message: `ollama+anthropic both failed: ${ollamaErr.message} | ${err.message}`,
+          });
+          return res.status(502).json({ error: 'Local and cloud AI both failed', detail: err.message });
         }
       }
     } else {
-      // Call Vercel AI Gateway (Claude)
-      if (!AI_KEY) return res.status(500).json({ error: 'AI Gateway not configured. Set AI_GATEWAY_API_KEY or use AI_PROVIDER=local.' });
-      const result = await callCloudAI(AI_KEY, systemPrompt, userPrompt);
-      content = result.content;
-      modelUsed = result.model;
-      usage = result.usage;
+      // Anthropic direct with tier router
+      tier = pickTier(action, prompt, context);
+      provider = 'anthropic';
+      try {
+        const r = await callAnthropicTier(tier, systemPrompt, userPrompt);
+        content = r.content;
+        modelUsed = r.model;
+        usage = r.usage;
+      } catch (err) {
+        // Auto-fallback: frontier 429/529/5xx → small
+        const status = err?.status || err?.response?.status;
+        if (tier === 'frontier' && (status === 429 || status === 529 || (status >= 500 && status < 600))) {
+          console.warn(`Frontier tier failed (${status}), falling back to small`);
+          try {
+            const r = await callAnthropicTier('small', systemPrompt, userPrompt);
+            content = r.content;
+            modelUsed = r.model + ' (frontier-fallback)';
+            usage = r.usage;
+            escalated_from = 'frontier';
+            tier = 'small';
+          } catch (err2) {
+            await logInvocation(sql, {
+              caller, action, model: SMALL_MODEL, tier: 'small', provider,
+              latency_ms: Date.now() - reqStart, success: false,
+              error_message: `frontier+small both failed: ${err.message} | ${err2.message}`,
+            });
+            return res.status(502).json({ error: 'AI call failed (both tiers)', detail: err2.message });
+          }
+        } else {
+          await logInvocation(sql, {
+            caller, action, model: tier === 'frontier' ? FRONTIER_MODEL : SMALL_MODEL,
+            tier, provider, latency_ms: Date.now() - reqStart, success: false,
+            error_message: err.message,
+          });
+          return res.status(502).json({ error: 'AI call failed', detail: err.message });
+        }
+      }
     }
+
+    // Log successful invocation
+    const rawModel = modelUsed.replace(' (ollama-fallback)', '').replace(' (frontier-fallback)', '').replace(/^ollama\//, '');
+    const cost_usd = provider === 'anthropic' ? estimateCostUsd(rawModel, usage) : null;
+    await logInvocation(sql, {
+      caller, action, model: modelUsed, tier, provider,
+      tokens_in:          usage.input_tokens || 0,
+      tokens_out:         usage.output_tokens || 0,
+      cache_read_tokens:  usage.cache_read_tokens || 0,
+      cache_write_tokens: usage.cache_write_tokens || 0,
+      cost_usd,
+      latency_ms: Date.now() - reqStart,
+      success: true,
+      escalated_from,
+    });
 
     // Trigger n8n webhook if configured (fire-and-forget)
     const n8nUrl = process.env.N8N_WEBHOOK_URL;
@@ -309,9 +481,18 @@ ${context?.tone ? `Tone: ${context.tone}` : ''}`;
       } catch {}
     }
 
-    return res.json({ action, content, model: modelUsed, usage, provider: useLocal ? 'ollama' : 'cloud' });
+    return res.json({
+      action, content,
+      model: modelUsed,
+      tier,
+      provider,
+      usage,
+      cost_usd,
+      escalated_from,
+    });
 
   } catch (err) {
-    return res.status(500).json({ error: 'AI service error' });
+    console.error('[api/ai] unhandled error:', err);
+    return res.status(500).json({ error: 'AI service error', detail: err.message });
   }
 };
