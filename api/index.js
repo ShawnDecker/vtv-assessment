@@ -7829,21 +7829,38 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             }
 
             // Auto-heal: VPS/n8n restart via Hostinger API
+            // Per-service 1-hour cooldown so we don't restart-spam the hypervisor
+            // when the VM is flapping. Transition alerts for other services still
+            // fire during the cooldown — this only gates the restart action itself.
             if (s.service === 'n8n' && s.status === 'down') {
               const recentDowns = await sql`SELECT COUNT(*) as cnt FROM system_health_log
                 WHERE service = 'n8n' AND status = 'down'
                 AND checked_at > NOW() - INTERVAL '20 minutes'`;
               if (parseInt(recentDowns[0].cnt) >= 3) {
-                try {
-                  const hostingerResp = await fetch('https://developers.hostinger.com/api/vps/v1/virtual-machines/1138119/restart', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${process.env.HOSTINGER_API_KEY || ''}` }
+                const cooldownRows = await sql`SELECT checked_at FROM system_health_log
+                  WHERE service = 'n8n' AND auto_healed = true
+                  AND heal_action = 'vps_restart'
+                  AND checked_at > NOW() - INTERVAL '1 hour'
+                  ORDER BY checked_at DESC LIMIT 1`;
+                if (cooldownRows.length > 0) {
+                  actions.push({
+                    action: 'vps_restart',
+                    result: 'skipped_cooldown',
+                    last_restart_at: cooldownRows[0].checked_at,
+                    cooldown_minutes: 60
                   });
-                  actions.push({ action: 'vps_restart', result: hostingerResp.ok ? 'sent' : 'failed' });
-                  await sql`UPDATE system_health_log SET auto_healed = true, heal_action = 'vps_restart'
-                    WHERE id = (SELECT MAX(id) FROM system_health_log WHERE service = 'n8n')`;
-                } catch (healErr) {
-                  actions.push({ action: 'vps_restart', result: 'error', error: healErr.message });
+                } else {
+                  try {
+                    const hostingerResp = await fetch('https://developers.hostinger.com/api/vps/v1/virtual-machines/1138119/restart', {
+                      method: 'POST',
+                      headers: { 'Authorization': `Bearer ${process.env.HOSTINGER_API_KEY || ''}` }
+                    });
+                    actions.push({ action: 'vps_restart', result: hostingerResp.ok ? 'sent' : 'failed' });
+                    await sql`UPDATE system_health_log SET auto_healed = true, heal_action = 'vps_restart'
+                      WHERE id = (SELECT MAX(id) FROM system_health_log WHERE service = 'n8n')`;
+                  } catch (healErr) {
+                    actions.push({ action: 'vps_restart', result: 'error', error: healErr.message });
+                  }
                 }
               }
             }
