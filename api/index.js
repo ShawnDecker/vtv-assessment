@@ -1774,6 +1774,70 @@ module.exports = async (req, res) => {
       return res.json({ exists: true, hasPin: !!rows[0].pin_hash });
     }
 
+    // POST /api/auth/refresh — Silently refresh a valid JWT before it expires
+    // Accepts expired-within-14-days tokens so users returning after a week
+    // don't need to re-enter their PIN. Security: signature must still validate
+    // and contact must still exist + not be disabled.
+    if (req.method === 'POST' && url === '/auth/refresh') {
+      try {
+        const token = extractToken(req);
+        if (!token) return res.status(401).json({ error: 'No token provided' });
+
+        // Parse payload even if expired
+        const parts = token.split('.');
+        if (parts.length !== 3) return res.status(401).json({ error: 'Malformed token' });
+
+        // Verify signature first
+        const expectedSig = crypto.createHmac('sha256', JWT_SECRET).update(`${parts[0]}.${parts[1]}`).digest('base64url');
+        if (parts[2] !== expectedSig) return res.status(401).json({ error: 'Invalid signature' });
+
+        let payload;
+        try { payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString()); }
+        catch { return res.status(401).json({ error: 'Malformed payload' }); }
+
+        // Allow refresh if token expired within the last 14 days (grace period)
+        const now = Math.floor(Date.now() / 1000);
+        const graceWindow = 14 * 24 * 60 * 60; // 14 days
+        if (payload.exp && payload.exp < now - graceWindow) {
+          return res.status(401).json({ error: 'Token expired beyond refresh window. Please log in.' });
+        }
+
+        // Verify the contact still exists
+        if (!payload.email) return res.status(401).json({ error: 'Invalid token payload' });
+        const contactRows = await sql`SELECT id, first_name FROM contacts WHERE LOWER(email) = LOWER(${payload.email}) LIMIT 1`;
+        if (contactRows.length === 0) return res.status(401).json({ error: 'Account not found' });
+
+        // Issue new token with current tier + team IDs
+        let tier = 'free';
+        let teamIds = [];
+        try {
+          const profileRows = await sql`SELECT membership_tier FROM user_profiles WHERE contact_id = ${contactRows[0].id} LIMIT 1`;
+          if (profileRows.length > 0) tier = profileRows[0].membership_tier || 'free';
+          const teamRows = await sql`SELECT team_id FROM team_members WHERE contact_id = ${contactRows[0].id}`;
+          teamIds = teamRows.map(t => t.team_id);
+        } catch (e) { /* non-fatal */ }
+
+        const newToken = createJWT({
+          contactId: contactRows[0].id,
+          email: payload.email.toLowerCase(),
+          tier,
+          teamIds,
+          firstName: contactRows[0].first_name
+        });
+
+        return res.json({
+          token: newToken,
+          contactId: contactRows[0].id,
+          email: payload.email.toLowerCase(),
+          tier,
+          firstName: contactRows[0].first_name
+        });
+      } catch (refreshErr) {
+        console.error('[auth/refresh] Error:', refreshErr.message);
+        return res.status(500).json({ error: 'Refresh failed' });
+      }
+    }
+
     // GET /api/member?email=xxx — Member portal: profile, tier, assessments, teams
     // JWT path returns full profile. Email-only path (coaching email deep-links)
     // returns a narrow, non-PII response: firstName + latest assessment pillar
@@ -6077,12 +6141,39 @@ This link expires in 24 hours.
               continue;
             }
 
+            // === CREATE ENGAGEMENT RECORD FIRST (needed for tracking pixel) ===
+            let engId = null;
+            try {
+              const engRec = await sql`
+                INSERT INTO email_engagement (contact_id, email, coaching_day, email_variant)
+                VALUES (${seq.contact_id || null}, ${seq.email.toLowerCase()}, ${nextDay}, 'default')
+                RETURNING id`;
+              engId = engRec[0]?.id;
+            } catch (engErr) { /* engagement table may not exist */ }
+
+            // Wrap all links with click-tracking and add open pixel to HTML
+            let html = emailContent.html || '';
+            if (engId) {
+              const trackBase = `${BASE_URL}/api/agent/email`;
+              // Wrap every href with click tracker
+              html = html.replace(/href="(https?:\/\/[^"]+)"/g, function(m, u) {
+                return `href="${trackBase}/track-click?id=${engId}&url=${encodeURIComponent(u)}"`;
+              });
+              // Add 1x1 open pixel right before </body> (or append if no </body>)
+              const pixel = `<img src="${trackBase}/track-open?id=${engId}" width="1" height="1" style="display:none" alt=""/>`;
+              if (html.includes('</body>')) {
+                html = html.replace('</body>', pixel + '</body>');
+              } else {
+                html = html + pixel;
+              }
+            }
+
             await transporter.sendMail({
               from: `"Shawn @ Value Engine" <${process.env.GMAIL_USER}>`,
               to: seq.email,
               subject: emailContent.subject,
               text: emailContent.text,
-              html: emailContent.html,
+              html,
             });
 
             // Update sequence
@@ -6092,10 +6183,10 @@ This link expires in 24 hours.
               WHERE id = ${seq.id}
             `;
 
-            results.push({ email: seq.email, status: 'sent', day: nextDay });
+            results.push({ email: seq.email, status: 'sent', day: nextDay, engagementId: engId });
             sentCount++;
             console.log(`Coaching email Day ${nextDay} sent to ${maskEmail(seq.email)}`);
-            await logEmail(sql, { recipient: seq.email, emailType: 'coaching', subject: emailContent.subject, assessmentId: seq.assessment_id, metadata: { day: nextDay } });
+            await logEmail(sql, { recipient: seq.email, emailType: 'coaching', subject: emailContent.subject, assessmentId: seq.assessment_id, metadata: { day: nextDay, engagementId: engId } });
 
           } catch (sendErr) {
             console.error(`Coaching email error for ${maskEmail(seq.email)}:`, sendErr.message);
@@ -6129,7 +6220,7 @@ This link expires in 24 hours.
       }
 
       await ensureCoachingTable(sql);
-      await sql`UPDATE coaching_sequences SET unsubscribed = TRUE WHERE email = ${email}`;
+      await sql`UPDATE coaching_sequences SET unsubscribed = TRUE WHERE LOWER(email) = LOWER(${email})`;
 
       res.setHeader('Content-Type', 'text/html');
       return res.status(200).send(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Unsubscribed</title></head><body style="margin:0;padding:0;background:#111122;font-family:Arial,Helvetica,sans-serif;">
@@ -6261,7 +6352,7 @@ This link expires in 24 hours.
             WHERE LOWER(email) = LOWER(${email}) AND coaching_day = ${day} AND action_completed = false`;
           // Boost engagement score for replying
           await sql`UPDATE coaching_sequences SET engagement_score = LEAST(1.0, COALESCE(engagement_score, 0) + 0.15)
-            WHERE email = ${email}`;
+            WHERE LOWER(email) = LOWER(${email})`;
         } catch (e) { /* non-fatal */ }
 
         // Track analytics
@@ -6475,7 +6566,7 @@ This link expires in 24 hours.
             // Get action completion rate
             let actionRate = 0;
             try {
-              const engRows = await sql`SELECT COUNT(*) as total, SUM(CASE WHEN action_completed THEN 1 ELSE 0 END) as completed FROM email_engagement WHERE email = ${email}`;
+              const engRows = await sql`SELECT COUNT(*) as total, SUM(CASE WHEN action_completed THEN 1 ELSE 0 END) as completed FROM email_engagement WHERE LOWER(email) = LOWER(${email})`;
               if (engRows[0]?.total > 0) actionRate = Math.round((Number(engRows[0].completed) / Number(engRows[0].total)) * 100);
             } catch (e) { /* non-fatal */ }
 
@@ -6605,6 +6696,30 @@ This link expires in 24 hours.
 </td></tr>
 </table></td></tr></table></body></html>`;
 
+            // Create engagement record for tracking (accountability emails)
+            let acctEngId = null;
+            try {
+              const acctEng = await sql`
+                INSERT INTO email_engagement (contact_id, email, coaching_day, email_variant)
+                VALUES (${member.contact_id || null}, ${email.toLowerCase()}, ${coachingDay}, 'accountability')
+                RETURNING id`;
+              acctEngId = acctEng[0]?.id;
+            } catch (e) { /* non-fatal */ }
+
+            // Inject tracking pixel and wrap links
+            if (acctEngId) {
+              const trackBase = `${BASE_URL}/api/agent/email`;
+              html = html.replace(/href="(https?:\/\/[^"]+)"/g, function(m, u) {
+                return `href="${trackBase}/track-click?id=${acctEngId}&url=${encodeURIComponent(u)}"`;
+              });
+              const pixel = `<img src="${trackBase}/track-open?id=${acctEngId}" width="1" height="1" style="display:none" alt=""/>`;
+              if (html.includes('</body>')) {
+                html = html.replace('</body>', pixel + '</body>');
+              } else {
+                html = html + pixel;
+              }
+            }
+
             await transporter.sendMail({
               from: `"Shawn @ Value Engine" <${process.env.GMAIL_USER}>`,
               to: email,
@@ -6614,7 +6729,7 @@ This link expires in 24 hours.
 
             results.push({ email, status: 'sent', day: coachingDay, weakest, streak: replyStreak });
             sentCount++;
-            await logEmail(sql, { recipient: email, emailType: 'accountability', subject, metadata: { day: coachingDay, weakest, streak: replyStreak } });
+            await logEmail(sql, { recipient: email, emailType: 'accountability', subject, metadata: { day: coachingDay, weakest, streak: replyStreak, engagementId: acctEngId } });
           } catch (sendErr) {
             console.error(`Accountability email error for ${maskEmail(member.email)}:`, sendErr.message);
             results.push({ email: member.email, status: 'error', error: sendErr.message });
@@ -7923,7 +8038,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
           // Skip day 0 (assessment day)
           if (day === 0) {
-            await sql`UPDATE coaching_sequences SET current_day = 1 WHERE email = ${email}`;
+            await sql`UPDATE coaching_sequences SET current_day = 1 WHERE LOWER(email) = LOWER(${email})`;
             continue;
           }
 
@@ -8030,7 +8145,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             skippedCount++;
             decision.action = 'skipped';
             decisions.push(decision);
-            await sql`UPDATE coaching_sequences SET engagement_score = ${engagementScore}, persona = ${persona} WHERE email = ${email}`;
+            await sql`UPDATE coaching_sequences SET engagement_score = ${engagementScore}, persona = ${persona} WHERE LOWER(email) = LOWER(${email})`;
             continue;
           }
 
@@ -8106,7 +8221,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           await sql`UPDATE coaching_sequences
             SET current_day = ${day + 1}, last_sent_at = NOW(),
                 engagement_score = ${engagementScore}, email_variant = ${variant}, persona = ${persona}
-            WHERE email = ${email}`;
+            WHERE LOWER(email) = LOWER(${email})`;
 
           decisions.push(decision);
 
