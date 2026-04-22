@@ -1,0 +1,25 @@
+# CONTACTS_LOCAL.md — example shape
+
+<!--
+  This file's REAL counterpart (without the .example suffix) is gitignored.
+  Copy this to CONTACTS_LOCAL.md and fill with private info per member.
+  Never commit CONTACTS_LOCAL.md itself.
+-->
+
+## last-first-name
+
+- **Cell:** 540-xxx-xxxx
+- **Direct email:** firstname@company.com
+- **Preferred contact:** text / email / LinkedIn DM
+- **Warm-intro context:** met at X event, introduced by Y, we have Z in common
+- **Shawn's prior interactions:** (dates + summary)
+- **Sensitive notes:** (family situation, pricing tier interest, competitor they asked about, etc.)
+
+## doe-jane
+
+- **Cell:** 540-xxx-xxxx
+- **Direct email:** jane@example.com
+- **Preferred contact:** text
+- **Warm-intro context:** Jim referred
+- **Shawn's prior interactions:** coffee 2026-03-12
+- **Sensitive notes:** wife takes the assessment before she will — start there
