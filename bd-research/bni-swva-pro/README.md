@@ -13,15 +13,26 @@ For each chapter member, produce a one-page market analysis covering:
 
 ## The three VTV templates by business type
 
-Most BNI members are B2B service providers — the "Chad's fishing kayak" consumer-cohort template from the kayak branch doesn't fit them directly. Use the right template per member:
+Most BNI members are B2B service providers. Use the right template per member:
 
 | Template | When it fits | VTV pitch in one line |
 |---|---|---|
-| **Consumer cohort** (Chad template) | Consumer-facing brand owner (restaurant, gym, retailer, outfitter) | "Psychographic cohort data on buyers similar to your customers — 100+ data points you can't get from Meta or GA." |
+| **Consumer cohort** | Consumer-facing brand owner (restaurant, gym, retailer, outfitter) | "Psychographic cohort data on buyers similar to your customers — 100+ data points you can't get from Meta or GA." |
 | **Lead scoring** | B2B service provider (realtor, accountant, lawyer, CPA, financial advisor, contractor, insurance) | "5-pillar signal on every lead — know which prospects convert, which don't, before the first meeting." |
 | **Team assessment** | Business owner with 5+ employees (franchise, agency, clinic, crew) | "Team-level 5-pillar scan — leadership, trust, and communication gaps made visible in an hour." |
 
-A member may fit two templates. Note both.
+A member may fit two templates. Note both. Member files never reference the KBF / fishing-kayak work from the sibling branch — each file stands on its own business.
+
+## Depth expectation
+
+Every member file must fill Section 3 of `_template.md` with quantitative, business-specific content:
+
+- **TAM / revenue math** with arithmetic shown
+- **Locational impact** — specific counties / cities / service radius named, competitor density sourced
+- **At least one Mermaid chart** using real numbers (or flagged `ILLUSTRATIVE` if a real figure isn't available)
+- **Growth math** — what a 3–5 pt conversion lift from VTV lead-scoring is worth to them in dollars
+
+A file without Section 3 filled to this depth is a draft, not a deliverable.
 
 ## Folder layout
 

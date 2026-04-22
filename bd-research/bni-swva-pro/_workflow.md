@@ -20,27 +20,31 @@ Stub is a valid markdown file with section headings present but body blank. Lets
 
 ## Phase 2 — one deep dive to align shape
 
-Shawn picks the highest-priority member (or the one most like Chad from the fishing-kayak branch, whichever he wants first). I fill `_template.md` completely for that one person. Shawn reviews for:
+Shawn picks the highest-priority member. I fill `_template.md` completely for that one person — including Section 3 (mathematics + locational impact + graph). Shawn reviews for:
 - Right tone (direct, no VTV jargon)
 - Right data-point emphasis (consumer-cohort vs lead-scoring vs team-assessment)
+- Quantitative depth of Section 3: TAM math, locational specificity, chart clarity, growth-lift arithmetic
 - Opening line actually sounds like something he'd say
 - Depth of public-footprint research (too much / too little)
 
-Shawn's feedback gets baked into `_template.md` before we scale.
+Shawn's feedback gets baked into `_template.md` before we scale. Each member file stands on its own business — no cross-references to other research projects.
 
 ## Phase 3 — batch the rest
 
 3–5 members per output. Each gets their own file in `members/`. Order by priority tag.
 
-For each batch:
-1. Pull public sources: company site, LinkedIn, Google Business, relevant directories (Realtor.com, AVVO, BBB, state licensing boards).
+Per-file checklist:
+1. Pull public sources per the hierarchy below.
 2. Draft the file.
-3. Flag anything that needs Shawn's private context (warm-intro, backstory) to go into `CONTACTS_LOCAL.md` rather than the public file.
-4. At the end of each batch, I update the index (below) in the main `README.md`.
+3. **Section 3 non-negotiable**: TAM math with arithmetic shown, counties / cities named, competitor density sourced, at least one Mermaid chart (real numbers or `ILLUSTRATIVE` flag), growth math derived for this business.
+4. Flag anything needing Shawn's private context (warm-intro, backstory) → `CONTACTS_LOCAL.md`, not the public file.
+5. Update the index in the main `README.md` at the end of each batch.
+
+A file missing Section 3 to the stated depth is a draft, not done.
 
 ## Phase 4 — reconcile after meetings
 
-After Shawn meets with a member, he can append a `## 7. Post-meeting notes` section to their file (or a separate `meetings/<date>-<name>.md` file if preferred). That section captures: what the member actually said, what they cared about, what to follow up on, and whether VTV is a fit.
+After Shawn meets with a member, append a `## 8. Post-meeting notes` section to their file (or a separate `meetings/<date>-<name>.md` if preferred). Capture: what the member actually said, what they cared about, what to follow up on, whether VTV fits, and whether the template we guessed matched reality. If wrong, rewrite the Top-3 data points and the Section 3 math for the correct lane.
 
 Post-meeting updates may reveal that a template mismatch happened (e.g. we had them as lead-scoring but they really want team-assessment). Adjust and note in their file.
 

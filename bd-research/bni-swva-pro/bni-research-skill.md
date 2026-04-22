@@ -17,6 +17,14 @@ Your job per member: produce a one-page market analysis that tells Shawn exactly
 2. **Privacy split is structural, not best-effort.** Public-facing analysis goes in `members/<lastname-firstname>.md`. Private info (personal cell, direct email, warm-intro context, sensitive notes) goes in `bd-research/bni-swva-pro/CONTACTS_LOCAL.md` which is gitignored. Never write a private phone or direct email into a `members/*.md` file.
 3. **BNI portal is bot-blocked.** `bniswva.com` and `bni.com` both 403 every automated fetch. If a user asks "research the chapter members," and you don't have the list, do not guess. Ask for the list in one of three formats: paste, screenshot, or PDF/CSV export.
 4. **Before editing this repo, check master.** This skill runs alongside other Claude Code sessions that also push to master. Before any commit, run `git fetch origin master && git log --oneline HEAD..origin/master` per the root-level `CLAUDE.md` rule.
+5. **Depth expectation — mathematics, locational impact, at least one graph per member file.** Every `members/*.md` must contain Section 3 of `_template.md`:
+   - TAM / revenue math with arithmetic shown (not hand-waved)
+   - Specific counties / cities / service-area geography named
+   - Competitor density sourced from a state / federal / industry directory
+   - At least one Mermaid chart (or second if one doesn't tell the full story) using real numbers; `ILLUSTRATIVE` flag only when a real number isn't yet available and Shawn needs to validate
+   - Growth math: what a 3–5 pt conversion lift from VTV lead-scoring is worth in dollars to this business
+   A member file without Section 3 filled to this depth is incomplete — treat as a draft, do not mark done.
+6. **No KBF / Chad / fishing-kayak content in `members/*.md` files.** The consumer-cohort template is an internal shorthand, not a deliverable style. Every member file stands on its own business in its own geography — no cross-references to the KBF reference.
 
 ---
 
@@ -26,7 +34,7 @@ Most BNI members are B2B service providers, not consumer brands. Pick the right 
 
 | Template | When it fits | VTV pitch in one line |
 |---|---|---|
-| **Consumer cohort** ("Chad template") | Consumer-facing brand owner — restaurant, gym, retailer, outfitter, boutique | "Psychographic cohort data on buyers similar to your customers — 100+ data points you can't get from Meta or GA." |
+| **Consumer cohort** | Consumer-facing brand owner — restaurant, gym, retailer, outfitter, boutique | "Psychographic cohort data on buyers similar to your customers — 100+ data points you can't get from Meta or GA." |
 | **Lead scoring** | B2B service provider — realtor, CPA, lawyer, financial advisor, contractor, insurance, HVAC, agency | "5-pillar signal on every lead — know which prospects convert and which don't, before the first meeting." |
 | **Team assessment** | Business owner with 5+ employees — franchise, agency, clinic, crew, multi-location | "Team-level 5-pillar scan — leadership, trust, and communication gaps made visible in an hour." |
 
