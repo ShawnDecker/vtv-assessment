@@ -30,10 +30,23 @@ bd-research/bni-swva-pro/
 ├── README.md                       # this file
 ├── _template.md                    # per-member analysis template
 ├── _workflow.md                    # how to run the research, Phase 1 vs Phase 2
+├── bni-research-skill.md           # Claude Code skill — wire into ~/.claude/skills/
 ├── members/                        # one file per member (public-safe content)
 │   └── <lastname-firstname>.md
 └── CONTACTS_LOCAL.md               # phone / direct-email / private notes (gitignored)
 ```
+
+## Wired into Jarvis (Claude Code skill)
+
+`bni-research-skill.md` is a Claude Code skill definition. Install it once and any Claude Code session on the same machine picks up the full workflow, the three pitch templates, the privacy rules, and the never-invent-a-fact constraint automatically — no need to re-explain the context every session.
+
+```bash
+mkdir -p ~/.claude/skills/bni-research
+cp bd-research/bni-swva-pro/bni-research-skill.md ~/.claude/skills/bni-research/SKILL.md
+# restart Claude Code
+```
+
+After install, invoke with `/bni-research` in any Claude Code session on the machine, or by any conversational reference to BNI chapter research. The skill sits beside the existing `vtv-team` skill (if installed); they don't conflict and both can be active in the same session.
 
 ## Workflow
 
