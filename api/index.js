@@ -36,10 +36,11 @@ const VTV_CONSTITUTION = {
 // ========== SECURITY: Rate Limiting ==========
 const rateLimitStore = new Map();
 const RATE_LIMITS = {
-  default: { max: 60, windowMs: 60000 },    // 60 req/min general
+  default: { max: 60, windowMs: 60000 },     // 60 req/min general
   auth: { max: 10, windowMs: 60000 },        // 10 req/min for PIN attempts
   assessment: { max: 5, windowMs: 60000 },   // 5 submissions/min
   admin: { max: 30, windowMs: 60000 },       // 30 req/min for admin
+  enumeration: { max: 5, windowMs: 60000 },  // 5 req/min for endpoints that reveal account existence (has-pin, etc.) — defeats casual email enumeration
 };
 
 function checkRateLimit(ip, category = 'default') {
@@ -63,6 +64,10 @@ function checkRateLimit(ip, category = 'default') {
 
 // ========== SECURITY: JWT Token Generation & Verification ==========
 const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_API_KEY;
+if (!process.env.JWT_SECRET && process.env.ADMIN_API_KEY) {
+  console.warn('SECURITY: JWT_SECRET unset — falling back to ADMIN_API_KEY. ' +
+    'Compromise of admin key = JWT forgery. Set distinct JWT_SECRET in Vercel env vars.');
+}
 if (!JWT_SECRET) console.error('CRITICAL: JWT_SECRET not set — auth will fail');
 const JWT_EXPIRY = 7 * 24 * 60 * 60; // 7 days in seconds
 
@@ -1313,6 +1318,7 @@ module.exports = async (req, res) => {
 
   // Determine rate limit category
   const rateCategory = url.startsWith('/admin') ? 'admin'
+    : url.startsWith('/member/has-pin') ? 'enumeration'   // Tight limit: this endpoint can be probed to enumerate which emails have accounts
     : (url.includes('/verify-pin') || url.includes('/set-pin') || url.includes('/pin-login') || url.includes('/forgot-pin') || url.includes('/reset-pin')) ? 'auth'
     : url === '/assessment' ? 'assessment'
     : 'default';
@@ -1812,13 +1818,23 @@ module.exports = async (req, res) => {
       return res.json({ verified: true, token, contactId, firstName: rows[0].first_name, tier });
     }
 
-    // GET /api/member/has-pin?email=xxx — Check if member has a PIN set
+    // GET /api/member/has-pin?email=xxx — Check if member has a PIN set.
+    // Defenses against email enumeration:
+    //   1. Rate limited to 5/min/IP via the 'enumeration' category (see top of file)
+    //   2. Constant ~200ms response time so DB hit latency doesn't reveal existence
+    //   Reasons we can't fully unify the response: member.html branches its UI on
+    //   exists/hasPin to show signup vs PIN-setup vs PIN-entry forms. Tightening
+    //   beyond timing+rate-limit requires a UX rewrite — tracked as a separate task.
     if (req.method === 'GET' && url.startsWith('/member/has-pin')) {
+      const startTime = Date.now();
       const params = new URL('http://x' + req.url).searchParams;
       const email = (params.get('email') || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       const rows = await sql`SELECT pin_hash FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      // Pad to a constant ~200ms so timing doesn't differentiate hit vs miss
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 200) await new Promise(r => setTimeout(r, 200 - elapsed));
       if (rows.length === 0) return res.json({ exists: false, hasPin: false });
       return res.json({ exists: true, hasPin: !!rows[0].pin_hash });
     }
