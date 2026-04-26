@@ -6,20 +6,20 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/devotional/send",
+      "schedule": "0 11 * * *"
+    },
+    {
       "path": "/api/ceo-briefing",
-      "schedule": "45 10 * * *"
+      "schedule": "30 11 * * *"
     },
     {
       "path": "/api/coaching/send",
-      "schedule": "47 11 * * *"
+      "schedule": "0 12 * * *"
     },
     {
       "path": "/api/accountability/send",
-      "schedule": "47 22 * * *"
-    },
-    {
-      "path": "/api/devotional/send",
-      "schedule": "47 15 * * *"
+      "schedule": "0 23 * * *"
     }
   ],
   "routes": [
