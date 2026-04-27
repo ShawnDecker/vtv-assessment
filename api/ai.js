@@ -651,3 +651,214 @@ ${VTV_TONE}
     return res.status(500).json({ error: 'AI service error', detail: err.message });
   }
 };
+
+// ============================================================================
+// GROWTH AGENTS HELPER — runGrowthAgent(agentType, input)
+// ============================================================================
+// Local-model-first, Anthropic fallback. Returns { output, engine, latency_ms }.
+// All five growth-agent endpoints share this — keeps prompt logic in one place.
+// `output` is parsed JSON when the agent's contract specifies JSON, else string.
+// `engine` is "ollama:<model>" or "anthropic:<model>" for telemetry grouping.
+
+const GROWTH_PREFERRED_OLLAMA_MODELS = ['qwen2.5:14b', 'llama3.1:8b'];
+
+// Cached per cold-start so we don't hit /api/tags on every call.
+let _ollamaModelCache = null;
+async function pickOllamaGrowthModel() {
+  if (_ollamaModelCache !== null) return _ollamaModelCache;
+  try {
+    const resp = await fetch(`${OLLAMA_HOST}/api/tags`, { signal: AbortSignal.timeout(2000) });
+    if (!resp.ok) { _ollamaModelCache = false; return false; }
+    const data = await resp.json();
+    const names = (data.models || []).map(m => m.name);
+    // Prefer chat model from the spec — never qwen2.5-coder.
+    for (const pref of GROWTH_PREFERRED_OLLAMA_MODELS) {
+      if (names.some(n => n === pref || n.startsWith(`${pref}:`) || n.split(':')[0] === pref.split(':')[0])) {
+        // Find exact tag match if possible, else first matching base.
+        const match = names.find(n => n === pref) || names.find(n => n.startsWith(pref.split(':')[0]));
+        _ollamaModelCache = match || pref;
+        return _ollamaModelCache;
+      }
+    }
+    // Last-resort: any non-coder chat model.
+    const chatish = names.find(n => /^(qwen2?\.?5|llama3?|mistral|phi|gemma)/i.test(n) && !/coder/i.test(n));
+    if (chatish) {
+      console.warn(`[growth-agents] preferred chat model not pulled — falling back to ${chatish}`);
+      _ollamaModelCache = chatish;
+      return chatish;
+    }
+    console.warn('[growth-agents] no suitable Ollama chat model found; will use Anthropic');
+    _ollamaModelCache = false;
+    return false;
+  } catch (e) {
+    console.warn('[growth-agents] Ollama tag check failed:', e.message);
+    _ollamaModelCache = false;
+    return false;
+  }
+}
+
+// Tries to pull JSON out of the model's reply. Models often wrap in ```json fences
+// or add a preamble. Returns parsed object or throws.
+function extractJson(text) {
+  if (text == null) throw new Error('empty model response');
+  let s = String(text).trim();
+  // Strip code fences.
+  const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) s = fence[1].trim();
+  // Slice from first { to last } if there's surrounding prose.
+  const first = s.indexOf('{');
+  const last = s.lastIndexOf('}');
+  if (first !== -1 && last !== -1 && last > first) s = s.slice(first, last + 1);
+  return JSON.parse(s);
+}
+
+// Per-agent prompt + parser. parser: 'json' | 'text'. expects: schema hint for prompts.
+const GROWTH_AGENT_SPECS = {
+  lead_qualifier: {
+    parser: 'json',
+    system: `You are the VTV Growth Lead Qualifier. Score inbound leads using a P.I.N.K.-style rubric (People, Influence, Numbers, Knowledge — adapted: fit, fit-strength, financial readiness, clarity-of-need).
+
+Output ONE JSON object, no prose, no code fences:
+{
+  "score": <integer 0-100>,
+  "recommended_tier": "VictoryPath" | "Value Builder" | "Victory VIP",
+  "actions": [<exactly 3 short strings, each a specific next step>]
+}
+
+Scoring guide:
+- Budget tier "none" caps score at 35; "<$500" caps at 60; "$500-2000" caps at 80; ">$2000" no cap.
+- Urgency 1-2 subtracts 10; 4-5 adds 10. Urgency 3 neutral.
+- Bottleneck specificity: vague ("growth") -10; specific with metric ("can't get past 5 enrolled clients") +15.
+- Tier mapping: <40 → VictoryPath; 40-69 → Value Builder; 70+ → Victory VIP.
+
+Actions must be VTV-specific (mention assessment, framework, coaching, or a tier upsell). No generic advice.`,
+    user: (i) => `Lead intake:
+- Name: ${i.name}
+- Email: ${i.email}
+- Bottleneck: ${i.bottleneck}
+- Budget tier: ${i.budget_tier}
+- Urgency (1-5): ${i.urgency}
+
+Return JSON only.`,
+  },
+
+  outreach_drafter: {
+    parser: 'json',
+    system: `You are the VTV Growth Outreach Drafter, writing as Shawn Decker. Tone: warm, direct, specific. No "Hope this finds you well", no "Just checking in", no emojis.
+
+Output ONE JSON object, no prose, no code fences:
+{
+  "email": "<plaintext, target 100 words, opens with a real observation tied to their bottleneck, ends with one ask, sign 'Shawn'>",
+  "linkedin_dm": "<plaintext, target 40 words, conversational, no salesy hooks>",
+  "calendly_suggestion": "<one sentence suggesting a Calendly slot — reference https://calendly.com/valuetovictory/ and propose timing fit>"
+}`,
+    user: (i) => `Lead context:
+- Name: ${i.name}
+- Email: ${i.email}
+- Bottleneck: ${i.bottleneck}
+- Budget tier: ${i.budget_tier}
+- Urgency: ${i.urgency}/5
+- Recommended tier: ${i.recommended_tier || 'unknown'}
+- Score: ${i.score ?? 'unknown'}/100
+${i.tone_brief ? `\nAdditional tone brief:\n${i.tone_brief}\n` : ''}
+Draft the three artifacts. Return JSON only.`,
+  },
+
+  content_repurposer: {
+    parser: 'json',
+    system: `You are the VTV Content Repurposer. Given one piece of source content, produce 5 platform variants that stay on-brand for ValueToVictory (faith-based, P.I.N.K. framework, no hype words).
+
+Output ONE JSON object, no prose, no code fences:
+{
+  "x":         "<<=280 chars, single tweet, no hashtags unless 1 essential>",
+  "instagram": "<caption <=2200 chars, 5-10 relevant hashtags appended after a blank line>",
+  "linkedin":  "<<=3000 chars, professional, paragraph format, no emojis>",
+  "facebook":  "<medium-form 200-500 words, conversational>",
+  "youtube":   { "title": "<=70 chars catchy", "description": "<2-3 paragraph YT short description with timestamps placeholder>" }
+}
+
+Hard rules:
+- Strict character limits — count and trim before returning.
+- Never use: unlock, crush, journey, leverage, game-changer, next-level.
+- No emojis anywhere.`,
+    user: (i) => `Source content:
+${i.source}
+
+Produce all 5 variants. Return JSON only.`,
+  },
+
+  calendar_concierge: {
+    parser: 'json',
+    system: `You are the VTV Calendar Concierge. Given a Calendly booking webhook payload, produce three artifacts for a smooth call.
+
+Output ONE JSON object, no prose, no code fences:
+{
+  "prep_brief":      "<200-word internal brief for Shawn — who, why, what to ask, what to avoid, recommended outcome>",
+  "reminder_email":  "<plaintext 24h reminder TO the prospect, warm, sign 'Shawn'>",
+  "followup_email":  "<plaintext same-day post-call follow-up template TO the prospect, with [BRACKETED] placeholders for personalization>"
+}`,
+    user: (i) => `Calendly payload (relevant fields extracted or full):
+${typeof i === 'string' ? i : JSON.stringify(i, null, 2)}
+
+Return JSON only.`,
+  },
+
+  // pipeline_reporter is data-driven, not LLM-driven. The endpoint shapes the
+  // result directly from SQL. We keep a spec entry so the contract is uniform.
+  pipeline_reporter: { parser: 'noop', system: '', user: () => '' },
+};
+
+async function callOllamaGrowth(model, systemPrompt, userPrompt) {
+  const start = Date.now();
+  const resp = await fetch(`${OLLAMA_HOST}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: userPrompt },
+      ],
+      stream: false,
+      format: 'json',  // hint for chat models that support it; harmless otherwise
+      options: { temperature: 0.5 },
+    }),
+    signal: AbortSignal.timeout(30000),  // hard 30s per spec
+  });
+  if (!resp.ok) throw new Error(`Ollama HTTP ${resp.status}`);
+  const data = await resp.json();
+  return { content: data.message?.content || '', latency_ms: Date.now() - start };
+}
+
+async function runGrowthAgent(agentType, input) {
+  const spec = GROWTH_AGENT_SPECS[agentType];
+  if (!spec) throw new Error(`unknown growth agent: ${agentType}`);
+  if (spec.parser === 'noop') throw new Error(`${agentType} is data-driven; do not call runGrowthAgent`);
+
+  const systemPrompt = spec.system;
+  const userPrompt   = spec.user(input);
+
+  // Try Ollama first.
+  const ollamaModel = await pickOllamaGrowthModel();
+  if (ollamaModel) {
+    try {
+      const { content, latency_ms } = await callOllamaGrowth(ollamaModel, systemPrompt, userPrompt);
+      const output = spec.parser === 'json' ? extractJson(content) : content;
+      return { output, engine: `ollama:${ollamaModel}`, latency_ms };
+    } catch (e) {
+      console.warn(`[growth-agents] Ollama failed (${e.message}); falling back to Anthropic`);
+    }
+  }
+
+  // Anthropic fallback via existing tier router. Use frontier — these are
+  // customer-touching artifacts where accuracy beats cost.
+  const start = Date.now();
+  const r = await callAnthropicTier('frontier', systemPrompt, userPrompt, { max_tokens: 1500 });
+  const output = spec.parser === 'json' ? extractJson(r.content) : r.content;
+  return { output, engine: `anthropic:${r.model}`, latency_ms: Date.now() - start };
+}
+
+module.exports.runGrowthAgent = runGrowthAgent;
+module.exports.GROWTH_AGENT_SPECS = GROWTH_AGENT_SPECS;
+module.exports.pickOllamaGrowthModel = pickOllamaGrowthModel;
+module.exports.extractJson = extractJson;

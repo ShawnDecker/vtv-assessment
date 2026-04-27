@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Growth Intake — The Value Engine</title>
+  <meta name="description" content="Tell us where your growth is stuck. Get an instant qualified-lead score, a recommended VTV tier, and three specific next actions." />
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-TT6PYLPP31');
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Satoshi', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .page-header { text-align: center; padding: 3rem 1.5rem 1.5rem; }
+    .page-header .brand {
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #D4A847;
+      margin-bottom: 0.75rem;
+    }
+    .page-header h1 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 2.5rem;
+      font-style: italic;
+      color: #fff;
+      margin-bottom: 0.75rem;
+    }
+    .page-header .subtitle {
+      font-size: 1.05rem;
+      color: #a1a1aa;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    .form-card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 1rem;
+      padding: 2.25rem 1.75rem;
+    }
+
+    .form-group { margin-bottom: 1.5rem; }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #D4A847;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    label .req { color: #ef4444; margin-left: 0.25rem; }
+    .helper {
+      font-size: 0.8rem;
+      color: #71717a;
+      margin-bottom: 0.5rem;
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+    }
+
+    input[type="text"], input[type="email"], textarea, select {
+      width: 100%;
+      background: #0a0a0a;
+      color: #fff;
+      border: 1px solid #3f3f46;
+      border-radius: 0.5rem;
+      padding: 0.75rem 0.9rem;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 1rem;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #D4A847;
+      box-shadow: 0 0 0 3px rgba(212, 168, 71, 0.15);
+    }
+    textarea { min-height: 120px; resize: vertical; }
+
+    .urgency-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .urgency-row label {
+      flex: 1 1 0;
+      min-width: 80px;
+      text-align: center;
+      cursor: pointer;
+      padding: 0.6rem 0.4rem;
+      border: 1px solid #3f3f46;
+      border-radius: 0.5rem;
+      letter-spacing: 0;
+      text-transform: none;
+      color: #d4d4d8;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+    .urgency-row label:hover { border-color: #D4A847; color: #fff; }
+    .urgency-row input[type="radio"] { display: none; }
+    .urgency-row input[type="radio"]:checked + .urg-label {
+      border-color: #D4A847;
+      background: rgba(212, 168, 71, 0.1);
+      color: #D4A847;
+      font-weight: 700;
+    }
+    .urg-pip {
+      display: block;
+      font-size: 0.7rem;
+      color: #71717a;
+      margin-top: 0.15rem;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #0a0a0a;
+      border: none;
+      padding: 1rem 1.5rem;
+      border-radius: 0.5rem;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(212, 168, 71, 0.3);
+    }
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .result-card {
+      background: #18181b;
+      border: 2px solid #D4A847;
+      border-radius: 1rem;
+      padding: 2rem 1.75rem;
+      margin-top: 1.5rem;
+      display: none;
+    }
+    .result-card.shown { display: block; }
+    .result-card .score-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #0a0a0a;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.35rem 0.9rem;
+      border-radius: 2rem;
+      margin-bottom: 1rem;
+    }
+    .result-card h2 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.85rem;
+      font-style: italic;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+    .result-card .tier-label {
+      font-size: 0.85rem;
+      color: #a1a1aa;
+      margin-bottom: 1.25rem;
+    }
+    .result-card .tier-label strong { color: #D4A847; }
+
+    .actions-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #71717a;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      margin-top: 1rem;
+    }
+    .actions-list {
+      list-style: none;
+      padding: 0;
+    }
+    .actions-list li {
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+      border-radius: 0.5rem;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.5rem;
+      color: #d4d4d8;
+      font-size: 0.95rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+    .actions-list li::before {
+      content: counter(action-counter);
+      counter-increment: action-counter;
+      flex-shrink: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: #D4A847;
+      color: #0a0a0a;
+      border-radius: 50%;
+      font-weight: 800;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .actions-list { counter-reset: action-counter; }
+
+    .error-msg {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      padding: 0.85rem 1rem;
+      border-radius: 0.5rem;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .error-msg.shown { display: block; }
+
+    .footer-note {
+      text-align: center;
+      color: #52525b;
+      font-size: 0.8rem;
+      margin-top: 2rem;
+      padding: 1rem;
+    }
+    .footer-note a { color: #D4A847; text-decoration: none; }
+    .footer-note a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      .page-header h1 { font-size: 1.85rem; }
+      .form-card { padding: 1.5rem 1.25rem; }
+      .urgency-row label { flex: 1 1 30%; }
+    }
+  </style>
+  <script src="/js/sticky-nav.js" defer></script>
+  <script src="/js/assessment-icons.js" defer></script>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="brand">THE VALUE ENGINE</div>
+    <h1>Where is your growth stuck?</h1>
+    <p class="subtitle">Two minutes. We'll score where you are, recommend the right VTV path, and give you three concrete next steps.</p>
+  </header>
+
+  <main class="container">
+    <form id="intake-form" class="form-card" novalidate>
+      <div class="form-group">
+        <label for="name">Your name <span class="req">*</span></label>
+        <input type="text" id="name" name="name" required maxlength="200" autocomplete="name" />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Best email <span class="req">*</span></label>
+        <input type="email" id="email" name="email" required maxlength="320" autocomplete="email" />
+      </div>
+
+      <div class="form-group">
+        <label for="bottleneck">Your biggest growth bottleneck right now <span class="req">*</span></label>
+        <p class="helper">Be specific — "can't get past 5 enrolled clients" beats "need more growth".</p>
+        <textarea id="bottleneck" name="bottleneck" required maxlength="4000" placeholder="What is the one thing standing between you and the next level?"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="budget_tier">Budget tier <span class="req">*</span></label>
+        <select id="budget_tier" name="budget_tier" required>
+          <option value="">Select a budget range</option>
+          <option value="none">No budget right now</option>
+          <option value="&lt;$500">Less than $500</option>
+          <option value="$500-2000">$500 to $2,000</option>
+          <option value="&gt;$2000">More than $2,000</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>How urgent is solving this? <span class="req">*</span></label>
+        <div class="urgency-row" role="radiogroup" aria-label="urgency">
+          <label>
+            <input type="radio" name="urgency" value="1" required />
+            <span class="urg-label">1<span class="urg-pip">someday</span></span>
+          </label>
+          <label>
+            <input type="radio" name="urgency" value="2" />
+            <span class="urg-label">2<span class="urg-pip">soon-ish</span></span>
+          </label>
+          <label>
+            <input type="radio" name="urgency" value="3" />
+            <span class="urg-label">3<span class="urg-pip">this quarter</span></span>
+          </label>
+          <label>
+            <input type="radio" name="urgency" value="4" />
+            <span class="urg-label">4<span class="urg-pip">this month</span></span>
+          </label>
+          <label>
+            <input type="radio" name="urgency" value="5" />
+            <span class="urg-label">5<span class="urg-pip">right now</span></span>
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">Get my score</button>
+      <div class="error-msg" id="error-msg"></div>
+    </form>
+
+    <section class="result-card" id="result-card" aria-live="polite">
+      <span class="score-badge" id="score-badge">Score: --</span>
+      <h2 id="result-headline">Your VTV Path</h2>
+      <p class="tier-label">Recommended tier: <strong id="result-tier">--</strong></p>
+      <div class="actions-label">Three next actions</div>
+      <ul class="actions-list" id="actions-list"></ul>
+    </section>
+  </main>
+
+  <footer class="footer-note">
+    Value to Victory &mdash; <a href="https://valuetovictory.com">valuetovictory.com</a>
+  </footer>
+
+  <script>
+    (function () {
+      const form = document.getElementById('intake-form');
+      const submitBtn = document.getElementById('submit-btn');
+      const errorMsg = document.getElementById('error-msg');
+      const resultCard = document.getElementById('result-card');
+      const scoreBadge = document.getElementById('score-badge');
+      const resultTier = document.getElementById('result-tier');
+      const actionsList = document.getElementById('actions-list');
+
+      function showError(msg) {
+        errorMsg.textContent = msg;
+        errorMsg.classList.add('shown');
+      }
+      function clearError() {
+        errorMsg.textContent = '';
+        errorMsg.classList.remove('shown');
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        clearError();
+        resultCard.classList.remove('shown');
+
+        const fd = new FormData(form);
+        const payload = {
+          name: (fd.get('name') || '').toString().trim(),
+          email: (fd.get('email') || '').toString().trim(),
+          bottleneck: (fd.get('bottleneck') || '').toString().trim(),
+          budget_tier: (fd.get('budget_tier') || '').toString(),
+          urgency: parseInt(fd.get('urgency'), 10),
+        };
+
+        if (!payload.name || !payload.email || !payload.bottleneck || !payload.budget_tier || !payload.urgency) {
+          showError('Please complete every field.');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Scoring...';
+
+        try {
+          const res = await fetch('/api/growth-agents/intake', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            showError(data.error || 'Something went wrong. Please try again.');
+            return;
+          }
+
+          scoreBadge.textContent = 'Score: ' + (data.score ?? '--') + ' / 100';
+          resultTier.textContent = data.recommended_tier || '--';
+          actionsList.innerHTML = '';
+          (data.actions || []).forEach(function (a) {
+            const li = document.createElement('li');
+            li.textContent = a;
+            actionsList.appendChild(li);
+          });
+          resultCard.classList.add('shown');
+          resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (err) {
+          showError('Network error: ' + (err && err.message ? err.message : 'unknown'));
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Get my score';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
