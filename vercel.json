@@ -323,6 +323,10 @@
       "dest": "/media-overview.html"
     },
     {
+      "src": "/growth",
+      "dest": "/growth-services.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }

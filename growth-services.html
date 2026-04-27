@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Growth Services — Value to Victory</title>
+  <meta name="description" content="Ads management, creative production, landing pages, and analytics — all built into the VTV platform." />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #e4e4e7; line-height: 1.7; }
+    a { color: #D4A847; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .hero { text-align: center; padding: 4rem 1.5rem 3rem; border-bottom: 1px solid #1a1a1a; }
+    .hero .eyebrow { font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.75rem; }
+    .hero h1 { font-family: 'Instrument Serif', serif; font-size: 2.75rem; font-style: italic; color: #fff; margin-bottom: 1rem; line-height: 1.2; }
+    .hero .subtitle { font-size: 1.05rem; color: #a1a1aa; max-width: 620px; margin: 0 auto; }
+
+    .container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* Services Grid */
+    .services { padding: 3rem 0; }
+    .services-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .service-card {
+      background: #18181b; border: 1px solid #27272a; border-radius: 1rem;
+      padding: 2rem; transition: border-color 0.3s, transform 0.3s;
+    }
+    .service-card:hover { border-color: #D4A847; transform: translateY(-3px); }
+    .service-icon { font-size: 2.25rem; margin-bottom: 1rem; }
+    .service-name { font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+    .service-desc { font-size: 0.88rem; color: #a1a1aa; line-height: 1.6; }
+    .service-tag {
+      display: inline-block; margin-top: 1rem; font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; color: #D4A847;
+      background: rgba(212,168,71,0.1); padding: 0.25rem 0.75rem; border-radius: 1rem;
+    }
+
+    /* Team Section */
+    .team-section { padding: 3rem 0; border-top: 1px solid #1a1a1a; }
+    .section-label { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; font-weight: 700; margin-bottom: 1.25rem; text-align: center; }
+    .team-section h2 { font-family: 'Instrument Serif', serif; font-size: 1.75rem; font-style: italic; color: #fff; text-align: center; margin-bottom: 0.75rem; }
+    .team-section .team-sub { text-align: center; color: #a1a1aa; font-size: 0.9rem; max-width: 560px; margin: 0 auto 2rem; }
+
+    .team-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; }
+    .team-role {
+      background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem;
+      padding: 1.25rem 0.75rem; text-align: center;
+    }
+    .team-role .role-icon { font-size: 1.75rem; margin-bottom: 0.5rem; }
+    .team-role .role-name { font-size: 0.7rem; font-weight: 700; color: #e4e4e7; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* How It Works */
+    .how-section { padding: 3rem 0; border-top: 1px solid #1a1a1a; }
+    .how-section h2 { font-family: 'Instrument Serif', serif; font-size: 1.75rem; font-style: italic; color: #fff; text-align: center; margin-bottom: 2rem; }
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+    .step { text-align: center; }
+    .step-num {
+      width: 40px; height: 40px; border-radius: 50%; display: inline-flex;
+      align-items: center; justify-content: center; font-weight: 900; font-size: 1rem;
+      background: linear-gradient(135deg, #D4A847, #b8942e); color: #0a0a0a;
+      margin-bottom: 0.75rem;
+    }
+    .step-title { font-size: 0.85rem; font-weight: 700; color: #e4e4e7; margin-bottom: 0.35rem; }
+    .step-desc { font-size: 0.75rem; color: #71717a; }
+
+    /* Metrics */
+    .metrics { padding: 3rem 0; border-top: 1px solid #1a1a1a; }
+    .metrics h2 { font-family: 'Instrument Serif', serif; font-size: 1.75rem; font-style: italic; color: #fff; text-align: center; margin-bottom: 2rem; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+    .metric {
+      background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem;
+      padding: 1.5rem; text-align: center;
+    }
+    .metric .metric-label { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: #71717a; font-weight: 700; margin-bottom: 0.5rem; }
+    .metric .metric-value { font-size: 0.85rem; font-weight: 700; color: #D4A847; }
+
+    /* Platforms */
+    .platforms { padding: 3rem 0; border-top: 1px solid #1a1a1a; text-align: center; }
+    .platforms h2 { font-family: 'Instrument Serif', serif; font-size: 1.75rem; font-style: italic; color: #fff; margin-bottom: 0.75rem; }
+    .platforms .plat-sub { color: #a1a1aa; font-size: 0.9rem; margin-bottom: 2rem; }
+    .platform-logos { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; }
+    .platform-item { text-align: center; }
+    .platform-item .plat-icon { font-size: 2.5rem; }
+    .platform-item .plat-name { font-size: 0.7rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.5rem; font-weight: 700; }
+
+    /* CTA */
+    .cta-section { text-align: center; padding: 3rem 1.5rem; background: linear-gradient(180deg, #0a0a0a, #1a1510); border-top: 1px solid rgba(212,168,71,0.2); }
+    .cta-section h2 { font-family: 'Instrument Serif', serif; font-size: 1.75rem; font-style: italic; color: #fff; margin-bottom: 0.75rem; }
+    .cta-section p { color: #a1a1aa; font-size: 0.9rem; margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto; }
+    .cta-btn {
+      display: inline-block; padding: 0.875rem 2.5rem;
+      background: linear-gradient(135deg, #D4A847, #b8942e);
+      color: #0a0a0a; font-weight: 800; font-size: 0.95rem;
+      border-radius: 0.5rem; text-decoration: none;
+    }
+    .cta-btn:hover { opacity: 0.9; text-decoration: none; }
+    .cta-links { margin-top: 1.5rem; }
+    .cta-links a { font-size: 0.82rem; color: #71717a; margin: 0 0.75rem; }
+
+    .footer { text-align: center; padding: 2rem 1.5rem; border-top: 1px solid #1a1a1a; }
+    .footer .brand { font-family: 'Instrument Serif', serif; font-style: italic; color: #D4A847; margin-bottom: 0.5rem; }
+    .footer .copy { font-size: 0.75rem; color: #52525b; }
+
+    @media (max-width: 700px) {
+      .hero h1 { font-size: 2rem; }
+      .services-grid { grid-template-columns: 1fr; }
+      .team-grid { grid-template-columns: repeat(3, 1fr); }
+      .steps { grid-template-columns: 1fr 1fr; }
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="eyebrow">VTV Growth Services</div>
+    <h1>We Scale Brands That Matter</h1>
+    <p class="subtitle">Ads management, creative production, landing pages, and analytics &mdash; all built into the Value to Victory platform. We help faith-driven brands acquire users and grow revenue.</p>
+  </div>
+
+  <div class="container">
+
+    <!-- CORE SERVICES -->
+    <div class="services">
+      <div class="services-grid">
+        <div class="service-card">
+          <div class="service-icon">&#128200;</div>
+          <div class="service-name">Ads Management</div>
+          <div class="service-desc">We scale campaigns across Meta, TikTok, and Google to drive user acquisition and revenue &mdash; with CAC in focus. Every dollar is tracked, tested, and optimized.</div>
+          <div class="service-tag">Meta &bull; TikTok &bull; Google</div>
+        </div>
+
+        <div class="service-card">
+          <div class="service-icon">&#127912;</div>
+          <div class="service-name">Creative Production</div>
+          <div class="service-desc">We produce scroll-stopping creatives, hooks, and ad copy designed to grab attention and convert cold audiences. From concept to launch in days, not weeks.</div>
+          <div class="service-tag">Ad Copy &bull; Video &bull; Graphics</div>
+        </div>
+
+        <div class="service-card">
+          <div class="service-icon">&#128187;</div>
+          <div class="service-name">Landing Pages &amp; Funnels</div>
+          <div class="service-desc">Custom landing pages and conversion funnels designed to drive signups, purchases, and LTV. Always tested. Always improving. Built on our proven design system.</div>
+          <div class="service-tag">CRO &bull; A/B Testing &bull; Funnels</div>
+        </div>
+
+        <div class="service-card">
+          <div class="service-icon">&#128202;</div>
+          <div class="service-name">Transparent Reporting</div>
+          <div class="service-desc">See how every dollar performs with real-time reporting on CAC, ROAS, and retention. No fluff. Just insights you can act on. Biweekly growth syncs with your team.</div>
+          <div class="service-tag">CAC &bull; ROAS &bull; LTV</div>
+        </div>
+
+        <div class="service-card">
+          <div class="service-icon">&#129309;</div>
+          <div class="service-name">Strategic Partnership</div>
+          <div class="service-desc">From offer testing to funnel optimization, we&rsquo;ve done this across dozens of consumer brands. We&rsquo;re not just a vendor &mdash; we&rsquo;re your growth partner with skin in the game.</div>
+          <div class="service-tag">Strategy &bull; Consulting &bull; Growth</div>
+        </div>
+
+        <div class="service-card">
+          <div class="service-icon">&#128218;</div>
+          <div class="service-name">Guides &amp; Tools</div>
+          <div class="service-desc">We&rsquo;ve created battle-tested guides, templates, and automation tools &mdash; provided free to every client. Ad templates, email sequences, funnel blueprints, and more.</div>
+          <div class="service-tag">Free Resources &bull; Templates</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- YOUR TEAM -->
+    <div class="team-section">
+      <div class="section-label">Your Stacked Team</div>
+      <h2>A Full Marketing Pod, Aligned to Your Goals</h2>
+      <p class="team-sub">Every client gets a dedicated team &mdash; not a freelancer, not a chatbot. Real people who know your brand and your numbers.</p>
+      <div class="team-grid">
+        <div class="team-role"><div class="role-icon">&#127919;</div><div class="role-name">Strategist</div></div>
+        <div class="team-role"><div class="role-icon">&#128200;</div><div class="role-name">Paid Media Lead</div></div>
+        <div class="team-role"><div class="role-icon">&#127912;</div><div class="role-name">Creative Designer</div></div>
+        <div class="team-role"><div class="role-icon">&#128203;</div><div class="role-name">Project Manager</div></div>
+        <div class="team-role"><div class="role-icon">&#128202;</div><div class="role-name">Reporting Analyst</div></div>
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="how-section">
+      <div class="section-label">How It Works</div>
+      <h2>From Strategy to Scale in 4 Steps</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-title">Discovery Call</div>
+          <div class="step-desc">We learn your brand, goals, audience, and budget. 30 minutes.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-title">Strategy & Creative</div>
+          <div class="step-desc">Your pod builds a launch plan: ad creatives, landing pages, targeting.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-title">Launch & Test</div>
+          <div class="step-desc">Campaigns go live. We test hooks, audiences, and offers in the first 14 days.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-title">Optimize & Scale</div>
+          <div class="step-desc">Weekly optimization. Biweekly syncs. We double down on what works and cut what doesn't.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- METRICS WE TRACK -->
+    <div class="metrics">
+      <div class="section-label">What We Measure</div>
+      <h2>Every Dollar Accounted For</h2>
+      <div class="metrics-grid">
+        <div class="metric"><div class="metric-label">Customer Acquisition Cost</div><div class="metric-value">CAC</div></div>
+        <div class="metric"><div class="metric-label">Return on Ad Spend</div><div class="metric-value">ROAS</div></div>
+        <div class="metric"><div class="metric-label">Payback Period</div><div class="metric-value">Days to ROI</div></div>
+        <div class="metric"><div class="metric-label">Lifetime Value</div><div class="metric-value">LTV</div></div>
+      </div>
+    </div>
+
+    <!-- PLATFORMS -->
+    <div class="platforms">
+      <div class="section-label">Platforms We Run</div>
+      <h2>Where Your Audience Lives</h2>
+      <p class="plat-sub">We run paid campaigns across the platforms that matter for your audience.</p>
+      <div class="platform-logos">
+        <div class="platform-item"><div class="plat-icon">&#128308;</div><div class="plat-name">Meta / Facebook</div></div>
+        <div class="platform-item"><div class="plat-icon">&#128247;</div><div class="plat-name">Instagram</div></div>
+        <div class="platform-item"><div class="plat-icon">&#127909;</div><div class="plat-name">TikTok</div></div>
+        <div class="platform-item"><div class="plat-icon">&#128269;</div><div class="plat-name">Google Ads</div></div>
+        <div class="platform-item"><div class="plat-icon">&#9654;</div><div class="plat-name">YouTube</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <h2>Ready to Grow?</h2>
+    <p>Book a free 30-minute discovery call. We&rsquo;ll map your growth strategy and show you exactly how we&rsquo;d scale your brand.</p>
+    <a href="https://calendly.com/valuetovictory/30min" class="cta-btn">Book Your Discovery Call</a>
+    <div class="cta-links">
+      <a href="https://assessment.valuetovictory.com">Take the Assessment</a>
+      <a href="https://assessment.valuetovictory.com/pricing">View Pricing</a>
+      <a href="https://valuetovictory.com">VTV Home</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="brand">Value to Victory</div>
+    <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br>valuetovictory.com</div>
+  </div>
+
+</body>
+</html>
