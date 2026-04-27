@@ -209,7 +209,9 @@ add_section('Competitors in Every Vertical \u2014 VTV Connects Them',
 
 add_section('Our Team',
 "Shawn E. Decker \u2014 Founder & CEO\n"
-"U.S. Navy Veteran (Aviation Maintenance, 1998\u20132002). Licensed Real Estate Appraiser, 23+ years. "
+"U.S. Navy Veteran (Aviation Maintenance, 1998\u20132002). VA Certified Real Estate Appraiser "
+"License #4001011047, 23+ years, active & current. 2026 Continuing Education: 28+ hours including "
+"USPAP, National Valuation Bias and Fair Housing, Hybrid/Desktop Appraisals (McKissock). "
 "Published author (2 books). Created the P.I.N.K. Framework and built the entire platform architecture.\n\n"
 "Cameron Decker \u2014 VP Fitness & Coaching (FitCarna)\n"
 "Leads the Carna Method coaching system. 300+ existing clients, 12K+ lbs lost. $12K+/mo Day 1 revenue, "
