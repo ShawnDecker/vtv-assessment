@@ -1,0 +1,43 @@
+name: OSV-Scanner (dep CVEs)
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: "13 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: osv-scanner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install osv-scanner
+        run: |
+          VERSION="1.9.2"
+          curl -sSL "https://github.com/google/osv-scanner/releases/download/v${VERSION}/osv-scanner_linux_amd64" -o osv-scanner
+          chmod +x osv-scanner
+          sudo mv osv-scanner /usr/local/bin/
+          osv-scanner --version
+
+      - name: Run osv-scanner
+        run: osv-scanner --recursive --skip-git ./
+        continue-on-error: true
+
+      # npm audit catches advisories OSV may not have (e.g. NVD-only or
+      # GitHub-specific). Both are non-blocking — surface findings via the
+      # Actions log; do not fail the build.
+      - name: Set up Node.js for npm audit
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: npm audit (production deps only)
+        run: npm audit --audit-level=moderate --omit=dev || true

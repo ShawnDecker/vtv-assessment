@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/js/auth.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/png" href="/favicon.png" />
@@ -113,7 +114,16 @@
   </div>
 
   <script>
-    // JWT auth check — require authentication through member portal
+    // Auth gate — redirect to login if no token
+    (function() {
+      const token = localStorage.getItem('vtv_token');
+      if (!token) {
+        window.location.href = '/member';
+        return;
+      }
+    })();
+
+    // JWT auth check — pre-fill email from token
     (function() {
       try {
         var token = localStorage.getItem('vtv_token');
@@ -124,19 +134,12 @@
             // Keep both localStorage keys in sync
             localStorage.setItem('ve_email', payload.email);
           }
-        } else {
-          // No token — redirect to member portal
-          window.location.href = '/member?msg=Please+log+in+to+view+your+progress';
-          return;
         }
       } catch(e) {
         // Token decode failed — try localStorage fallback
         var saved = localStorage.getItem('ve_email') || localStorage.getItem('vtv_member_email');
         if (saved) {
           document.getElementById('email').value = saved;
-        } else {
-          window.location.href = '/member?msg=Please+log+in+to+view+your+progress';
-          return;
         }
       }
     })();
@@ -148,7 +151,8 @@
       if (!email || !email.includes('@')) { errEl.textContent = 'Enter a valid email.'; errEl.classList.remove('hidden'); return; }
 
       try {
-        var resp = await fetch('/api/user/history?email=' + encodeURIComponent(email));
+        var _t = localStorage.getItem('vtv_token');
+        var resp = await fetch('/api/user/history?email=' + encodeURIComponent(email), { headers: _t ? {'Authorization': 'Bearer ' + _t} : {} });
         var data = await resp.json();
         if (data.isNewUser || !data.assessments || data.assessments.length === 0) {
           errEl.textContent = 'No assessments found. Take one first.'; errEl.classList.remove('hidden'); return;

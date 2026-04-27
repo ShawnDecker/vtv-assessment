@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Build Your Own Jarvis — Value to Victory</title>
+  <meta name="description" content="Full software stack to build a local voice assistant like Shawn's Jarvis. All open-source, CPU-only, no API keys." />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #e4e4e7; min-height: 100vh; line-height: 1.7; }
+
+    .container { max-width: 880px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+
+    .page-header { text-align: center; margin-bottom: 3rem; }
+    .page-header .brand { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.75rem; }
+    .page-header h1 { font-family: 'Instrument Serif', serif; font-size: 2.75rem; font-style: italic; color: #fff; margin-bottom: 0.75rem; letter-spacing: -0.01em; }
+    .page-header .subtitle { font-size: 1.05rem; color: #a1a1aa; max-width: 640px; margin: 0 auto; }
+
+    .footprint { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin: 2rem 0; }
+    .footprint .chip {
+      background: #18181b; border: 1px solid #27272a; border-radius: 0.5rem;
+      padding: 0.6rem 1.1rem; font-size: 0.8rem; color: #a1a1aa;
+    }
+    .footprint .chip strong { color: #D4A847; font-weight: 700; }
+
+    .download-row { text-align: center; margin: 2rem 0 3rem; display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-block; padding: 0.85rem 1.75rem; border-radius: 0.5rem;
+      font-weight: 600; font-size: 0.95rem; text-decoration: none; cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+    }
+    .btn-primary { background: #D4A847; color: #0a0a0a; }
+    .btn-primary:hover { background: #f0c05a; transform: translateY(-1px); }
+    .btn-secondary { background: #18181b; color: #e4e4e7; border: 1px solid #27272a; }
+    .btn-secondary:hover { background: #27272a; }
+
+    .panel {
+      background: #18181b; border: 1px solid #27272a; border-radius: 1rem;
+      padding: 2rem; margin-bottom: 1.5rem;
+    }
+    .panel h2 {
+      font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1.75rem;
+      color: #fff; margin-bottom: 1rem;
+    }
+    .panel h3 {
+      font-family: 'Satoshi', sans-serif; font-weight: 600; font-size: 1.1rem;
+      color: #D4A847; margin-top: 1.5rem; margin-bottom: 0.75rem;
+    }
+    .panel p { color: #d4d4d8; margin-bottom: 0.75rem; }
+    .panel ul, .panel ol { margin: 0.75rem 0 0.75rem 1.5rem; color: #d4d4d8; }
+    .panel li { margin-bottom: 0.35rem; }
+
+    code {
+      background: #27272a; color: #f0c05a;
+      padding: 0.15rem 0.4rem; border-radius: 0.25rem;
+      font-family: 'SF Mono', Monaco, Menlo, Consolas, monospace;
+      font-size: 0.9em;
+    }
+    pre {
+      background: #0a0a0a; border: 1px solid #27272a; border-radius: 0.5rem;
+      padding: 1rem 1.25rem; margin: 1rem 0; overflow-x: auto;
+      font-family: 'SF Mono', Monaco, Menlo, Consolas, monospace; font-size: 0.85rem;
+      color: #a1a1aa; line-height: 1.5;
+    }
+    pre code { background: transparent; color: #e4e4e7; padding: 0; }
+
+    table {
+      width: 100%; border-collapse: collapse; margin: 1rem 0 1.25rem;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 0.65rem 0.9rem; text-align: left; border-bottom: 1px solid #27272a;
+      vertical-align: top;
+    }
+    th { color: #D4A847; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
+    td { color: #d4d4d8; }
+    td:first-child { color: #fff; font-weight: 500; }
+
+    .checklist { list-style: none; margin-left: 0; }
+    .checklist li {
+      padding: 0.5rem 0 0.5rem 1.75rem; position: relative;
+      border-bottom: 1px solid #27272a;
+    }
+    .checklist li:last-child { border-bottom: 0; }
+    .checklist li::before {
+      content: "☐"; position: absolute; left: 0; top: 0.5rem; color: #D4A847; font-size: 1.1rem;
+    }
+
+    .footnote {
+      text-align: center; margin-top: 3rem; padding-top: 2rem;
+      border-top: 1px solid #27272a; color: #71717a; font-size: 0.85rem;
+    }
+    .footnote a { color: #D4A847; text-decoration: none; }
+    .footnote a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      .container { padding: 2rem 1rem 3rem; }
+      .page-header h1 { font-size: 2rem; }
+      .panel { padding: 1.25rem; }
+      table { font-size: 0.85rem; }
+      th, td { padding: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="page-header">
+      <div class="brand">Value to Victory / Builder Notes</div>
+      <h1>Build Your Own Jarvis</h1>
+      <p class="subtitle">Local voice assistant with wake-word, TTS, LLM replies, long-term memory, web search, database access, overnight design proposals, and Claude Code control. All open-source. CPU-only. No API keys.</p>
+
+      <div class="footprint">
+        <div class="chip"><strong>~10 GB</strong> disk</div>
+        <div class="chip"><strong>8 GB</strong> RAM min</div>
+        <div class="chip"><strong>CPU only</strong></div>
+        <div class="chip"><strong>$0</strong> ongoing cost</div>
+      </div>
+
+      <div class="download-row">
+        <a class="btn btn-primary" href="/build-jarvis.md" download>Download the full manifest (.md)</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h2>1. Operating system and runtime</h2>
+      <p>Windows 10 or 11 (64-bit). Linux works with minor path edits.</p>
+      <p>Python <strong>3.12</strong> — <code>NOT</code> 3.13 or 3.14. ML wheels lag the newest Python. Use <code>py -3.12</code>.</p>
+      <pre><code>py -3.12 -m venv C:\Users\Cameron\jarvis\.venv
+C:\Users\Cameron\jarvis\.venv\Scripts\activate
+python -m pip install -U pip</code></pre>
+    </section>
+
+    <section class="panel">
+      <h2>2. Python packages — one pip install line</h2>
+      <pre><code>pip install openwakeword faster-whisper sounddevice numpy pynput piper-tts ^
+            pyyaml onnxruntime edge-tts python-docx pypdf chardet psutil ^
+            beautifulsoup4 psycopg[binary]</code></pre>
+      <table>
+        <thead><tr><th>Package</th><th>Role</th><th>License</th></tr></thead>
+        <tbody>
+          <tr><td>openwakeword</td><td>"Hey Jarvis" wake-word detection</td><td>MIT</td></tr>
+          <tr><td>faster-whisper</td><td>Speech-to-text (CTranslate2)</td><td>MIT</td></tr>
+          <tr><td>edge-tts</td><td>Azure neural voices, free, no key</td><td>Apache 2.0</td></tr>
+          <tr><td>piper-tts</td><td>Offline TTS fallback</td><td>MIT</td></tr>
+          <tr><td>sounddevice</td><td>Audio I/O (PortAudio)</td><td>MIT</td></tr>
+          <tr><td>pynput</td><td>Keystroke injection, hotkeys</td><td>LGPL 3.0</td></tr>
+          <tr><td>numpy</td><td>Numerical ops, embedding vectors</td><td>BSD</td></tr>
+          <tr><td>onnxruntime</td><td>Runs the wake-word ONNX model</td><td>MIT</td></tr>
+          <tr><td>python-docx / pypdf</td><td>Read .docx / .pdf for index</td><td>MIT / BSD</td></tr>
+          <tr><td>chardet</td><td>Text encoding detection</td><td>LGPL</td></tr>
+          <tr><td>psutil</td><td>Battery / CPU / RAM</td><td>BSD</td></tr>
+          <tr><td>beautifulsoup4</td><td>Parse web search pages</td><td>MIT</td></tr>
+          <tr><td>psycopg[binary]</td><td>Postgres access (optional)</td><td>LGPL</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>3. Local AI — Ollama</h2>
+      <p>Install: <a href="https://ollama.com/download/windows" style="color:#D4A847;">ollama.com/download/windows</a></p>
+      <pre><code>ollama pull qwen3:8b          # 5.2 GB — main reasoning + SQL gen
+ollama pull nomic-embed-text  # 275 MB — vector embeddings</code></pre>
+      <p>Optional additions:</p>
+      <pre><code>ollama pull phi4-mini:latest  # 2.5 GB — fastest butler replies
+ollama pull gemma3:4b         # 3.3 GB — alternate reasoning</code></pre>
+      <p>All run on CPU. Ollama exposes <code>http://localhost:11434</code>.</p>
+    </section>
+
+    <section class="panel">
+      <h2>4. Speech models (auto-downloaded)</h2>
+      <table>
+        <thead><tr><th>Model</th><th>Size</th><th>Role</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr><td>hey_jarvis_v0.1.onnx</td><td>1.3 MB</td><td>Wake-word</td><td>Free</td></tr>
+          <tr><td>Whisper small.en</td><td>480 MB</td><td>Voice → text</td><td>Free</td></tr>
+          <tr><td>nomic-embed-text</td><td>275 MB</td><td>Text → vectors</td><td>Free</td></tr>
+          <tr><td>qwen3:8b</td><td>5.2 GB</td><td>Reasoning</td><td>Free</td></tr>
+          <tr><td>Edge-TTS Ryan</td><td>0 MB (cloud)</td><td>British male voice</td><td>Free, online</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>5. The 15 source files</h2>
+      <p>Drop these in <code>C:\Users\Cameron\jarvis\</code>:</p>
+      <table>
+        <thead><tr><th>File</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td>jarvis.py</td><td>Main daemon — mic loop, wake word, state machine</td></tr>
+          <tr><td>commands.py</td><td>Phrase → keystroke map (Enter, Esc, approvals)</td></tr>
+          <tr><td>voice.py</td><td>TTS wrapper (Edge primary, Piper fallback)</td></tr>
+          <tr><td>llm.py</td><td>Ollama client, butler prompt, streaming, history</td></tr>
+          <tr><td>tools.py</td><td>40+ voice tool handlers</td></tr>
+          <tr><td>context.py</td><td>Memory files + Obsidian into LLM prompt</td></tr>
+          <tr><td>knowledge.py</td><td>SQLite vector index + cosine search</td></tr>
+          <tr><td>memory.py</td><td>Long-term "remember X" / "recall X"</td></tr>
+          <tr><td>web.py</td><td>DuckDuckGo + Bing + URL fetch + Wikipedia</td></tr>
+          <tr><td>shell.py</td><td>Whitelisted read-only shell + file read</td></tr>
+          <tr><td>scenes.py</td><td>"Load my X workspace" multi-app launcher</td></tr>
+          <tr><td>proposals.py</td><td>Overnight design-proposal generator</td></tr>
+          <tr><td>overnight_worker.py</td><td>Scheduled indexer + orchestrator</td></tr>
+          <tr><td>config.yaml</td><td>All tunables (voice, thresholds, hotkeys, LLM)</td></tr>
+          <tr><td>scenes.yaml / crawl_config.yaml</td><td>Workspace + overnight scope</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>6. Windows-native wiring (no extra install)</h2>
+      <ul>
+        <li><strong>Task Scheduler</strong> — overnight job at 11 pm / 2 am / 5 am</li>
+        <li><strong>Startup folder</strong> — <code>shell:startup</code> shortcut, auto-launches on login</li>
+        <li><strong>PowerShell</strong> — app launching and task registration</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>7. Optional — database access</h2>
+      <p>Skip if not needed. For asking Jarvis "how many users" style questions from your own Postgres / Neon:</p>
+      <ol>
+        <li>Have your DB URL ready: <code>postgresql://user:pass@host/db?sslmode=require</code></li>
+        <li>Run <code>setup_db_role.py</code> once — creates a <strong>read-only</strong> <code>jarvis_ro</code> role, grants SELECT only, snapshots schema</li>
+        <li>Voice queries like <em>"how many members"</em> then return live counts</li>
+      </ol>
+    </section>
+
+    <section class="panel">
+      <h2>8. What you do NOT need</h2>
+      <ul>
+        <li>No OpenAI or Anthropic API key</li>
+        <li>No Azure, Google Cloud, or AWS account</li>
+        <li>No microcontroller, Arduino, or sensor hardware</li>
+        <li>No GPU</li>
+        <li>No Docker (can containerize later)</li>
+        <li>No ElevenLabs or paid TTS subscription</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>9. First-run checklist</h2>
+      <ul class="checklist">
+        <li>Install Python 3.12</li>
+        <li>Create venv at <code>C:\Users\Cameron\jarvis\.venv</code></li>
+        <li>pip install the package list from Section 2</li>
+        <li>Install Ollama, pull <code>qwen3:8b</code> and <code>nomic-embed-text</code></li>
+        <li>Copy the 15 Python files to <code>C:\Users\Cameron\jarvis\</code></li>
+        <li>Edit <code>config.yaml</code> paths if username differs</li>
+        <li>Edit <code>crawl_config.yaml</code> to point at your project directories</li>
+        <li>Edit <code>scenes.yaml</code> for your workspaces (optional)</li>
+        <li>Run <code>python jarvis.py --test-tts</code> — verify voice</li>
+        <li>Run <code>python jarvis.py --test-wake</code> — say "Hey Jarvis", verify wake</li>
+        <li>Register Startup shortcut + Scheduled Task</li>
+        <li>(Optional) Run <code>setup_db_role.py</code> to wire Postgres</li>
+      </ul>
+    </section>
+
+    <footer class="footnote">
+      Questions? Contact <a href="mailto:valuetovictory@gmail.com">valuetovictory@gmail.com</a> · Built by Shawn Decker · Value to Victory
+    </footer>
+  </div>
+</body>
+</html>

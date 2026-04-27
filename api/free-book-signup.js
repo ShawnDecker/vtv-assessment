@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
 
     // Check if already verified
     const existing = await sql`
-      SELECT id, verified FROM free_book_signups WHERE email = ${email.toLowerCase()} LIMIT 1
+      SELECT id, verified FROM free_book_signups WHERE LOWER(email) = ${email.toLowerCase()} LIMIT 1
     `;
     if (existing.length > 0 && existing[0].verified) {
       return res.status(200).json({ success: true, message: 'This email has already been verified. Check your inbox for the book download link.' });

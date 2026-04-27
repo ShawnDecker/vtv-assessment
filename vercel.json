@@ -6,20 +6,20 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/devotional/send",
+      "schedule": "0 11 * * *"
+    },
+    {
       "path": "/api/ceo-briefing",
-      "schedule": "45 10 * * *"
+      "schedule": "30 11 * * *"
     },
     {
       "path": "/api/coaching/send",
-      "schedule": "47 11 * * *"
+      "schedule": "0 12 * * *"
     },
     {
       "path": "/api/accountability/send",
-      "schedule": "47 22 * * *"
-    },
-    {
-      "path": "/api/devotional/send",
-      "schedule": "47 15 * * *"
+      "schedule": "0 23 * * *"
     }
   ],
   "routes": [
@@ -121,6 +121,14 @@
     {
       "src": "/about-pink",
       "dest": "/about-pink.html"
+    },
+    {
+      "src": "/consult",
+      "dest": "/consult.html"
+    },
+    {
+      "src": "/book-call",
+      "dest": "/consult.html"
     },
     {
       "src": "/joy",
@@ -283,6 +291,10 @@
       "dest": "/coaching.html"
     },
     {
+      "src": "/coaching-reply",
+      "dest": "/coaching-reply.html"
+    },
+    {
       "src": "/stuck",
       "dest": "/stuck.html"
     },
@@ -325,6 +337,38 @@
     {
       "src": "/growth",
       "dest": "/growth-services.html"
+    },
+    {
+      "src": "/investor-pitch",
+      "dest": "/investor-pitch.html"
+    },
+    {
+      "src": "/executive-summary",
+      "dest": "/executive-summary.html"
+    },
+    {
+      "src": "/nda",
+      "dest": "/nda-agreement.html"
+    },
+    {
+      "src": "/funnel",
+      "dest": "/funnel.html"
+    },
+    {
+      "src": "/start",
+      "dest": "/funnel.html"
+    },
+    {
+      "src": "/go",
+      "dest": "/funnel.html"
+    },
+    {
+      "src": "/upsell",
+      "dest": "/upsell.html"
+    },
+    {
+      "src": "/team-admin",
+      "dest": "/team-admin.html"
     },
     {
       "src": "/(.*)",

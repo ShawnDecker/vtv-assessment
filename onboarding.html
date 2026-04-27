@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/js/auth.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <link rel="icon" type="image/png" href="/favicon.png" />
@@ -214,7 +215,8 @@
 
       // Need to look up or create contact first
       try {
-        var histResp = await fetch('/api/user/history?email=' + encodeURIComponent(email));
+        var _t = localStorage.getItem('vtv_token');
+        var histResp = await fetch('/api/user/history?email=' + encodeURIComponent(email), { headers: _t ? {'Authorization': 'Bearer ' + _t} : {} });
         var histData = await histResp.json();
         if (!histData.isNewUser && histData.assessments && histData.assessments.length > 0) {
           // Existing user, get contact ID from assessment

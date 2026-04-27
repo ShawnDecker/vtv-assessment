@@ -202,13 +202,13 @@
       </div>
       <div class="section-title">Quick Links</div>
       <div class="card" style="display:flex;flex-direction:column;gap:8px;">
-        <a href="https://assessment.valuetovictory.com/" target="_blank">Assessment Home</a>
-        <a href="https://assessment.valuetovictory.com/member" target="_blank">Member Portal</a>
-        <a href="https://assessment.valuetovictory.com/pricing" target="_blank">Pricing Page</a>
-        <a href="https://assessment.valuetovictory.com/coaching" target="_blank">Coaching Intake</a>
-        <a href="https://assessment.valuetovictory.com/teams" target="_blank">Teams</a>
-        <a href="https://assessment.valuetovictory.com/relationship-hub" target="_blank">Relationship Hub</a>
-        <a href="https://assessment.valuetovictory.com/audiobook" target="_blank">Audiobook</a>
+        <a href="/" target="_blank">Assessment Home</a>
+        <a href="/member" target="_blank">Member Portal</a>
+        <a href="/pricing" target="_blank">Pricing Page</a>
+        <a href="/coaching" target="_blank">Coaching Intake</a>
+        <a href="/teams" target="_blank">Teams</a>
+        <a href="/relationship-hub" target="_blank">Relationship Hub</a>
+        <a href="/audiobook" target="_blank">Audiobook</a>
         <a href="https://console.neon.tech" target="_blank">Neon Database Console</a>
         <a href="https://vercel.com/dashboard" target="_blank">Vercel Dashboard</a>
         <a href="https://github.com/ShawnDecker/vtv-assessment" target="_blank">GitHub Repository</a>
@@ -485,7 +485,7 @@ function openContact(id) {
           <div class="pillar-bar"><div class="plbl">Knowledge</div><div class="track"><div class="fill" style="width:${((a.knowledgeTotal||0)/pillarMax*100)}%"></div></div><div class="pval">${a.knowledgeTotal||0}</div></div>
           <div style="margin-top:8px;font-size:11px;color:#71717a;">Weakest: <span style="color:#ef4444;">${a.weakestPillar||'—'}</span></div>
           <div style="margin-top:8px;text-align:center;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
-            <a href="https://assessment.valuetovictory.com/report/${a.id}" target="_blank" class="btn btn-sm">View Report</a>
+            <a href="/report/${a.id}" target="_blank" class="btn btn-sm">View Report</a>
             <button class="btn btn-sm btn-outline" onclick="emailReport(${a.id},'${esc(c.email)}')">Email to Them</button>
             <button class="btn btn-sm btn-outline" onclick="emailReport(${a.id},'valuetovictory@gmail.com')">Email to Me</button>
           </div>

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/js/auth.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/png" href="/favicon.png" />
@@ -219,7 +220,8 @@
       resultEl.classList.remove('hidden');
 
       try {
-        var resp = await fetch('/api/user/history?email=' + encodeURIComponent(email));
+        var _t = localStorage.getItem('vtv_token');
+        var resp = await fetch('/api/user/history?email=' + encodeURIComponent(email), { headers: _t ? {'Authorization': 'Bearer ' + _t} : {} });
         var data = await resp.json();
 
         if (data.isNewUser || !data.assessments || data.assessments.length === 0) {
@@ -311,9 +313,11 @@
       resultEl.classList.remove('hidden');
 
       try {
+        var _t = localStorage.getItem('vtv_token');
+        var _h = _t ? {'Authorization': 'Bearer ' + _t} : {};
         var [respA, respB] = await Promise.all([
-          fetch('/api/user/history?email=' + encodeURIComponent(emailA)),
-          fetch('/api/user/history?email=' + encodeURIComponent(emailB))
+          fetch('/api/user/history?email=' + encodeURIComponent(emailA), { headers: _h }),
+          fetch('/api/user/history?email=' + encodeURIComponent(emailB), { headers: _h })
         ]);
         var dataA = await respA.json();
         var dataB = await respB.json();
@@ -372,7 +376,7 @@
       var email = localStorage.getItem('ve_email');
       if (!email) return;
 
-      fetch('/api/entitlements?email=' + encodeURIComponent(email))
+      fetch('/api/entitlements?email=' + encodeURIComponent(email), { headers: localStorage.getItem('vtv_token') ? { 'Authorization': 'Bearer ' + localStorage.getItem('vtv_token') } : {} })
         .then(function(r) { return r.json(); })
         .then(function(data) {
           var tier = data.tier || 'free';

@@ -3,13 +3,44 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const BASE_URL = process.env.BASE_URL || 'https://assessment.valuetovictory.com';
 
+// ========== VTV COACHING CONSTITUTION ==========
+// This governs EVERY AI-generated response, coaching email, and system interaction.
+// No code in this platform may violate these principles.
+const VTV_CONSTITUTION = {
+  coreRule: 'NEVER cause harm. Every interaction must add value to the person and those around them while encouraging openness to growth.',
+  principles: [
+    'Speak truth with compassion — honest about weaknesses, never cruel about them',
+    'Build people up — even confrontation should leave them stronger than before',
+    'No addiction mechanics — no streaks that punish, no notifications that guilt, no gamification that creates anxiety',
+    'Respect autonomy — suggest, never pressure. They choose their pace.',
+    'Faith-grounded — wisdom is welcome, preaching is not. Meet people where they are.',
+    'Privacy is sacred — their data is theirs. Their struggles are theirs. Their growth is theirs to share or keep.',
+    'No comparison to others — only compare them to their previous self',
+    'Celebrate effort, not just results — showing up matters more than the score',
+    'When someone is struggling, lead with empathy before strategy',
+    'The goal is a person who outgrows the system — that means it worked',
+  ],
+  tone: {
+    voice: 'Direct, warm, like a mentor who has been through it. Not corporate. Not clinical. Real.',
+    never: ['game-changer', 'unlock potential', 'level up', 'crush it', 'hustle', 'grind harder', 'no excuses'],
+    always: ['honest', 'specific to their data', 'actionable within their real life', 'respectful of their time'],
+  },
+  safetyFilters: {
+    mentalHealth: 'If someone indicates self-harm, crisis, or severe depression — do NOT coach. Provide 988 Suicide & Crisis Lifeline and encourage professional help immediately.',
+    relationships: 'Never advise ending relationships. Encourage communication, professional counseling, and self-reflection.',
+    financial: 'Never give specific investment advice. Encourage financial literacy and professional consultation.',
+    faith: 'Honor all faith backgrounds. Share biblical wisdom when natural. Never gatekeep or judge.',
+  },
+};
+
 // ========== SECURITY: Rate Limiting ==========
 const rateLimitStore = new Map();
 const RATE_LIMITS = {
-  default: { max: 60, windowMs: 60000 },    // 60 req/min general
+  default: { max: 60, windowMs: 60000 },     // 60 req/min general
   auth: { max: 10, windowMs: 60000 },        // 10 req/min for PIN attempts
   assessment: { max: 5, windowMs: 60000 },   // 5 submissions/min
   admin: { max: 30, windowMs: 60000 },       // 30 req/min for admin
+  enumeration: { max: 5, windowMs: 60000 },  // 5 req/min for endpoints that reveal account existence (has-pin, etc.) — defeats casual email enumeration
 };
 
 function checkRateLimit(ip, category = 'default') {
@@ -32,7 +63,12 @@ function checkRateLimit(ip, category = 'default') {
 }
 
 // ========== SECURITY: JWT Token Generation & Verification ==========
-const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_API_KEY || 'vtv-fallback-change-me';
+const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_API_KEY;
+if (!process.env.JWT_SECRET && process.env.ADMIN_API_KEY) {
+  console.warn('SECURITY: JWT_SECRET unset — falling back to ADMIN_API_KEY. ' +
+    'Compromise of admin key = JWT forgery. Set distinct JWT_SECRET in Vercel env vars.');
+}
+if (!JWT_SECRET) console.error('CRITICAL: JWT_SECRET not set — auth will fail');
 const JWT_EXPIRY = 7 * 24 * 60 * 60; // 7 days in seconds
 
 function createJWT(payload) {
@@ -45,6 +81,7 @@ function createJWT(payload) {
 
 function verifyJWT(token) {
   try {
+    if (!JWT_SECRET) return null;
     const [header, body, signature] = token.split('.');
     const expectedSig = crypto.createHmac('sha256', JWT_SECRET).update(`${header}.${body}`).digest('base64url');
     if (signature !== expectedSig) return null;
@@ -60,6 +97,73 @@ function extractToken(req) {
   return null;
 }
 
+function extractUser(req) {
+  const auth = req.headers['authorization'] || '';
+  if (auth.startsWith('Bearer ')) {
+    return verifyJWT(auth.slice(7));
+  }
+  return null;
+}
+
+// ========== SECURITY: PIN Hashing (PBKDF2 — replaces SHA-256) ==========
+const PIN_SALT = process.env.PIN_SALT || '_vtv_salt_2026';
+const PIN_ITERATIONS = 100000;
+const PIN_KEYLEN = 64;
+const PIN_DIGEST = 'sha512';
+
+function hashPinSync(pin) {
+  return crypto.pbkdf2Sync(pin, PIN_SALT, PIN_ITERATIONS, PIN_KEYLEN, PIN_DIGEST).toString('hex');
+}
+
+function verifyPin(pin, storedHash) {
+  // Support legacy SHA-256 hashes (64 chars) and new PBKDF2 (128 chars)
+  if (storedHash.length === 64) {
+    // Legacy SHA-256 — verify but flag for upgrade
+    const legacyHash = crypto.createHash('sha256').update(pin + PIN_SALT).digest('hex');
+    return { valid: legacyHash === storedHash, needsUpgrade: true };
+  }
+  // New PBKDF2
+  const newHash = hashPinSync(pin);
+  return { valid: newHash === storedHash, needsUpgrade: false };
+}
+
+// ========== INPUT VALIDATION ==========
+function validateEmail(email) {
+  if (!email || typeof email !== 'string') return false;
+  return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim());
+}
+function validateLength(str, min, max) {
+  if (!str || typeof str !== 'string') return false;
+  return str.length >= min && str.length <= max;
+}
+function sanitizeString(str, maxLen = 1000) {
+  if (!str || typeof str !== 'string') return '';
+  return str.trim().substring(0, maxLen);
+}
+
+// HTML escape for safe interpolation into email templates (prevents stored XSS)
+function escapeHtml(str) {
+  if (!str || typeof str !== 'string') return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Mask email for logging (PII protection) — shows first 2 chars + domain
+function maskEmail(email) {
+  if (!email || typeof email !== 'string') return '[no-email]';
+  const [local, domain] = email.split('@');
+  if (!domain) return email.substring(0, 2) + '***';
+  return local.substring(0, 2) + '***@' + domain;
+}
+
+async function auditLog(sql, { action, actor, targetTable, targetId, oldValues, newValues, ip }) {
+  try {
+    await sql`INSERT INTO audit_log (action, actor, target_table, target_id, old_values, new_values, ip_address)
+      VALUES (${action}, ${actor || 'system'}, ${targetTable || null}, ${targetId || null},
+              ${oldValues ? JSON.stringify(oldValues) : null}::jsonb,
+              ${newValues ? JSON.stringify(newValues) : null}::jsonb, ${ip || null})`;
+  } catch(e) { console.error('Audit log error:', e.message); }
+}
+
 // ========== SECURITY: CORS Allowed Origins ==========
 const ALLOWED_ORIGINS = [
   'https://valuetovictory.com',
@@ -67,16 +171,14 @@ const ALLOWED_ORIGINS = [
   'https://assessment.valuetovictory.com',
   'https://shawnedecker.com',
   'https://www.shawnedecker.com',
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://localhost:4173',
+  ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'] : []),
 ];
 
 function getCorsOrigin(req) {
   const origin = req.headers.origin || '';
   if (ALLOWED_ORIGINS.includes(origin)) return origin;
-  // Allow Vercel preview deployments
-  if (origin.endsWith('.vercel.app')) return origin;
+  // Allow Vercel preview deployments — only exact project subdomains
+  if (origin.endsWith('.vercel.app') && /^https:\/\/vtv-assessment[a-z0-9-]*\.vercel\.app$/.test(origin)) return origin;
   return ALLOWED_ORIGINS[0]; // Default to main domain
 }
 
@@ -340,7 +442,7 @@ function generatePrescription(a) {
 
 function generateCoachingEmail(day, assessmentData, prescription, email) {
   const a = assessmentData;
-  const firstName = a.first_name || 'there';
+  const firstName = escapeHtml(a.first_name || 'there');
   const weakest = prescription.weakestPillar;
   const strongest = prescription.strongestPillar;
   const weakestScore = prescription.weakestScore;
@@ -360,13 +462,15 @@ function generateCoachingEmail(day, assessmentData, prescription, email) {
   const retakeUrl = BASE_URL;
   const reportUrl = `${BASE_URL}/report/${a.id}`;
 
-  // Pillar-specific content for 8+8+8 rule (Day 2)
+  // Pillar-specific content for the Honest 24 framework (Day 2)
+  // The 8+8+8 is the IDEAL. The Reality Audit is what actually happens.
+  // The Dynamic Calculator personalizes it.
   const rule888 = {
-    Time: "Your 8 hours of work aren't laser-focused — they're scattered. Your 8 hours for you? You're spending them on other people's priorities. Tomorrow, I want you to draw three columns on a piece of paper: WORK / ME / SLEEP. Be brutally honest about where each hour actually goes.",
-    People: "Your 8 hours for relationships are getting eaten by work overflow. When was the last time you spent a full hour — just ONE — with someone who matters? Not while checking your phone. Not while half-working. A real, full hour.",
-    Influence: "Your 8 work hours aren't building authority — they're maintaining. You're working 8 but influencing 0. The question isn't whether you're busy. It's whether anyone notices when you're not in the room.",
-    Numbers: "Your 8 work hours aren't tracked against actual income per hour. You're busy but not profitable. If I asked you right now what each hour of your work is worth in dollars, could you answer? Most can't.",
-    Knowledge: "Where in your 8+8+8 is learning? If it's not scheduled, it's not happening. You've got 8 hours for work, 8 for you, 8 for sleep — but learning isn't in any of those blocks. That's why your Knowledge score is where it is."
+    Time: "Let's be real about your 24 hours. The 8+8+8 is the target — 8 hours of focused work, 8 hours for you, 8 hours of sleep. But here's what actually happens: 1-2 hours commuting, 1 hour getting ready, 1-2 hours on meals and chores. That leaves you maybe 4-5 hours 'for you' — not 8. Your Time score tells me you're not even protecting those 4-5. Tomorrow, draw four columns: WORK / OBLIGATIONS / ME / SLEEP. Track every hour. The gap between where your time goes and where it should go is your biggest opportunity.",
+    People: "The 8+8+8 says you get 8 hours for you — but in reality, commuting, cooking, errands, and household obligations eat 3-4 of those hours. That leaves maybe 4-5 hours of discretionary time. How much of that goes to the people who matter? Be honest — most of it goes to screens. One real hour with someone who matters is worth more than 4 hours of scrolling in the same room.",
+    Influence: "The 8+8+8 says 8 hours of work. Reality? You work 9-10 including commute and lunch. The question is: how many of those hours build influence vs. just maintain your position? Most people spend 90% on maintenance and 10% on growth. Flip that ratio in just one hour a day and your Influence score changes within 30 days.",
+    Numbers: "Let's do the real math. You work 8-10 hours including commute. Sleep 6-7. Spend 2-3 on obligations. That leaves 4-5 hours. Now divide your total daily expenses by your actual productive hours. That's your real cost-per-hour. Most people have never calculated this. Do it right now — the number will either motivate you or terrify you. Both are useful.",
+    Knowledge: "Here's the honest breakdown: after work (9-10 hrs with commute), sleep (7 hrs), and obligations (2-3 hrs), you have roughly 4-5 hours of discretionary time. If learning isn't carved out of those 4-5 hours with a specific block, it's not happening. You can't learn passively. Schedule 30 minutes of deliberate learning inside your real available time — not your fantasy schedule."
   };
 
   // Pillar-specific 10-minute challenges (Day 4)
@@ -414,23 +518,34 @@ Tomorrow: The 8+8+8 Rule — and why your ${weakest} is stealing from the wrong 
       break;
 
     case 2:
-      subject = `The 8+8+8 Rule — and why your ${weakest} is stealing from the wrong 8`;
+      subject = `The Honest 24 — your day doesn't math the way you think it does`;
       body = `${firstName},
 
-The 8+8+8 Rule is simple: 8 hours for you (workouts, hobbies, friends) + 8 hours of laser-focused work + 8 hours of deep, guilt-free sleep.
+Let me wreck a popular framework for you: the 8+8+8 Rule. 8 hours work, 8 hours for you, 8 hours sleep. Clean. Simple. And mathematically dishonest.
 
-Most people know this. Almost nobody lives it. And your ${weakest} score tells me exactly where the breakdown is.
+Here's what a real 24 hours looks like for most people:
+
+THE HONEST 24:
+Sleep: 6-7 hours (you're not getting 8 — almost nobody does)
+Work + commute: 9-10 hours (your "8 hours" doesn't include getting there and back)
+Obligations: 2-3 hours (meals, errands, chores, kids, getting ready)
+ACTUAL DISCRETIONARY TIME: 4-5 hours
+
+That's the truth. You don't have 8 hours "for you." You have 4-5. And if your ${weakest} score is ${weakestScore}/50, I can tell you exactly where those 4-5 hours are going — they're being wasted on things that don't compound.
 
 ${rule888[weakest] || rule888.Time}
 
-Here's the thing — when one of your 8s is off, they all suffer. Your ${weakest} isn't just one pillar. It's the leak that's draining every other block of your day.
+THE THREE FRAMEWORKS COMBINED:
+1. THE IDEAL (8+8+8): This is the target you're building toward. Protect your sleep. Sharpen your work hours so 8 is enough. Guard your personal time ruthlessly.
+
+2. THE REALITY AUDIT: Track tomorrow using four columns — WORK / OBLIGATIONS / ME / SLEEP. No rounding. No lying to yourself. Write down every hour and see where you actually are.
+
+3. YOUR PERSONAL CALCULATOR: Take your actual waking hours (probably 17). Subtract work + commute (9-10). Subtract obligations (2-3). What's left? That number — probably 4 or 5 — is your GROWTH WINDOW. Every minute of ${weakest} improvement has to come from that window. So the question isn't "do I have time?" The question is "what am I spending my growth window on right now?"
 
 YOUR MOVE TODAY:
-Run the Time Audit using the 8+8+8 framework. Track tomorrow in three blocks. Write down every hour. No guessing. No rounding. Just truth.
+Run the Reality Audit. Four columns. Every hour. Tomorrow I'm going to give you the 1-3-5 Rule — your exact priorities based on what the audit reveals.
 
-At the end of the day, you'll see exactly where the bleed is happening. That awareness alone changes behavior.
-
-Tomorrow: The 1-3-5 Rule — I'm going to give you your exact 1, your 3, and your 5.
+The 8+8+8 is where you're headed. The Honest 24 is where you start.
 
 — Shawn`;
       break;
@@ -578,26 +693,32 @@ You now have all 4 rules:
 
 Today I'm combining them into one daily routine. Personalized to your scores. Print this out. Tape it to your mirror. Start tomorrow.
 
-YOUR DAILY SYSTEM:
+YOUR DAILY SYSTEM (Built on the Honest 24):
 
-6:00 AM — 8+8+8 Check
-Ask yourself: Is today structured for value or just activity? Are my three 8-hour blocks protected?
+6:00 AM — Reality Check
+You have approximately 4-5 hours of discretionary time today. Not 8. Accept that. Now ask: "What am I doing with my growth window today?"
 
 6:15 AM — 1-3-5 List
-Write down your 1 goal (improve ${weakest}), your 3 key tasks for today, and 5 quick wins you can knock out.
+Write down your 1 goal (improve ${weakest}), your 3 key tasks for today, and 5 quick wins you can knock out. These must fit inside your REAL available time — not a fantasy schedule.
 
 6:30 AM — Start Your 90/90/1 Block
 ${rule9090[weakest] || rule9090.Time}
-This is your non-negotiable 90 minutes. No phone. No email. No interruptions.
+This is your non-negotiable 90 minutes carved from your growth window. No phone. No email. No interruptions. This is 30-40% of your discretionary time — that's how much your ${weakest} matters.
 
 Throughout the Day — The 10-Minute Rule
-Whenever resistance hits — whenever you want to avoid ${weakest} work — set a timer for 10 minutes and just start. The resistance always breaks after the first round.
+Whenever resistance hits — whenever you want to avoid ${weakest} work — set a timer for 10 minutes and just start. The resistance always breaks after the first round. 10 minutes is 3% of your growth window. You can afford 3%.
 
-9:00 PM — Evening Review
-Did I invest in ${weakest} today? Did my 8+8+8 hold? What's my 1-3-5 for tomorrow?
+9:00 PM — Evening Accountability
+Three questions. Answer them honestly:
+1. How many of my 4-5 discretionary hours went toward ${weakest} today?
+2. What ate the time that should have been mine? (Scrolling? TV? Other people's emergencies?)
+3. What's my 1-3-5 for tomorrow?
 
-THE TRUTH ABOUT SYSTEMS:
-A system doesn't need to be complicated to work. It needs to be consistent. This one is designed around YOUR specific weakness, YOUR cross-pillar impact, and YOUR score. It's not generic advice. It's your playbook.
+THE HONEST MATH:
+90 minutes of your growth window = 30% of your discretionary time on ${weakest}
+That leaves 3+ hours for everything else you want to do
+Do this for 90 days and you'll gain ${targetScore - weakestScore} points on your ${weakest} score
+Your ${strongest} stops bleeding, your Master Score jumps, and people start noticing
 
 YOUR MOVE TODAY:
 Print this schedule. Or screenshot it. Put it somewhere you'll see it before 6 AM tomorrow. Then start.
@@ -643,9 +764,410 @@ I'm in your corner.
 P.S. If you want to go deeper — structured accountability, monthly progress tracking, and direct coaching access — check out our membership options at valuetovictory.com/pricing. But the 4 rules above? Those are free. And they work.`;
       break;
 
+    // ===== PHASE 2: DEEP DIVES (Days 9-16, sent every other day) =====
+    case 9:
+      subject = `Week 2 starts now — let's go deeper on ${weakest}`;
+      body = `${firstName},
+
+You finished Week 1. Most people never get that far.
+
+But here's the thing — knowing the 4 rules isn't the same as living them. Week 1 was awareness. Week 2 is depth.
+
+This week I'm going deeper on your ${weakest} (${weakestScore}/50). Not the theory. The specifics. The sub-categories that are pulling your score down and exactly what to do about each one.
+
+Your weakest sub-category is ${weakestSub}. That's not just a label — it's the specific behavior pattern that's costing you the most.
+
+HERE'S WHAT'S COMING THIS WEEK:
+• Deep dive into ${weakestSub} — what it really means and why it's stuck
+• The "Opposite Action" technique — doing the thing your score says you avoid
+• A mid-week accountability check that you can't fake
+• Your first progress measurement since Day 1
+
+THE RULE FOR WEEK 2:
+Every morning before you check your phone, ask yourself: "What's one thing I can do for my ${weakest} today that I wouldn't have done two weeks ago?"
+
+Write the answer down. Then do it. That's the whole system.
+
+YOUR MOVE TODAY:
+Open your report and look at your ${weakest} sub-categories. Rank them. Which one feels most uncomfortable? That's your starting point.
+
+${reportUrl}
+
+— Shawn`;
+      break;
+
+    case 10:
+      subject = `The Opposite Action technique for ${weakestSub}`;
+      body = `${firstName},
+
+Your weakest sub-category is ${weakestSub}. Score: ${prescription.weakestSubScore || 1}/5.
+
+Here's a pattern I see over and over: the thing you most need to improve is the thing you most naturally avoid. Your brain has built a highway around it. You don't even notice you're avoiding it anymore.
+
+THE OPPOSITE ACTION TECHNIQUE:
+1. Identify the behavior your low ${weakestSub} score reveals
+2. Ask: "What would someone who scores 5/5 on this do today?"
+3. Do that thing. Even if it feels wrong. Even if it feels forced.
+
+The discomfort IS the signal that you're growing. Comfort is maintenance. Discomfort is improvement.
+
+${weakest === 'Time' ? `For ${weakestSub}: If you're avoiding structure, build it. If you're avoiding delegation, delegate something today. If you're avoiding tracking, track every hour tomorrow.` : ''}${weakest === 'People' ? `For ${weakestSub}: If you're avoiding hard conversations, have one today. If you're avoiding vulnerability, share something real. If you're avoiding boundaries, set one.` : ''}${weakest === 'Influence' ? `For ${weakestSub}: If you're avoiding visibility, post something today. If you're avoiding feedback, ask for it. If you're avoiding leadership, lead something small.` : ''}${weakest === 'Numbers' ? `For ${weakestSub}: If you're avoiding your bank statement, open it. If you're avoiding goal-setting, set one today. If you're avoiding tracking, start a spreadsheet.` : ''}${weakest === 'Knowledge' ? `For ${weakestSub}: If you're avoiding learning, spend 20 minutes on it today. If you're avoiding application, apply one thing you already know. If you're avoiding self-assessment, be honest about what you don't know.` : ''}
+
+YOUR MOVE TODAY:
+One Opposite Action. Just one. Something your old self would have avoided. Do it before the end of the day and you'll feel the shift.
+
+— Shawn`;
+      break;
+
+    case 11:
+      subject = `Mid-week check: Are you running the system or just reading emails?`;
+      body = `${firstName},
+
+Honest question — and I need you to answer it before you read another word:
+
+Have you actually done any of the exercises from the last 10 days?
+
+Not "thought about it." Not "planned to." Actually did.
+
+If yes — good. You're in the minority. Keep going.
+
+If no — that's the data point that matters most. Because knowing your ${weakest} is ${weakestScore}/50 and doing nothing about it is worse than not knowing at all. At least ignorance has an excuse. Awareness without action is a choice.
+
+I'm not saying this to guilt you. I'm saying it because I've seen what happens when people actually run the system vs. people who just read about it. The gap is massive.
+
+THE 3-QUESTION ACCOUNTABILITY CHECK:
+1. Did I do my 90-minute block at least 3 times this week? (Yes/No)
+2. Did I use the 10-Minute Rule when I hit resistance? (Yes/No)
+3. Is my 1-3-5 list written down somewhere I see daily? (Yes/No)
+
+If you got 2 or more Yes answers — you're on track.
+If you got 1 or fewer — you're consuming, not executing. And consuming doesn't change scores.
+
+YOUR MOVE TODAY:
+If you haven't started — start with ONE 10-minute sprint on ${weakest}. Right now. Not after this email. Not after lunch. Now.
+
+If you have started — do your 90-minute block today and track it. Write down what you did and how it felt.
+
+— Shawn`;
+      break;
+
+    case 12:
+      subject = `The compound effect: small ${weakest} wins add up fast`;
+      body = `${firstName},
+
+Day 12. You're almost through Week 2. Let me show you something about how progress actually works.
+
+Your ${weakest} score is ${weakestScore}/50. To get to ${targetScore}, you need to gain ${targetScore - weakestScore} points.
+
+That sounds like a lot. But here's how the compound effect works:
+
+WEEK 1: You learned the system (awareness = +0 points, but priceless)
+WEEK 2: You started doing Opposite Actions (+1-2 points)
+WEEK 3-4: Habits start forming, behavior shifts (+3-5 points)
+MONTH 2: Other people notice (+5-8 points)
+MONTH 3: It's just who you are now (+8-12 points)
+
+The math: if you improve ${weakestSub} by just 1 point, your entire ${weakest} score rises. And because of the cross-pillar effect, your ${strongest} stops bleeding too. One sub-category improvement creates a cascade.
+
+${crossHeadline}
+
+THIS IS THE COMPOUND EFFECT IN ACTION:
+1% improvement per day = 37x improvement in a year. You don't need 37x. You need ${targetScore - weakestScore} points. That's achievable in 90 days if you show up.
+
+YOUR MOVE TODAY:
+Write down one small win from this week related to ${weakest}. Even if it's tiny. "I tracked my time for one day." "I had that hard conversation." "I opened my bank statement." Small wins compound.
+
+— Shawn`;
+      break;
+
+    // ===== PHASE 3: ADVANCED STRATEGIES (Days 13-20, sent every 3 days) =====
+    case 13:
+      subject = `Your ${strongest} is being held hostage by your ${weakest}`;
+      body = `${firstName},
+
+Two weeks in. Let's talk about something most coaching programs ignore completely: the cross-pillar effect.
+
+Your ${strongest} score is ${strongestScore}/50. That's your best pillar. But it's not performing at its real potential because your ${weakest} (${weakestScore}/50) is dragging it down.
+
+${crossHeadline}
+
+${crossExplanation}
+
+Think of it like this: your ${strongest} is a sports car, and your ${weakest} is flat tires. The engine is fine. The horsepower is there. But you can't get to top speed on flat tires.
+
+THE UNLOCK:
+Every point you add to ${weakest} doesn't just improve ${weakest}. It unlocks performance in ${strongest} that's been trapped. You're not building from zero — you're removing the cap.
+
+${primaryImpact.subCategoryLinks ? `THE SPECIFIC CONNECTIONS:\n${primaryImpact.subCategoryLinks.map(l => `• Your ${l.from} (${weakest}) directly limits your ${l.to} (${strongest})`).join('\n')}` : ''}
+
+YOUR MOVE TODAY:
+Look at your ${strongest} pillar scores. Identify the one sub-category that should be higher but isn't. Then ask: "Is my ${weakest} the reason this is stuck?" The answer is almost always yes.
+
+${reportUrl}
+
+— Shawn`;
+      break;
+
+    case 14:
+      subject = `The 5 people around you are your real score`;
+      body = `${firstName},
+
+Jim Rohn said you're the average of the five people you spend the most time with. I think it goes deeper than that.
+
+Your VALUE is the average of the five people you spend the most time with. And your ${weakest} score (${weakestScore}/50) is partially a reflection of who's in your circle.
+
+THE PEOPLE AUDIT:
+List the 5 people you spent the most time with this week. For each one, answer:
+1. Do they challenge me to grow, or do they keep me comfortable?
+2. Do they model strength in ${weakest}? Or are they weak there too?
+3. If I told them about the 90/90/1 rule, would they support it or mock it?
+
+This isn't about cutting people off. It's about being intentional. Your environment shapes your behavior more than your willpower does.
+
+THE UPGRADE:
+You don't need to replace anyone. You need to ADD one person who is strong where you are weak. One person who models what a high ${weakest} score looks like. One mentor, one peer, one example.
+
+YOUR MOVE TODAY:
+Text or call one person who you think could be your accountability partner for the next 60 days. Tell them what you're working on. Ask them to check in weekly. That one conversation can change the trajectory.
+
+— Shawn`;
+      break;
+
+    case 15:
+      subject = `3 weeks in — it's time to measure what changed`;
+      body = `${firstName},
+
+Three weeks ago your Master Score was ${masterScore} (${scoreRange}). Your ${weakest} was ${weakestScore}/50.
+
+It's time to measure.
+
+Not because the number is everything — but because measurement creates accountability. And accountability is what separates people who improve from people who just "try."
+
+I want you to retake the assessment today. Same pillars. New questions. Real data.
+
+HERE'S WHAT TO EXPECT:
+• If your score went UP: The system is working. Keep running it. Don't stop because it's working — that's the trap.
+• If your score stayed the SAME: You now know more than you did. The awareness is real. But action needs to increase.
+• If your score went DOWN: That's actually possible and it's not bad. Sometimes understanding exposes gaps you were hiding from yourself. A lower score with higher awareness beats a higher score with no clue.
+
+THE HONEST TRUTH:
+Most people won't retake it because they're afraid of the number. That fear IS the reason their score is what it is. Face the number. Own it. Then work it.
+
+YOUR MOVE TODAY:
+Retake the assessment. Takes about 7 minutes for the quick version.
+
+${retakeUrl}
+
+Once you're done, compare your reports side by side. Look at which sub-categories moved and which didn't. That's your roadmap for the next 60 days.
+
+— Shawn`;
+      break;
+
+    case 16:
+      subject = `What your morning routine says about your ${weakest}`;
+      body = `${firstName},
+
+The first 60 minutes of your day predict the next 15 hours. I'm not being philosophical — it's behavioral science. Your morning either sets you up for growth or for maintenance.
+
+Here's what a high-${weakest} person does in their first hour:
+${weakest === 'Time' ? `• Reviews their calendar BEFORE checking email\n• Identifies the #1 priority before touching their phone\n• Blocks their 90-minute focus window for the day\n• Deletes or delegates at least one thing from yesterday's overflow` : ''}${weakest === 'People' ? `• Sends one intentional message to someone who matters\n• Reviews their People Audit — who needs attention today?\n• Blocks time for one real conversation (not text, not Slack)\n• Checks in with their accountability partner` : ''}${weakest === 'Influence' ? `• Creates one piece of content or insight to share\n• Reviews their professional visibility — what did they contribute this week?\n• Identifies one opportunity to lead or teach today\n• Works on their credibility in their space for 30 minutes` : ''}${weakest === 'Numbers' ? `• Checks their numbers — revenue, expenses, income per hour\n• Reviews progress toward their financial goals\n• Identifies one cost to cut or one income stream to grow\n• Updates their tracking system` : ''}${weakest === 'Knowledge' ? `• Spends 30 minutes in deliberate learning (not scrolling)\n• Applies one thing they learned yesterday\n• Identifies one knowledge gap that's costing them\n• Teaches someone else what they know (teaching = mastery)` : ''}
+
+COMPARE THAT TO YOUR CURRENT MORNING:
+Be honest. What do the first 60 minutes of your day actually look like? If the answer is "phone, email, react" — that's why your ${weakest} is ${weakestScore}/50. You're starting every day in maintenance mode.
+
+YOUR MOVE TODAY:
+Tomorrow morning, try the high-${weakest} routine. Just one morning. Set your alarm 30 minutes earlier if you need to. One day. See how it feels.
+
+— Shawn`;
+      break;
+
+    case 17:
+      subject = `The income-per-hour question you're avoiding`;
+      body = `${firstName},
+
+Quick math. Don't skip this.
+
+Take your monthly income. Divide by hours worked. That's your income per hour.
+
+Now ask: is that number going UP or DOWN over the last 12 months?
+
+This matters because your Master Score (${masterScore}) and your income per hour are correlated. Not perfectly — but strongly. Because the 5 pillars (Time, People, Influence, Numbers, Knowledge) are the 5 levers that determine what your time is worth.
+
+${weakest === 'Numbers' ? `Your Numbers score (${weakestScore}/50) tells me you probably don't know this number off the top of your head. That's the problem. What you don't measure, you can't improve.` : `Even though ${weakest} is your focus, every pillar connects to your income per hour. Your ${weakest} score of ${weakestScore}/50 means there's unrealized income hiding in that pillar.`}
+
+THE VALUE PER HOUR FRAMEWORK:
+1. Calculate your current $/hour (be honest)
+2. Identify what activities earn above that rate (high-value)
+3. Identify what activities earn below that rate (low-value)
+4. Systematically eliminate, delegate, or reduce low-value hours
+5. Replace them with high-value hours
+
+This is the Time Multiplier from the book. It's not about working more hours. It's about making each hour worth more.
+
+YOUR MOVE TODAY:
+Calculate your income per hour. Write it down. Look at it. Then ask: "What would have to change for this number to double?" The answer probably lives in your ${weakest} pillar.
+
+— Shawn`;
+      break;
+
+    case 18:
+      subject = `Month 1 almost done — the real test starts now`;
+      body = `${firstName},
+
+You're approaching the end of Month 1. Here's what the data says happens right now:
+
+• 70% of people who start a self-improvement program quit in the first 30 days
+• The ones who make it past 30 days are 5x more likely to hit 90 days
+• The ones who hit 90 days rarely go back
+
+You're at the inflection point. The next 7 days determine whether this becomes a chapter in your story or just another email sequence you read.
+
+YOUR CURRENT STATUS:
+Started: ${new Date(a.completed_at || Date.now()).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+Master Score: ${masterScore} (${scoreRange})
+Focus: ${weakest} (${weakestScore}/50)
+Target: ${targetScore}/50
+Days in the system: ${day}
+
+THE 30-DAY CHECKPOINT:
+1. Have you retaken the assessment since Day 1? (If not — do it today)
+2. Are you doing your 90-minute blocks consistently? (3+ per week = on track)
+3. Has anyone noticed a change in you? (External validation = real progress)
+4. Do you FEEL different about ${weakest}? (Awareness shift = leading indicator)
+
+If you answered YES to 2+ of these — you're ahead of 70% of people who started this journey.
+
+YOUR MOVE TODAY:
+Retake the assessment if you haven't already. Then visit your dashboard and look at your progress.
+
+${retakeUrl}
+
+— Shawn`;
+      break;
+
+    // ===== PHASE 4: WEEKLY ONGOING (Days 19+, sent weekly) =====
+    case 19:
+      subject = `Your ${weakest} score is a choice now, not a circumstance`;
+      body = `${firstName},
+
+When you first took the assessment, your ${weakest} score (${weakestScore}/50) felt like a discovery. Something you didn't know about yourself.
+
+Now it's different. Now you know. You've had the framework. You've had the tools. You've had almost three weeks of coaching specifically on this pillar.
+
+At this point, your ${weakest} score isn't a circumstance. It's a choice. Every day you decide whether to work on it or not. And that's actually the most powerful position you can be in — because choices can change. Circumstances feel permanent. Choices feel like freedom.
+
+THE WEEKLY SYSTEM (going forward):
+From here on, I'm going to check in weekly. Not daily — because at this point, you either have the habits or you don't. And if you don't, daily emails aren't what's missing. Action is.
+
+Each week I'll send you:
+• One insight about your pillar scores
+• One challenge for the week
+• One accountability question
+
+THIS WEEK'S CHALLENGE:
+Spend 90 minutes on ${weakest} work every day this week. No excuses. 7 days straight. Track it. If you miss a day, add 30 minutes to the next day.
+
+— Shawn`;
+      break;
+
+    case 20:
+      subject = `Weekly check-in: What moved this week?`;
+      body = `${firstName},
+
+End of the week. Three questions:
+
+1. WHAT MOVED?
+What specific action did you take for your ${weakest} this week? Not what you planned. What you actually did.
+
+2. WHAT RESISTED?
+Where did you hit a wall? What did you avoid? That resistance is information — it's pointing directly at the thing that needs the most attention.
+
+3. WHAT'S NEXT?
+Based on this week, what's the ONE thing you're committing to next week?
+
+THE NUMBERS:
+Your Master Score on Day 1: ${masterScore}
+Your ${weakest} on Day 1: ${weakestScore}/50
+Days since you started: ${day}
+
+If you haven't retaken the assessment yet — this is your weekly reminder. The number won't lie to you. And you need the feedback loop.
+
+${retakeUrl}
+
+YOUR MOVE THIS WEEK:
+Write down your answers to the 3 questions above. Say them out loud. Share them with someone. Accountability turns intentions into actions.
+
+— Shawn`;
+      break;
+
     default:
-      subject = `Your coaching update from The Value Engine`;
-      body = `${firstName},\n\nKeep running the system. Your ${weakest} is where the leverage is.\n\n— Shawn`;
+      // Days 21+ — rotating weekly content. 20 topics total = 5 months of unique content.
+      const weekNum = Math.floor((day - 19) / 1) + 5;
+
+      // Pillar-specific deep dives for each weakest pillar
+      const pillarDeepDives = {
+        Time: [
+          { subj: `Your calendar is your confession`, content: `Your calendar shows what you actually believe about what matters. Pull up last week. Look at every hour. Did those hours reflect what you say your priorities are? This isn't about productivity. It's about integrity between your words and your time.` },
+          { subj: `The Sunday Reset — 20 minutes that changes the week`, content: `Every Sunday night, spend 20 minutes: (1) Review last week honestly — what ate your time? (2) Block next week's 90-minute ${weakest} sessions FIRST. (3) Everything else fills in around them. That's how high performers protect what matters.` },
+          { subj: `Delegation isn't weakness — avoidance is`, content: `You're doing tasks right now that someone else could do at 70% quality for 20% of what your hour is worth. Calculate your real hourly value. Then ask: what am I doing below that rate? That's where delegation starts.` },
+          { subj: `The energy audit — time tracked wrong`, content: `Time tracking misses the point. It's not when you worked — it's when you had energy. Track YOUR 3 peak hours this week. Protect those for ${weakestSub} work. The other hours? Email, meetings, logistics. Peak hours = needle movers.` },
+        ],
+        People: [
+          { subj: `The Five You Surround Yourself With`, content: `Jim Rohn said you become the average of the 5 people you spend the most time with. List yours. Be honest. Are they pulling you up, holding steady, or pulling down? You don't have to cut anyone off — but you DO get to choose who gets your best hours.` },
+          { subj: `The apology you've been avoiding`, content: `There's someone you need to make it right with. You know exactly who. Not because you did something terrible — but because something's unfinished. Your ${weakest} score reflects this. Handle it this week. One conversation. No defense. Just ownership.` },
+          { subj: `Your inner circle audit`, content: `List every person who's had access to your phone, time, or trust in the last 30 days. Rank them: Giver (pours in), Receiver (takes but gives when able), Exchanger (balanced), Taker (drains). Your ${weakestSub} score is pointing at the Takers. You know who they are.` },
+          { subj: `The hard conversation you keep rehearsing`, content: `You've been practicing the conversation in your head for weeks. Maybe months. Your brain runs it on loop because it's unfinished. This week, have it. Not perfectly. Not with a script. Just have it. The relief of the DONE version is worth every ounce of the dread.` },
+        ],
+        Influence: [
+          { subj: `Influence is deposited, not declared`, content: `You don't tell people you have influence. You show it through the thousand tiny ways you show up when no one's watching. Your ${weakest} score is saying the deposits have slowed. Make one deposit this week with no expectation of return.` },
+          { subj: `The credibility gap`, content: `Credibility = what people expect from you, met consistently over time. Where's the gap between what you say and what they get? Close that gap in ONE area this week. Small promises, kept. That's how trust compounds.` },
+          { subj: `Your voice is needed more than you think`, content: `Somewhere this week, you'll hold back an opinion that needed to be said. That silence costs you influence. Not because you need to be loud — but because withheld truth erodes presence. Speak once this week when it would've been easier to stay quiet.` },
+          { subj: `The leader you're avoiding becoming`, content: `Leadership isn't a title. It's a pattern of taking responsibility before anyone asks you to. Your ${weakestSub} score is pointing at the responsibility you're still dodging. What's one thing you could own this week that you've been waiting for someone else to handle?` },
+        ],
+        Numbers: [
+          { subj: `Open the statement you've been avoiding`, content: `There's a financial document, statement, or number you haven't looked at in over 30 days. You know which one. This week, open it. Not to fix it yet — just to look. Awareness is the first 80% of financial change.` },
+          { subj: `Your real hourly rate`, content: `Take your total income last month. Divide by actual hours worked (including the admin, commute, email, prep). That's your real hourly rate. It's probably lower than you think. Now ask: what activities drag that number down? That's where Numbers work starts.` },
+          { subj: `The leak you know about`, content: `There's one subscription, one habit, one recurring charge you KNOW is wasteful. You haven't cut it because it feels small. Small times 12 months is not small. This week, cut it. Put the money into your highest-value account.` },
+          { subj: `The conversation about money`, content: `If you have a partner, the money conversation is probably overdue. Not the budget — the vision. What would you do with 2x your current income? What would you stop doing? Talk about that. The tactics follow the vision.` },
+        ],
+        Knowledge: [
+          { subj: `Learning vs consuming`, content: `You consume a lot of content. But what did you APPLY in the last 7 days from something you learned? Consumption without application is entertainment. This week: one book chapter, one podcast, one article — and ONE implementation within 48 hours.` },
+          { subj: `The book you keep not finishing`, content: `There's a book on your shelf or Kindle you started months ago. You know which one. It's not that you're too busy. It's that finishing it would obligate you to change. This week, finish it OR give it away. Indecision is the drain.` },
+          { subj: `Teaching forces mastery`, content: `You don't know something until you can teach it. Pick one thing you've learned recently. Teach it to someone — a kid, a coworker, a friend. Even if they didn't ask. The act of explaining exposes every gap in your understanding. That's where real learning begins.` },
+          { subj: `The mentor you haven't asked`, content: `There's someone you admire who would probably answer 3 questions via email if you wrote thoughtfully. You haven't asked because you're worried about imposing. This week, write the email. Short. Specific. No pitch. Just 3 questions. The worst they can do is not respond.` },
+        ],
+      };
+
+      // Universal content (applies to anyone regardless of weakest pillar)
+      const universalTopics = [
+        { subj: `Your ${strongest} wants to thank your ${weakest}`,
+          content: `Remember the cross-pillar effect? ${crossHeadline}\n\nEvery point you've added to ${weakest} has unlocked potential in ${strongest}. Even if you can't see it yet in a score, it's happening in your behavior. The connections are real.` },
+        { subj: `The 90-day mark is approaching`,
+          content: `The 90/90/1 Rule isn't a suggestion. It's a commitment. 90 minutes a day, 90 days, 1 focus: ${weakest}.\n\nIf you started when you took the assessment, you're getting close. If you started late, that's fine — the clock starts when you decide it starts. What matters is consistency, not perfection.` },
+        { subj: `What would a ${masterScore + 20} version of you do today?`,
+          content: `Your Master Score is ${masterScore}. Imagine the version of you at ${masterScore + 20}. That person has a ${weakest} score of ${targetScore} or higher.\n\nWhat does that person's morning look like? How do they handle the thing you're avoiding? What decisions do they make that you haven't made yet?\n\nThat's not a fantasy. That's a blueprint. Close the gap.` },
+        { subj: `Monthly retake reminder`,
+          content: `Time to retake the assessment. Not because I said so — but because the data doesn't lie and you need the feedback.\n\nYour original scores:\n• Master: ${masterScore} (${scoreRange})\n• ${weakest}: ${weakestScore}/50\n• ${strongest}: ${strongestScore}/50\n\nRetake now and compare: ${retakeUrl}\n\nIf the score went up — the system works. If it didn't — the system works, you just need to run it more consistently.` },
+        { subj: `The growth window math (refresher)`,
+          content: `You have 4-5 hours of discretionary time per day. Not 8. That's your growth window. This week's question: are you still giving at least 90 minutes of that window to ${weakest} work? If not, today is the day you restart.` },
+        { subj: `The next level is decided this week`,
+          content: `Your assessment score moves in two directions: up when you're consistent, down when you drift. There's no neutral. This week alone has 5 decisions that will determine the direction. Choose the next-level decision each time, even when it's harder.` },
+        { subj: `Who are you becoming?`,
+          content: `You're 6+ weeks in. The person you are today is not the same as the person who took the original assessment. Identity shifts slow. Scores shift faster. But they point the same direction — up. Who are you becoming? Not what are you achieving. Who are you BECOMING.` },
+        { subj: `The community check-in`,
+          content: `Who else is running this system with you? If no one — that's your week's work. Find one person to share your ${weakest} goal with. Accountability isn't weakness; it's force multiplication. The Value to Victory group is there if you need a starting point.` },
+      ];
+
+      // Combine: pillar deep dives + universal topics = 12-13 unique topics per pillar
+      const allTopics = [
+        ...(pillarDeepDives[weakest] || []),
+        ...universalTopics,
+      ];
+
+      const topicIndex = (day - 21) % allTopics.length;
+      const topic = allTopics[Math.max(0, topicIndex)];
+      subject = topic.subj;
+      body = `${firstName},\n\nWeek ${weekNum} check-in. Day ${day} of your journey.\n\n${topic.content}\n\nYOUR MOVE THIS WEEK:\nOne action. One commitment. One thing you can point to on Friday and say "I did that for my ${weakest}."\n\nI'm still in your corner.\n\n— Shawn`;
   }
 
   // Build HTML version with dark/gold styling matching existing emails
@@ -654,17 +1176,42 @@ P.S. If you want to go deeper — structured accountability, monthly progress tr
 
 <!-- Header -->
 <tr><td style="background:#1a1a2e;border-radius:4px 4px 0 0;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">VALUE <span style="color:#d4a853;">TO</span> VICTORY</h1><p style="margin:4px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">Daily Coaching — Day ${day} of 8</p></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">VALUE <span style="color:#d4a853;">TO</span> VICTORY</h1><p style="margin:4px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">${day <= 8 ? `Daily Coaching — Day ${day} of 8` : day <= 16 ? `Deep Dive — Week ${Math.ceil(day/7)}` : day <= 20 ? `Advanced — Week ${Math.ceil(day/7)}` : `Weekly Check-In — Week ${Math.ceil(day/7)}`}</p></td></tr></table>
+
+<!-- Pillar Score Bars -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:8px 40px 4px 40px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#6a6a84;letter-spacing:1px;">
+<tr>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'Time' ? 'color:#d4a853;font-weight:bold;' : ''}">T</td>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'People' ? 'color:#d4a853;font-weight:bold;' : ''}">P</td>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'Influence' ? 'color:#d4a853;font-weight:bold;' : ''}">I</td>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'Numbers' ? 'color:#d4a853;font-weight:bold;' : ''}">N</td>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'Knowledge' ? 'color:#d4a853;font-weight:bold;' : ''}">K</td>
+</tr>
+<tr>
+<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.time_total || 0)/50)*100)}%;background:${weakest === 'Time' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.people_total || 0)/50)*100)}%;background:${weakest === 'People' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.influence_total || 0)/50)*100)}%;background:${weakest === 'Influence' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.numbers_total || 0)/50)*100)}%;background:${weakest === 'Numbers' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.knowledge_total || 0)/50)*100)}%;background:${weakest === 'Knowledge' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+</tr>
+</table>
+</td></tr></table>
 
 <!-- Gold Divider -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#d4a853,transparent);"></div></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:4px 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#d4a853,transparent);"></div></td></tr></table>
 
 <!-- Body -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 32px 40px;">
 <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#c0c0d8;line-height:1.7;white-space:pre-wrap;">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\n/g, '</div><div style="height:16px;"></div><div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#c0c0d8;line-height:1.7;white-space:pre-wrap;">').replace(/YOUR MOVE TODAY:|YOUR 10-MINUTE CHALLENGE:|YOUR 90-MINUTE DAILY BLOCK:|YOUR DAILY SYSTEM:|YOUR 1 \(The Massive Goal\):|YOUR 3 \(Key Tasks\):|YOUR 5 \(Quick Wins for Today\):|YOUR FINAL MOVE:|THE CASCADE EFFECT:|THE TRUTH ABOUT SYSTEMS:|HERE'S WHY THIS WORKS:/g, match => `<strong style="color:#d4a853;text-transform:uppercase;letter-spacing:1px;font-size:13px;">${match}</strong>`)}</div>
 </td></tr></table>
 
-${day === 6 || day === 8 ? `<!-- Retake CTA -->
+<!-- Check-In Reply Button -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px 16px 40px;text-align:center;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;border:2px solid #d4a853;" align="center"><a href="${BASE_URL}/coaching-reply?email=${encodeURIComponent(email)}&day=${day}" target="_blank" style="display:inline-block;padding:12px 32px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#d4a853;text-decoration:none;letter-spacing:1px;">Reply to Today's Challenge &rarr;</a></td></tr></table>
+</td></tr></table>
+
+${day === 6 || day === 8 || day === 15 || day === 18 || day === 20 || ((day > 20) && ((day - 21) % 5 === 4)) ? `<!-- Retake CTA -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px 32px 40px;text-align:center;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;background:linear-gradient(135deg,#d4a853,#c89030);" align="center"><a href="${retakeUrl}" target="_blank" style="display:inline-block;padding:14px 40px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:800;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Retake the Assessment &rarr;</a></td></tr></table>
 </td></tr></table>` : ''}
@@ -758,6 +1305,8 @@ module.exports = async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Content-Security-Policy', "default-src 'self' https:; script-src 'self' 'unsafe-inline' https://assets.calendly.com https://www.googletagmanager.com https://api.fontshare.com; style-src 'self' 'unsafe-inline' https://api.fontshare.com https://fonts.googleapis.com; img-src 'self' https: data:; connect-src 'self' https:; frame-src https://calendly.com https://www.youtube.com;");
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -769,6 +1318,7 @@ module.exports = async (req, res) => {
 
   // Determine rate limit category
   const rateCategory = url.startsWith('/admin') ? 'admin'
+    : url.startsWith('/member/has-pin') ? 'enumeration'   // Tight limit: this endpoint can be probed to enumerate which emails have accounts
     : (url.includes('/verify-pin') || url.includes('/set-pin') || url.includes('/pin-login') || url.includes('/forgot-pin') || url.includes('/reset-pin')) ? 'auth'
     : url === '/assessment' ? 'assessment'
     : 'default';
@@ -808,7 +1358,7 @@ module.exports = async (req, res) => {
       let isReturningUser = false;
 
       if (email) {
-        const contactRows = await sql`SELECT * FROM contacts WHERE email = ${email} LIMIT 1`;
+        const contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = LOWER(${email}) LIMIT 1`;
         if (contactRows.length > 0) {
           contact = contactRows[0];
           const history = await sql`SELECT question_id, answered_at FROM answer_history WHERE contact_id = ${contact.id} ORDER BY answered_at ASC`;
@@ -1013,8 +1563,8 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Reset link has expired. Please request a new one.' });
       }
 
-      // Set the new PIN
-      const pinHash = crypto.createHash('sha256').update(newPin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+      // Set the new PIN (PBKDF2)
+      const pinHash = hashPinSync(newPin);
       await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW(), pin_reset_token = NULL, pin_reset_expires = NULL WHERE id = ${contact.id}`;
 
       // Generate JWT so they're logged in immediately
@@ -1055,11 +1605,16 @@ module.exports = async (req, res) => {
         const jwt = token ? verifyJWT(token) : null;
         const jwtValid = jwt && jwt.email === email;
 
-        // Option 2: Old PIN matches
+        // Option 2: Old PIN matches (supports legacy hash upgrade)
         let oldPinValid = false;
         if (oldPin) {
-          const oldPinHash = crypto.createHash('sha256').update(oldPin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
-          oldPinValid = oldPinHash === contact.pin_hash;
+          const result = verifyPin(oldPin, contact.pin_hash);
+          oldPinValid = result.valid;
+          if (result.valid && result.needsUpgrade) {
+            // Upgrade legacy hash in-place
+            const upgradedHash = hashPinSync(oldPin);
+            await sql`UPDATE contacts SET pin_hash = ${upgradedHash} WHERE id = ${contact.id}`;
+          }
         }
 
         if (!jwtValid && !oldPinValid) {
@@ -1067,7 +1622,7 @@ module.exports = async (req, res) => {
         }
       }
 
-      const pinHash = crypto.createHash('sha256').update(pin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+      const pinHash = hashPinSync(pin);
       await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE id = ${contact.id}`;
       return res.json({ success: true, message: 'PIN set successfully' });
     }
@@ -1079,18 +1634,24 @@ module.exports = async (req, res) => {
       const pin = (b.pin || '').trim();
       if (!email || !pin) return res.status(400).json({ error: 'Email and PIN required' });
 
-      const pinHash = crypto.createHash('sha256').update(pin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
-
       const rows = await sql`SELECT id, first_name, pin_hash FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
       if (rows.length === 0) return res.json({ verified: false, error: 'No account found' });
 
-      // If no PIN set, auto-set it for them (first login)
+      // If no PIN set, auto-set it for them (first login) — use PBKDF2
       if (!rows[0].pin_hash) {
-        // For Amanda's account or any account without a PIN, set it now
-        await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE id = ${rows[0].id}`;
+        const newPinHash = hashPinSync(pin);
+        await sql`UPDATE contacts SET pin_hash = ${newPinHash}, pin_set_at = NOW() WHERE id = ${rows[0].id}`;
         // Continue to login (don't return needsPin — just log them in)
-      } else if (rows[0].pin_hash !== pinHash) {
-        return res.json({ verified: false, error: 'Incorrect PIN' });
+      } else {
+        const pinResult = verifyPin(pin, rows[0].pin_hash);
+        if (!pinResult.valid) {
+          return res.json({ verified: false, error: 'Incorrect PIN' });
+        }
+        // Auto-upgrade legacy SHA-256 hash to PBKDF2
+        if (pinResult.needsUpgrade) {
+          const upgradedHash = hashPinSync(pin);
+          await sql`UPDATE contacts SET pin_hash = ${upgradedHash} WHERE id = ${rows[0].id}`;
+        }
       }
 
       // Generate JWT token for authenticated sessions
@@ -1114,7 +1675,7 @@ module.exports = async (req, res) => {
       if (email && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
         (async () => {
           try {
-            const firstName = rows[0].first_name || 'there';
+            const firstName = escapeHtml(rows[0].first_name || 'there');
             // Fetch latest assessments for this contact
             const assessments = await sql`
               SELECT id, completed_at, master_score, score_range, weakest_pillar, depth,
@@ -1244,7 +1805,7 @@ module.exports = async (req, res) => {
               subject: `New sign-in to your Value Engine account — ${dateStr}`,
               html: signInHtml,
             });
-            console.log(`Sign-in email sent to ${email} for contact ${contactId}`);
+            console.log(`Sign-in email sent to ${maskEmail(email)} for contact ${contactId}`);
             await logEmail(sql, { recipient: email, emailType: 'sign_in', subject: `New sign-in to your Value Engine account — ${dateStr}`, contactId });
           } catch (signInEmailErr) {
             console.error('Sign-in email error (non-fatal):', signInEmailErr.message);
@@ -1257,27 +1818,132 @@ module.exports = async (req, res) => {
       return res.json({ verified: true, token, contactId, firstName: rows[0].first_name, tier });
     }
 
-    // GET /api/member/has-pin?email=xxx — Check if member has a PIN set
+    // GET /api/member/has-pin?email=xxx — Check if member has a PIN set.
+    // Defenses against email enumeration:
+    //   1. Rate limited to 5/min/IP via the 'enumeration' category (see top of file)
+    //   2. Constant ~200ms response time so DB hit latency doesn't reveal existence
+    //   Reasons we can't fully unify the response: member.html branches its UI on
+    //   exists/hasPin to show signup vs PIN-setup vs PIN-entry forms. Tightening
+    //   beyond timing+rate-limit requires a UX rewrite — tracked as a separate task.
     if (req.method === 'GET' && url.startsWith('/member/has-pin')) {
+      const startTime = Date.now();
       const params = new URL('http://x' + req.url).searchParams;
       const email = (params.get('email') || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       const rows = await sql`SELECT pin_hash FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      // Pad to a constant ~200ms so timing doesn't differentiate hit vs miss
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 200) await new Promise(r => setTimeout(r, 200 - elapsed));
       if (rows.length === 0) return res.json({ exists: false, hasPin: false });
       return res.json({ exists: true, hasPin: !!rows[0].pin_hash });
     }
 
+    // POST /api/auth/refresh — Silently refresh a valid JWT before it expires
+    // Accepts expired-within-14-days tokens so users returning after a week
+    // don't need to re-enter their PIN. Security: signature must still validate
+    // and contact must still exist + not be disabled.
+    if (req.method === 'POST' && url === '/auth/refresh') {
+      try {
+        const token = extractToken(req);
+        if (!token) return res.status(401).json({ error: 'No token provided' });
+
+        // Parse payload even if expired
+        const parts = token.split('.');
+        if (parts.length !== 3) return res.status(401).json({ error: 'Malformed token' });
+
+        // Verify signature first
+        const expectedSig = crypto.createHmac('sha256', JWT_SECRET).update(`${parts[0]}.${parts[1]}`).digest('base64url');
+        if (parts[2] !== expectedSig) return res.status(401).json({ error: 'Invalid signature' });
+
+        let payload;
+        try { payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString()); }
+        catch { return res.status(401).json({ error: 'Malformed payload' }); }
+
+        // Allow refresh if token expired within the last 14 days (grace period)
+        const now = Math.floor(Date.now() / 1000);
+        const graceWindow = 14 * 24 * 60 * 60; // 14 days
+        if (payload.exp && payload.exp < now - graceWindow) {
+          return res.status(401).json({ error: 'Token expired beyond refresh window. Please log in.' });
+        }
+
+        // Verify the contact still exists
+        if (!payload.email) return res.status(401).json({ error: 'Invalid token payload' });
+        const contactRows = await sql`SELECT id, first_name FROM contacts WHERE LOWER(email) = LOWER(${payload.email}) LIMIT 1`;
+        if (contactRows.length === 0) return res.status(401).json({ error: 'Account not found' });
+
+        // Issue new token with current tier + team IDs
+        let tier = 'free';
+        let teamIds = [];
+        try {
+          const profileRows = await sql`SELECT membership_tier FROM user_profiles WHERE contact_id = ${contactRows[0].id} LIMIT 1`;
+          if (profileRows.length > 0) tier = profileRows[0].membership_tier || 'free';
+          const teamRows = await sql`SELECT team_id FROM team_members WHERE contact_id = ${contactRows[0].id}`;
+          teamIds = teamRows.map(t => t.team_id);
+        } catch (e) { /* non-fatal */ }
+
+        const newToken = createJWT({
+          contactId: contactRows[0].id,
+          email: payload.email.toLowerCase(),
+          tier,
+          teamIds,
+          firstName: contactRows[0].first_name
+        });
+
+        return res.json({
+          token: newToken,
+          contactId: contactRows[0].id,
+          email: payload.email.toLowerCase(),
+          tier,
+          firstName: contactRows[0].first_name
+        });
+      } catch (refreshErr) {
+        console.error('[auth/refresh] Error:', refreshErr.message);
+        return res.status(500).json({ error: 'Refresh failed' });
+      }
+    }
+
     // GET /api/member?email=xxx — Member portal: profile, tier, assessments, teams
+    // JWT path returns full profile. Email-only path (coaching email deep-links)
+    // returns a narrow, non-PII response: firstName + latest assessment pillar
+    // scores only. No stripe IDs, teams, phone, email, last name, or tier data.
     if (req.method === 'GET' && url.startsWith('/member') && !url.startsWith('/member/portal')) {
       const params = new URL('http://x' + req.url).searchParams;
-      const email = (params.get('email') || '').toLowerCase().trim();
+      const jwtUser = extractUser(req);
+      const rawEmail = params.get('email') || '';
+      // Zod-style email shape check — reject obviously malformed inputs early
+      if (rawEmail && (rawEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail))) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+      const emailParam = rawEmail.toLowerCase().trim();
+      const email = (jwtUser?.email || emailParam || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       const contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
       if (contactRows.length === 0) return res.json({ found: false });
 
       const contact = contactRows[0];
+
+      if (!jwtUser) {
+        const latest = await sql`
+          SELECT completed_at, mode, master_score, weakest_pillar, focus_pillar,
+                 time_total, people_total, influence_total, numbers_total, knowledge_total
+          FROM assessments WHERE contact_id = ${contact.id}
+          ORDER BY completed_at DESC LIMIT 1
+        `;
+        return res.json({
+          found: true,
+          contact: { firstName: contact.first_name },
+          assessments: latest.map(a => ({
+            completedAt: a.completed_at, mode: a.mode,
+            masterScore: a.master_score,
+            weakestPillar: a.weakest_pillar, focusPillar: a.focus_pillar,
+            timeTotal: a.time_total, peopleTotal: a.people_total,
+            influenceTotal: a.influence_total, numbersTotal: a.numbers_total,
+            knowledgeTotal: a.knowledge_total,
+          })),
+        });
+      }
 
       // Get user profile (membership tier)
       let profile = { membership_tier: 'free' };
@@ -1324,10 +1990,12 @@ module.exports = async (req, res) => {
       });
     }
 
-    // POST /api/member/portal — Create Stripe billing portal session
+    // POST /api/member/portal — Create Stripe billing portal session (JWT required)
     if (req.method === 'POST' && url === '/member/portal') {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const b = req.body || {};
-      const email = (b.email || '').toLowerCase().trim();
+      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (b.email || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       try {
@@ -1346,17 +2014,26 @@ module.exports = async (req, res) => {
         });
         return res.json({ url: session.url });
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Billing portal error:', e.message);
+        return res.status(500).json({ error: 'Failed to create billing portal session' });
       }
     }
 
-    // POST /api/member/delete-request — Log account deletion request, immediately unsubscribe, and notify admin
+    // POST /api/member/delete-request — Log account deletion request (JWT required)
     if (req.method === 'POST' && url === '/member/delete-request') {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const b = req.body || {};
-      const email = (b.email || '').toLowerCase().trim();
+      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (b.email || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       try {
+        // Ensure deletion_requested_at column exists
+        try { await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS deletion_requested_at TIMESTAMPTZ`; } catch(e) {}
+
+        // Mark the contact's deletion request timestamp
+        try { await sql`UPDATE contacts SET deletion_requested_at = NOW() WHERE LOWER(email) = ${email}`; } catch(e) {}
+
         // IMMEDIATELY unsubscribe from all email sequences to prevent bounces
         try { await sql`UPDATE coaching_sequences SET unsubscribed = TRUE WHERE LOWER(email) = ${email}`; } catch(e) {}
         try { await sql`UPDATE devotional_progress SET opted_out = TRUE WHERE LOWER(email) = ${email}`; } catch(e) {}
@@ -1390,10 +2067,31 @@ module.exports = async (req, res) => {
       }
     }
 
-    // POST /api/member/preferences — Save user preferences
+    // POST /api/admin/process-deletions — Auto-process deletion requests older than 48 hours
+    if (req.method === 'POST' && url === '/admin/process-deletions') {
+      // Find contacts with deletion_requested_at > 48 hours ago
+      const pending = await sql`SELECT id, email, first_name FROM contacts WHERE deletion_requested_at IS NOT NULL AND deletion_requested_at < NOW() - INTERVAL '48 hours' AND deleted_at IS NULL`;
+
+      const results = [];
+      for (const c of pending) {
+        try {
+          // Soft delete — set deleted_at, anonymize PII
+          await sql`UPDATE contacts SET deleted_at = NOW(), first_name = 'Deleted', last_name = 'User', phone = NULL, pin_hash = NULL WHERE id = ${c.id}`;
+          await sql`UPDATE user_profiles SET membership_tier = 'free', stripe_customer_id = NULL, stripe_subscription_id = NULL WHERE contact_id = ${c.id}`;
+          // Audit
+          await sql`INSERT INTO audit_log (action, actor, target_table, target_id, new_values) VALUES ('account_deleted', 'system_auto', 'contacts', ${c.id}, ${JSON.stringify({email: c.email, reason: '48hr_auto_deletion'})}::jsonb)`;
+          results.push({ id: c.id, email: c.email, status: 'deleted' });
+        } catch(e) { results.push({ id: c.id, error: e.message }); }
+      }
+      return res.json({ processed: results.length, results });
+    }
+
+    // POST /api/member/preferences — Save user preferences (JWT required)
     if (req.method === 'POST' && url === '/member/preferences') {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const b = req.body || {};
-      const email = (b.email || '').toLowerCase().trim();
+      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (b.email || '').toLowerCase().trim();
       const preferences = b.preferences;
       if (!email) return res.status(400).json({ error: 'Email required' });
       if (!preferences || typeof preferences !== 'object') return res.status(400).json({ error: 'Preferences object required' });
@@ -1416,10 +2114,11 @@ module.exports = async (req, res) => {
       }
     }
 
-    // GET /api/member/preferences?email=X — Retrieve user preferences
+    // GET /api/member/preferences?email=X — Retrieve user preferences (accepts JWT or email)
     if (req.method === 'GET' && url.startsWith('/member/preferences')) {
+      const jwtUser = extractUser(req);
       const params = new URL('http://x' + req.url).searchParams;
-      const email = (params.get('email') || '').toLowerCase().trim();
+      const email = (jwtUser?.email || params.get('email') || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       try {
@@ -1435,6 +2134,91 @@ module.exports = async (req, res) => {
         console.error('Get preferences error:', e.message);
         return res.json({ preferences: {} });
       }
+    }
+
+    // GET /api/member/export — GDPR data export (requires JWT)
+    if (req.method === 'GET' && url === '/member/export') {
+      const user = extractUser(req);
+      if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+      const contactId = user.contactId;
+
+      // Gather all user data
+      const contact = await sql`SELECT id, first_name, last_name, email, phone, created_at FROM contacts WHERE id = ${contactId}`;
+      const profile = await sql`SELECT * FROM user_profiles WHERE contact_id = ${contactId}`;
+      const assessments = await sql`SELECT id, mode, depth, master_score, score_range, time_total, people_total, influence_total, numbers_total, knowledge_total, completed_at FROM assessments WHERE contact_id = ${contactId} ORDER BY id DESC`;
+      const preferences = await sql`SELECT preferences FROM user_profiles WHERE contact_id = ${contactId}`;
+
+      let datingProfile = null;
+      try { const dp = await sql`SELECT display_name, gender, age, faith, bio, created_at FROM dating_profiles WHERE contact_id = ${contactId}`; if (dp.length) datingProfile = dp[0]; } catch(e) {}
+
+      let teamMemberships = [];
+      try { teamMemberships = await sql`SELECT t.team_name, tm.role, tm.joined_at FROM team_members tm JOIN teams t ON t.id = tm.team_id WHERE tm.contact_id = ${contactId}`; } catch(e) {}
+
+      const exportData = {
+        exported_at: new Date().toISOString(),
+        format_version: '1.0',
+        contact: contact[0] || null,
+        profile: profile[0] || null,
+        assessments,
+        dating_profile: datingProfile,
+        team_memberships: teamMemberships,
+        preferences: preferences[0]?.preferences || null
+      };
+
+      // Audit log
+      try { await sql`INSERT INTO audit_log (action, actor, target_table, target_id, ip_address) VALUES ('data_export', ${user.email || 'user'}, 'contacts', ${contactId}, ${clientIP})`; } catch(e) {}
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename="vtv-data-export.json"');
+      return res.json(exportData);
+    }
+
+    // GET /api/billing-portal — Redirect to Stripe Customer Portal
+    if (req.method === 'GET' && url === '/billing-portal') {
+      const user = extractUser(req);
+      if (!user) return res.status(401).json({ error: 'Login required' });
+
+      const profile = await sql`SELECT stripe_customer_id FROM user_profiles WHERE contact_id = ${user.contactId} LIMIT 1`;
+      if (!profile.length || !profile[0].stripe_customer_id) {
+        return res.status(400).json({ error: 'No active subscription found. Subscribe first at /pricing.' });
+      }
+
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      const session = await stripe.billingPortal.sessions.create({
+        customer: profile[0].stripe_customer_id,
+        return_url: 'https://assessment.valuetovictory.com/member',
+      });
+
+      return res.json({ url: session.url });
+    }
+
+    // GET /api/trial-status — Check trial/subscription status for conversion prompts
+    if (req.method === 'GET' && url === '/trial-status') {
+      const user = extractUser(req);
+      if (!user) return res.status(401).json({ error: 'Login required' });
+
+      const profile = await sql`SELECT membership_tier, created_at, stripe_subscription_id FROM user_profiles WHERE contact_id = ${user.contactId} LIMIT 1`;
+      if (!profile.length) return res.json({ status: 'no_profile', daysActive: 0, shouldPrompt: true });
+
+      const p = profile[0];
+      const daysSinceSignup = Math.floor((Date.now() - new Date(p.created_at).getTime()) / (1000 * 60 * 60 * 24));
+      const isPaid = p.membership_tier !== 'free' && p.stripe_subscription_id;
+
+      const assessmentCount = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE contact_id = ${user.contactId}`;
+      const coachingDay = await sql`SELECT MAX(current_day) as day FROM coaching_sequences WHERE contact_id = ${user.contactId}`;
+
+      return res.json({
+        tier: p.membership_tier,
+        isPaid: !!isPaid,
+        daysActive: daysSinceSignup,
+        trialDaysLeft: Math.max(0, 7 - daysSinceSignup),
+        assessmentsTaken: +assessmentCount[0].cnt,
+        coachingDay: coachingDay[0]?.day || 0,
+        shouldPrompt: !isPaid && daysSinceSignup >= 5,
+        shouldLock: !isPaid && daysSinceSignup >= 8,
+        upgradeUrl: '/pricing'
+      });
     }
 
     // POST /api/affiliate/apply — Create partner profile
@@ -1528,13 +2312,94 @@ module.exports = async (req, res) => {
       }
     }
 
-    // GET /api/user/history?email=xxx
+    // POST /api/affiliate/init — Create affiliate tables
+    if (req.method === 'POST' && url === '/affiliate/init') {
+      await sql`CREATE TABLE IF NOT EXISTS affiliate_links (
+        id SERIAL PRIMARY KEY,
+        contact_id INTEGER NOT NULL,
+        code TEXT NOT NULL UNIQUE,
+        campaign TEXT DEFAULT 'default',
+        clicks INTEGER DEFAULT 0,
+        signups INTEGER DEFAULT 0,
+        conversions INTEGER DEFAULT 0,
+        commission_rate FLOAT DEFAULT 0.20,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`;
+      await sql`CREATE TABLE IF NOT EXISTS affiliate_conversions (
+        id SERIAL PRIMARY KEY,
+        affiliate_link_id INTEGER REFERENCES affiliate_links(id),
+        referred_contact_id INTEGER,
+        referred_email TEXT,
+        event_type TEXT NOT NULL,
+        amount_cents INTEGER DEFAULT 0,
+        commission_cents INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`;
+      await sql`CREATE INDEX IF NOT EXISTS idx_aff_links_code ON affiliate_links(code)`;
+      await sql`CREATE INDEX IF NOT EXISTS idx_aff_links_contact ON affiliate_links(contact_id)`;
+      return res.json({ ok: true, message: 'Affiliate tables created' });
+    }
+
+    // POST /api/affiliate/create-link — Generate unique referral link
+    if (req.method === 'POST' && url === '/affiliate/create-link') {
+      const user = extractUser(req);
+      if (!user) return res.status(401).json({ error: 'Login required' });
+
+      const b = req.body || {};
+      const campaign = sanitizeString(b.campaign || 'default', 50);
+      const code = crypto.randomBytes(6).toString('hex');
+
+      await sql`INSERT INTO affiliate_links (contact_id, code, campaign) VALUES (${user.contactId}, ${code}, ${campaign})`;
+
+      return res.json({
+        ok: true,
+        code,
+        link: `https://assessment.valuetovictory.com/?ref=${code}`,
+        campaign
+      });
+    }
+
+    // GET /api/affiliate/stats — Get affiliate performance
+    if (req.method === 'GET' && url === '/affiliate/stats') {
+      const user = extractUser(req);
+      if (!user) return res.status(401).json({ error: 'Login required' });
+
+      const links = await sql`SELECT * FROM affiliate_links WHERE contact_id = ${user.contactId} ORDER BY created_at DESC`;
+      const totalConversions = await sql`SELECT COUNT(*) as cnt, COALESCE(SUM(commission_cents),0) as total FROM affiliate_conversions ac JOIN affiliate_links al ON al.id = ac.affiliate_link_id WHERE al.contact_id = ${user.contactId}`;
+
+      return res.json({
+        links,
+        totalClicks: links.reduce((s, l) => s + (l.clicks || 0), 0),
+        totalSignups: links.reduce((s, l) => s + (l.signups || 0), 0),
+        totalConversions: +totalConversions[0].cnt,
+        totalCommission: +totalConversions[0].total / 100,
+        pendingPayout: +totalConversions[0].total / 100
+      });
+    }
+
+    // GET /api/affiliate/track?ref=CODE — Track referral click (called from frontend)
+    if (req.method === 'GET' && url.startsWith('/affiliate/track')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const refCode = params.get('ref');
+      if (!refCode) return res.status(400).json({ error: 'ref code required' });
+
+      try {
+        await sql`UPDATE affiliate_links SET clicks = clicks + 1 WHERE code = ${refCode}`;
+      } catch(e) {}
+      return res.json({ ok: true });
+    }
+
+    // GET /api/user/history?email=xxx — Public endpoint (needed for assessment results flow)
+    // Users land here immediately after completing an assessment, before they've logged in.
+    // Only returns assessment scores and answer history — no PII beyond what they submitted.
     if (req.method === 'GET' && url.startsWith('/user/history')) {
       const params = new URL('http://x' + req.url).searchParams;
-      const email = params.get('email');
+      const jwtUser = extractUser(req);
+      const email = (jwtUser?.email || params.get('email') || '').toLowerCase().trim();
       if (!email) return res.json({ error: 'Email required', answered: [], assessments: [] });
 
-      const contactRows = await sql`SELECT * FROM contacts WHERE email = ${email} LIMIT 1`;
+      const contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
       if (contactRows.length === 0) return res.json({ answered: [], assessments: [], isNewUser: true });
 
       const contact = contactRows[0];
@@ -1584,12 +2449,11 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Email is required' });
       }
       const cleanEmail = b.email.trim().toLowerCase();
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(cleanEmail)) {
+      if (!validateEmail(cleanEmail)) {
         return res.status(400).json({ error: 'Please enter a valid email address.' });
       }
 
-      let contactRows = await sql`SELECT * FROM contacts WHERE email = ${cleanEmail} LIMIT 1`;
+      let contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = LOWER(${cleanEmail}) LIMIT 1`;
       let contact;
       if (contactRows.length > 0) {
         contact = contactRows[0];
@@ -1613,13 +2477,30 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Email is required to save your assessment results. Please enter your email and try again.' });
       }
       const cleanEmail = b.email.trim().toLowerCase();
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(cleanEmail)) {
+      if (!validateEmail(cleanEmail)) {
         return res.status(400).json({ error: 'Please enter a valid email address.' });
       }
 
+      // Validate payload size — reject oversized bodies
+      const bodyStr = JSON.stringify(b);
+      if (bodyStr.length > 50000) {
+        return res.status(400).json({ error: 'Payload too large' });
+      }
+
+      // Validate answer values are numbers 1-5
+      const answerFields = ['timeAwareness','timeAllocation','timeProtection','timeLeverage','fiveHourLeak','valuePerHour','timeInvestment','downtimeQuality','foresight','timeReallocation','trustInvestment','boundaryQuality','networkDepth','relationalRoi','peopleAudit','allianceBuilding','loveBankDeposits','communicationClarity','restraintPractice','valueReplacement','leadershipLevel','integrityAlignment','professionalCredibility','empatheticListening','gravitationalCenter','microHonesties','wordManagement','personalResponsibility','adaptiveInfluence','influenceMultiplier','financialAwareness','goalSpecificity','investmentLogic','measurementHabit','costVsValue','numberOneClarity','smallImprovements','negativeMath','incomeMultiplier','negotiationSkill','learningHours','applicationRate','biasAwareness','highestBestUse','supplyAndDemand','substitutionRisk','doubleJeopardy','knowledgeCompounding','weightedAnalysis','perceptionVsPerspective'];
+      for (const field of answerFields) {
+        if (b[field] !== undefined) {
+          const val = Number(b[field]);
+          if (isNaN(val) || val < 1 || val > 5) {
+            return res.status(400).json({ error: `Invalid answer value for ${field}. Must be 1-5.` });
+          }
+          b[field] = val; // normalize to number
+        }
+      }
+
       // Upsert contact with validated email
-      let contactRows = await sql`SELECT * FROM contacts WHERE email = ${cleanEmail} LIMIT 1`;
+      let contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = LOWER(${cleanEmail}) LIMIT 1`;
       let contact;
       if (contactRows.length > 0) {
         contact = contactRows[0];
@@ -1633,7 +2514,7 @@ module.exports = async (req, res) => {
         const rows = await sql`INSERT INTO contacts (first_name, last_name, email, phone, created_at) VALUES (${b.firstName || ''}, ${b.lastName || ''}, ${cleanEmail}, ${b.phone || null}, ${new Date().toISOString()}) RETURNING *`;
         contact = rows[0];
       }
-      console.log(`Contact upserted: ${contact.id} (${cleanEmail}) - ${contact.first_name} ${contact.last_name}`);
+      console.log(`Contact upserted: ${contact.id} (${maskEmail(cleanEmail)})`);
 
       // Dynamic scoring: if questionIds provided, compute pillar totals from question_bank
       let tt, pt, it, nt, kt;
@@ -1875,7 +2756,7 @@ Don't guess. Run the system.
             text: emailBody,
           });
           emailSent = true;
-          console.log(`Auto-email sent to ${contactEmail} for assessment ${assessment.id}`);
+          console.log(`Auto-email sent to ${maskEmail(contactEmail)} for assessment ${assessment.id}`);
           await logEmail(sql, { recipient: contactEmail, emailType: 'assessment_report', subject, contactId: contact.id, assessmentId: assessment.id, metadata: { score: masterScore, range: scoreRange } });
         } catch (emailErr) {
           console.error('Auto-email FAILED for', contactEmail, ':', emailErr.message);
@@ -1893,7 +2774,7 @@ Don't guess. Run the system.
               text: emailBody,
             });
             emailSent = true;
-            console.log(`Auto-email RETRY succeeded for ${contactEmail}`);
+            console.log(`Auto-email RETRY succeeded for ${maskEmail(contactEmail)}`);
             await logEmail(sql, { recipient: contactEmail, emailType: 'assessment_report', subject, contactId: contact.id, assessmentId: assessment.id, metadata: { score: masterScore, range: scoreRange, retry: true } });
           } catch (retryErr) {
             console.error('Auto-email RETRY also failed for', contactEmail, ':', retryErr.message);
@@ -1917,7 +2798,7 @@ Don't guess. Run the system.
             current_day = 0,
             last_sent_at = NULL,
             started_at = NOW()`;
-        console.log(`Coaching sequence enrolled/reset for ${cleanEmail}, assessment ${assessment.id}`);
+        console.log(`Coaching sequence enrolled/reset for ${maskEmail(cleanEmail)}, assessment ${assessment.id}`);
       } catch (coachErr) {
         console.error('Coaching enroll error (non-fatal):', coachErr.message);
       }
@@ -1932,8 +2813,10 @@ Don't guess. Run the system.
       return res.json({ assessment: mapped, prescription, contact: { id: contact.id, firstName: contact.first_name, lastName: contact.last_name }, emailSent, emailError: !emailSent ? 'Your results are saved but the email delivery encountered an issue. You can view your report at the link below.' : null, depth: assessmentDepth, focusPillar: assessmentFocusPillar });
     }
 
-    // POST /api/teams — Create team with optional company CMA fields for fast org integration
+    // POST /api/teams — Create team (JWT required)
     if (req.method === 'POST' && url === '/teams') {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const b = req.body || {};
       const code = Math.random().toString(36).substring(2, 10);
       const companyDomain = (b.companyDomain || b.company_domain || '').toLowerCase().replace('@', '').trim();
@@ -2137,12 +3020,14 @@ Don't guess. Run the system.
         if (result.length === 0) return res.status(404).json({ error: 'Member not found in this team' });
         return res.json({ success: true, member: result[0] });
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
-    // POST /api/teams/:id/settings — Update company CMA settings for an existing team
+    // POST /api/teams/:id/settings — Update company CMA settings (JWT required)
     if (req.method === 'POST' && url.match(/^\/teams\/\d+\/settings$/)) {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const teamId = parseInt(url.split('/')[2]);
       const b = req.body || {};
       try {
@@ -2182,13 +3067,14 @@ Don't guess. Run the system.
 
         return res.json({ success: true, settings: result[0], autoImported });
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
-    // POST /api/teams/:id/import — Bulk import members (CSV-style: email, department, role, goals)
-    // Company admin sends a list of employees. They get member numbers but identities stay masked in reports.
+    // POST /api/teams/:id/import — Bulk import members (JWT required)
     if (req.method === 'POST' && url.match(/^\/teams\/\d+\/import$/)) {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const teamId = parseInt(url.split('/')[2]);
       const b = req.body || {};
       const members = b.members || []; // Array of { email, department?, roleTitle?, goals?, customCode? }
@@ -2264,7 +3150,7 @@ Don't guess. Run the system.
           note: 'Pre-registered members will be fully linked when they complete their first assessment. Identities remain anonymous in all team reports.'
         });
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
@@ -2370,12 +3256,16 @@ Don't guess. Run the system.
 
         return res.json(report);
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
-    // POST /api/teams/:id/send-report — Send anonymized aggregate report to company CMA email
+    // POST /api/teams/:id/send-report — Send report (JWT or admin API key required)
     if (req.method === 'POST' && url.match(/^\/teams\/\d+\/send-report$/)) {
+      const jwtUser = extractUser(req);
+      const apiKey = req.headers['x-api-key'] || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!jwtUser && !(validKey && apiKey === validKey)) return res.status(401).json({ error: 'Authentication required.' });
       const teamId = parseInt(url.split('/')[2]);
       try {
         const team = await sql`SELECT * FROM teams WHERE id = ${teamId} LIMIT 1`;
@@ -2426,7 +3316,7 @@ Don't guess. Run the system.
         await logEmail(sql, { recipient: cmaEmail, emailType: 'team_report', subject: `${teamName} — P.I.N.K. Value Engine Team Report`, metadata: { teamId, teamName } });
         return res.json({ success: true, sentTo: cmaEmail, generatedAt: reportData.generatedAt });
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
@@ -2454,6 +3344,18 @@ Don't guess. Run the system.
       return res.json({ tracked: true });
     }
 
+    // POST /api/error-report — Client-side error tracking
+    if (req.method === 'POST' && url === '/error-report') {
+      const b = req.body || {};
+      try {
+        await sql`INSERT INTO audit_log (action, actor, target_table, new_values, ip_address)
+          VALUES ('client_error', ${b.page || 'unknown'}, 'frontend',
+                  ${JSON.stringify({ message: (b.message || '').substring(0, 500), stack: (b.stack || '').substring(0, 1000), url: b.url, userAgent: (req.headers['user-agent'] || '').substring(0, 200) })}::jsonb,
+                  ${clientIP})`;
+      } catch(e) {}
+      return res.json({ ok: true });
+    }
+
     // GET /api/analytics/funnel — Funnel conversion data (last 90 days)
     if (req.method === 'GET' && url === '/analytics/funnel') {
       // Requires admin key or JWT with admin role
@@ -2471,15 +3373,16 @@ Don't guess. Run the system.
         `;
         return res.json({ funnel, totals });
       } catch (e) {
-        return res.json({ error: 'Analytics not initialized. Run /api/migrate-analytics first.', details: e.message });
+        console.error('Analytics error:', e.message); return res.json({ error: 'Analytics not initialized' });
       }
     }
 
     // ========== PRIVACY PREFERENCES ==========
-    // GET /api/privacy?email=xxx&teamId=xxx — Get privacy prefs for a team
+    // GET /api/privacy?email=xxx&teamId=xxx — Get privacy prefs (accepts JWT or email)
     if (req.method === 'GET' && url.startsWith('/privacy')) {
+      const jwtUser = extractUser(req);
       const params = new URL('http://x' + req.url).searchParams;
-      const email = (params.get('email') || '').toLowerCase().trim();
+      const email = (jwtUser?.email || params.get('email') || '').toLowerCase().trim();
       const teamId = params.get('teamId');
       if (!email) return res.status(400).json({ error: 'email required' });
 
@@ -2497,10 +3400,12 @@ Don't guess. Run the system.
       }
     }
 
-    // POST /api/privacy — Set privacy preferences
+    // POST /api/privacy — Set privacy preferences (JWT required)
     if (req.method === 'POST' && url === '/privacy') {
+      const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const b = req.body || {};
-      const email = (b.email || '').toLowerCase().trim();
+      const email = jwtUser.email ? jwtUser.email.toLowerCase().trim() : (b.email || '').toLowerCase().trim();
       const teamId = b.teamId;
       if (!email || !teamId) return res.status(400).json({ error: 'email and teamId required' });
 
@@ -2522,21 +3427,37 @@ Don't guess. Run the system.
 
         return res.json({ success: true, message: 'Privacy preferences saved' });
       } catch (e) {
-        return res.status(500).json({ error: 'Failed to save preferences. Run /api/migrate-analytics first.', details: e.message });
+        console.error('Save preferences error:', e.message);
+        return res.status(500).json({ error: 'Failed to save preferences' });
       }
     }
 
     // ========== ADMIN ENDPOINTS — REQUIRE API KEY ==========
-    // POST /api/admin/pin-login — Short PIN login returns API key
+    // POST /api/admin/pin-login — Short PIN login with DB-backed brute-force lockout
     if (req.method === 'POST' && url === '/admin/pin-login') {
       const { pin } = req.body || {};
       const validPin = process.env.ADMIN_PIN;
-      if (!validPin) return res.status(500).json({ error: 'ADMIN_PIN not configured in environment variables' });
-      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!validPin) return res.status(500).json({ error: 'ADMIN_PIN not configured' });
+
+      // Brute-force protection: check failed attempts in last 15 minutes
+      const MAX_ATTEMPTS = 5;
+      const LOCKOUT_MINUTES = 15;
+      try {
+        const recentFails = await sql`SELECT COUNT(*) as cnt FROM audit_log WHERE action = 'pin_login_failed' AND created_at > NOW() - INTERVAL '${sql.unsafe(String(LOCKOUT_MINUTES))} minutes' AND ip_address = ${clientIP}`;
+        if (Number(recentFails[0]?.cnt || 0) >= MAX_ATTEMPTS) {
+          return res.status(429).json({ error: `Too many failed attempts. Try again in ${LOCKOUT_MINUTES} minutes.` });
+        }
+      } catch(e) { /* audit_log may not exist — allow login */ }
+
       if (!pin || pin.trim() !== validPin) {
+        // Log failed attempt
+        try { await auditLog(sql, { action: 'pin_login_failed', actor: 'unknown', ip: clientIP }); } catch(e) {}
         return res.status(401).json({ error: 'Invalid PIN' });
       }
-      return res.json({ success: true, apiKey: validKey });
+      // Success — log it and return token + API key
+      try { await auditLog(sql, { action: 'pin_login_success', actor: 'admin', ip: clientIP }); } catch(e) {}
+      const adminToken = createJWT({ role: 'admin', iat: Math.floor(Date.now() / 1000) });
+      return res.json({ success: true, token: adminToken, apiKey: process.env.ADMIN_API_KEY || '' });
     }
 
     // All /admin/* routes require x-api-key header matching ADMIN_API_KEY env var
@@ -2554,15 +3475,19 @@ Don't guess. Run the system.
       return res.json(teams);
     }
 
-    // GET /api/admin/contacts
+    // GET /api/admin/contacts (single query — no N+1)
     if (req.method === 'GET' && url === '/admin/contacts') {
-      const allContacts = await sql`SELECT * FROM contacts ORDER BY created_at DESC`;
-      const enriched = [];
-      for (const c of allContacts) {
-        const ca = await sql`SELECT * FROM assessments WHERE contact_id = ${c.id} ORDER BY completed_at DESC`;
-        enriched.push({ ...c, firstName: c.first_name, lastName: c.last_name, latestAssessment: ca.length > 0 ? mapAssessment(ca[0]) : null, assessmentCount: ca.length });
-      }
-      return res.json(enriched);
+      const enriched = await sql`
+        SELECT c.*,
+          (SELECT COUNT(*) FROM assessments WHERE contact_id = c.id) as assessment_count,
+          (SELECT row_to_json(a.*) FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as latest_assessment
+        FROM contacts c ORDER BY c.created_at DESC LIMIT 500
+      `;
+      return res.json(enriched.map(c => ({
+        ...c, firstName: c.first_name, lastName: c.last_name,
+        assessmentCount: Number(c.assessment_count || 0),
+        latestAssessment: c.latest_assessment ? mapAssessment(c.latest_assessment) : null,
+      })));
     }
 
     // GET /api/admin/contacts/:id
@@ -2639,7 +3564,7 @@ Don't guess. Run the system.
         await cascadeDeleteContact(id);
         return res.json({ success: true, deleted: { email: rows[0].email, id } });
       } catch(e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
@@ -2651,7 +3576,7 @@ Don't guess. Run the system.
         for (const id of ids) { await cascadeDeleteContact(id); }
         return res.json({ success: true, deleted: ids.length });
       } catch(e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
@@ -2676,6 +3601,459 @@ Don't guess. Run the system.
         totalContacts: Number(totalC[0]?.count || 0),
         totalAssessments: Number(totalA[0]?.count || 0),
       });
+    }
+
+    // GET /api/action-plan/{assessmentId} — Generate personalized 30-day action plan
+    // Returns a day-by-day action plan tailored to user's weakest pillar + sub-category.
+    // This is what the $1.99 Action Plan Report unlocks (previously just 3 generic steps).
+    if (req.method === 'GET' && url.match(/^\/action-plan\/\d+$/)) {
+      const assessmentId = parseInt(url.split('/action-plan/')[1]);
+      try {
+        const aRows = await sql`SELECT a.*, c.first_name, c.last_name, c.email
+          FROM assessments a JOIN contacts c ON a.contact_id = c.id
+          WHERE a.id = ${assessmentId} LIMIT 1`;
+        if (aRows.length === 0) return res.status(404).json({ error: 'Assessment not found' });
+        const a = aRows[0];
+        const prescription = typeof a.prescription === 'string' ? JSON.parse(a.prescription) : (a.prescription || {});
+
+        const weakest = a.weakest_pillar || 'Time';
+        const weakestSub = prescription.weakestSubCategory || `${weakest} Awareness`;
+
+        // 30-day pillar-specific action tracks — 4-week progression
+        const actionLibrary = {
+          Time: {
+            week1: [
+              { day: 1, title: 'Run the Time Audit', steps: ['Track every hour for 24 hours. No rounding. No guessing.', 'Use the 4-column method: Work / Obligations / Growth / Sleep.', 'At day end, total each column. Write down the actual growth window hours.'] },
+              { day: 2, title: 'Find your Five-Hour Leak', steps: ['Review yesterday\'s audit. Circle activities that gave no return.', 'Total the wasted hours. That\'s your leak.', 'Pick ONE leak source to eliminate this week.'] },
+              { day: 3, title: 'Protect peak hours', steps: ['Identify your 3 highest-energy hours (usually morning).', 'Block them on tomorrow\'s calendar for ${weakest} work.', 'Tell one person they are non-negotiable.'] },
+              { day: 4, title: '10-minute sprint', steps: ['Set a timer for 10 minutes.', 'Work on ${weakestSub} with zero distractions.', '2-minute rest. Repeat once. Total: 22 minutes that changes your day.'] },
+              { day: 5, title: 'Delegation test', steps: ['List everything you did this week at below your hourly rate.', 'Pick one task to delegate or eliminate next week.', 'Cost of doing it yourself vs. cost of giving it up — choose freedom.'] },
+              { day: 6, title: '90-minute block', steps: ['Schedule one uninterrupted 90-minute session tomorrow.', 'Phone in another room. Door closed.', 'Work only on ${weakestSub} advancement.'] },
+              { day: 7, title: 'Week 1 review', steps: ['Look at the time you reclaimed. Total the hours.', 'What worked? What didn\'t? Write it down.', 'Commit to week 2 with specific calendar blocks.'] },
+            ],
+            week2: [
+              { day: 8, title: 'Morning priority lock', steps: ['Before checking phone, write down the ONE thing that must move today.', 'Block 60-90 min for it before any other task.', 'Don\'t break the streak.'] },
+              { day: 9, title: 'Energy mapping', steps: ['Rate your energy hourly today (1-5).', 'Tomorrow, align ${weakest} work with your high-energy slots.', 'Low-energy hours: email, admin, rest.'] },
+              { day: 10, title: 'The No list', steps: ['List 5 commitments you said yes to but shouldn\'t have this month.', 'Pick one to renegotiate or exit this week.', 'Practice: "I don\'t have capacity for that right now."'] },
+              { day: 11, title: 'Systematize', steps: ['Identify one recurring task you do weekly.', 'Document the steps in 5 minutes.', 'Next time, the doc runs you — not the other way around.'] },
+              { day: 12, title: 'Expand the 90', steps: ['If you\'ve been doing 90-minute blocks, add 15 minutes today.', 'If you haven\'t started, do 30 minutes. Something over nothing.', 'Consistency scales — intensity breaks.'] },
+              { day: 13, title: 'Friday audit', steps: ['Review this week\'s calendar honestly.', 'Which blocks did you protect? Which did you abandon?', 'Replace one broken block with a firmer boundary next week.'] },
+              { day: 14, title: 'Sabbath rest', steps: ['Do zero ${weakest} work today.', 'Sabbath is not laziness — it\'s intentional recovery.', 'Strong systems need rest. This is part of the plan.'] },
+            ],
+            week3: [
+              { day: 15, title: 'Retake check-in', steps: ['Retake the quick assessment.', 'Compare your Time pillar score vs. Day 1.', 'Any shift — even 1 point — is data.'] },
+              { day: 16, title: 'Automate one process', steps: ['Pick one task you do weekly.', 'Research: can software, a template, or delegation cut the time 50%?', 'Implement today. Reclaim those hours forever.'] },
+              { day: 17, title: 'The time donation', steps: ['Identify a high-leverage person in your life.', 'Gift them 30 minutes today — no agenda, no ask.', 'Relational capital compounds faster than productivity.'] },
+              { day: 18, title: 'Calendar stress test', steps: ['Look at next week\'s calendar.', 'Where will things break? What will steal your blocks?', 'Pre-fix those conflicts NOW, not when they happen.'] },
+              { day: 19, title: 'Saying goodbye to a leak', steps: ['Choose one ongoing commitment that\'s not bearing fruit.', 'Write the exit email / draft the conversation.', 'Send it this week. Mercy beats martyrdom.'] },
+              { day: 20, title: 'Systems audit', steps: ['List your 3 most-used tools/apps.', 'Which one is costing you more time than it saves?', 'Replace or remove it this weekend.'] },
+              { day: 21, title: 'Week 3 celebration', steps: ['Notice what\'s different than Day 1.', 'Write it down. Even if it feels small.', 'Tell one person what\'s shifting.'] },
+            ],
+            week4: [
+              { day: 22, title: 'Peak performance stack', steps: ['Identify what fueled your BEST day this month.', 'Rebuild the conditions tomorrow: same sleep, same energy, same hour.', 'Make it your default, not your exception.'] },
+              { day: 23, title: 'The 10% cut', steps: ['Look at one category of time spent (meetings, social, email).', 'Cut 10% from it this week. Just 10%.', 'Move those hours to ${weakestSub} work.'] },
+              { day: 24, title: 'Future self interview', steps: ['Write 3 questions a more-disciplined future you would ask today\'s you.', 'Answer honestly.', 'Let the answers shape tomorrow.'] },
+              { day: 25, title: 'Teach someone', steps: ['Share one time-protection principle with someone who asks.', 'Teaching exposes your own gaps — and cements your mastery.', 'Be the pattern you want around you.'] },
+              { day: 26, title: 'Margin check', steps: ['How much margin (unscheduled time) do you have this week?', 'If under 10%, something breaks soon.', 'Protect or create margin — it\'s where growth happens.'] },
+              { day: 27, title: 'Month recap', steps: ['Write down the 3 biggest time shifts you made this month.', 'Name one that saved you more than 5 hours.', 'Double down on that next month.'] },
+              { day: 28, title: 'Re-assessment prep', steps: ['Take the extensive P.I.N.K. assessment tomorrow.', 'Don\'t check against old scores until after you finish.', 'Honest answers = honest data.'] },
+              { day: 29, title: 'Full assessment retake', steps: ['Complete the full extensive assessment at valuetovictory.com.', 'Compare to your original scores.', 'Note where ${weakest} moved. That\'s what this month built.'] },
+              { day: 30, title: 'Next 30 days plan', steps: ['Based on your new scores, write 3 goals for next month.', 'Share them with one accountability person.', 'The system works — you just need to keep running it.'] },
+            ],
+          },
+          People: {
+            week1: [
+              { day: 1, title: 'People Audit', steps: ['List your 15-20 most-invested relationships.', 'Rank each: Giver / Receiver / Exchanger / Taker.', 'Note which ones drain your energy and which fuel you.'] },
+              { day: 2, title: 'The Forgotten Five', steps: ['Think of 5 people you\'ve lost touch with that matter.', 'Send a simple "thinking of you" text to one today. No agenda.', 'Reconnection is relational wealth.'] },
+              { day: 3, title: 'Love Bank deposit', steps: ['Do one act of service for someone close WITHOUT being asked.', 'Don\'t announce it. Don\'t expect thanks.', 'Trust compounds from unseen acts.'] },
+              { day: 4, title: 'Boundary setting', steps: ['Identify one relationship where you consistently overextend.', 'Decide what\'s acceptable and what\'s not — for YOU, not them.', 'Communicate ONE boundary clearly this week.'] },
+              { day: 5, title: 'Hard conversation', steps: ['Name the conversation you\'ve been avoiding.', 'Schedule it within 7 days.', 'Unfinished conversations are leaks in your ${weakest} pillar.'] },
+              { day: 6, title: 'Relational ROI', steps: ['Which 3 relationships return the most support/energy/growth?', 'Invest 30+ minutes in one this week.', 'Protect the ones that pour in.'] },
+              { day: 7, title: 'Week 1 review', steps: ['Note which relationships you fed and which went hungry.', 'Which feel different now?', 'Adjust next week\'s attention accordingly.'] },
+            ],
+            week2: [
+              { day: 8, title: 'Active listening', steps: ['In every conversation today, ask one follow-up question before responding.', 'Listen for what they\'re NOT saying.', 'Communication Clarity is a muscle.'] },
+              { day: 9, title: 'Speak truth', steps: ['Tell one person something real you\'ve been holding back.', 'Not a complaint. Not a secret. An honest observation or affirmation.', 'Truth builds trust.'] },
+              { day: 10, title: 'Cut a Taker', steps: ['Identify one relationship that consistently drains you with no return.', 'Reduce access this week — cancel, decline, reschedule.', 'Not cruel. Just honest about capacity.'] },
+              { day: 11, title: 'Alliance building', steps: ['Pick one person in your field who\'s 2 levels ahead of you.', 'Write them a short, specific message — no ask, just appreciation.', 'Networks grow through deposits, not withdrawals.'] },
+              { day: 12, title: 'Family anchor', steps: ['Spend 30 uninterrupted minutes with one family member.', 'No phone. No multitasking. Just them.', 'Family is the People pillar\'s foundation.'] },
+              { day: 13, title: 'Apology or restoration', steps: ['Is there someone you owe an apology or course-correction?', 'Handle it this week. Short. Honest. No defense.', 'The ${weakest} pillar rises fastest when old debts clear.'] },
+              { day: 14, title: 'Sabbath with people', steps: ['Gather with one person today for no reason other than presence.', 'No agenda. No productivity.', 'Relational rest counts.'] },
+            ],
+            week3: [
+              { day: 15, title: 'Retake check', steps: ['Retake the quick assessment.', 'Has People pillar moved?', 'Even 1-point shifts are real — they came from real work.'] },
+              { day: 16, title: 'Trust deposit', steps: ['Keep a small promise today that you could\'ve easily skipped.', 'Trust Investment is built in the tiny reliabilities.', 'No one else knows — but you and they do.'] },
+              { day: 17, title: 'Celebrate someone', steps: ['Publicly (or privately) acknowledge someone\'s growth or effort.', 'Specific, not generic.', 'People rise to honest celebration.'] },
+              { day: 18, title: 'The brave ask', steps: ['Ask for something you need — help, input, support — from someone who could give it.', 'Asking is relational strength, not weakness.', 'Most people love being asked.'] },
+              { day: 19, title: 'Forgiveness check', steps: ['Is there a grudge, resentment, or withheld forgiveness that\'s costing you?', 'Work toward release this week — internally first.', 'The ${weakest} pillar can\'t rise while anchored to old weight.'] },
+              { day: 20, title: 'Community audit', steps: ['Where are you isolated? Which room/group do you need to re-enter?', 'Re-enter one this week.', 'Community is ${weakestSub}\'s environment.'] },
+              { day: 21, title: 'Week 3 reflection', steps: ['Which 3 relationships feel stronger than Day 1?', 'What did you actually do differently?', 'Name the pattern. Repeat it.'] },
+            ],
+            week4: [
+              { day: 22, title: 'Depth over breadth', steps: ['Pick one relationship to go deeper with this week.', 'Ask a question you\'ve never asked them.', 'Listen for what comes.'] },
+              { day: 23, title: 'Gift a story', steps: ['Tell someone in your life about a moment THEY impacted.', 'Be specific. Name the date if you can.', 'Most people never hear the impact they had.'] },
+              { day: 24, title: 'Conflict repair', steps: ['If there\'s tension lingering with someone, address it directly this week.', 'Short, honest, solution-focused.', 'Unresolved conflict taxes every other pillar.'] },
+              { day: 25, title: 'Mentor check-in', steps: ['Reach out to someone who\'s poured into you.', 'Update them on what you\'re doing with what they gave.', 'Closing the loop is relational maturity.'] },
+              { day: 26, title: 'Family pattern', steps: ['Notice one generational pattern in your family you want to interrupt.', 'What\'s one action you\'ll take this week to break it?', 'You\'re the turning point.'] },
+              { day: 27, title: 'Recap and honor', steps: ['Write down the 3 relationships most changed this month.', 'Tell one of them.', 'Verbalize the shift.'] },
+              { day: 28, title: 'Re-assessment prep', steps: ['Take the full assessment tomorrow.', 'Answer honestly — especially the People sub-categories.', 'Data beats impression.'] },
+              { day: 29, title: 'Full assessment retake', steps: ['Complete the extensive P.I.N.K. assessment.', 'Review your People pillar score movement.', 'Match it to what you did — what worked?'] },
+              { day: 30, title: 'Next 30 days', steps: ['Pick the People sub-category you want to target next month.', 'Write 3 specific actions.', 'Share with accountability partner.'] },
+            ],
+          },
+          Influence: {
+            week1: [
+              { day: 1, title: 'Credibility audit', steps: ['List 3 recent promises you made.', 'Honest assessment: did you deliver? Partially? At all?', 'Credibility = consistency. No shortcut.'] },
+              { day: 2, title: 'Micro-integrity', steps: ['Do one small thing today that only you would know if you skipped.', 'Integrity Alignment builds invisibly first.', 'Small wins become character.'] },
+              { day: 3, title: 'Speak up once', steps: ['In one meeting/conversation, share a thought you would\'ve held back.', 'Tactfully. Clearly. Briefly.', 'Voice is a muscle. Use it.'] },
+              { day: 4, title: 'The quiet leader', steps: ['Lead something small today without declaring it.', 'Organize, clarify, or move something forward without seeking credit.', 'Real influence doesn\'t need a title.'] },
+              { day: 5, title: 'Deliver early', steps: ['Pick one deadline or commitment this week.', 'Deliver it ahead of schedule.', 'Early + quality = reputation.'] },
+              { day: 6, title: 'Active presence', steps: ['In every interaction today, be fully present — no phone, no split attention.', 'People feel presence more than they remember words.', 'Gravity starts with attention.'] },
+              { day: 7, title: 'Week 1 review', steps: ['Where did you lead this week?', 'Where did you defer when you should\'ve led?', 'Pattern-spot for next week.'] },
+            ],
+            week2: [
+              { day: 8, title: 'Teach something', steps: ['Explain one concept or skill to someone this week.', 'Teaching crystallizes your authority — AND their respect.', 'If you know it, give it.'] },
+              { day: 9, title: 'Receive feedback', steps: ['Ask one person for specific feedback on how you show up.', 'Don\'t defend. Just listen and thank them.', 'Blind spots are influence-killers.'] },
+              { day: 10, title: 'Own a mistake', steps: ['Name a recent mistake. Own it publicly (or at least to those affected).', 'No excuse. No blame.', 'Ownership increases trust faster than perfection.'] },
+              { day: 11, title: 'Keep your word (visibly)', steps: ['Whatever small thing you committed to — do it today.', 'Follow-through is the rarest professional quality.', 'Micro-reliability is leverage.'] },
+              { day: 12, title: 'Give credit', steps: ['Publicly acknowledge someone who helped you.', 'Specific. Genuine. Named.', 'Lifting others elevates you.'] },
+              { day: 13, title: 'Strategic no', steps: ['Decline one request that doesn\'t align with your priorities.', 'Kindly, clearly, without long explanation.', 'Boundaries ARE leadership.'] },
+              { day: 14, title: 'Sabbath', steps: ['Don\'t lead, produce, or manage today.', 'Rest is the most credible non-verbal message.', 'Real influence includes stopping.'] },
+            ],
+            week3: [
+              { day: 15, title: 'Retake check', steps: ['Retake quick assessment.', 'Has Influence pillar shifted?', 'Track the trend.'] },
+              { day: 16, title: 'Write something', steps: ['Post or publish ONE thought publicly today.', 'LinkedIn, email, blog, anywhere.', 'Ideas spread. You can\'t lead silently.'] },
+              { day: 17, title: 'Difficult decision', steps: ['There\'s a decision you\'ve been avoiding.', 'Make it this week.', 'Leadership is making calls before you feel ready.'] },
+              { day: 18, title: 'Mentor someone', steps: ['Share 15 minutes of your experience with someone earlier in their journey.', 'No payment needed. No pitch.', 'Influence flows when it\'s given freely.'] },
+              { day: 19, title: 'Ask a brave question', steps: ['In one conversation, ask the question others are avoiding.', 'Kindly. Directly.', 'The person who asks the real question has the floor.'] },
+              { day: 20, title: 'Refine your message', steps: ['Write out your core message in 3 sentences.', 'What do you want to be known for?', 'Clarity is magnetic.'] },
+              { day: 21, title: 'Week 3 reflection', steps: ['Where did you step into leadership this week?', 'Where did you still hide?', 'Next week — one more step forward.'] },
+            ],
+            week4: [
+              { day: 22, title: 'Build authority content', steps: ['Make one thing this week that showcases your knowledge.', 'Article, video, post, document — whatever fits.', 'Authority is proven, not claimed.'] },
+              { day: 23, title: 'Elevate someone visible', steps: ['Publicly recommend or introduce two people who should know each other.', 'Be the bridge.', 'Connectors hold disproportionate influence.'] },
+              { day: 24, title: 'Speak on your weak point', steps: ['Admit a limitation publicly or to peers.', 'Vulnerability + competence = trust.', 'Hiding weakness costs more than exposing it.'] },
+              { day: 25, title: 'Pattern interrupt', steps: ['Notice a habit in your leadership style that\'s stale.', 'Try the opposite today.', 'Growth lives outside your default moves.'] },
+              { day: 26, title: 'Serve without credit', steps: ['Help someone in a way no one will see.', 'Note how it feels.', 'That feeling is influence mastery.'] },
+              { day: 27, title: 'Recap and decide', steps: ['What shifted in your ${weakest} pillar this month?', 'What are you willing to commit to long-term?', 'Write it down.'] },
+              { day: 28, title: 'Re-assessment prep', steps: ['Retake the full extensive assessment tomorrow.', 'Answer from where you are today, not where you started.', 'Real data = real movement.'] },
+              { day: 29, title: 'Full assessment retake', steps: ['Complete the extensive P.I.N.K. assessment.', 'Compare Influence sub-categories to Day 1.', 'Where\'d the biggest jumps happen?'] },
+              { day: 30, title: 'Next 30 days', steps: ['Pick your new weakest Influence sub-category.', 'Define 3 actions for the next month.', 'The system works. Keep running it.'] },
+            ],
+          },
+          Numbers: {
+            week1: [
+              { day: 1, title: 'The Snapshot', steps: ['Open every financial account. Write every balance.', 'Add total income (month) and total outflow.', 'Net: surplus or deficit? That\'s your starting truth.'] },
+              { day: 2, title: 'Real hourly rate', steps: ['Total last month\'s income. Divide by actual hours worked (include commute, admin, prep).', 'That\'s your real hourly rate.', 'Now ask: what am I doing below that rate?'] },
+              { day: 3, title: 'Cut one leak', steps: ['Identify the dumbest subscription or recurring charge.', 'Cancel it today.', 'Redirect that money to an account that grows.'] },
+              { day: 4, title: 'The Number', steps: ['Calculate the one number that matters most for your next goal.', 'Income needed. Debt to eliminate. Amount to save.', 'Write it where you\'ll see it daily.'] },
+              { day: 5, title: 'One financial conversation', steps: ['If you have a partner, have a 20-minute money conversation.', 'If you don\'t, talk to a financial mentor or friend.', 'Money grows in the light.'] },
+              { day: 6, title: 'Income audit', steps: ['List every income source (active + passive).', 'Rank by amount AND reliability.', 'Where\'s the opportunity to add or strengthen?'] },
+              { day: 7, title: 'Week 1 review', steps: ['What changed about what you know about your money?', 'Awareness is 80% of the work.', 'Now apply it.'] },
+            ],
+            week2: [
+              { day: 8, title: 'Budget from zero', steps: ['Build next month\'s budget starting from zero — not your habits.', 'Every dollar gets a job.', 'No category = no dollars there.'] },
+              { day: 9, title: 'Measurement habit', steps: ['Log every expense for 3 days. All of them.', 'Review Friday.', 'Measurement changes behavior automatically.'] },
+              { day: 10, title: 'Price your time', steps: ['Task you dread: what would you pay someone to do it for you?', 'If the number\'s less than your hourly rate, delegate.', 'Your time is a financial asset.'] },
+              { day: 11, title: 'Debt plan', steps: ['List all debts, smallest to largest.', 'Pick the snowball or avalanche method.', 'Commit to one extra payment this week.'] },
+              { day: 12, title: 'One extra dollar earned', steps: ['Make one dollar beyond your usual income this week.', 'Sell something. Side skill. One-off.', 'Income is a skill — practice it.'] },
+              { day: 13, title: 'Cost-Value review', steps: ['Pick your 3 largest expenses.', 'Rate each on the return they give you.', 'Cut or reduce one this month.'] },
+              { day: 14, title: 'Sabbath', steps: ['No money decisions today.', 'Rest from the scoreboard.', 'Abundance mindset starts with presence.'] },
+            ],
+            week3: [
+              { day: 15, title: 'Retake check', steps: ['Retake quick assessment.', 'Numbers pillar movement?', 'Follow the trend.'] },
+              { day: 16, title: 'Investment logic', steps: ['What\'s one dollar amount you could invest this month in growth?', 'Book, course, tool, asset, skill.', 'Action beats analysis.'] },
+              { day: 17, title: 'Income multiplier', steps: ['Think about one skill that would double your hourly rate in 12 months.', 'Spend 30 minutes today starting that skill.', 'Income grows from capability, not hours.'] },
+              { day: 18, title: 'Negotiate once', steps: ['Find one bill, rate, or deal worth renegotiating.', 'Call or email this week.', 'Negotiation Skill is a sub-score that moves fast.'] },
+              { day: 19, title: 'Track net worth', steps: ['Assets minus debts. Write it down.', 'Start tracking monthly.', 'Net worth is the real scoreboard.'] },
+              { day: 20, title: 'One investment made', steps: ['Invest one small amount somewhere compounding this week.', 'Savings account, index fund, business asset.', 'Movement teaches more than planning.'] },
+              { day: 21, title: 'Week 3 reflection', steps: ['What\'s one financial behavior that changed?', 'Name it. Keep it.', 'Incremental shifts compound.'] },
+            ],
+            week4: [
+              { day: 22, title: 'Future income vision', steps: ['Write your target income in 24 months.', 'Now the habits that bridge today to then.', 'Vision drives numbers. Not the other way around.'] },
+              { day: 23, title: 'Fix the leakiest category', steps: ['Pick the spending category with the biggest gap between intention and reality.', 'Cut it in half for one week.', 'Then keep going.'] },
+              { day: 24, title: 'Teach one principle', steps: ['Share one money principle you\'ve applied with someone.', 'Teaching forces mastery.', 'Also: gift someone the truth.'] },
+              { day: 25, title: 'Small improvements', steps: ['Tiny financial upgrade: round up savings, autopay one bill, organize one account.', 'One tiny win.', 'Small = sustainable.'] },
+              { day: 26, title: 'Review + adjust', steps: ['Look at the budget you built on Day 8.', 'Where did reality diverge from plan?', 'Adjust for next month.'] },
+              { day: 27, title: 'Recap', steps: ['What\'s one number that looks different than 30 days ago?', 'Bank balance. Debt total. Savings. Hourly rate.', 'Write it down.'] },
+              { day: 28, title: 'Re-assessment prep', steps: ['Take full assessment tomorrow.', 'Honest Numbers answers only.', 'This is data, not judgment.'] },
+              { day: 29, title: 'Full assessment retake', steps: ['Complete extensive P.I.N.K. assessment.', 'Compare Numbers sub-scores to Day 1.', 'Biggest movers? Smallest?'] },
+              { day: 30, title: 'Next 30 days', steps: ['Pick your new weakest Numbers sub-category.', 'Define 3 specific money actions for next month.', 'Keep compounding.'] },
+            ],
+          },
+          Knowledge: {
+            week1: [
+              { day: 1, title: 'Learning audit', steps: ['What did you actually LEARN in the last 30 days?', 'Not what you consumed — what changed behavior.', 'If nothing, that\'s the data.'] },
+              { day: 2, title: 'Block learning time', steps: ['Schedule 30 minutes tomorrow purely for learning.', 'Same time, same place, repeated daily.', 'Consistency beats volume.'] },
+              { day: 3, title: 'Application Rate', steps: ['Learn one thing today. Apply it within 24 hours.', 'Application is where knowledge compounds.', 'Without application, it\'s entertainment.'] },
+              { day: 4, title: 'Finish one thing', steps: ['Find the book, course, or program you started but haven\'t finished.', 'Finish it this week OR give it away.', 'Indecision is the drain.'] },
+              { day: 5, title: 'One teacher', steps: ['Identify one expert in your field worth learning from.', 'Follow their work deeply this week.', 'Depth over breadth.'] },
+              { day: 6, title: 'Notes become action', steps: ['Review any notes you\'ve taken recently.', 'Circle 3 items that need action.', 'Do one today.'] },
+              { day: 7, title: 'Week 1 review', steps: ['What did you actually apply this week?', 'Honest.', 'Next week — raise the Application Rate.'] },
+            ],
+            week2: [
+              { day: 8, title: 'Teach what you learned', steps: ['Share one concept with someone this week.', 'Teaching exposes your understanding — and cements it.', 'If you can\'t explain it simply, you don\'t own it yet.'] },
+              { day: 9, title: 'Bias audit', steps: ['Name one belief you hold strongly that you\'ve never challenged.', 'Read one piece opposing your view.', 'Bias Awareness is a high-leverage sub-category.'] },
+              { day: 10, title: 'Apply to work', steps: ['Take one lesson from this month\'s learning and apply it at work.', 'Even small integration counts.', 'Knowledge proves itself in action.'] },
+              { day: 11, title: 'Weighted analysis', steps: ['Pick a decision you\'ve been stuck on.', 'List pros/cons with weights (1-10) for importance.', 'Clarity through structured thought.'] },
+              { day: 12, title: 'Compound reading', steps: ['Read one book chapter AND apply one insight within 48 hours.', 'Knowledge Compounding requires both halves.', 'Consumption + application = growth.'] },
+              { day: 13, title: 'Highest and best use', steps: ['Identify one task that\'s below your highest value.', 'Delegate or stop.', 'Your time = your knowledge leverage.'] },
+              { day: 14, title: 'Sabbath', steps: ['No new inputs today.', 'Integration requires rest.', 'Silence is also a teacher.'] },
+            ],
+            week3: [
+              { day: 15, title: 'Retake check', steps: ['Retake quick assessment.', 'Knowledge pillar movement?', 'Track it.'] },
+              { day: 16, title: 'Expert interview', steps: ['Reach out to someone 5+ years ahead of you.', 'Ask 3 specific questions. Keep it short.', 'Worst they can do is not respond.'] },
+              { day: 17, title: 'Substitution risk', steps: ['What\'s one thing you do that AI or someone else could automate?', 'Shift your focus to what\'s un-replaceable.', 'Future-proof your knowledge.'] },
+              { day: 18, title: 'Double jeopardy check', steps: ['What mistake have you made twice?', 'The second time wasn\'t bad luck — it was unlearned.', 'Commit to third-time prevention.'] },
+              { day: 19, title: 'Perception vs perspective', steps: ['Notice when you\'re perceiving (first reaction) vs. seeing full perspective.', 'Slow down today when you hit a reaction.', 'Perspective is the harder, higher skill.'] },
+              { day: 20, title: 'Skill stack', steps: ['What 3 skills combine uniquely in you?', 'That combination is your edge.', 'Deepen one this month.'] },
+              { day: 21, title: 'Week 3 reflection', steps: ['What did you learn AND apply this week?', 'That ratio is the Knowledge pillar in action.', 'Keep it rising.'] },
+            ],
+            week4: [
+              { day: 22, title: 'Curated input', steps: ['Cut one content source that feels educational but isn\'t transforming you.', 'Replace with one stronger source.', 'Your inputs become your thinking.'] },
+              { day: 23, title: 'Write to clarify', steps: ['Write 500 words on something you\'re learning.', 'Writing forces structured thought.', 'Share it or keep it — doesn\'t matter.'] },
+              { day: 24, title: 'Supply and demand', steps: ['Where is knowledge scarce that you could develop?', 'The less common your expertise, the higher the value.', 'Build toward rare + valuable.'] },
+              { day: 25, title: 'One decision, deeply', steps: ['Pick one decision this week.', 'Apply everything you\'ve learned to it.', 'Decisions are knowledge made visible.'] },
+              { day: 26, title: 'Feedback loop', steps: ['Ask one person how your thinking has changed over the past month.', 'External perspective reveals internal growth.', 'Hidden progress is still progress.'] },
+              { day: 27, title: 'Recap and commit', steps: ['What 3 things do you know now that you didn\'t 30 days ago?', 'Write them down.', 'Commit to teaching one next month.'] },
+              { day: 28, title: 'Re-assessment prep', steps: ['Take full assessment tomorrow.', 'Answer Knowledge sub-categories honestly.', 'Growth shows up in the questions, too.'] },
+              { day: 29, title: 'Full assessment retake', steps: ['Complete extensive P.I.N.K. assessment.', 'Compare Knowledge sub-scores to Day 1.', 'Biggest movers tell you what worked.'] },
+              { day: 30, title: 'Next 30 days', steps: ['Pick the next Knowledge sub-category to develop.', 'Define 3 learning-into-action commitments.', 'Build the compound engine.'] },
+            ],
+          },
+        };
+
+        const track = actionLibrary[weakest] || actionLibrary.Time;
+        const allDays = [...track.week1, ...track.week2, ...track.week3, ...track.week4];
+
+        // Personalize each day's action steps with user's weakest + sub-category
+        const personalized = allDays.map(d => ({
+          day: d.day,
+          week: Math.ceil(d.day / 7),
+          title: d.title,
+          steps: d.steps.map(s => s.replace(/\$\{weakest\}/g, weakest).replace(/\$\{weakestSub\}/g, weakestSub)),
+        }));
+
+        return res.json({
+          assessmentId: a.id,
+          contact: { firstName: a.first_name, lastName: a.last_name, email: a.email },
+          assessment: {
+            masterScore: a.master_score,
+            scoreRange: a.score_range,
+            weakestPillar: weakest,
+            weakestSubCategory: weakestSub,
+            strongestPillar: prescription.strongestPillar,
+          },
+          plan: {
+            title: `30-Day ${weakest} Transformation Plan`,
+            subtitle: `Daily actions targeting ${weakestSub} — your biggest leverage point`,
+            weeks: [
+              { number: 1, title: 'Awareness + First Actions', days: personalized.slice(0, 7) },
+              { number: 2, title: 'Habit Formation', days: personalized.slice(7, 14) },
+              { number: 3, title: 'Compound Effect', days: personalized.slice(14, 21) },
+              { number: 4, title: 'Integration + Re-Assessment', days: personalized.slice(21, 30) },
+            ],
+          },
+          totalDays: 30,
+          generated: new Date().toISOString(),
+        });
+      } catch (planErr) {
+        console.error('[action-plan] Error:', planErr.message);
+        return res.status(500).json({ error: 'Failed to generate action plan' });
+      }
+    }
+
+    // GET /api/admin/client-digest — Per-client status digest with replies, mood, progress
+    // Shows: every active person, their latest reply, mood, action rate, coaching day, scores
+    if (req.method === 'GET' && url === '/admin/client-digest') {
+      try {
+        // Get all active coaching sequences with assessment + contact data
+        const clients = await sql`
+          SELECT cs.email, cs.current_day, cs.last_sent_at, cs.started_at,
+            cs.engagement_score, cs.persona,
+            c.first_name, c.last_name, c.id as contact_id,
+            a.master_score, a.score_range, a.weakest_pillar,
+            a.time_total, a.people_total, a.influence_total, a.numbers_total, a.knowledge_total,
+            a.time_multiplier
+          FROM coaching_sequences cs
+          JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
+          LEFT JOIN assessments a ON a.id = cs.assessment_id
+          WHERE cs.unsubscribed = FALSE
+          ORDER BY cs.last_sent_at DESC
+        `;
+
+        const digest = [];
+        for (const client of clients) {
+          // Get their replies
+          let replies = [];
+          let replyStreak = 0;
+          let actionRate = 0;
+          try {
+            replies = await sql`SELECT coaching_day, response, mood, action_completed, sentiment, key_themes, coaching_insight, created_at
+              FROM coaching_replies WHERE LOWER(email) = LOWER(${client.email}) ORDER BY coaching_day DESC LIMIT 10`;
+            if (replies.length > 0) {
+              const days = replies.map(r => r.coaching_day).sort((a, b) => b - a);
+              replyStreak = 1;
+              for (let i = 0; i < days.length - 1; i++) {
+                if (days[i] - days[i + 1] <= 2) replyStreak++; else break;
+              }
+              const actioned = replies.filter(r => r.action_completed).length;
+              actionRate = Math.round((actioned / replies.length) * 100);
+            }
+          } catch (e) { /* table may not exist */ }
+
+          // Get their feedback
+          let feedback = [];
+          try {
+            feedback = await sql`SELECT category, response, created_at FROM user_feedback WHERE LOWER(email) = LOWER(${client.email}) ORDER BY created_at DESC LIMIT 5`;
+          } catch (e) { /* non-fatal */ }
+
+          // Get email engagement stats
+          let opens = 0, clicks = 0, totalEmails = 0;
+          try {
+            const eng = await sql`SELECT COUNT(*) as total, SUM(CASE WHEN opened_at IS NOT NULL THEN 1 ELSE 0 END) as opens, SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) as clicks FROM email_engagement WHERE LOWER(email) = LOWER(${client.email})`;
+            totalEmails = Number(eng[0]?.total || 0);
+            opens = Number(eng[0]?.opens || 0);
+            clicks = Number(eng[0]?.clicks || 0);
+          } catch (e) { /* non-fatal */ }
+
+          // Days since start
+          const daysSinceStart = Math.floor((Date.now() - new Date(client.started_at).getTime()) / (1000*60*60*24));
+
+          // Determine status color
+          const latestReply = replies[0] || null;
+          let status = 'active';
+          if (latestReply?.mood === 'struggling' || latestReply?.sentiment === 'negative') status = 'needs_attention';
+          else if (replyStreak >= 3) status = 'thriving';
+          else if (totalEmails > 3 && opens === 0) status = 'disengaged';
+
+          digest.push({
+            name: `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.email,
+            email: client.email,
+            status,
+            coachingDay: client.current_day,
+            daysSinceStart,
+            phase: client.current_day <= 8 ? 'daily' : client.current_day <= 16 ? 'deep-dive' : client.current_day <= 20 ? 'advanced' : 'weekly',
+            scores: {
+              master: client.master_score,
+              range: client.score_range,
+              weakest: client.weakest_pillar,
+              time: client.time_total, people: client.people_total,
+              influence: client.influence_total, numbers: client.numbers_total,
+              knowledge: client.knowledge_total, multiplier: client.time_multiplier,
+            },
+            engagement: {
+              persona: client.persona || 'standard',
+              engagementScore: client.engagement_score || 0,
+              emailsSent: totalEmails, opens, clicks,
+              openRate: totalEmails > 0 ? Math.round((opens/totalEmails)*100) : 0,
+            },
+            replies: {
+              total: replies.length,
+              streak: replyStreak,
+              actionRate,
+              latestMood: latestReply?.mood || null,
+              latestSentiment: latestReply?.sentiment || null,
+              latest: latestReply ? {
+                day: latestReply.coaching_day,
+                response: latestReply.response,
+                mood: latestReply.mood,
+                actionCompleted: latestReply.action_completed,
+                themes: latestReply.key_themes,
+                date: latestReply.created_at,
+              } : null,
+              history: replies.slice(0, 5).map(r => ({
+                day: r.coaching_day, mood: r.mood, actionCompleted: r.action_completed,
+                response: r.response.substring(0, 200) + (r.response.length > 200 ? '...' : ''),
+                date: r.created_at,
+              })),
+            },
+            feedback: feedback.map(f => ({
+              category: f.category,
+              response: f.response.substring(0, 200),
+              date: f.created_at,
+            })),
+            lastEmailAt: client.last_sent_at,
+          });
+        }
+
+        // Sort: needs_attention first, then thriving, then active, then disengaged
+        const statusOrder = { needs_attention: 0, thriving: 1, active: 2, disengaged: 3 };
+        digest.sort((a, b) => (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99));
+
+        return res.json({
+          generated: new Date().toISOString(),
+          totalClients: digest.length,
+          needsAttention: digest.filter(d => d.status === 'needs_attention').length,
+          thriving: digest.filter(d => d.status === 'thriving').length,
+          disengaged: digest.filter(d => d.status === 'disengaged').length,
+          clients: digest,
+        });
+      } catch (digestErr) {
+        console.error('[admin/client-digest] Error:', digestErr);
+        return res.status(500).json({ error: digestErr.message });
+      }
+    }
+
+    // GET /api/admin/replies — All coaching replies across all users (newest first)
+    if (req.method === 'GET' && url.startsWith('/admin/replies')) {
+      try {
+        const params = new URL('http://x' + req.url).searchParams;
+        const limit = Math.min(parseInt(params.get('limit') || '50'), 200);
+        const mood = params.get('mood'); // filter by mood
+        const since = params.get('since'); // filter by date
+
+        let replies;
+        if (mood) {
+          replies = await sql`SELECT cr.*, c.first_name, c.last_name
+            FROM coaching_replies cr
+            LEFT JOIN contacts c ON cr.contact_id = c.id
+            WHERE cr.mood = ${mood}
+            ORDER BY cr.created_at DESC LIMIT ${limit}`;
+        } else if (since) {
+          replies = await sql`SELECT cr.*, c.first_name, c.last_name
+            FROM coaching_replies cr
+            LEFT JOIN contacts c ON cr.contact_id = c.id
+            WHERE cr.created_at >= ${since}
+            ORDER BY cr.created_at DESC LIMIT ${limit}`;
+        } else {
+          replies = await sql`SELECT cr.*, c.first_name, c.last_name
+            FROM coaching_replies cr
+            LEFT JOIN contacts c ON cr.contact_id = c.id
+            ORDER BY cr.created_at DESC LIMIT ${limit}`;
+        }
+
+        // Summary stats
+        const stats = await sql`SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN mood = 'struggling' THEN 1 ELSE 0 END) as struggling,
+          SUM(CASE WHEN mood = 'strong' OR mood = 'unstoppable' THEN 1 ELSE 0 END) as strong,
+          SUM(CASE WHEN action_completed THEN 1 ELSE 0 END) as actions_completed,
+          SUM(CASE WHEN sentiment = 'crisis' THEN 1 ELSE 0 END) as crisis_flags
+          FROM coaching_replies`;
+
+        return res.json({
+          total: Number(stats[0]?.total || 0),
+          struggling: Number(stats[0]?.struggling || 0),
+          strong: Number(stats[0]?.strong || 0),
+          actionsCompleted: Number(stats[0]?.actions_completed || 0),
+          crisisFlags: Number(stats[0]?.crisis_flags || 0),
+          replies: replies.map(r => ({
+            name: `${r.first_name || ''} ${r.last_name || ''}`.trim() || r.email,
+            email: r.email,
+            day: r.coaching_day,
+            response: r.response,
+            mood: r.mood,
+            actionCompleted: r.action_completed,
+            sentiment: r.sentiment,
+            themes: r.key_themes,
+            insight: r.coaching_insight,
+            date: r.created_at,
+          })),
+        });
+      } catch (repliesErr) {
+        return res.status(500).json({ error: repliesErr.message });
+      }
     }
 
     // GET /api/admin/export (CSV)
@@ -2814,7 +4192,7 @@ Don't guess. Run the system.
           avgScore: Math.round(Number(q.avg_score) * 10) / 10,
         })));
       } catch (e) {
-        return res.json({ error: 'Question bank not initialized. Run /api/migrate-question-system first.', details: e.message });
+        console.error('Question bank error:', e.message); return res.json({ error: 'Question bank not initialized' });
       }
     }
 
@@ -3066,7 +4444,7 @@ Don't guess. Run the system.
         recipientEmail = b.overrideEmail;
       }
 
-      const firstName = a.first_name || 'there';
+      const firstName = escapeHtml(a.first_name || 'there');
       const masterScore = a.master_score;
       const scoreRange = a.score_range;
       const weakestPillar = a.weakest_pillar;
@@ -3409,7 +4787,7 @@ ${roadmapHtml}
         const c = rows[0];
         return res.json({ enrolled: true, challengeId: c.id, day90Date: c.day_90_date, enrolledAt: c.enrolled_at });
       } catch (e) {
-        return res.status(500).json({ error: 'Could not enroll. Ensure migration has been run.', details: e.message });
+        console.error('Enrollment error:', e.message); return res.status(500).json({ error: 'Could not enroll. Please try again.' });
       }
     }
 
@@ -3419,7 +4797,7 @@ ${roadmapHtml}
       const email = params.get('email');
       if (!email) return res.status(400).json({ error: 'email required' });
 
-      const contactRows = await sql`SELECT * FROM contacts WHERE email = ${email} LIMIT 1`;
+      const contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = LOWER(${email}) LIMIT 1`;
       if (contactRows.length === 0) return res.status(404).json({ error: 'Contact not found' });
       const contact = contactRows[0];
 
@@ -3481,7 +4859,7 @@ ${roadmapHtml}
           current: currentScore,
         });
       } catch (e) {
-        return res.json({ enrolled: false, error: 'Challenge system not initialized. Run migration first.', details: e.message });
+        console.error('Challenge error:', e.message); return res.json({ enrolled: false, error: 'Challenge system not initialized' });
       }
     }
 
@@ -3570,9 +4948,10 @@ ${roadmapHtml}
       if (!email || !newPin) return res.status(400).json({ error: 'email and pin required' });
       if (newPin.length < 4 || newPin.length > 32) return res.status(400).json({ error: 'PIN must be 4-32 characters' });
 
-      const pinHash = crypto.createHash('sha256').update(newPin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
+      const pinHash = hashPinSync(newPin);
       const rows = await sql`UPDATE contacts SET pin_hash = ${pinHash}, pin_set_at = NOW() WHERE LOWER(email) = ${email} RETURNING id, email, first_name`;
       if (rows.length === 0) return res.status(404).json({ error: 'No contact found with that email' });
+      await auditLog(sql, { action: 'admin_reset_pin', actor: 'admin', targetTable: 'contacts', targetId: rows[0].id, newValues: { email }, ip: clientIP });
       return res.json({ success: true, contact: { id: rows[0].id, email: rows[0].email, firstName: rows[0].first_name }, message: `PIN reset successfully for ${email}` });
     }
 
@@ -3596,6 +4975,7 @@ ${roadmapHtml}
       await Promise.all(updates);
 
       const profile = await sql`SELECT membership_tier, stripe_customer_id, stripe_subscription_id, partner_id FROM user_profiles WHERE contact_id = ${contactId} LIMIT 1`;
+      await auditLog(sql, { action: 'admin_update_profile', actor: 'admin', targetTable: 'user_profiles', targetId: contactId, newValues: { tier: b.tier, stripeCustomerId: b.stripeCustomerId, stripeSubscriptionId: b.stripeSubscriptionId }, ip: clientIP });
       return res.json({ success: true, contactId, email, profile: profile[0] });
     }
 
@@ -3610,9 +4990,10 @@ ${roadmapHtml}
       if (rows.length === 0) return res.json({ found: false });
 
       const result = { found: true, email: rows[0].email, firstName: rows[0].first_name, hasPin: !!rows[0].pin_hash, pinSetAt: rows[0].pin_set_at };
-      if (pin) {
-        const testHash = crypto.createHash('sha256').update(pin + (process.env.PIN_SALT || '_vtv_salt_2026')).digest('hex');
-        result.pinMatches = testHash === rows[0].pin_hash;
+      if (pin && rows[0].pin_hash) {
+        const pinCheck = verifyPin(pin, rows[0].pin_hash);
+        result.pinMatches = pinCheck.valid;
+        result.hashType = pinCheck.needsUpgrade ? 'legacy-sha256' : 'pbkdf2';
       }
       return res.json(result);
     }
@@ -3719,7 +5100,7 @@ ${roadmapHtml}
           inserted
         });
       } catch(e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
@@ -3750,7 +5131,7 @@ ${roadmapHtml}
           topWeakestSubCategories: topWeakSubs,
         });
       } catch (e) {
-        return res.json({ error: 'Feedback table not initialized. Run migration first.', details: e.message });
+        console.error('Feedback error:', e.message); return res.json({ error: 'Feedback table not initialized' });
       }
     }
 
@@ -4454,7 +5835,7 @@ ${roadmapHtml}
       if (aRows.length === 0) return res.status(404).json({ error: 'Assessment not found' });
       const a = aRows[0];
 
-      const firstName = a.first_name || 'there';
+      const firstName = escapeHtml(a.first_name || 'there');
       const name = (a.first_name || '') + ' ' + (a.last_name || '');
       const masterScore = a.master_score;
       const scoreRange = a.score_range;
@@ -4968,25 +6349,26 @@ This link expires in 24 hours.
         }
         return res.json({ enrolled, total: users.length });
       } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' });
       }
     }
 
     // GET /api/coaching/send — called by cron job to send daily coaching emails
     if (req.method === 'GET' && url === '/coaching/send') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         await ensureCoachingTable(sql);
 
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
-        // Find all active sequences: not unsubscribed, day < 8, last_sent_at is null or before today
+        // Find all active sequences: not unsubscribed, eligible for next email
+        // Cadence: Days 1-8 daily, Days 9-16 every 2 days, Days 17-20 every 3 days, Days 21+ weekly (7 days)
         // JOIN contacts to skip orphaned sequences (deleted accounts)
         const sequences = await sql`
           SELECT cs.* FROM coaching_sequences cs
           INNER JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
           WHERE cs.unsubscribed = FALSE
-            AND cs.current_day < 8
             AND (cs.last_sent_at IS NULL OR cs.last_sent_at < ${todayStart.toISOString()})
           ORDER BY cs.id
         `;
@@ -5020,12 +6402,26 @@ This link expires in 24 hours.
               continue;
             }
 
+            // Cadence control: Phase 1 (days 0-8) = daily, Phase 2 (9-16) = every 2 days,
+            // Phase 3 (17-20) = every 3 days, Phase 4 (21+) = weekly
+            if (seq.last_sent_at) {
+              const lastSent = new Date(seq.last_sent_at);
+              const daysSinceLast = Math.floor((todayStart.getTime() - lastSent.getTime()) / (1000 * 60 * 60 * 24));
+              const currentDay = seq.current_day;
+              const minDaysBetween = currentDay < 8 ? 1 : currentDay < 16 ? 2 : currentDay < 20 ? 3 : 7;
+              if (daysSinceLast < minDaysBetween) {
+                results.push({ email: seq.email, status: 'skipped', reason: `cadence: need ${minDaysBetween} days between emails (phase ${currentDay < 8 ? 1 : currentDay < 16 ? 2 : currentDay < 20 ? 3 : 4}), only ${daysSinceLast} elapsed` });
+                skippedCount++;
+                continue;
+              }
+            }
+
             // Respect 3-per-day email limit — check emails sent today to this user
             let emailsTodayCount = 0;
             try {
               const emailsTodayRows = await sql`
                 SELECT COUNT(*) as cnt FROM coaching_sequences
-                WHERE email = ${seq.email}
+                WHERE LOWER(email) = LOWER(${seq.email})
                   AND last_sent_at >= ${todayStart.toISOString()}
               `;
               emailsTodayCount = Number(emailsTodayRows[0]?.cnt || 0);
@@ -5070,12 +6466,39 @@ This link expires in 24 hours.
               continue;
             }
 
+            // === CREATE ENGAGEMENT RECORD FIRST (needed for tracking pixel) ===
+            let engId = null;
+            try {
+              const engRec = await sql`
+                INSERT INTO email_engagement (contact_id, email, coaching_day, email_variant)
+                VALUES (${seq.contact_id || null}, ${seq.email.toLowerCase()}, ${nextDay}, 'default')
+                RETURNING id`;
+              engId = engRec[0]?.id;
+            } catch (engErr) { /* engagement table may not exist */ }
+
+            // Wrap all links with click-tracking and add open pixel to HTML
+            let html = emailContent.html || '';
+            if (engId) {
+              const trackBase = `${BASE_URL}/api/agent/email`;
+              // Wrap every href with click tracker
+              html = html.replace(/href="(https?:\/\/[^"]+)"/g, function(m, u) {
+                return `href="${trackBase}/track-click?id=${engId}&url=${encodeURIComponent(u)}"`;
+              });
+              // Add 1x1 open pixel right before </body> (or append if no </body>)
+              const pixel = `<img src="${trackBase}/track-open?id=${engId}" width="1" height="1" style="display:none" alt=""/>`;
+              if (html.includes('</body>')) {
+                html = html.replace('</body>', pixel + '</body>');
+              } else {
+                html = html + pixel;
+              }
+            }
+
             await transporter.sendMail({
               from: `"Shawn @ Value Engine" <${process.env.GMAIL_USER}>`,
               to: seq.email,
               subject: emailContent.subject,
               text: emailContent.text,
-              html: emailContent.html,
+              html,
             });
 
             // Update sequence
@@ -5085,13 +6508,13 @@ This link expires in 24 hours.
               WHERE id = ${seq.id}
             `;
 
-            results.push({ email: seq.email, status: 'sent', day: nextDay });
+            results.push({ email: seq.email, status: 'sent', day: nextDay, engagementId: engId });
             sentCount++;
-            console.log(`Coaching email Day ${nextDay} sent to ${seq.email}`);
-            await logEmail(sql, { recipient: seq.email, emailType: 'coaching', subject: emailContent.subject, assessmentId: seq.assessment_id, metadata: { day: nextDay } });
+            console.log(`Coaching email Day ${nextDay} sent to ${maskEmail(seq.email)}`);
+            await logEmail(sql, { recipient: seq.email, emailType: 'coaching', subject: emailContent.subject, assessmentId: seq.assessment_id, metadata: { day: nextDay, engagementId: engId } });
 
           } catch (sendErr) {
-            console.error(`Coaching email error for ${seq.email}:`, sendErr.message);
+            console.error(`Coaching email error for ${maskEmail(seq.email)}:`, sendErr.message);
             results.push({ email: seq.email, status: 'error', error: sendErr.message });
           }
         }
@@ -5122,7 +6545,7 @@ This link expires in 24 hours.
       }
 
       await ensureCoachingTable(sql);
-      await sql`UPDATE coaching_sequences SET unsubscribed = TRUE WHERE email = ${email}`;
+      await sql`UPDATE coaching_sequences SET unsubscribed = TRUE WHERE LOWER(email) = LOWER(${email})`;
 
       res.setHeader('Content-Type', 'text/html');
       return res.status(200).send(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Unsubscribed</title></head><body style="margin:0;padding:0;background:#111122;font-family:Arial,Helvetica,sans-serif;">
@@ -5147,14 +6570,15 @@ This link expires in 24 hours.
         if (!email) return res.status(400).json({ error: 'email parameter required' });
 
         await ensureCoachingTable(sql);
-        const rows = await sql`SELECT * FROM coaching_sequences WHERE email = ${email} ORDER BY created_at DESC LIMIT 1`;
+        const rows = await sql`SELECT * FROM coaching_sequences WHERE LOWER(email) = LOWER(${email}) ORDER BY created_at DESC LIMIT 1`;
         if (rows.length === 0) return res.json({ enrolled: false });
 
         const seq = rows[0];
         return res.json({
           enrolled: true,
           currentDay: seq.current_day,
-          totalDays: 8,
+          totalDays: 'ongoing',
+          phase: seq.current_day <= 8 ? 'daily' : seq.current_day <= 16 ? 'deep-dive' : seq.current_day <= 20 ? 'advanced' : 'weekly',
           lastSentAt: seq.last_sent_at,
           startedAt: seq.started_at,
           unsubscribed: seq.unsubscribed,
@@ -5166,16 +6590,237 @@ This link expires in 24 hours.
       }
     }
 
-    // GET /api/accountability/send — evening accountability + platform updates email
+    // ========== COACHING REPLY SYSTEM ==========
+
+    // POST /api/coaching/reply — Capture coaching check-in response from web form
+    if (req.method === 'POST' && url === '/coaching/reply') {
+      try {
+        const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+        const email = (b.email || '').toLowerCase().trim();
+        const day = parseInt(b.day) || 0;
+        const response = (b.response || '').trim();
+        const mood = b.mood || 'neutral';
+        const actionCompleted = b.actionCompleted === true;
+        const weakestPillar = b.weakestPillar || null;
+
+        if (!email || !response) return res.status(400).json({ error: 'email and response required' });
+
+        // Ensure coaching_replies table exists
+        await sql`CREATE TABLE IF NOT EXISTS coaching_replies (
+          id SERIAL PRIMARY KEY,
+          contact_id INTEGER,
+          email TEXT NOT NULL,
+          coaching_day INTEGER,
+          response TEXT NOT NULL,
+          mood TEXT DEFAULT 'neutral',
+          action_completed BOOLEAN DEFAULT false,
+          weakest_pillar TEXT,
+          sentiment TEXT DEFAULT 'neutral',
+          key_themes TEXT[] DEFAULT '{}',
+          coaching_insight TEXT,
+          created_at TIMESTAMP DEFAULT NOW()
+        )`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_coaching_replies_email ON coaching_replies(email)`;
+
+        // Get contact ID
+        const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+        const contactId = contactRows.length > 0 ? contactRows[0].id : null;
+
+        // Simple sentiment analysis based on mood + keywords
+        let sentiment = mood === 'struggling' ? 'negative' : mood === 'unstoppable' || mood === 'strong' ? 'positive' : 'neutral';
+        const negativeWords = ['stuck', 'can\'t', 'failed', 'didn\'t', 'struggle', 'hard', 'impossible', 'overwhelm', 'quit', 'give up'];
+        const positiveWords = ['did it', 'completed', 'progress', 'better', 'improved', 'growth', 'proud', 'committed', 'breakthrough', 'realized'];
+        const lowerResp = response.toLowerCase();
+        const negHits = negativeWords.filter(w => lowerResp.includes(w)).length;
+        const posHits = positiveWords.filter(w => lowerResp.includes(w)).length;
+        if (negHits > posHits) sentiment = 'negative';
+        else if (posHits > negHits) sentiment = 'positive';
+
+        // Extract key themes
+        const themes = [];
+        if (lowerResp.includes('time') || lowerResp.includes('schedule') || lowerResp.includes('calendar')) themes.push('time_management');
+        if (lowerResp.includes('money') || lowerResp.includes('financial') || lowerResp.includes('budget')) themes.push('finances');
+        if (lowerResp.includes('relationship') || lowerResp.includes('partner') || lowerResp.includes('family')) themes.push('relationships');
+        if (lowerResp.includes('learn') || lowerResp.includes('read') || lowerResp.includes('study')) themes.push('learning');
+        if (lowerResp.includes('lead') || lowerResp.includes('team') || lowerResp.includes('influence')) themes.push('leadership');
+        if (lowerResp.includes('pray') || lowerResp.includes('god') || lowerResp.includes('faith') || lowerResp.includes('church')) themes.push('faith');
+
+        // Generate personalized insight — governed by VTV_CONSTITUTION
+        // Core rule: NEVER cause harm. Add value. Encourage openness to growth.
+        let insight = 'Your response has been saved. Tomorrow\'s coaching email will reflect what you shared.';
+
+        // Check for crisis language first (safety filter)
+        const crisisWords = ['suicide', 'kill myself', 'end it all', 'self-harm', 'want to die', 'no reason to live', 'give up on life'];
+        const isCrisis = crisisWords.some(w => lowerResp.includes(w));
+        if (isCrisis) {
+          sentiment = 'crisis';
+          insight = `I hear you, and I want you to know — what you\'re feeling matters. This system isn\'t equipped to help with what you\'re going through right now, but someone is. Please reach out to the 988 Suicide & Crisis Lifeline (call or text 988) or chat at 988lifeline.org. You are not alone, and your life has value that no score can measure.`;
+        } else if (sentiment === 'negative' && !actionCompleted) {
+          insight = `The fact that you showed up to check in today — that matters. Struggling doesn\'t mean failing. It means you\'re aware, and awareness is the first step to change. Tomorrow\'s email will meet you where you are with your ${weakestPillar || 'growth area'}, not where you think you should be.`;
+        } else if (sentiment === 'positive' && actionCompleted) {
+          insight = `You did the work and you feel it. That\'s not luck — that\'s you choosing to grow. Tomorrow\'s email will build on what you started. The people around you benefit when you invest in yourself like this.`;
+        } else if (actionCompleted && sentiment !== 'positive') {
+          insight = `You showed up and did the work even when it didn\'t feel good. That kind of consistency is rare and it\'s exactly what changes lives — yours and the people around you. What you did today matters more than how it felt.`;
+        } else if (!actionCompleted && sentiment === 'positive') {
+          insight = `Good to hear you\'re in a strong place. The action step is still there when you\'re ready — no guilt, no pressure. Tomorrow\'s email will offer a version that fits into your real schedule. Growth happens at your pace, not anyone else\'s.`;
+        } else if (mood === 'struggling') {
+          insight = `Thank you for being honest about where you are. That takes courage. You don\'t have to fix everything today. Pick one small thing tomorrow that moves you forward — even 5 minutes counts. You\'re building something that matters.`;
+        }
+
+        // Save reply
+        await sql`INSERT INTO coaching_replies (contact_id, email, coaching_day, response, mood, action_completed, weakest_pillar, sentiment, key_themes, coaching_insight)
+          VALUES (${contactId}, ${email}, ${day}, ${response}, ${mood}, ${actionCompleted}, ${weakestPillar}, ${sentiment}, ${themes}, ${insight})`;
+
+        // Update engagement score based on reply
+        try {
+          await sql`UPDATE email_engagement SET action_completed = ${actionCompleted}
+            WHERE LOWER(email) = LOWER(${email}) AND coaching_day = ${day} AND action_completed = false`;
+          // Boost engagement score for replying
+          await sql`UPDATE coaching_sequences SET engagement_score = LEAST(1.0, COALESCE(engagement_score, 0) + 0.15)
+            WHERE LOWER(email) = LOWER(${email})`;
+        } catch (e) { /* non-fatal */ }
+
+        // Track analytics
+        try {
+          await sql`INSERT INTO analytics_events (event_type, contact_id, metadata)
+            VALUES ('coaching_reply', ${contactId}, ${JSON.stringify({ day, mood, sentiment, actionCompleted, themes })}::jsonb)`;
+        } catch (e) { /* non-fatal */ }
+
+        return res.json({ success: true, insight, sentiment, themes });
+      } catch (replyErr) {
+        console.error('[coaching/reply] Error:', replyErr.message);
+        return res.status(500).json({ error: 'Failed to save reply' });
+      }
+    }
+
+    // GET /api/coaching/replies?email=X — Get reply history and streak for a user
+    if (req.method === 'GET' && url.startsWith('/coaching/replies')) {
+      try {
+        const params = new URL('http://x' + req.url).searchParams;
+        const email = (params.get('email') || '').toLowerCase().trim();
+        if (!email) return res.status(400).json({ error: 'email required' });
+
+        // Check if table exists
+        let replies = [];
+        let streak = 0;
+        try {
+          replies = await sql`SELECT coaching_day, mood, action_completed, sentiment, key_themes, coaching_insight, created_at
+            FROM coaching_replies WHERE LOWER(email) = LOWER(${email}) ORDER BY coaching_day DESC LIMIT 30`;
+
+          // Calculate streak — consecutive days with replies
+          if (replies.length > 0) {
+            const days = replies.map(r => r.coaching_day).sort((a, b) => b - a);
+            streak = 1;
+            for (let i = 0; i < days.length - 1; i++) {
+              if (days[i] - days[i + 1] === 1) streak++;
+              else break;
+            }
+          }
+        } catch (e) { /* table may not exist */ }
+
+        // Mood distribution
+        const moodCounts = {};
+        replies.forEach(r => { moodCounts[r.mood] = (moodCounts[r.mood] || 0) + 1; });
+
+        // Action completion rate
+        const actionsCompleted = replies.filter(r => r.action_completed).length;
+        const actionRate = replies.length > 0 ? Math.round((actionsCompleted / replies.length) * 100) : 0;
+
+        return res.json({
+          replies: replies.slice(0, 10),
+          streak,
+          totalReplies: replies.length,
+          moodDistribution: moodCounts,
+          actionCompletionRate: actionRate,
+          latestMood: replies.length > 0 ? replies[0].mood : null,
+          latestSentiment: replies.length > 0 ? replies[0].sentiment : null,
+        });
+      } catch (err) {
+        return res.json({ replies: [], streak: 0, totalReplies: 0, error: err.message });
+      }
+    }
+
+    // ========== END COACHING REPLY SYSTEM ==========
+
+    // POST /api/trial/send-conversion-emails — Send upgrade emails to trial users approaching expiry
+    if (req.method === 'POST' && url === '/trial/send-conversion-emails') {
+      const apiKey = req.headers['x-api-key'];
+      const cronSecret = req.headers['x-cron-secret'] || req.headers['authorization']?.replace('Bearer ', '');
+      if (apiKey !== (process.env.ADMIN_API_KEY || '') && cronSecret !== (process.env.CRON_SECRET || '')) {
+        return res.status(401).json({ error: 'Admin or cron auth required' });
+      }
+
+      const targets = await sql`
+        SELECT c.id, c.email, c.first_name, up.membership_tier, up.created_at,
+               EXTRACT(DAY FROM NOW() - up.created_at) as days_active
+        FROM contacts c
+        JOIN user_profiles up ON up.contact_id = c.id
+        WHERE up.membership_tier = 'free'
+          AND up.stripe_subscription_id IS NULL
+          AND up.created_at > NOW() - INTERVAL '9 days'
+          AND up.created_at < NOW() - INTERVAL '4 days'
+          AND c.deleted_at IS NULL
+        ORDER BY up.created_at ASC
+        LIMIT 50
+      `;
+
+      const results = [];
+      if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
+        });
+
+        for (const t of targets) {
+          const days = Math.floor(t.days_active);
+          let subject, body;
+
+          if (days <= 5) {
+            subject = t.first_name ? `${t.first_name}, your free access ends in 2 days` : 'Your free access ends in 2 days';
+            body = `<p>You've been using Value to Victory for ${days} days. Your free access ends soon.</p><p>Upgrade to VictoryPath ($29/mo) to keep your coaching emails, action plans, and progress tracking.</p><p><a href="https://assessment.valuetovictory.com/pricing" style="display:inline-block;padding:12px 32px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:6px;">Upgrade Now →</a></p>`;
+          } else if (days <= 7) {
+            subject = t.first_name ? `${t.first_name}, last day of free access` : 'Last day of free access';
+            body = `<p>Your 7-day free trial ends today. After today, you'll lose access to:</p><ul><li>Daily coaching emails personalized to your P.I.N.K. score</li><li>Progress tracking & action plans</li><li>30-day challenges</li><li>Couple & relationship tools</li></ul><p><a href="https://assessment.valuetovictory.com/pricing" style="display:inline-block;padding:12px 32px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:6px;">Keep My Access — $29/mo →</a></p>`;
+          } else {
+            subject = t.first_name ? `${t.first_name}, we saved your results` : 'We saved your results';
+            body = `<p>Your free trial ended, but your P.I.N.K. assessment results are still saved.</p><p>Reactivate anytime for $29/mo and pick up right where you left off — your scores, your coaching plan, your progress.</p><p><a href="https://assessment.valuetovictory.com/pricing" style="display:inline-block;padding:12px 32px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:6px;">Reactivate My Account →</a></p>`;
+          }
+
+          try {
+            await transporter.sendMail({
+              from: '"Value to Victory" <' + process.env.GMAIL_USER + '>',
+              to: t.email,
+              subject,
+              html: '<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:2rem;">' + body + '<hr style="margin:2rem 0;border:none;border-top:1px solid #eee"/><p style="font-size:0.75rem;color:#999;">Value to Victory — valuetovictory.com</p></div>'
+            });
+            results.push({ email: t.email, days, status: 'sent' });
+          } catch(e) {
+            results.push({ email: t.email, days, status: 'failed', error: e.message });
+          }
+        }
+      }
+
+      return res.json({ sent: results.filter(r => r.status === 'sent').length, failed: results.filter(r => r.status === 'failed').length, results });
+    }
+
+    // GET /api/accountability/send — PERSONALIZED evening accountability email
+    // Pulls each person's assessment, coaching day, latest reply, devotional, and reply streak
     if (req.method === 'GET' && url === '/accountability/send') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         await ensureCoachingTable(sql);
 
+        // Get members with their assessment data
         const members = await sql`
-          SELECT cs.email, cs.current_day, c.first_name
+          SELECT cs.email, cs.current_day, cs.assessment_id, cs.engagement_score,
+            c.first_name, c.id as contact_id
           FROM coaching_sequences cs
           JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
-          WHERE cs.unsubscribed = FALSE AND cs.current_day <= 8
+          WHERE cs.unsubscribed = FALSE
+            AND LOWER(cs.email) NOT IN (
+              SELECT LOWER(recipient) FROM email_log
+              WHERE email_type = 'accountability' AND sent_at::date = CURRENT_DATE
+            )
           ORDER BY cs.id
         `;
 
@@ -5192,95 +6837,226 @@ This link expires in 24 hours.
         }
         if (!transporter) return res.status(500).json({ error: 'Email credentials not configured' });
 
-        const platformUpdates = [
-          'Tier-aware upsell system \u2014 paid members now see relevant next steps instead of generic CTAs',
-          'RFM Audiobook page with 65-chapter player, mini player, and chapter search',
-          'Cart checkout supporting mixed subscriptions + one-time products',
-          'Couple Challenge Hub and Relationship Matrix for partners',
-          'Member dashboard with audiobook access card and quick links',
-          'Mobile responsive overhaul across the entire member portal',
-        ];
-        const bugFixes = [
-          'Fixed all 7 Stripe payment links \u2014 every tier verified working',
-          'Fixed member login error handling and dashboard score display',
-          'Restored free-book section visibility during assessment',
-          'Fixed Stripe webhook signature verification',
-          'Resolved 40+ UI bugs across 8 new pages',
-        ];
+        // Get today's devotional for faith section
+        let devotional = null;
+        try {
+          const startDate = new Date('2026-03-01');
+          const today = new Date();
+          const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+          const cycleDay = (diffDays % 60) + 1;
+          const devRows = await sql`SELECT * FROM rfm_devotionals WHERE day_number = ${cycleDay} LIMIT 1`;
+          if (devRows.length > 0) devotional = devRows[0];
+        } catch (e) { /* devotional table may not exist */ }
 
         let sentCount = 0;
         const results = [];
 
         for (const member of members) {
           try {
-            const firstName = member.first_name || 'Friend';
-            const unsubToken = Buffer.from(member.email).toString('base64');
-            const unsubUrl = `${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(member.email)}&token=${unsubToken}`;
+            const firstName = escapeHtml(member.first_name || 'Friend');
+            const email = member.email;
+            const coachingDay = member.current_day || 1;
+            const unsubToken = Buffer.from(email).toString('base64');
+            const unsubUrl = `${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(email)}&token=${unsubToken}`;
+            const feedbackUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('What did the Value Engine help you with today?')}`;
+            const bugUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
 
-            const feedbackUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(member.email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('Can you tell us something the Value Engine helped you with today?')}`;
-            const bugUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(member.email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
+            // Get their assessment data
+            let assessment = null;
+            try {
+              const aRows = await sql`SELECT * FROM assessments WHERE id = ${member.assessment_id} LIMIT 1`;
+              if (aRows.length > 0) assessment = aRows[0];
+            } catch (e) { /* non-fatal */ }
+
+            const weakest = assessment?.weakest_pillar || 'your focus area';
+            const weakestScore = assessment ? (assessment[`${weakest.toLowerCase()}_total`] || 0) : 0;
+            const masterScore = assessment?.master_score || 0;
+            const scoreRange = assessment?.score_range || '';
+
+            // Get latest reply
+            let lastReply = null;
+            let replyStreak = 0;
+            try {
+              const replies = await sql`SELECT * FROM coaching_replies WHERE LOWER(email) = LOWER(${email}) ORDER BY coaching_day DESC LIMIT 5`;
+              if (replies.length > 0) {
+                lastReply = replies[0];
+                replyStreak = 1;
+                const days = replies.map(r => r.coaching_day).sort((a, b) => b - a);
+                for (let i = 0; i < days.length - 1; i++) {
+                  if (days[i] - days[i + 1] <= 2) replyStreak++; else break;
+                }
+              }
+            } catch (e) { /* table may not exist */ }
+
+            // Get action completion rate
+            let actionRate = 0;
+            try {
+              const engRows = await sql`SELECT COUNT(*) as total, SUM(CASE WHEN action_completed THEN 1 ELSE 0 END) as completed FROM email_engagement WHERE LOWER(email) = LOWER(${email})`;
+              if (engRows[0]?.total > 0) actionRate = Math.round((Number(engRows[0].completed) / Number(engRows[0].total)) * 100);
+            } catch (e) { /* non-fatal */ }
+
+            // Build pillar bars
+            const pillarBarHtml = assessment ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:10px;color:#6a6a84;letter-spacing:1px;margin-bottom:12px;">
+    <tr>
+      <td width="20%" style="text-align:center;${weakest==='Time'?'color:#D4A847;font-weight:bold;':''}">T:${assessment.time_total||0}</td>
+      <td width="20%" style="text-align:center;${weakest==='People'?'color:#D4A847;font-weight:bold;':''}">P:${assessment.people_total||0}</td>
+      <td width="20%" style="text-align:center;${weakest==='Influence'?'color:#D4A847;font-weight:bold;':''}">I:${assessment.influence_total||0}</td>
+      <td width="20%" style="text-align:center;${weakest==='Numbers'?'color:#D4A847;font-weight:bold;':''}">N:${assessment.numbers_total||0}</td>
+      <td width="20%" style="text-align:center;${weakest==='Knowledge'?'color:#D4A847;font-weight:bold;':''}">K:${assessment.knowledge_total||0}</td>
+    </tr>
+    <tr>
+      <td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;height:4px;"><div style="width:${Math.round(((assessment.time_total||0)/50)*100)}%;background:${weakest==='Time'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+      <td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;height:4px;"><div style="width:${Math.round(((assessment.people_total||0)/50)*100)}%;background:${weakest==='People'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+      <td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;height:4px;"><div style="width:${Math.round(((assessment.influence_total||0)/50)*100)}%;background:${weakest==='Influence'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+      <td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;height:4px;"><div style="width:${Math.round(((assessment.numbers_total||0)/50)*100)}%;background:${weakest==='Numbers'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+      <td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;height:4px;"><div style="width:${Math.round(((assessment.knowledge_total||0)/50)*100)}%;background:${weakest==='Knowledge'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+    </tr>
+    </table>` : '';
+
+            // Personalized coaching phase description
+            const phase = coachingDay <= 8 ? 'Daily Coaching' : coachingDay <= 16 ? 'Deep Dive' : coachingDay <= 20 ? 'Advanced' : 'Weekly Check-In';
+
+            // Reply-aware greeting
+            let greeting = `Before you close out today &mdash; how did your ${weakest} work go?`;
+            if (lastReply && lastReply.mood === 'struggling') {
+              greeting = `Yesterday you said you were struggling. That honesty matters. How was today?`;
+            } else if (lastReply && lastReply.action_completed) {
+              greeting = `You completed yesterday's action step. Did you build on that today?`;
+            } else if (lastReply && !lastReply.action_completed) {
+              greeting = `Yesterday's action step is still there. Even 5 minutes counts. How was today?`;
+            }
+
+            // Streak section
+            const streakHtml = replyStreak >= 2 ? `
+    <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:12px 20px;margin:0 0 16px;text-align:center;">
+      <span style="font-size:24px;font-weight:900;color:#D4A847;">${replyStreak}</span>
+      <span style="font-size:13px;color:#a1a1aa;"> day check-in streak</span>
+      <span style="font-size:11px;color:#52525b;display:block;margin-top:4px;">Action completion rate: ${actionRate}%</span>
+    </div>` : '';
+
+            // Devotional section (connected to their pillar when possible)
+            let devotionalHtml = '';
+            if (devotional) {
+              const pillarConnection = (devotional.themes || []).some(t =>
+                (weakest === 'People' && ['family','love','relationships','trust'].includes(t)) ||
+                (weakest === 'Numbers' && ['money','provision','poverty','work'].includes(t)) ||
+                (weakest === 'Time' && ['patience','waiting','seasons','time'].includes(t)) ||
+                (weakest === 'Influence' && ['leadership','faith','courage','obedience'].includes(t)) ||
+                (weakest === 'Knowledge' && ['wisdom','learning','growth','truth'].includes(t))
+              );
+              devotionalHtml = `
+    <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px 24px;margin:0 0 20px;">
+      <p style="color:#D4A847;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 4px;">Today's Word</p>
+      <p style="color:#71717a;font-size:11px;margin:0 0 12px;">Day ${devotional.day_number} &mdash; ${escapeHtml(devotional.chapter_title || '')}</p>
+      ${pillarConnection ? `<p style="color:#D4A847;font-size:12px;font-style:italic;margin:0 0 8px;">This connects to your ${weakest} journey.</p>` : ''}
+      <p style="color:#e4e4e7;font-size:14px;font-style:italic;line-height:1.6;margin:0 0 8px;">"${escapeHtml(devotional.scripture_text || '')}"</p>
+      <p style="color:#71717a;font-size:12px;margin:0 0 12px;">&mdash; ${escapeHtml(devotional.scripture_reference || '')}</p>
+      <p style="color:#a1a1aa;font-size:13px;line-height:1.6;margin:0 0 12px;">${escapeHtml((devotional.action_step || '').substring(0, 200))}</p>
+      <a href="${BASE_URL}/daily-word" style="color:#D4A847;font-size:13px;text-decoration:none;">Read full devotional &rarr;</a>
+    </div>`;
+            }
+
+            // Dynamic subject line based on their state
+            let subject = `${firstName} — Day ${coachingDay} of your ${weakest} journey`;
+            if (replyStreak >= 3) subject = `${firstName} — ${replyStreak}-day streak. Your ${weakest} is changing.`;
+            else if (lastReply && lastReply.mood === 'struggling') subject = `${firstName} — still here, still in your corner`;
+            else if (lastReply && lastReply.action_completed) subject = `${firstName} — you showed up yesterday. How about today?`;
 
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;"><tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
-<tr><td style="text-align:center;padding-bottom:24px;">
+<tr><td style="text-align:center;padding-bottom:16px;">
   <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;margin-bottom:8px;">VALUE TO VICTORY</div>
-  <div style="font-family:Georgia,serif;font-size:26px;font-style:italic;color:#ffffff;">Evening Check-In</div>
+  <div style="font-family:Georgia,serif;font-size:22px;font-style:italic;color:#ffffff;">Evening Check-In &mdash; ${phase}</div>
+  <div style="font-size:12px;color:#52525b;margin-top:4px;">Day ${coachingDay} &middot; Focus: ${weakest} (${weakestScore}/50) &middot; Score: ${masterScore} (${scoreRange})</div>
 </td></tr>
-<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:40px 32px;">
-  <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 20px;">${firstName},</p>
-  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 8px;">Before you close out today &mdash; take 60 seconds and answer this honestly:</p>
-  <div style="background:#111118;border-left:3px solid #D4A847;padding:16px 20px;margin:16px 0 24px;border-radius:0 8px 8px 0;">
-    <p style="color:#D4A847;font-size:15px;font-weight:bold;margin:0 0 8px;">What did you actually accomplish today?</p>
-    <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">Not what you planned. Not what you wanted to do. What did you <em>do</em>? Write it down. Say it out loud. Own it &mdash; good or bad. That's where growth starts.</p>
+<tr><td style="padding:0 0 16px;">
+  ${pillarBarHtml}
+</td></tr>
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:32px 28px;">
+  <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 16px;">${firstName},</p>
+  <p style="color:#a1a1aa;font-size:15px;line-height:1.7;margin:0 0 16px;">${greeting}</p>
+
+  ${streakHtml}
+
+  <!-- Growth Window -->
+  <div style="background:#111118;border-left:3px solid #D4A847;padding:14px 18px;margin:0 0 16px;border-radius:0 8px 8px 0;">
+    <p style="color:#D4A847;font-size:14px;font-weight:bold;margin:0 0 6px;">Your Honest 24</p>
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:9px;color:#71717a;letter-spacing:1px;">WORK</div><div style="font-size:16px;color:#e4e4e7;font-weight:bold;">9-10h</div></td>
+    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:9px;color:#71717a;letter-spacing:1px;">OBLIGAT.</div><div style="font-size:16px;color:#e4e4e7;font-weight:bold;">2-3h</div></td>
+    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:9px;color:#D4A847;letter-spacing:1px;font-weight:bold;">GROWTH</div><div style="font-size:16px;color:#D4A847;font-weight:bold;">4-5h</div></td>
+    <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:9px;color:#71717a;letter-spacing:1px;">SLEEP</div><div style="font-size:16px;color:#e4e4e7;font-weight:bold;">6-7h</div></td>
+    </tr></table>
+    <p style="color:#52525b;font-size:11px;text-align:center;margin:6px 0 0;">How much of your growth window went to ${weakest} today?</p>
   </div>
 
-  <hr style="border:none;border-top:1px solid #27272a;margin:24px 0;"/>
-
-  <!-- FEEDBACK SECTION -->
-  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px 24px;margin:0 0 20px;">
-    <p style="color:#D4A847;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;">We Want to Hear From You</p>
-    <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0 0 16px;">Your feedback shapes everything we build. Tell us what's working, what's not, or what you wish existed.</p>
-    <table width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td width="50%" style="padding-right:6px;">
-        <a href="${feedbackUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:12px 8px;border-radius:8px;">Share What Helped</a>
-      </td>
-      <td width="50%" style="padding-left:6px;">
-        <a href="${bugUrl}" style="display:block;text-align:center;background:#18181b;border:1px solid #ef4444;color:#ef4444;font-size:13px;font-weight:bold;text-decoration:none;padding:12px 8px;border-radius:8px;">Report an Issue</a>
-      </td>
-    </tr></table>
+  <!-- Check-in CTA -->
+  <div style="text-align:center;margin:0 0 20px;">
+    <a href="${BASE_URL}/coaching-reply?email=${encodeURIComponent(email)}&day=${coachingDay}" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;border-radius:8px;">Log Today's Check-In &rarr;</a>
   </div>
 
   <hr style="border:none;border-top:1px solid #27272a;margin:20px 0;"/>
 
-  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:20px 24px;margin:0;">
-    <p style="color:#D4A847;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;">A Note from Shawn</p>
-    <p style="color:#e4e4e7;font-size:15px;line-height:1.7;margin:0 0 12px;font-style:italic;">Every single one of you taking this assessment and showing up every day &mdash; that matters. You're not just checking a box. You're choosing to look at yourself honestly, and that takes guts. I built this because I needed it first. Now I get to watch it help you too. That's the whole point.</p>
-    <p style="color:#a1a1aa;font-size:14px;margin:0;">&mdash; Shawn Decker</p>
-  </div>
+  ${devotionalHtml}
+
+  <!-- Feedback -->
+  <table width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td width="50%" style="padding-right:6px;">
+      <a href="${feedbackUrl}" style="display:block;text-align:center;background:#18181b;border:1px solid #D4A847;color:#D4A847;font-size:12px;font-weight:bold;text-decoration:none;padding:10px 8px;border-radius:8px;">Share What Helped</a>
+    </td>
+    <td width="50%" style="padding-left:6px;">
+      <a href="${bugUrl}" style="display:block;text-align:center;background:#18181b;border:1px solid #52525b;color:#71717a;font-size:12px;font-weight:bold;text-decoration:none;padding:10px 8px;border-radius:8px;">Report an Issue</a>
+    </td>
+  </tr></table>
 </td></tr>
-<tr><td style="text-align:center;padding-top:24px;">
-  <a href="${BASE_URL}/member" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;padding:12px 32px;border-radius:8px;">Open Your Dashboard</a>
+<tr><td style="text-align:center;padding-top:20px;">
+  <a href="${BASE_URL}/member" style="display:inline-block;background:#18181b;border:1px solid #27272a;color:#a1a1aa;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:8px;">Open Dashboard</a>
 </td></tr>
-<tr><td style="text-align:center;padding-top:24px;">
+<tr><td style="text-align:center;padding-top:20px;">
   <p style="color:#52525b;font-size:12px;margin:0;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p>
   <p style="color:#3f3f46;font-size:11px;margin:8px 0 0;"><a href="${unsubUrl}" style="color:#3f3f46;text-decoration:underline;">Unsubscribe from evening emails</a></p>
 </td></tr>
 </table></td></tr></table></body></html>`;
 
+            // Create engagement record for tracking (accountability emails)
+            let acctEngId = null;
+            try {
+              const acctEng = await sql`
+                INSERT INTO email_engagement (contact_id, email, coaching_day, email_variant)
+                VALUES (${member.contact_id || null}, ${email.toLowerCase()}, ${coachingDay}, 'accountability')
+                RETURNING id`;
+              acctEngId = acctEng[0]?.id;
+            } catch (e) { /* non-fatal */ }
+
+            // Inject tracking pixel and wrap links
+            if (acctEngId) {
+              const trackBase = `${BASE_URL}/api/agent/email`;
+              html = html.replace(/href="(https?:\/\/[^"]+)"/g, function(m, u) {
+                return `href="${trackBase}/track-click?id=${acctEngId}&url=${encodeURIComponent(u)}"`;
+              });
+              const pixel = `<img src="${trackBase}/track-open?id=${acctEngId}" width="1" height="1" style="display:none" alt=""/>`;
+              if (html.includes('</body>')) {
+                html = html.replace('</body>', pixel + '</body>');
+              } else {
+                html = html + pixel;
+              }
+            }
+
             await transporter.sendMail({
               from: `"Shawn @ Value Engine" <${process.env.GMAIL_USER}>`,
-              to: member.email,
-              subject: `${firstName}, what did you actually accomplish today?`,
+              to: email,
+              subject,
               html,
             });
 
-            results.push({ email: member.email, status: 'sent' });
+            results.push({ email, status: 'sent', day: coachingDay, weakest, streak: replyStreak });
             sentCount++;
-            await logEmail(sql, { recipient: member.email, emailType: 'accountability', subject: `${firstName}, what did you actually accomplish today?` });
+            await logEmail(sql, { recipient: email, emailType: 'accountability', subject, metadata: { day: coachingDay, weakest, streak: replyStreak, engagementId: acctEngId } });
           } catch (sendErr) {
-            console.error(`Accountability email error for ${member.email}:`, sendErr.message);
+            console.error(`Accountability email error for ${maskEmail(member.email)}:`, sendErr.message);
             results.push({ email: member.email, status: 'error', error: sendErr.message });
             await logEmail(sql, { recipient: member.email, emailType: 'accountability', status: 'failed', metadata: { error: sendErr.message } });
           }
@@ -5289,7 +7065,7 @@ This link expires in 24 hours.
         return res.json({ sent: sentCount, total: members.length, results });
       } catch (acctErr) {
         console.error('[accountability/send] Error:', acctErr);
-        return res.status(500).json({ error: 'Accountability send failed', details: acctErr.message });
+        return res.status(500).json({ error: 'Accountability send failed', detail: acctErr.message });
       }
     }
 
@@ -5318,10 +7094,11 @@ This link expires in 24 hours.
       await ensureFeedbackResponseTable();
       const b = req.body || {};
       const email = (b.email || '').toLowerCase().trim();
-      const response = (b.response || '').trim();
+      const response = sanitizeString(b.response, 5000);
       const category = b.category || 'feedback';
       const severity = b.severity || (category === 'bug' ? 'medium' : 'low');
       if (!email || !response) return res.status(400).json({ error: 'email and response required' });
+      if (!validateEmail(email)) return res.status(400).json({ error: 'Invalid email address' });
       let contactId = null, firstName = null;
       try { const c = await sql`SELECT id, first_name FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`; if (c.length > 0) { contactId = c[0].id; firstName = c[0].first_name; } } catch(e) {}
       const row = await sql`INSERT INTO user_feedback (contact_id, email, first_name, category, feedback_type, question, response, severity, page_url, device_info)
@@ -5472,6 +7249,7 @@ else if(cm==='idea'){document.getElementById('tyTitle').textContent='Great Idea!
     // ========== CEO DAILY BRIEFING ==========
     // GET /api/ceo-briefing — Daily executive summary email sent at 6:45 AM
     if (req.method === 'GET' && url === '/ceo-briefing') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         const ceoEmail = 'valuetovictory@gmail.com';
         const now = new Date();
@@ -5854,7 +7632,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         const results = [];
         for (const c of contacts) {
           try {
-            const firstName = c.first_name || 'Friend';
+            const firstName = escapeHtml(c.first_name || 'Friend');
             const feedbackUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(c.email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('Can you tell us something the Value Engine helped you with today?')}`;
             const bugUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(c.email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
@@ -5910,7 +7688,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           } catch(e) { results.push({ email:c.email, status:'error', error:e.message }); }
         }
         return res.json({ sent:sentCount, total:contacts.length, results });
-      } catch(e) { return res.status(500).json({ error:e.message }); }
+      } catch(e) { console.error('Server error:', e.message); return res.status(500).json({ error: 'Internal server error' }); }
     }
 
     // GET /api/send-vt-pitch — Send Virginia Tech partnership pitch
@@ -6171,6 +7949,15 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
     }
 
     // ========== AGENT SYSTEM — SELF-LEARNING MULTI-AGENT LOOP ==========
+    // Agent dashboard requires JWT or API key (no longer public)
+    if (url === '/agent/dashboard') {
+      const jwtUser = extractUser(req);
+      const apiKey = req.headers['x-api-key'] || new URL('http://x' + req.url).searchParams.get('key') || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!jwtUser && !(validKey && apiKey === validKey)) {
+        return res.status(401).json({ error: 'Authentication required. Please log in or provide API key.' });
+      }
+    }
     // All /agent/* routes require API key EXCEPT tracking endpoints (embedded in emails)
     if (url.startsWith('/agent') && !url.startsWith('/agent/email/track-open') && !url.startsWith('/agent/email/track-click') && url !== '/agent/dashboard') {
       const apiKey = req.headers['x-api-key'] || new URL('http://x' + req.url).searchParams.get('key') || '';
@@ -6350,6 +8137,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
     // GET /api/agent/systems/run — Main systems health check loop
     if (req.method === 'GET' && url === '/agent/systems/run') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         const services = [];
         const alerts = [];
@@ -6511,11 +8299,19 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
       return res.end(pixel);
     }
 
-    // GET /api/agent/email/track-click?id=X&url=Y — Link redirect tracker
+    // GET /api/agent/email/track-click?id=X&url=Y — Link redirect tracker (allowlisted domains only)
     if (req.method === 'GET' && url.startsWith('/agent/email/track-click')) {
       const params = new URL('http://x' + req.url).searchParams;
       const engagementId = params.get('id');
-      const redirectUrl = params.get('url') || `${BASE_URL}/member`;
+      let redirectUrl = params.get('url') || `${BASE_URL}/member`;
+      // Prevent open redirect — only allow our domains
+      try {
+        const parsed = new URL(redirectUrl);
+        const allowedHosts = ['valuetovictory.com', 'www.valuetovictory.com', 'assessment.valuetovictory.com', 'shawnedecker.com', 'www.shawnedecker.com', 'thelostartofvalue.com', 'www.thelostartofvalue.com'];
+        if (!allowedHosts.includes(parsed.hostname)) {
+          redirectUrl = `${BASE_URL}/member`;
+        }
+      } catch { redirectUrl = `${BASE_URL}/member`; }
       if (engagementId) {
         try {
           await sql`UPDATE email_engagement SET clicked_at = NOW() WHERE id = ${parseInt(engagementId)} AND clicked_at IS NULL`;
@@ -6554,7 +8350,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           SELECT cs.*, c.first_name, c.email as contact_email, c.id as contact_id
           FROM coaching_sequences cs
           JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
-          WHERE cs.unsubscribed = false AND cs.current_day < 8
+          WHERE cs.unsubscribed = false
           AND (cs.last_sent_at IS NULL OR cs.last_sent_at < ${todayStart.toISOString()})
           LIMIT 50`;
 
@@ -6567,17 +8363,34 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
           // Skip day 0 (assessment day)
           if (day === 0) {
-            await sql`UPDATE coaching_sequences SET current_day = 1 WHERE email = ${email}`;
+            await sql`UPDATE coaching_sequences SET current_day = 1 WHERE LOWER(email) = LOWER(${email})`;
             continue;
           }
 
           // === OBSERVE: Get engagement history ===
           const engagement = await sql`SELECT * FROM email_engagement
-            WHERE email = ${email} ORDER BY sent_at DESC LIMIT 7`;
+            WHERE LOWER(email) = LOWER(${email}) ORDER BY sent_at DESC LIMIT 7`;
 
           const recentOpens = engagement.filter(e => e.opened_at).length;
           const recentClicks = engagement.filter(e => e.clicked_at).length;
           const recentActions = engagement.filter(e => e.action_completed).length;
+
+          // === OBSERVE: Get latest coaching reply ===
+          let latestReply = null;
+          let replyStreak = 0;
+          try {
+            const replies = await sql`SELECT * FROM coaching_replies WHERE LOWER(email) = LOWER(${email}) ORDER BY coaching_day DESC LIMIT 5`;
+            if (replies.length > 0) {
+              latestReply = replies[0];
+              // Calculate reply streak
+              const replyDays = replies.map(r => r.coaching_day).sort((a, b) => b - a);
+              replyStreak = 1;
+              for (let i = 0; i < replyDays.length - 1; i++) {
+                if (replyDays[i] - replyDays[i + 1] <= 2) replyStreak++; // Allow 2-day gap for Phase 2+ cadence
+                else break;
+              }
+            }
+          } catch (e) { /* coaching_replies table may not exist yet */ }
 
           // Check for assessment retake
           const retake = await sql`SELECT id FROM assessments
@@ -6586,14 +8399,17 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             ORDER BY completed_at DESC LIMIT 1`;
           const hasRetaken = retake.length > 0;
 
-          // === CLASSIFY: Assign persona ===
+          // === CLASSIFY: Assign persona (now includes reply data) ===
           let persona = 'standard';
+          const replyBonus = latestReply ? 0.2 : 0;
+          const streakBonus = replyStreak >= 3 ? 0.15 : replyStreak >= 2 ? 0.1 : 0;
           const engagementScore = engagement.length > 0
-            ? ((recentOpens * 0.3 + recentClicks * 0.3 + recentActions * 0.3 + (hasRetaken ? 0.1 : 0)) / Math.max(engagement.length, 1))
+            ? Math.min(1.0, ((recentOpens * 0.25 + recentClicks * 0.25 + recentActions * 0.2 + replyBonus + streakBonus + (hasRetaken ? 0.1 : 0)) / Math.max(engagement.length, 1)))
             : 0.5; // Default for new users
 
-          if (recentOpens >= 3 && recentClicks >= 2) persona = 'fast_mover';
-          else if (recentOpens <= 1 && recentClicks === 0 && engagement.length >= 2) persona = 'disengaged';
+          if (replyStreak >= 3 || (recentOpens >= 3 && recentClicks >= 2)) persona = 'fast_mover';
+          else if (latestReply && latestReply.sentiment === 'negative' && latestReply.mood === 'struggling') persona = 'struggling';
+          else if (recentOpens <= 1 && recentClicks === 0 && engagement.length >= 2 && !latestReply) persona = 'disengaged';
 
           // Check if high performer
           const latestAssessment = await sql`SELECT score_range FROM assessments
@@ -6654,7 +8470,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             skippedCount++;
             decision.action = 'skipped';
             decisions.push(decision);
-            await sql`UPDATE coaching_sequences SET engagement_score = ${engagementScore}, persona = ${persona} WHERE email = ${email}`;
+            await sql`UPDATE coaching_sequences SET engagement_score = ${engagementScore}, persona = ${persona} WHERE LOWER(email) = LOWER(${email})`;
             continue;
           }
 
@@ -6671,14 +8487,26 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           // Generate email with variant awareness
           let emailContent = generateCoachingEmail(day, assessment, prescription, email);
 
-          // Modify subject line based on variant
+          // Modify subject line based on variant + reply data
           let subject = emailContent.subject || `Day ${day}: Your Value Engine Coaching`;
-          if (variant === 'nudge') {
-            subject = `⚡ Quick win for today — Day ${day}`;
+          if (latestReply && latestReply.mood === 'struggling') {
+            subject = `${seq.first_name || 'Hey'} — I heard you. Here's what to do next.`;
+            variant = 'empathy';
+          } else if (latestReply && latestReply.action_completed && latestReply.sentiment === 'positive') {
+            subject = `${seq.first_name || 'You'} crushed Day ${day - 1}. Day ${day} is bigger.`;
+            variant = 'momentum';
+          } else if (latestReply && !latestReply.action_completed) {
+            subject = `The step you skipped yesterday? It takes 10 minutes.`;
+            variant = 'nudge';
+          } else if (replyStreak >= 3) {
+            subject = `${replyStreak}-day streak. This is how scores change.`;
+            variant = 'streak';
+          } else if (variant === 'nudge') {
+            subject = `Quick win for today — Day ${day}`;
           } else if (variant === 're_engage') {
             subject = `Did you know this about your ${assessment.weakest_pillar || 'weakest'} score?`;
           } else if (variant === 'momentum') {
-            subject = `🔥 You're on fire — Day ${day} momentum builder`;
+            subject = `You're building momentum — Day ${day}`;
           }
 
           // Create engagement record BEFORE sending
@@ -6718,7 +8546,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           await sql`UPDATE coaching_sequences
             SET current_day = ${day + 1}, last_sent_at = NOW(),
                 engagement_score = ${engagementScore}, email_variant = ${variant}, persona = ${persona}
-            WHERE email = ${email}`;
+            WHERE LOWER(email) = LOWER(${email})`;
 
           decisions.push(decision);
 
@@ -6986,6 +8814,93 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           systemRegistry = await sql`SELECT * FROM system_registry ORDER BY category, system_type, system_name`;
         } catch(e) { /* table may not exist yet */ }
 
+        // === AI ROUTER STATUS + METRICS ===
+        const aiRouter = {
+          ollama: { host: null, reachable: false, models: [], error: null },
+          anthropic: { configured: !!process.env.ANTHROPIC_API_KEY },
+          provider_mode: process.env.AI_PROVIDER || 'cloud',
+          small_model: process.env.ZYRIX_SMALL_MODEL || 'claude-haiku-4-5',
+          frontier_model: process.env.ZYRIX_FRONTIER_MODEL || 'claude-opus-4-7',
+          tunnel_status: 'not-configured',
+          tunnel_advice: '',
+          metrics: null,
+        };
+
+        const ollamaHost = process.env.OLLAMA_HOST || process.env.OLLAMA_URL || 'http://localhost:11434';
+        aiRouter.ollama.host = ollamaHost;
+
+        // Probe Ollama from the Vercel function — tells us whether the tunnel actually works.
+        try {
+          const r = await fetch(`${ollamaHost}/api/tags`, { signal: AbortSignal.timeout(3000) });
+          if (r.ok) {
+            const d = await r.json();
+            aiRouter.ollama.reachable = true;
+            aiRouter.ollama.models = (d.models || []).map(m => m.name);
+          } else {
+            aiRouter.ollama.error = `HTTP ${r.status}`;
+          }
+        } catch (e) {
+          aiRouter.ollama.error = e.message || String(e);
+        }
+
+        // Classify the current routing state and write a plain-English explanation
+        // so the dashboard can guide the user to fix it.
+        const isLocalhost = /localhost|127\.0\.0\.1|::1/i.test(ollamaHost);
+        const isTryCloudflare = /trycloudflare\.com/i.test(ollamaHost);
+        if (isLocalhost) {
+          aiRouter.tunnel_status = 'not-configured';
+          aiRouter.tunnel_advice = "OLLAMA_HOST is still pointing at localhost, which Vercel cannot reach from its serverless environment. Every AI call is being answered by Anthropic at full cloud price, even though you have free local models installed. Download the Cloudflare Tunnel setup below, run the three scripts in order, then update Vercel env vars OLLAMA_HOST and AI_PROVIDER=auto. Expected cost reduction: 60-80% on coaching, assessment, devotional, and simple content-generate calls.";
+        } else if (isTryCloudflare) {
+          aiRouter.tunnel_status = 'quick-tunnel';
+          aiRouter.tunnel_advice = "Quick tunnel (trycloudflare.com) detected. These URLs rotate on every cloudflared restart and are UNAUTHENTICATED — fine for a smoke test but not for production. Run 3-named-tunnel-setup.ps1 from the Cloudflare Tunnel package to create a persistent named tunnel tied to a hostname you control.";
+        } else if (aiRouter.ollama.reachable) {
+          aiRouter.tunnel_status = 'named-tunnel-active';
+          aiRouter.tunnel_advice = "Named tunnel is live. Vercel can reach your Ollama and the tier router will route action-specific calls to local models (free) before falling back to Anthropic.";
+        } else {
+          aiRouter.tunnel_status = 'misconfigured';
+          aiRouter.tunnel_advice = `OLLAMA_HOST is set to a remote URL but Vercel cannot reach it: ${aiRouter.ollama.error}. Check: (1) Is cloudflared running on the source machine? Try "Get-Service Cloudflared" in PowerShell. (2) Is the DNS record still pointing at the tunnel? (3) Is the source machine awake and has Ollama started? AI calls will fall back to Anthropic until this is fixed.`;
+        }
+
+        // Metrics from model_invocations — table may not exist yet
+        try {
+          const last24h = await sql`
+            SELECT
+              COUNT(*)::int AS calls,
+              COALESCE(SUM(tokens_in + tokens_out), 0)::int AS tokens,
+              COALESCE(SUM(cost_usd), 0)::float AS cost_usd,
+              ROUND(AVG(latency_ms))::int AS avg_latency_ms,
+              COUNT(*) FILTER (WHERE cache_read_tokens > 0)::int AS cache_hits,
+              COUNT(*) FILTER (WHERE success = false)::int AS errors,
+              COUNT(*) FILTER (WHERE escalated_from IS NOT NULL)::int AS escalations
+            FROM model_invocations WHERE created_at > NOW() - INTERVAL '24 hours'`;
+
+          const byTier = await sql`
+            SELECT tier, COUNT(*)::int AS calls, COALESCE(SUM(cost_usd), 0)::float AS cost_usd
+            FROM model_invocations WHERE created_at > NOW() - INTERVAL '7 days'
+            GROUP BY tier ORDER BY calls DESC`;
+
+          const byModel = await sql`
+            SELECT model, tier, provider, COUNT(*)::int AS calls, COALESCE(SUM(cost_usd), 0)::float AS cost_usd
+            FROM model_invocations WHERE created_at > NOW() - INTERVAL '7 days'
+            GROUP BY model, tier, provider ORDER BY calls DESC LIMIT 10`;
+
+          const recentErrors = await sql`
+            SELECT action, model, tier, error_message, created_at
+            FROM model_invocations WHERE success = false
+            ORDER BY created_at DESC LIMIT 5`;
+
+          aiRouter.metrics = {
+            last_24h: last24h[0] || {},
+            by_tier_7d: byTier,
+            by_model_7d: byModel,
+            recent_errors: recentErrors,
+          };
+        } catch (metricErr) {
+          aiRouter.metrics = {
+            note: 'No AI invocations logged yet. The model_invocations table bootstraps on the first /api/ai call after deploy.',
+          };
+        }
+
         return res.json({
           agents: agentRuns,
           health,
@@ -6993,15 +8908,143 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           pages: topInsights,
           rules,
           recentDecisions,
-          systems: systemRegistry
+          systems: systemRegistry,
+          aiRouter,
         });
       } catch (dashErr) {
         return res.status(500).json({ error: dashErr.message });
       }
     }
 
+    // ========== POST /api/webhook/vercel-budget — Vercel spend management webhook ==========
+    // Vercel sends two event types:
+    //   1. spend_amount_threshold: { budgetAmount, currentSpend, teamId, thresholdPercent }
+    //   2. endOfBillingCycle: { teamId, type: "endOfBillingCycle" }
+    if (req.method === 'POST' && url === '/webhook/vercel-budget') {
+      try {
+        // Verify webhook signature if secret is configured
+        const webhookSecret = process.env.VERCEL_WEBHOOK_SECRET;
+        if (webhookSecret) {
+          const signature = req.headers['x-vercel-signature'] || '';
+          const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+          const expected = crypto.createHmac('sha1', webhookSecret).update(rawBody).digest('hex');
+          if (signature !== expected) {
+            console.warn('[vercel-budget] Invalid signature — rejecting');
+            return res.status(401).json({ error: 'Invalid webhook signature' });
+          }
+        }
+
+        const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        const ts = new Date().toISOString();
+
+        // Detect event type from Vercel's actual payload format
+        let eventType = 'unknown';
+        let budgetAmount = null;
+        let currentSpend = null;
+        let thresholdPercent = null;
+
+        if (body?.type === 'endOfBillingCycle') {
+          eventType = 'endOfBillingCycle';
+        } else if (body?.thresholdPercent !== undefined) {
+          eventType = 'spend_amount_threshold';
+          budgetAmount = body.budgetAmount;
+          currentSpend = body.currentSpend;
+          thresholdPercent = body.thresholdPercent;
+        } else {
+          // Test or unknown event — log but don't act
+          eventType = body?.type || body?.event || 'test';
+          budgetAmount = body?.budgetAmount || body?.amount || null;
+        }
+
+        console.log(`[vercel-budget] Event: ${eventType}, Budget: $${budgetAmount}, Spend: $${currentSpend}, Threshold: ${thresholdPercent}%`);
+
+        // Log to system_registry for dashboard visibility
+        try {
+          const isOverBudget = eventType === 'spend_amount_threshold' && thresholdPercent >= 100;
+          await sql`INSERT INTO system_registry (system_name, system_type, category, status, endpoint, metadata, last_reported_at)
+            VALUES (
+              'vercel:budget-alert',
+              'webhook',
+              'cloud',
+              ${isOverBudget ? 'degraded' : 'healthy'},
+              'https://vercel.com/danddappraisal-7740s-projects/settings/billing',
+              ${JSON.stringify({ eventType, budgetAmount, currentSpend, thresholdPercent, received_at: ts })}::jsonb,
+              NOW()
+            )
+            ON CONFLICT (system_name) DO UPDATE SET
+              status = EXCLUDED.status,
+              metadata = EXCLUDED.metadata,
+              last_reported_at = NOW()`;
+        } catch (dbErr) {
+          console.error('[vercel-budget] DB log failed:', dbErr.message);
+        }
+
+        // Send alert email to Shawn
+        try {
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: 'valuetovictory@gmail.com', pass: process.env.GMAIL_APP_PASSWORD }
+          });
+
+          let subject, messageHtml;
+          if (eventType === 'spend_amount_threshold') {
+            const emoji = thresholdPercent >= 100 ? '🚨' : thresholdPercent >= 75 ? '⚠️' : 'ℹ️';
+            subject = `${emoji} Vercel Spend Alert: ${thresholdPercent}% of $${budgetAmount} budget used`;
+            messageHtml = `
+              <p><strong>Current Spend:</strong> $${currentSpend} of $${budgetAmount}</p>
+              <p><strong>Threshold:</strong> ${thresholdPercent}%</p>
+              <p><strong>Time:</strong> ${ts}</p>
+              <hr style="border-color:#27272a;margin:16px 0;">
+              <p style="font-size:13px;color:#a1a1aa;">
+                ${thresholdPercent >= 100
+                  ? '🚨 Budget limit reached! Production deployments may be paused. Go to Vercel to increase the limit or resume.'
+                  : thresholdPercent >= 75
+                    ? '⚠️ Approaching budget limit. Consider reviewing usage.'
+                    : 'ℹ️ Budget milestone reached. No action needed.'}
+              </p>`;
+          } else if (eventType === 'endOfBillingCycle') {
+            subject = '✅ Vercel: Billing cycle ended';
+            messageHtml = `
+              <p><strong>Event:</strong> Billing cycle ended</p>
+              <p><strong>Time:</strong> ${ts}</p>
+              <hr style="border-color:#27272a;margin:16px 0;">
+              <p style="font-size:13px;color:#a1a1aa;">✅ New billing cycle started. If deployments were paused, they should auto-resume.</p>`;
+          } else {
+            subject = `Vercel Webhook: ${eventType}`;
+            messageHtml = `
+              <p><strong>Event:</strong> ${escapeHtml(eventType)}</p>
+              ${budgetAmount ? `<p><strong>Budget:</strong> $${budgetAmount}</p>` : ''}
+              <p><strong>Time:</strong> ${ts}</p>`;
+          }
+
+          const htmlBody = `
+            <div style="font-family:Arial;max-width:500px;padding:20px;background:#0a0a0a;color:#e4e4e7;border-radius:10px;">
+              <h2 style="color:#D4A847;margin:0 0 12px;">Vercel Budget Alert</h2>
+              ${messageHtml}
+              <a href="https://vercel.com/danddappraisal-7740s-projects/settings/billing" style="display:inline-block;margin-top:12px;padding:10px 20px;background:#D4A847;color:#0a0a0a;text-decoration:none;border-radius:6px;font-weight:bold;">Open Vercel Billing</a>
+            </div>`;
+
+          await transporter.sendMail({
+            from: '"VTV System Alert" <valuetovictory@gmail.com>',
+            to: 'valuetovictory@gmail.com',
+            subject,
+            html: htmlBody
+          });
+          console.log('[vercel-budget] Alert email sent');
+        } catch (emailErr) {
+          console.error('[vercel-budget] Email failed:', emailErr.message);
+        }
+
+        return res.json({ received: true, event: eventType, timestamp: ts });
+      } catch (whErr) {
+        console.error('[vercel-budget] Error:', whErr);
+        return res.status(500).json({ error: 'Webhook processing failed' });
+      }
+    }
+
     // ========== GET /api/devotional/send — Send daily devotional to all subscribers ==========
     if (req.method === 'GET' && url === '/devotional/send') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         // Get today's devotional
         const fs = require('fs');
@@ -7017,7 +9060,8 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         const dayIndex = ((diffDays % 60) + 60) % 60;
         const dev = devotionals[dayIndex] || devotionals[0];
 
-        // Get subscribers
+        // Get subscribers: active coaching users + paid members + explicit opt-ins
+        // Daily dedup — skip anyone already sent today
         let subscribers = [];
         try {
           subscribers = await sql`
@@ -7025,22 +9069,29 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             FROM contacts c
             LEFT JOIN devotional_progress dp ON dp.contact_id = c.id
             LEFT JOIN user_profiles up ON up.contact_id = c.id
+            LEFT JOIN coaching_sequences cs ON LOWER(cs.email) = LOWER(c.email)
             WHERE c.email IS NOT NULL AND c.email != ''
-              AND (dp.id IS NOT NULL OR up.membership_tier IN ('individual','couple','premium'))
+              AND (
+                dp.id IS NOT NULL
+                OR up.membership_tier IN ('individual','couple','premium')
+                OR (cs.id IS NOT NULL AND cs.unsubscribed = false)
+              )
               AND (dp.opted_out IS NULL OR dp.opted_out = false)
+              AND LOWER(c.email) NOT IN (
+                SELECT LOWER(recipient) FROM email_log
+                WHERE email_type = 'devotional' AND created_at::date = CURRENT_DATE
+              )
             ORDER BY c.id ASC
           `;
         } catch(e) {
-          // If devotional tables don't exist, only send to paid members (not all contacts)
+          // Fallback: coaching_sequences members
           try {
             subscribers = await sql`
-              SELECT c.id as contact_id, c.email, c.first_name FROM contacts c
-              INNER JOIN user_profiles up ON up.contact_id = c.id
-              WHERE c.email IS NOT NULL AND c.email != ''
-                AND up.membership_tier IN ('individual','couple','premium')
+              SELECT DISTINCT c.id as contact_id, c.email, c.first_name FROM contacts c
+              INNER JOIN coaching_sequences cs ON LOWER(cs.email) = LOWER(c.email)
+              WHERE c.email IS NOT NULL AND c.email != '' AND cs.unsubscribed = false
               ORDER BY c.id ASC`;
           } catch(e2) {
-            // If user_profiles also doesn't exist, skip entirely
             subscribers = [];
           }
         }
@@ -7056,9 +9107,39 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         let sentCount = 0;
         const results = [];
 
+        // Precompute which pillar each devotional theme maps to
+        const themeToPillar = function(theme) {
+          if (!theme) return null;
+          const t = String(theme).toLowerCase();
+          if (['patience','waiting','seasons','time','urgency'].some(k => t.includes(k))) return 'Time';
+          if (['family','love','relationships','trust','friends','community'].some(k => t.includes(k))) return 'People';
+          if (['leadership','faith','courage','obedience','voice'].some(k => t.includes(k))) return 'Influence';
+          if (['money','provision','poverty','work','finances','wealth'].some(k => t.includes(k))) return 'Numbers';
+          if (['wisdom','learning','growth','truth','understanding'].some(k => t.includes(k))) return 'Knowledge';
+          return null;
+        };
+        const devotionalPillar = themeToPillar(dev.theme) || themeToPillar(dev.secondary_theme);
+
         for (const sub of subscribers) {
           try {
-            const firstName = sub.first_name || 'Friend';
+            const firstName = escapeHtml(sub.first_name || 'Friend');
+
+            // Look up the subscriber's weakest pillar for personalized connection
+            let userWeakestPillar = null;
+            try {
+              const aRows = await sql`SELECT weakest_pillar FROM assessments WHERE contact_id = ${sub.contact_id} ORDER BY completed_at DESC LIMIT 1`;
+              if (aRows.length > 0) userWeakestPillar = aRows[0].weakest_pillar;
+            } catch (e) { /* non-fatal */ }
+
+            // Build pillar-connection note if the devotional's theme matches their weakest pillar
+            let pillarNote = '';
+            if (devotionalPillar && userWeakestPillar && devotionalPillar === userWeakestPillar) {
+              pillarNote = `<div style="background:rgba(212,168,71,0.12);border-left:3px solid #D4A847;padding:12px 16px;margin:0 0 16px;border-radius:0 6px 6px 0;">
+                <p style="color:#D4A847;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 4px;">Connects to Your ${userWeakestPillar} Journey</p>
+                <p style="color:#e4e4e7;font-size:13px;line-height:1.5;margin:0;">Today's word speaks directly to the area your assessment flagged. Don't miss it.</p>
+              </div>`;
+            }
+
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 16px;"><tr><td align="center">
@@ -7070,6 +9151,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 </td></tr>
 <tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:36px 28px;">
   <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 16px;">${firstName},</p>
+  ${pillarNote}
   <div style="font-family:Georgia,serif;font-size:20px;color:#D4A847;font-style:italic;margin-bottom:4px;">${dev.title}</div>
   <div style="font-size:12px;color:#71717a;margin-bottom:20px;">Chapter: ${dev.chapter_title} &mdash; Theme: ${dev.theme}</div>
   <div style="background:#111118;border-left:3px solid #D4A847;padding:16px 20px;margin:0 0 24px;border-radius:0 8px 8px 0;">
@@ -7101,15 +9183,35 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 </td></tr>
 </table></td></tr></table></body></html>`;
 
+            // Engagement tracking
+            let devEngId = null;
+            try {
+              const devEng = await sql`
+                INSERT INTO email_engagement (contact_id, email, coaching_day, email_variant)
+                VALUES (${sub.contact_id}, ${sub.email.toLowerCase()}, ${dev.day_number}, 'devotional')
+                RETURNING id`;
+              devEngId = devEng[0]?.id;
+            } catch (e) { /* non-fatal */ }
+
+            let finalHtml = html;
+            if (devEngId) {
+              const trackBase = `${BASE_URL}/api/agent/email`;
+              finalHtml = finalHtml.replace(/href="(https?:\/\/[^"]+)"/g, function(m, u) {
+                return `href="${trackBase}/track-click?id=${devEngId}&url=${encodeURIComponent(u)}"`;
+              });
+              const pixel = `<img src="${trackBase}/track-open?id=${devEngId}" width="1" height="1" style="display:none" alt=""/>`;
+              finalHtml = finalHtml.includes('</body>') ? finalHtml.replace('</body>', pixel + '</body>') : finalHtml + pixel;
+            }
+
             await transporter.sendMail({
               from: `"Running From Miracles" <${process.env.GMAIL_USER}>`,
               to: sub.email,
               subject: `Day ${dev.day_number}: ${dev.title} — ${dev.scripture_reference}`,
-              html,
+              html: finalHtml,
             });
             sentCount++;
             results.push({ email: sub.email, status: 'sent' });
-            await logEmail(sql, { recipient: sub.email, emailType: 'devotional', subject: `Day ${dev.day_number}: ${dev.title}`, contactId: sub.contact_id, metadata: { day: dev.day_number, chapter: dev.chapter_title } });
+            await logEmail(sql, { recipient: sub.email, emailType: 'devotional', subject: `Day ${dev.day_number}: ${dev.title}`, contactId: sub.contact_id, metadata: { day: dev.day_number, chapter: dev.chapter_title, engagementId: devEngId, pillarMatch: !!pillarNote } });
 
             // Update progress
             try {
@@ -7126,7 +9228,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         return res.json({ sent: sentCount, total: subscribers.length, day: dev.day_number, title: dev.title, results });
       } catch(devErr) {
         console.error('[devotional/send] Error:', devErr);
-        return res.status(500).json({ error: devErr.message });
+        console.error('[devotional/send] Error:', devErr.message); return res.status(500).json({ error: 'Devotional send failed' });
       }
     }
 

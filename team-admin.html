@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=instrument-serif@400,400-italic&display=swap" rel="stylesheet">
+  <title>Team Admin — The Value Engine</title>
+  <meta name="description" content="Manage your team, view scores, invite members, and track progress." />
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TT6PYLPP31"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-TT6PYLPP31');
+    gtag('config', 'G-MJ1SXZJ399');
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Satoshi', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; line-height: 1.6; }
+
+    /* Auth gate overlay */
+    .auth-gate {
+      position: fixed; inset: 0; background: #0a0a0a; z-index: 1000;
+      display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1rem;
+    }
+    .auth-gate p { color: #a1a1aa; font-size: 1rem; }
+    .auth-gate a { color: #D4A847; text-decoration: none; font-weight: 600; }
+    .auth-gate a:hover { text-decoration: underline; }
+    .auth-gate.hidden { display: none; }
+
+    /* Layout */
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* Header */
+    .page-header { text-align: center; padding: 2.5rem 1.5rem 1.5rem; }
+    .page-header .brand { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; margin-bottom: 0.5rem; }
+    .page-header h1 { font-family: 'Instrument Serif', serif; font-size: 2.25rem; font-style: italic; color: #fff; margin-bottom: 0.5rem; }
+    .page-header .subtitle { font-size: 1rem; color: #a1a1aa; }
+
+    /* Team selector */
+    .team-selector { margin-bottom: 2rem; text-align: center; }
+    .team-selector select {
+      background: #18181b; border: 1px solid #27272a; color: #fff; border-radius: 0.5rem;
+      padding: 0.6rem 1.25rem; font-family: 'Satoshi', sans-serif; font-size: 0.95rem;
+      cursor: pointer; min-width: 240px;
+    }
+    .team-selector select:focus { outline: none; border-color: #D4A847; }
+
+    /* Stats row */
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card {
+      background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem;
+      padding: 1.25rem; text-align: center;
+    }
+    .stat-card .label { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #71717a; margin-bottom: 0.35rem; }
+    .stat-card .value { font-family: 'Instrument Serif', serif; font-size: 1.75rem; color: #D4A847; }
+
+    /* Section card */
+    .panel {
+      background: #18181b; border: 1px solid #27272a; border-radius: 1rem;
+      padding: 1.75rem; margin-bottom: 1.5rem;
+    }
+    .panel-title {
+      font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: #D4A847; margin-bottom: 1rem;
+    }
+
+    /* Join code */
+    .join-code-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .join-code {
+      background: #0a0a0a; border: 1px solid #27272a; border-radius: 0.5rem;
+      padding: 0.6rem 1.25rem; font-family: monospace; font-size: 1.25rem; color: #D4A847;
+      letter-spacing: 0.15em;
+    }
+    .copy-btn {
+      background: #27272a; border: none; color: #fff; border-radius: 0.5rem;
+      padding: 0.6rem 1rem; font-size: 0.8rem; cursor: pointer; font-family: 'Satoshi', sans-serif;
+      transition: background 0.2s;
+    }
+    .copy-btn:hover { background: #3f3f46; }
+    .copy-btn.copied { background: #166534; color: #86efac; }
+
+    /* Share link */
+    .share-link {
+      margin-top: 1rem; background: #0a0a0a; border: 1px solid #27272a; border-radius: 0.5rem;
+      padding: 0.5rem 1rem; font-size: 0.8rem; color: #a1a1aa; word-break: break-all;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .share-link span { flex: 1; }
+    .share-link .copy-btn { flex-shrink: 0; font-size: 0.75rem; padding: 0.4rem 0.75rem; }
+
+    /* Invite form */
+    .invite-form { display: flex; gap: 0.75rem; margin-top: 1.25rem; flex-wrap: wrap; }
+    .invite-form input {
+      flex: 1; min-width: 200px; background: #0a0a0a; border: 1px solid #27272a; border-radius: 0.5rem;
+      padding: 0.6rem 1rem; color: #fff; font-family: 'Satoshi', sans-serif; font-size: 0.9rem;
+    }
+    .invite-form input::placeholder { color: #52525b; }
+    .invite-form input:focus { outline: none; border-color: #D4A847; }
+    .invite-btn {
+      background: linear-gradient(135deg, #D4A847, #b8942e); color: #0a0a0a; border: none;
+      border-radius: 0.5rem; padding: 0.6rem 1.5rem; font-weight: 700; cursor: pointer;
+      font-family: 'Satoshi', sans-serif; font-size: 0.9rem; transition: all 0.2s;
+    }
+    .invite-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(212,168,71,0.3); }
+    .invite-status { font-size: 0.8rem; color: #a1a1aa; margin-top: 0.5rem; width: 100%; }
+
+    /* Members table */
+    .members-table { width: 100%; border-collapse: collapse; }
+    .members-table th {
+      text-align: left; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: #71717a; padding: 0.6rem 0.75rem; border-bottom: 1px solid #27272a;
+    }
+    .members-table td {
+      padding: 0.75rem; border-bottom: 1px solid rgba(39,39,42,0.5); font-size: 0.9rem; color: #d4d4d8;
+    }
+    .members-table tr:hover td { background: rgba(212,168,71,0.03); }
+    .members-table .range-pill {
+      display: inline-block; padding: 0.15rem 0.6rem; border-radius: 1rem;
+      font-size: 0.75rem; font-weight: 600; border: 1px solid currentColor;
+    }
+    .empty-state { text-align: center; padding: 2rem; color: #52525b; }
+
+    /* Action buttons */
+    .action-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .btn-outline {
+      background: transparent; border: 1px solid #27272a; color: #d4d4d8; border-radius: 0.5rem;
+      padding: 0.6rem 1.25rem; font-size: 0.85rem; cursor: pointer; font-family: 'Satoshi', sans-serif;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.2s;
+    }
+    .btn-outline:hover { border-color: #D4A847; color: #D4A847; }
+    .btn-gold {
+      background: linear-gradient(135deg, #D4A847, #b8942e); color: #0a0a0a; border: none;
+      border-radius: 0.5rem; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; font-family: 'Satoshi', sans-serif; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.2s;
+    }
+    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(212,168,71,0.3); }
+
+    /* Upgrade prompt */
+    .upgrade-banner {
+      background: linear-gradient(160deg, #1c1917, #18181b); border: 1px solid rgba(212,168,71,0.3);
+      border-radius: 1rem; padding: 2rem; text-align: center; margin-top: 1rem;
+    }
+    .upgrade-banner h3 { font-family: 'Instrument Serif', serif; font-size: 1.25rem; font-style: italic; margin-bottom: 0.5rem; }
+    .upgrade-banner p { color: #a1a1aa; font-size: 0.9rem; margin-bottom: 1rem; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 3rem; color: #52525b; }
+
+    /* Range colors */
+    .rc-crisis { color: #ef4444; }
+    .rc-survival { color: #f97316; }
+    .rc-growth { color: #D4A847; }
+    .rc-momentum { color: #22c55e; }
+    .rc-mastery { color: #10b981; }
+
+    @media (max-width: 640px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .members-table { font-size: 0.8rem; }
+      .members-table th, .members-table td { padding: 0.5rem 0.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Auth gate -->
+  <div class="auth-gate" id="authGate">
+    <p>Checking authentication...</p>
+    <p><a href="/?returning=true">Sign in to continue</a></p>
+  </div>
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="brand">The Value Engine</div>
+    <h1>Team Administration</h1>
+    <p class="subtitle">Manage members, track scores, and grow your team.</p>
+  </div>
+
+  <!-- Team selector (hidden if only one) -->
+  <div class="container">
+    <div class="team-selector" id="teamSelector" style="display:none;">
+      <select id="teamDropdown"></select>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="label">Members</div>
+        <div class="value" id="memberCount">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Avg Score</div>
+        <div class="value" id="avgScore">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Join Code</div>
+        <div class="value" id="joinCodeStat">--</div>
+      </div>
+    </div>
+
+    <!-- Invite section -->
+    <div class="panel">
+      <div class="panel-title">Invite Members</div>
+      <div class="join-code-row">
+        <div class="join-code" id="joinCodeDisplay">------</div>
+        <button class="copy-btn" id="copyCodeBtn" onclick="copyJoinCode()">Copy Code</button>
+      </div>
+      <div class="share-link" id="shareLink">
+        <span id="shareLinkText">assessment.valuetovictory.com/?team=...&depth=extensive</span>
+        <button class="copy-btn" onclick="copyShareLink()">Copy Link</button>
+      </div>
+      <form class="invite-form" id="inviteForm" onsubmit="sendInvite(event)">
+        <input type="email" id="inviteEmail" placeholder="Enter email to invite" required />
+        <button type="submit" class="invite-btn">Send Invite</button>
+      </form>
+      <div class="invite-status" id="inviteStatus"></div>
+    </div>
+
+    <!-- Members list -->
+    <div class="panel">
+      <div class="panel-title">Team Members</div>
+      <div id="membersContainer">
+        <div class="loading">Loading members...</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="panel">
+      <div class="panel-title">Team Actions</div>
+      <div class="action-row">
+        <a class="btn-outline" id="reportLink" href="/team-report/">View Team Report</a>
+        <button class="btn-outline" onclick="openBillingPortal()">Manage Subscription</button>
+      </div>
+    </div>
+
+    <!-- Builder resources (public, shareable with contractors/collaborators) -->
+    <div class="panel">
+      <div class="panel-title">Builder Resources</div>
+      <div class="action-row" style="flex-wrap:wrap;gap:0.75rem;">
+        <a class="btn-outline" href="/build-jarvis.html">Build Your Own Jarvis</a>
+        <a class="btn-outline" href="/build-jarvis.md" download>Download Manifest (.md)</a>
+      </div>
+      <p style="color:#71717a;font-size:0.85rem;margin-top:0.75rem;">
+        Full software stack to stand up a local voice assistant like Shawn's. Open-source, CPU-only, no API keys. Shareable link for contractors or team members.
+      </p>
+    </div>
+
+    <!-- Upgrade prompt (shown conditionally) -->
+    <div class="upgrade-banner" id="upgradeBanner" style="display:none;">
+      <h3>Unlock Team Analytics</h3>
+      <p>Get detailed pillar breakdowns, trend tracking, and custom team challenges with a team subscription.</p>
+      <a class="btn-gold" href="/pricing">Upgrade Now</a>
+    </div>
+  </div>
+
+  <script>
+    let currentTeam = null;
+    let userEmail = '';
+
+    // Auth check
+    (function() {
+      const token = localStorage.getItem('vtv_token');
+      if (!token) {
+        document.getElementById('authGate').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('authGate').classList.add('hidden');
+
+      // Decode email from token (JWT)
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        userEmail = payload.email || payload.sub || '';
+      } catch(e) {
+        userEmail = localStorage.getItem('vtv_email') || '';
+      }
+
+      loadTeams();
+    })();
+
+    async function loadTeams() {
+      try {
+        const token = localStorage.getItem('vtv_token');
+        const res = await fetch('/api/teams?email=' + encodeURIComponent(userEmail), {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error('Failed to load teams');
+        const data = await res.json();
+        const teams = data.teams || data || [];
+
+        if (!teams.length) {
+          document.getElementById('membersContainer').innerHTML = '<div class="empty-state">No teams found. Create a team from the member portal.</div>';
+          return;
+        }
+
+        if (teams.length > 1) {
+          const sel = document.getElementById('teamDropdown');
+          teams.forEach(function(t) {
+            const opt = document.createElement('option');
+            opt.value = t.id || t.team_id;
+            opt.textContent = t.name || t.team_name || ('Team ' + (t.id || t.team_id).slice(0,6));
+            sel.appendChild(opt);
+          });
+          document.getElementById('teamSelector').style.display = 'block';
+          sel.addEventListener('change', function() { selectTeam(teams.find(function(t){ return (t.id || t.team_id) === sel.value; })); });
+        }
+
+        selectTeam(teams[0]);
+      } catch(e) {
+        console.error('Team load error:', e);
+        document.getElementById('membersContainer').innerHTML = '<div class="empty-state">Could not load teams. Please try again.</div>';
+      }
+    }
+
+    function selectTeam(team) {
+      if (!team) return;
+      currentTeam = team;
+      const teamId = team.id || team.team_id;
+      const joinCode = team.join_code || team.joinCode || teamId.slice(0,8).toUpperCase();
+
+      // Update stats
+      document.getElementById('joinCodeStat').textContent = joinCode;
+      document.getElementById('joinCodeDisplay').textContent = joinCode;
+
+      // Share link
+      const shareUrl = 'https://assessment.valuetovictory.com/?team=' + teamId + '&depth=extensive';
+      document.getElementById('shareLinkText').textContent = shareUrl;
+
+      // Report link
+      document.getElementById('reportLink').href = '/team-report/' + teamId;
+
+      // Upgrade banner
+      const tier = team.tier || team.subscription_tier || '';
+      if (!tier || tier === 'free') {
+        document.getElementById('upgradeBanner').style.display = 'block';
+      } else {
+        document.getElementById('upgradeBanner').style.display = 'none';
+      }
+
+      loadMembers(teamId);
+    }
+
+    async function loadMembers(teamId) {
+      const container = document.getElementById('membersContainer');
+      container.innerHTML = '<div class="loading">Loading members...</div>';
+
+      try {
+        const token = localStorage.getItem('vtv_token');
+        const res = await fetch('/api/teams/' + teamId + '/results', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error('Failed to load members');
+        const data = await res.json();
+        const members = data.members || data.results || data || [];
+
+        if (!members.length) {
+          container.innerHTML = '<div class="empty-state">No members have taken the assessment yet. Share the join code to get started.</div>';
+          document.getElementById('memberCount').textContent = '0';
+          document.getElementById('avgScore').textContent = '--';
+          return;
+        }
+
+        // Stats
+        document.getElementById('memberCount').textContent = members.length;
+        const scores = members.filter(function(m){ return m.score; }).map(function(m){ return m.score; });
+        const avg = scores.length ? Math.round(scores.reduce(function(a,b){ return a+b; },0) / scores.length) : 0;
+        document.getElementById('avgScore').textContent = avg || '--';
+
+        // Build table
+        var html = '<table class="members-table"><thead><tr>';
+        html += '<th>Member</th><th>Score</th><th>Range</th><th>Weakest</th><th>Last Active</th>';
+        html += '</tr></thead><tbody>';
+
+        members.forEach(function(m, i) {
+          var label = m.name || m.display_name || ('Member #' + (i+1));
+          var score = m.score || '--';
+          var range = (m.range || '').toLowerCase();
+          var rangeCls = range ? 'rc-' + range : '';
+          var rangeLabel = range ? range.charAt(0).toUpperCase() + range.slice(1) : '--';
+          var weakest = m.weakest_pillar || m.weakest || '--';
+          if (weakest !== '--') weakest = weakest.charAt(0).toUpperCase() + weakest.slice(1);
+          var lastActive = m.last_active || m.updated_at || m.created_at || '--';
+          if (lastActive !== '--') {
+            try { lastActive = new Date(lastActive).toLocaleDateString(); } catch(e) {}
+          }
+
+          html += '<tr>';
+          html += '<td>' + escHtml(label) + '</td>';
+          html += '<td>' + score + '</td>';
+          html += '<td><span class="range-pill ' + rangeCls + '">' + rangeLabel + '</span></td>';
+          html += '<td>' + escHtml(weakest) + '</td>';
+          html += '<td>' + escHtml(lastActive) + '</td>';
+          html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch(e) {
+        console.error('Members load error:', e);
+        container.innerHTML = '<div class="empty-state">Could not load member data.</div>';
+      }
+    }
+
+    function copyJoinCode() {
+      var code = document.getElementById('joinCodeDisplay').textContent;
+      navigator.clipboard.writeText(code).then(function() {
+        var btn = document.getElementById('copyCodeBtn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function(){ btn.textContent = 'Copy Code'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+
+    function copyShareLink() {
+      var link = document.getElementById('shareLinkText').textContent;
+      navigator.clipboard.writeText(link).then(function() {
+        var btns = document.querySelectorAll('.share-link .copy-btn');
+        btns.forEach(function(b){ b.textContent = 'Copied!'; b.classList.add('copied'); });
+        setTimeout(function(){ btns.forEach(function(b){ b.textContent = 'Copy Link'; b.classList.remove('copied'); }); }, 2000);
+      });
+    }
+
+    async function sendInvite(e) {
+      e.preventDefault();
+      var email = document.getElementById('inviteEmail').value;
+      var status = document.getElementById('inviteStatus');
+      if (!currentTeam) { status.textContent = 'No team selected.'; return; }
+
+      status.textContent = 'Sending invite...';
+      try {
+        var teamId = currentTeam.id || currentTeam.team_id;
+        var token = localStorage.getItem('vtv_token');
+        var res = await fetch('/api/teams/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ teamId: teamId, email: email })
+        });
+        if (!res.ok) throw new Error('Invite failed');
+        status.textContent = 'Invite sent to ' + email + '!';
+        status.style.color = '#22c55e';
+        document.getElementById('inviteEmail').value = '';
+        setTimeout(function(){ status.textContent = ''; status.style.color = '#a1a1aa'; }, 4000);
+      } catch(err) {
+        status.textContent = 'Could not send invite. Try sharing the join code instead.';
+        status.style.color = '#ef4444';
+        setTimeout(function(){ status.textContent = ''; status.style.color = '#a1a1aa'; }, 4000);
+      }
+    }
+
+    async function openBillingPortal() {
+      try {
+        var token = localStorage.getItem('vtv_token');
+        var res = await fetch('/api/billing-portal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ email: userEmail })
+        });
+        if (!res.ok) throw new Error('Billing portal error');
+        var data = await res.json();
+        if (data.url) window.location.href = data.url;
+      } catch(e) {
+        alert('Could not open billing portal. Please try again or contact support.');
+      }
+    }
+
+    function escHtml(s) {
+      var d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+  </script>
+</body>
+</html>

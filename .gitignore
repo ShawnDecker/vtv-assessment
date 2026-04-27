@@ -6,3 +6,11 @@ node_modules/
 desktop.ini
 Thumbs.db
 ehthumbs.db
+.env*.local
+.claude/
+.DS_Store
+
+# BD research — private contact data lives beside public analysis but never
+# gets committed. See bd-research/bni-swva-pro/README.md.
+*.local.md
+bd-research/**/CONTACTS_LOCAL.md

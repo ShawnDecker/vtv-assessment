@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/js/auth.js"></script>
+  <script src="/error-reporter.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <link rel="icon" type="image/png" href="/favicon.png" />
@@ -1286,6 +1288,9 @@
 
 <!-- ===== JAVASCRIPT ===== -->
 <script>
+  // Auth gate — show login state if no token (don't redirect away)
+  // member.html has its own login flow (stateEntry → stateEnterPin → stateDashboard)
+
   // ── State ──────────────────────────────────────────────────────────────────
   // Theme Toggle
   function initTheme() {
@@ -1499,6 +1504,13 @@
       });
       var data = await res.json();
       if (data.verified) {
+        // CRITICAL: Save JWT token so all subsequent API calls are authenticated
+        if (data.token) localStorage.setItem('vtv_token', data.token);
+        if (data.contactId) localStorage.setItem('vtv_contact_id', String(data.contactId));
+        if (data.tier) localStorage.setItem('vtv_tier', data.tier);
+        if (data.firstName) localStorage.setItem('vtv_first_name', data.firstName);
+        localStorage.setItem('vtv_member_email', currentEmail);
+        localStorage.setItem('ve_email', currentEmail);
         await loadFullDashboard();
       } else {
         errEl.textContent = data.error || 'Incorrect PIN. Try again.';
@@ -1525,7 +1537,9 @@
   async function loadFullDashboard() {
     showState('stateLoading');
     try {
-      var res = await fetch('/api/member?email=' + encodeURIComponent(currentEmail));
+      var token = localStorage.getItem('vtv_token');
+      var headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+      var res = await fetch('/api/member?email=' + encodeURIComponent(currentEmail), { headers: headers });
       var data = await res.json();
       if (!data || data.found === false) {
         showState('stateNotFound');
@@ -1702,9 +1716,10 @@
     btn.disabled = true;
     btn.textContent = 'Opening portal…';
     try {
+      var _t = localStorage.getItem('vtv_token');
       const res = await fetch('/api/member/portal', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(_t ? {'Authorization': 'Bearer ' + _t} : {}) },
         body: JSON.stringify({ email: currentEmail })
       });
       const data = await res.json();
@@ -1826,7 +1841,7 @@
       </div>`;
 
     // Fetch entitlement and update the CTA
-    fetch('/api/entitlements?email=' + encodeURIComponent(email))
+    fetch('/api/entitlements?email=' + encodeURIComponent(email), { headers: localStorage.getItem('vtv_token') ? { 'Authorization': 'Bearer ' + localStorage.getItem('vtv_token') } : {} })
       .then(r => r.json())
       .then(data => {
         const ctaEl = document.getElementById('audiobookCta');
@@ -2155,9 +2170,10 @@
     btn.textContent = 'Importing…';
 
     try {
+      var _t = localStorage.getItem('vtv_token');
       const res = await fetch('/api/teams/' + teamId + '/import', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(_t ? {'Authorization': 'Bearer ' + _t} : {}) },
         body: JSON.stringify({ csv })
       });
       const data = await res.json();
@@ -2246,7 +2262,8 @@
     btn.textContent = 'Sending…';
 
     try {
-      const res = await fetch('/api/teams/' + teamId + '/send-report', { method: 'POST' });
+      var _t = localStorage.getItem('vtv_token');
+      const res = await fetch('/api/teams/' + teamId + '/send-report', { method: 'POST', headers: _t ? {'Authorization': 'Bearer ' + _t} : {} });
       if (res.ok) {
         toast('Report sent to CMA email!', 'success');
       } else {
@@ -2622,5 +2639,6 @@
   });
 </script>
 
+<script src="/cookie-consent.js"></script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/js/auth.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <link rel="icon" type="image/png" href="/favicon.png" />
@@ -174,7 +175,7 @@
     <div>
       <h2>Report Not Found</h2>
       <p style="color:#a1a1aa;margin-bottom:1rem;">This assessment could not be loaded.</p>
-      <a href="https://assessment.valuetovictory.com">Take the Assessment</a>
+      <a href="/">Take the Assessment</a>
     </div>
   </div>
   <div id="report" class="report" style="display:none;">
@@ -279,7 +280,7 @@
     <div id="goDeeper" class="section" style="display:none;text-align:center;">
       <div class="section-title" style="color:#D4A847;">Ready to Go Deeper?</div>
       <p style="color:#a1a1aa;font-size:0.9rem;line-height:1.6;margin-bottom:1.5rem;">Your quick score gives you a snapshot &mdash; but real change requires real reflection. The extensive assessment unlocks your full P.I.N.K. breakdown, personalized prescription, and the tools to actually move the needle.</p>
-      <a href="https://assessment.valuetovictory.com/?depth=extensive" style="display:inline-block;padding:0.875rem 2rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;border-radius:0.625rem;text-decoration:none;font-size:0.95rem;">Take the Extensive Assessment</a>
+      <a href="/?depth=extensive" style="display:inline-block;padding:0.875rem 2rem;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-weight:700;border-radius:0.625rem;text-decoration:none;font-size:0.95rem;">Take the Extensive Assessment</a>
       <p id="pillarDiveLabel" style="font-size:0.78rem;color:#71717a;margin-top:1.5rem;margin-bottom:0.5rem;">Or dive into one pillar at a time:</p>
       <div id="pillarDiveBtns" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;"></div>
     </div>
@@ -297,7 +298,7 @@
         <div class="section-title">Keep Moving</div>
         <div class="progress-text" id="progressText"></div>
         <p>Come back in 30 days and see how your score moves.</p>
-        <a href="https://assessment.valuetovictory.com/returning">Take Your Next Assessment</a>
+        <a href="/returning">Take Your Next Assessment</a>
       </div>
     </div>
 
@@ -509,7 +510,7 @@
       var pillarNames = ['Time', 'People', 'Influence', 'Numbers', 'Knowledge'];
       function buildPillarBtns() {
         return pillarNames.map(function(pn) {
-          return '<a href="https://assessment.valuetovictory.com/?depth=pillar&pillar=' + pn.toLowerCase() + '" style="' + pillarBtnStyle + '">' + pn + '</a>';
+          return '<a href="/?depth=pillar&pillar=' + pn.toLowerCase() + '" style="' + pillarBtnStyle + '">' + pn + '</a>';
         }).join('');
       }
       if (depth === 'quick') {
