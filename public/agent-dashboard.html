@@ -222,6 +222,71 @@ function render(data) {
     html += '</div>';
   }
 
+  // === AI ROUTER ===
+  if (data.aiRouter) {
+    const ar = data.aiRouter;
+    html += '<div class="section-title">AI Router</div>';
+
+    const tunnelClass = ar.tunnel_status === 'named-tunnel-active' ? 'b-green'
+                      : ar.tunnel_status === 'quick-tunnel' ? 'b-yellow'
+                      : ar.tunnel_status === 'misconfigured' ? 'b-red' : 'b-yellow';
+    html += `<div class="card"><div class="name">Routing <span class="badge ${tunnelClass}">${ar.tunnel_status || 'unknown'}</span></div>`;
+    html += `<div class="meta">Small: ${ar.small_model} &bull; Frontier: ${ar.frontier_model} &bull; Mode: ${ar.provider_mode}</div>`;
+    if (ar.ollama && ar.ollama.host) {
+      const ollamaBadge = ar.ollama.reachable ? '<span class="badge b-green">UP</span>' : '<span class="badge b-red">DOWN</span>';
+      const modelCount = ar.ollama.models && ar.ollama.models.length ? ' &bull; ' + ar.ollama.models.length + ' local models' : '';
+      const errMsg = ar.ollama.error ? ' &bull; ' + ar.ollama.error : '';
+      html += `<div class="detail">Ollama ${ollamaBadge} ${ar.ollama.host}${modelCount}${errMsg}</div>`;
+    }
+    if (ar.tunnel_advice && ar.tunnel_status !== 'named-tunnel-active') {
+      html += `<div class="detail" style="color:#eab308;margin-top:8px;">${ar.tunnel_advice}</div>`;
+    }
+    html += '</div>';
+
+    if (ar.metrics && ar.metrics.last_24h) {
+      const m = ar.metrics.last_24h;
+      html += '<div class="stat-row">';
+      html += stat(m.calls || 0, 'Calls 24h');
+      html += stat('$' + (m.cost_usd || 0).toFixed(2), 'Cost 24h');
+      html += stat((m.avg_latency_ms || 0) + 'ms', 'Avg Latency');
+      html += stat(m.cache_hits || 0, 'Cache Hits');
+      if (m.errors > 0) html += stat(m.errors, 'Errors');
+      if (m.escalations > 0) html += stat(m.escalations, 'Escalations');
+      html += '</div>';
+    }
+
+    if (ar.metrics && ar.metrics.by_tier_7d && ar.metrics.by_tier_7d.length) {
+      html += '<div class="cat-header">By Tier (7d)</div>';
+      html += '<table><tr><th>Tier</th><th>Calls</th><th>Cost</th></tr>';
+      for (const t of ar.metrics.by_tier_7d) {
+        html += `<tr><td>${t.tier || 'unknown'}</td><td>${t.calls}</td><td>$${(t.cost_usd || 0).toFixed(4)}</td></tr>`;
+      }
+      html += '</table>';
+    }
+
+    if (ar.metrics && ar.metrics.by_model_7d && ar.metrics.by_model_7d.length) {
+      html += '<div class="cat-header">Top Models (7d)</div>';
+      html += '<table><tr><th>Model</th><th>Tier</th><th>Calls</th><th>Cost</th></tr>';
+      for (const mm of ar.metrics.by_model_7d.slice(0, 5)) {
+        html += `<tr><td>${mm.model}</td><td>${mm.tier || '&mdash;'}</td><td>${mm.calls}</td><td>$${(mm.cost_usd || 0).toFixed(4)}</td></tr>`;
+      }
+      html += '</table>';
+    }
+
+    if (ar.metrics && ar.metrics.recent_errors && ar.metrics.recent_errors.length) {
+      html += '<div class="cat-header">Recent AI Errors</div>';
+      for (const e of ar.metrics.recent_errors) {
+        const ago = timeAgo(e.created_at);
+        const errMsg = (e.error_message || '').substring(0, 200);
+        html += `<div class="card"><div class="name" style="color:#ef4444;">${e.action || 'unknown action'} &bull; ${e.model || '&mdash;'}</div><div class="meta">${ago} &bull; Tier: ${e.tier || '&mdash;'}</div><div class="detail">${errMsg}</div></div>`;
+      }
+    }
+
+    if (ar.metrics && ar.metrics.note) {
+      html += `<div class="card"><div class="detail" style="color:#71717a;">${ar.metrics.note}</div></div>`;
+    }
+  }
+
   // === TEAM INSTALLATIONS ===
   const teamSystems = (data.systems || []).filter(s => s.category === 'team');
   if (teamSystems.length) {
