@@ -3454,18 +3454,36 @@ Don't guess. Run the system.
         try { await auditLog(sql, { action: 'pin_login_failed', actor: 'unknown', ip: clientIP }); } catch(e) {}
         return res.status(401).json({ error: 'Invalid PIN' });
       }
-      // Success — log it and return token + API key
+      // Success — log it and return JWT in both `token` and `apiKey` fields.
+      // SECURITY: `apiKey` field used to return the raw ADMIN_API_KEY env var,
+      // which gave anyone passing PIN auth the master credential in plaintext.
+      // It now contains the same JWT as `token` — older clients that send it as
+      // x-api-key continue to work via the JWT path in the /admin/* gate below.
       try { await auditLog(sql, { action: 'pin_login_success', actor: 'admin', ip: clientIP }); } catch(e) {}
       const adminToken = createJWT({ role: 'admin', iat: Math.floor(Date.now() / 1000) });
-      return res.json({ success: true, token: adminToken, apiKey: process.env.ADMIN_API_KEY || '' });
+      return res.json({ success: true, token: adminToken, apiKey: adminToken });
     }
 
-    // All /admin/* routes require x-api-key header matching ADMIN_API_KEY env var
+    // /admin/* gate — accepts any of:
+    //   (1) x-api-key header matching ADMIN_API_KEY (raw-key paste, power users)
+    //   (2) x-api-key containing a valid admin-role JWT (legacy pin-login clients)
+    //   (3) Authorization: Bearer <admin JWT> (preferred, modern clients)
     if (url.startsWith('/admin')) {
       const apiKey = req.headers['x-api-key'] || '';
+      const authHdr = req.headers['authorization'] || '';
+      const bearer = authHdr.startsWith('Bearer ') ? authHdr.slice(7) : '';
       const validKey = process.env.ADMIN_API_KEY || '';
-      if (!validKey || apiKey !== validKey) {
-        return res.status(401).json({ error: 'Unauthorized. Valid API key required.' });
+
+      let authorized = !!(validKey && apiKey === validKey);
+      if (!authorized) {
+        const candidate = apiKey || bearer;
+        if (candidate) {
+          const payload = verifyJWT(candidate);
+          if (payload && payload.role === 'admin') authorized = true;
+        }
+      }
+      if (!authorized) {
+        return res.status(401).json({ error: 'Unauthorized. Valid API key or admin JWT required.' });
       }
     }
 
