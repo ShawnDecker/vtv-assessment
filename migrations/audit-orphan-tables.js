@@ -51,7 +51,10 @@ async function auditTable(sql, table) {
   const hasCreated = colNames.includes('created_at');
   const hasUpdated = colNames.includes('updated_at');
 
-  const countRow = await sql`SELECT COUNT(*)::int AS n FROM ${sql.unsafe(`"${table}"`)}`;
+  // Table names come from a hardcoded list (TABLES const), so string interpolation is safe.
+  // The @neondatabase/serverless driver supports raw queries by calling sql() as a function;
+  // sql`...` is parameterized, sql(`...`) is raw. There is no sql.unsafe on this driver.
+  const countRow = await sql(`SELECT COUNT(*)::int AS n FROM "${table}"`);
   const rowCount = countRow[0].n;
 
   let lastWrite = null;
@@ -59,7 +62,7 @@ async function auditTable(sql, table) {
     const expr = hasUpdated && hasCreated
       ? 'GREATEST(MAX(created_at), MAX(updated_at))'
       : hasUpdated ? 'MAX(updated_at)' : 'MAX(created_at)';
-    const lw = await sql.unsafe(`SELECT ${expr} AS lw FROM "${table}"`);
+    const lw = await sql(`SELECT ${expr} AS lw FROM "${table}"`);
     lastWrite = lw[0].lw;
   }
 
