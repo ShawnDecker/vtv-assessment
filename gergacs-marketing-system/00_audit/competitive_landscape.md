@@ -89,7 +89,7 @@ Nine top-tier Savannah-area Realtors and small teams analyzed. The headline find
 
 ### A. The Appraiser-Realtor
 
-**NOT ONE** competitor above holds a Certified Residential Appraiser credential. Every agent sells emotion + access; Nikki can sell **defensible price intelligence**.
+**NOT ONE** competitor above holds a Certified Residential Appraiser credential. Every agent sells emotion + access; Nikki can sell **comparable-supported pricing analysis grounded in 21 years of appraisal methodology**.
 
 Frame: *"The only Savannah luxury Realtor who values your home before she lists it."*
 

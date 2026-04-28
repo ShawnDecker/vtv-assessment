@@ -102,7 +102,7 @@ If any blocker is unresolved by Wednesday Week 1, ads cannot launch this week.
 | Day | Action |
 |-----|--------|
 | Mon | Build retargeting audience: anyone who interacted with Lane 2 content past 30 days |
-| Tue | Build variant 2 of Ad #1 (Pre-List Valuation): more direct "what your home is worth" angle |
+| Tue | Build variant 2 of Ad #1 (Pre-List Comparable Analysis): more direct "what the comparables show" angle |
 | Wed | Launch retargeting ad set with mid-funnel CTA (FAQ + Microsoft Bookings) |
 | Thu | First mid-month deep dive (Day 14): performance by ad creative + persona × hook |
 | Fri | Decisions briefed for week 4 |
