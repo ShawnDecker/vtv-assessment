@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Why Nikki — Gergacs Realty</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Trocchi:wght@400&family=Noto+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F6F0E6;--text:#141414;--sec:#3A3530;--muted:#7A6E5E;
+  --navy:#1E2A44;--bronze:#7A5B2E;--bronze-d:#5C4422;
+  --pearl:#C9B690;--pearl-d:#9A7D4E;
+  --border:#D8CFBF;--card:#FFFBF4;
+}
+body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+.deck{max-width:920px;margin:0 auto;padding:0}
+.slide{min-height:100vh;padding:6vh 6vw;display:flex;flex-direction:column;justify-content:center;page-break-after:always;border-bottom:1px solid var(--border);position:relative}
+.slide:last-child{page-break-after:auto}
+.sl-num{position:absolute;top:24px;right:32px;font-size:.65rem;color:var(--muted);letter-spacing:.18em;text-transform:uppercase}
+.sl-mark{position:absolute;top:24px;left:32px;font-size:.6rem;color:var(--bronze);letter-spacing:.28em;text-transform:uppercase;font-weight:700}
+.sl-foot{position:absolute;bottom:24px;left:32px;right:32px;display:flex;justify-content:space-between;font-size:.55rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+h1{font-family:'Trocchi',serif;font-size:3.4rem;line-height:1.05;letter-spacing:-.005em;color:var(--navy);margin-bottom:1rem;font-weight:400}
+h2{font-family:'Trocchi',serif;font-size:2.2rem;line-height:1.1;color:var(--text);margin-bottom:1.2rem;font-weight:400}
+h3{font-family:'Trocchi',serif;font-size:1.4rem;color:var(--bronze);margin-bottom:.6rem;font-weight:400}
+p{font-size:1.05rem;color:var(--sec);margin-bottom:1rem;max-width:680px}
+.lede{font-size:1.4rem;color:var(--text);font-family:'Trocchi',serif;font-style:italic;line-height:1.4;max-width:720px}
+.tag{display:inline-block;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--bronze);font-weight:700;margin-bottom:1rem}
+.divider{width:60px;height:3px;background:linear-gradient(90deg,var(--bronze),var(--pearl));border-radius:2px;margin:1rem 0}
+.hero-img{width:100%;height:42vh;object-fit:cover;border-radius:14px;margin-bottom:2rem;box-shadow:0 12px 40px rgba(30,42,68,.18)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.split-img{height:50vh;object-fit:cover;border-radius:14px;box-shadow:0 12px 40px rgba(30,42,68,.18)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin:2rem 0}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.5rem 1rem;text-align:center;box-shadow:0 4px 16px rgba(30,42,68,.06)}
+.stat .n{font-family:'Trocchi',serif;font-size:2.2rem;color:var(--bronze);line-height:1}
+.stat .l{font-size:.6rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:.4rem}
+.bullets{list-style:none}
+.bullets li{font-size:1.1rem;color:var(--text);margin-bottom:1.1rem;padding-left:2rem;position:relative;line-height:1.55}
+.bullets li::before{content:'';position:absolute;left:0;top:.62rem;width:14px;height:14px;background:var(--bronze);border-radius:50%}
+blockquote{font-family:'Trocchi',serif;font-style:italic;font-size:1.6rem;line-height:1.45;color:var(--text);border-left:4px solid var(--bronze);padding-left:1.4rem;margin:1rem 0;max-width:720px}
+blockquote cite{display:block;font-style:normal;font-family:'Noto Sans',sans-serif;font-size:.7rem;color:var(--bronze);letter-spacing:.16em;text-transform:uppercase;margin-top:.8rem;font-weight:700}
+.cta-card{background:var(--navy);color:#F6F0E6;border-radius:14px;padding:2.4rem;margin-top:2rem;text-align:center;box-shadow:0 12px 40px rgba(30,42,68,.25)}
+.cta-card h2{color:#F6F0E6}
+.cta-btn{display:inline-block;padding:.9rem 2rem;background:linear-gradient(135deg,var(--pearl),var(--pearl-d));color:#1E2A44;border-radius:10px;text-decoration:none;font-weight:700;font-size:.95rem;margin-top:1rem;box-shadow:0 6px 20px rgba(201,182,144,.3)}
+.disclaimer{font-size:.75rem;color:var(--muted);font-style:italic;max-width:680px;margin-top:1.4rem;line-height:1.5}
+.cover{background:linear-gradient(160deg,#0E141F 0%,#1E2A44 50%,#3A4670 100%);color:#F6F0E6;text-align:center}
+.cover h1{color:#F6F0E6}
+.cover h1 em{color:var(--pearl);font-style:italic}
+.cover .lede{color:rgba(246,240,230,.8)}
+.cover .pearl-mark{font-family:'Trocchi',serif;font-style:italic;color:var(--pearl);letter-spacing:.4em;font-size:.85rem;margin-top:2rem}
+@media print{
+  .slide{page-break-after:always;min-height:auto;padding:1in 1in}
+  body{background:white}
+}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- SLIDE 1 · COVER -->
+<section class="slide cover">
+  <div class="sl-num">01 · Cover</div>
+  <h1>Why <em>Nikki</em></h1>
+  <div class="lede" style="margin-top:1.4rem">Realtor &amp; GA Certified Residential Appraiser. Savannah, Tybee, Pooler &amp; Richmond Hill.</div>
+  <div class="pearl-mark">— Your Next Pearl Awaits —</div>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>Luxury without the pretense.</span></div>
+</section>
+
+<!-- SLIDE 2 · THE PROBLEM -->
+<section class="slide">
+  <div class="sl-mark">The market</div>
+  <div class="sl-num">02 / 08</div>
+  <h2>Most Savannah agents tell you the same thing.</h2>
+  <p>"Premier." "Elite." "Unmatched." Every brokerage page says it. Every listing description says it. The words have stopped meaning anything.</p>
+  <p>You're not looking for premier. You're looking for honest.</p>
+  <div class="divider"></div>
+  <p style="font-style:italic;color:var(--bronze)">— Your Next Pearl Awaits.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>02 / 08</span></div>
+</section>
+
+<!-- SLIDE 3 · THE DIFFERENCE -->
+<section class="slide">
+  <div class="sl-mark">The difference</div>
+  <div class="sl-num">03 / 08</div>
+  <div class="split">
+    <div>
+      <h2>One Realtor in Savannah is also a Certified Residential Appraiser.</h2>
+      <p>Not five. Not three. One.</p>
+      <p>I've spent 21 years as a Certified Residential Appraiser, valuing Lowcountry homes for lenders, courts, and estates. I'm also an active Realtor representing buyers and sellers across Chatham, Bryan, and Effingham counties.</p>
+      <p style="color:var(--bronze);font-weight:700">Most agents can show you a home. Few can also walk you through what the comparables show.</p>
+    </div>
+    <img class="split-img" src="https://images.unsplash.com/photo-1571055107559-3e67626fa8be?w=1000&q=80" alt="Historic Savannah architecture · live oaks · golden hour"/>
+  </div>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>03 / 08</span></div>
+</section>
+
+<!-- SLIDE 4 · THE STATS -->
+<section class="slide">
+  <div class="sl-mark">The numbers</div>
+  <div class="sl-num">04 / 08</div>
+  <h2>The credential is in the work.</h2>
+  <div class="stats">
+    <div class="stat"><div class="n">21+</div><div class="l">Years Appraising</div></div>
+    <div class="stat"><div class="n">3</div><div class="l">Counties Served</div></div>
+    <div class="stat"><div class="n">2</div><div class="l">Credentials Held</div></div>
+    <div class="stat"><div class="n">1</div><div class="l">Hometown · Savannah</div></div>
+  </div>
+  <p>License: GA Certified Residential Appraiser CR287636. Independent appraisal practice through Gergacs Appraisals, LLC. Active Realtor under Next Move Real Estate.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>04 / 08</span></div>
+</section>
+
+<!-- SLIDE 5 · WHO I SERVE -->
+<section class="slide">
+  <div class="sl-mark">Who I serve</div>
+  <div class="sl-num">05 / 08</div>
+  <h2>Boutique guidance for boutique buyers.</h2>
+  <ul class="bullets">
+    <li><strong>Luxury buyers</strong> who want a guide more than a salesperson</li>
+    <li><strong>Downsizers and right-sizers</strong> moving from large estates to coastal cottages</li>
+    <li><strong>Relocators</strong> from across the country and overseas</li>
+    <li><strong>Lifestyle-driven professionals</strong> who choose neighborhoods on Tuesday afternoons, not on Zillow</li>
+    <li><strong>Sellers</strong> who want appraiser-trained perspective on positioning, not flattery</li>
+  </ul>
+  <p class="disclaimer">Image asset: Savannah multi-generational family on a porch with morning coffee. Refer to Savannah Image Library — multi-demographic representation per asset.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>05 / 08</span></div>
+</section>
+
+<!-- SLIDE 6 · MY APPROACH -->
+<section class="slide">
+  <div class="sl-mark">My approach</div>
+  <div class="sl-num">06 / 08</div>
+  <h2>I lead with relationship, not credentials.</h2>
+  <p>Credentials get you in the door. Relationship is what makes the home feel like the right one — and what brings you back the next time you move.</p>
+  <p>The way I work:</p>
+  <ul class="bullets">
+    <li><strong>I show you what the comparables show.</strong> Not what I want you to hear.</li>
+    <li><strong>I name the trade-offs honestly.</strong> Pooler vs Richmond Hill, Tybee vs Skidaway — there's no perfect answer, and you deserve the real one.</li>
+    <li><strong>I respect your time.</strong> No 30-minute calls that should have been 10. No three follow-ups when one is right.</li>
+    <li><strong>I stay in touch after closing.</strong> Most agents disappear at the deed. I check in for years.</li>
+  </ul>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>06 / 08</span></div>
+</section>
+
+<!-- SLIDE 7 · TESTIMONIAL -->
+<section class="slide">
+  <div class="sl-mark">In their words</div>
+  <div class="sl-num">07 / 08</div>
+  <blockquote>
+    "She told me what my home was actually positioned for in the comparable bracket — not what I wanted to hear. We listed at her number. We closed in 18 days."
+    <cite>— Skidaway Island seller, 2025 closing</cite>
+  </blockquote>
+  <blockquote style="margin-top:2rem">
+    "We were relocating from California with two kids and a dog and no idea where to start. Nikki spent the first 30 minutes asking about our Tuesday afternoons. By the third weekend we'd narrowed to two neighborhoods. We've been in Ardsley Park for nine months and she still texts about pollen season."
+    <cite>— Relocators, 2025 closing</cite>
+  </blockquote>
+  <p class="disclaimer">Asset note: testimonials shown above are representative — replace with actual past-client quotes once review-collection sweep complete (Lane 3, day 30+).</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>07 / 08</span></div>
+</section>
+
+<!-- SLIDE 8 · CTA -->
+<section class="slide">
+  <div class="sl-mark">Let's talk</div>
+  <div class="sl-num">08 / 08</div>
+  <h2>The conversation is the deliverable.</h2>
+  <p>30 minutes. No pitch. Just a real conversation about what you're trying to do — buying, selling, relocating, downsizing, or just thinking about it.</p>
+  <div class="cta-card">
+    <h2 style="font-size:1.6rem">Pick a 30-minute slot</h2>
+    <p style="color:rgba(246,240,230,.85)">Microsoft Bookings · No pressure · No agenda</p>
+    <a class="cta-btn" href="mailto:nikki@gergacsrealty.com">Email · nikki@gergacsrealty.com</a>
+    <a class="cta-btn" href="tel:9123783427" style="background:transparent;color:#F6F0E6;border:1.5px solid var(--pearl);margin-left:.5rem">Call · (912) 378-3427</a>
+  </div>
+  <p class="disclaimer">Pre-list comparable analysis is a strategic pricing review — not a USPAP appraisal. For lending, estate, divorce, or legal use, an appraisal report is required.</p>
+  <div class="sl-foot"><span>Gergacs Realty · Luxury without the pretense.</span><span>Your Next Pearl Awaits.</span></div>
+</section>
+
+</div>
+</body>
+</html>

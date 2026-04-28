@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pre-List Comparable Analysis — Gergacs Realty</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Trocchi:wght@400&family=Noto+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F6F0E6;--text:#141414;--sec:#3A3530;--muted:#7A6E5E;
+  --navy:#1E2A44;--bronze:#7A5B2E;--bronze-d:#5C4422;
+  --pearl:#C9B690;--pearl-d:#9A7D4E;
+  --border:#D8CFBF;--card:#FFFBF4;
+}
+body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+.deck{max-width:920px;margin:0 auto;padding:0}
+.slide{min-height:100vh;padding:6vh 6vw;display:flex;flex-direction:column;justify-content:center;page-break-after:always;border-bottom:1px solid var(--border);position:relative}
+.slide:last-child{page-break-after:auto}
+.sl-num{position:absolute;top:24px;right:32px;font-size:.65rem;color:var(--muted);letter-spacing:.18em;text-transform:uppercase}
+.sl-mark{position:absolute;top:24px;left:32px;font-size:.6rem;color:var(--bronze);letter-spacing:.28em;text-transform:uppercase;font-weight:700}
+.sl-foot{position:absolute;bottom:24px;left:32px;right:32px;display:flex;justify-content:space-between;font-size:.55rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+h1{font-family:'Trocchi',serif;font-size:3.2rem;line-height:1.05;color:var(--navy);margin-bottom:1rem;font-weight:400}
+h2{font-family:'Trocchi',serif;font-size:2.1rem;line-height:1.1;color:var(--text);margin-bottom:1.2rem;font-weight:400}
+h3{font-family:'Trocchi',serif;font-size:1.3rem;color:var(--bronze);margin-bottom:.5rem;font-weight:400}
+p{font-size:1.02rem;color:var(--sec);margin-bottom:.9rem;max-width:680px}
+.lede{font-size:1.35rem;color:var(--text);font-family:'Trocchi',serif;font-style:italic;line-height:1.4;max-width:720px}
+.divider{width:60px;height:3px;background:linear-gradient(90deg,var(--bronze),var(--pearl));border-radius:2px;margin:1rem 0}
+.hero-img{width:100%;height:42vh;object-fit:cover;border-radius:14px;margin-bottom:1.6rem;box-shadow:0 12px 40px rgba(30,42,68,.18)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.split-img{height:50vh;object-fit:cover;border-radius:14px;box-shadow:0 12px 40px rgba(30,42,68,.18)}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem;margin-top:1.4rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.4rem;box-shadow:0 4px 16px rgba(30,42,68,.06)}
+.card h3{font-size:1.08rem;color:var(--navy)}
+.card p{font-size:.85rem;line-height:1.5}
+.bullets{list-style:none}
+.bullets li{font-size:1rem;color:var(--text);margin-bottom:.85rem;padding-left:1.7rem;position:relative;line-height:1.55}
+.bullets li::before{content:'';position:absolute;left:0;top:.55rem;width:11px;height:11px;background:var(--bronze);border-radius:50%}
+blockquote{font-family:'Trocchi',serif;font-style:italic;font-size:1.5rem;line-height:1.45;color:var(--text);border-left:4px solid var(--bronze);padding-left:1.4rem;margin:1rem 0;max-width:720px}
+blockquote cite{display:block;font-style:normal;font-family:'Noto Sans',sans-serif;font-size:.7rem;color:var(--bronze);letter-spacing:.16em;text-transform:uppercase;margin-top:.7rem;font-weight:700}
+.cta-card{background:var(--navy);color:#F6F0E6;border-radius:14px;padding:2.4rem;margin-top:2rem;text-align:center;box-shadow:0 12px 40px rgba(30,42,68,.25)}
+.cta-card h2{color:#F6F0E6}
+.cta-btn{display:inline-block;padding:.9rem 2rem;background:linear-gradient(135deg,var(--pearl),var(--pearl-d));color:#1E2A44;border-radius:10px;text-decoration:none;font-weight:700;font-size:.92rem;margin-top:1rem;box-shadow:0 6px 20px rgba(201,182,144,.3)}
+.disclaimer{font-size:.75rem;color:var(--muted);font-style:italic;max-width:680px;margin-top:1.4rem;line-height:1.5;border-left:3px solid var(--bronze);padding-left:1rem}
+.cover{background:linear-gradient(160deg,#0E141F 0%,#1E2A44 50%,#3A4670 100%);color:#F6F0E6;text-align:center}
+.cover h1{color:#F6F0E6}
+.cover h1 em{color:var(--pearl);font-style:italic}
+.cover .lede{color:rgba(246,240,230,.8)}
+.cover .pearl-mark{font-family:'Trocchi',serif;font-style:italic;color:var(--pearl);letter-spacing:.4em;font-size:.85rem;margin-top:2rem}
+.method-table{width:100%;border-collapse:collapse;margin:1.4rem 0;font-size:.92rem}
+.method-table th{background:var(--navy);color:#F6F0E6;padding:.8rem 1rem;text-align:left;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+.method-table td{padding:.7rem 1rem;border-bottom:1px solid var(--border)}
+.process{display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem;margin-top:1.2rem}
+.proc-step{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem;position:relative}
+.proc-step .num{position:absolute;top:-12px;left:16px;background:var(--bronze);color:#F6F0E6;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Trocchi',serif;font-size:1rem;box-shadow:0 4px 12px rgba(122,91,46,.3)}
+.proc-step h3{margin-top:.6rem;font-size:1.05rem;color:var(--navy)}
+.proc-step p{font-size:.85rem;line-height:1.55}
+@media print{.slide{page-break-after:always;min-height:auto;padding:1in 1in}body{background:white}}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- SLIDE 1 · COVER -->
+<section class="slide cover">
+  <div class="sl-num">01 · Cover</div>
+  <h1>Pre-List <em>Comparable Analysis</em></h1>
+  <div class="lede" style="margin-top:1.4rem">A strategic pricing review of your home, grounded in 21 years of valuing the Lowcountry.</div>
+  <div class="pearl-mark">— Your Next Pearl Awaits —</div>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>Luxury without the pretense.</span></div>
+</section>
+
+<!-- SLIDE 2 · THE WRONG QUESTION -->
+<section class="slide">
+  <div class="sl-mark">The wrong question</div>
+  <div class="sl-num">02 / 12</div>
+  <h2>"What's my home worth?" is the wrong starting question.</h2>
+  <p>It's the question every seller asks. It's the question every agent gets paid to answer. And it's the question that produces the most expensive mistakes in real estate.</p>
+  <p>The right question is:</p>
+  <blockquote>"What does the recent comparable bracket support — and how do I position my home inside it?"</blockquote>
+  <p>That's a different conversation. It's the one I want to have with you.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>02 / 12</span></div>
+</section>
+
+<!-- SLIDE 3 · THE DUAL CREDENTIAL -->
+<section class="slide">
+  <div class="sl-mark">My credential</div>
+  <div class="sl-num">03 / 12</div>
+  <div class="split">
+    <div>
+      <h2>I'm one of the only Realtors in Savannah who is also a Certified Residential Appraiser.</h2>
+      <p>21 years of valuing Lowcountry homes for lenders, courts, and estate purposes. License GACR287636. Independent appraisal practice through Gergacs Appraisals, LLC.</p>
+      <p>What that means for your listing strategy: I read comparable sales the way an appraiser does. I know which adjustments the market actually supports and which ones sellers wish it did.</p>
+      <p style="color:var(--bronze);font-weight:700">Most agents can show you a comparable. Few can read it.</p>
+    </div>
+    <img class="split-img" src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1000&q=80" alt="Coastal Georgia evening sky · Lowcountry"/>
+  </div>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>03 / 12</span></div>
+</section>
+
+<!-- SLIDE 4 · WHAT THIS IS NOT -->
+<section class="slide">
+  <div class="sl-mark">Important boundary</div>
+  <div class="sl-num">04 / 12</div>
+  <h2>What this service is — and what it isn't.</h2>
+  <table class="method-table">
+    <tr><th>Pre-list comparable analysis</th><th>USPAP appraisal</th></tr>
+    <tr>
+      <td>A strategic pricing review based on recent local comparable sales</td>
+      <td>A certified appraisal report under USPAP Standards Rules 1 &amp; 2</td>
+    </tr>
+    <tr>
+      <td>For listing-strategy decisions</td>
+      <td>For lender, estate, divorce, or legal purposes</td>
+    </tr>
+    <tr>
+      <td>Provided as part of my Realtor representation</td>
+      <td>Provided as a separate, paid appraisal engagement through Gergacs Appraisals, LLC</td>
+    </tr>
+    <tr>
+      <td>Comparable analysis + market context + listing strategy recommendation</td>
+      <td>Independent value opinion documented under USPAP scope of work</td>
+    </tr>
+  </table>
+  <p>If you need a USPAP-compliant appraisal report — for a divorce, an estate, a refi, a tax appeal — that's a separate service through my appraisal practice. I'll tell you which one fits your situation.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>04 / 12</span></div>
+</section>
+
+<!-- SLIDE 5 · THE METHOD -->
+<section class="slide">
+  <div class="sl-mark">The method</div>
+  <div class="sl-num">05 / 12</div>
+  <h2>How I read comparables for your home.</h2>
+  <div class="process">
+    <div class="proc-step">
+      <div class="num">1</div>
+      <h3>Subject property review</h3>
+      <p>Walk-through · GLA · condition · feature inventory · improvements vs original</p>
+    </div>
+    <div class="proc-step">
+      <div class="num">2</div>
+      <h3>Comparable selection</h3>
+      <p>5-8 recent closed sales · same neighborhood · similar style/size/age · within last 6 months</p>
+    </div>
+    <div class="proc-step">
+      <div class="num">3</div>
+      <h3>Paired-sales adjustments</h3>
+      <p>Time · GLA · garage · bath · condition · view · lot — adjustments supported by paired-sales data, not by habit</p>
+    </div>
+    <div class="proc-step">
+      <div class="num">4</div>
+      <h3>Bracket reconciliation</h3>
+      <p>Adjusted comp range · weighted by similarity, recency, proximity · indicated bracket</p>
+    </div>
+    <div class="proc-step">
+      <div class="num">5</div>
+      <h3>Listing strategy</h3>
+      <p>Where in the bracket your home positions · pricing entry point · expected absorption</p>
+    </div>
+    <div class="proc-step">
+      <div class="num">6</div>
+      <h3>Pre-list prep recommendations</h3>
+      <p>What's worth doing (high ROI) · what isn't · staging vs as-is · timing</p>
+    </div>
+  </div>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>05 / 12</span></div>
+</section>
+
+<!-- SLIDE 6 · THE 60-SECOND TEST -->
+<section class="slide">
+  <div class="sl-mark">What I look for</div>
+  <div class="sl-num">06 / 12</div>
+  <h2>The first 60 seconds in your home.</h2>
+  <p>Before any comparable is pulled, I notice:</p>
+  <ul class="bullets">
+    <li><strong>The roof line</strong> — original heart-pine vs replacement; period-correct vs aftermarket</li>
+    <li><strong>The foundation lines</strong> — Savannah humidity, settling patterns, drainage</li>
+    <li><strong>The crown molding and trim</strong> — original is rare and supports the bracket</li>
+    <li><strong>The kitchen "decade signal"</strong> — when was it last meaningfully updated</li>
+    <li><strong>The primary bath</strong> — most undervalued or overvalued room in pricing</li>
+    <li><strong>The natural light</strong> — angle, exposure, time-of-day affecting your photos</li>
+    <li><strong>The yard's intended use</strong> — entertaining vs maintenance vs garden</li>
+  </ul>
+  <p>None of these are deal-breakers. All of them inform where your home positions in the comparable bracket.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>06 / 12</span></div>
+</section>
+
+<!-- SLIDE 7 · THINGS THAT DON'T ADD VALUE -->
+<section class="slide">
+  <div class="sl-mark">The hard truths</div>
+  <div class="sl-num">07 / 12</div>
+  <h2>Things sellers swear add value — that comparables don't actually support.</h2>
+  <ul class="bullets">
+    <li><strong>Custom paint colors</strong> — unless it's neutralized for sale, it's a discount</li>
+    <li><strong>Above-ground pools</strong> — almost never recouped in coastal Georgia</li>
+    <li><strong>Aftermarket sound systems</strong> — speakers don't appraise</li>
+    <li><strong>Over-improved primary baths</strong> — past a point, the comparables stop rewarding it</li>
+    <li><strong>Highly personalized landscaping</strong> — buyers see maintenance, not beauty</li>
+    <li><strong>Unpermitted finished spaces</strong> — appraisal won't credit GLA without permits</li>
+    <li><strong>Sentimental "we put $80k into the kitchen"</strong> — what matters is what comparables show, not what was spent</li>
+  </ul>
+  <p style="font-style:italic;color:var(--bronze)">I'd rather tell you the honest answer than the flattering one.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>07 / 12</span></div>
+</section>
+
+<!-- SLIDE 8 · WHAT YOU GET -->
+<section class="slide">
+  <div class="sl-mark">The deliverable</div>
+  <div class="sl-num">08 / 12</div>
+  <h2>What you'll have at the end of our 30 minutes.</h2>
+  <ul class="bullets">
+    <li><strong>The comparable bracket</strong> your home falls into based on 5-8 recent local sales</li>
+    <li><strong>The specific positioning</strong> within that bracket — high, mid, low — and why</li>
+    <li><strong>The 3-5 things worth doing</strong> before listing (and the 3-5 not worth doing)</li>
+    <li><strong>The expected absorption window</strong> in your neighborhood at this entry point</li>
+    <li><strong>The marketing plan</strong> for your home — channels, photography, story angle</li>
+    <li><strong>A clear next step</strong> — list now, list later, list with prep, or skip the conversation entirely</li>
+  </ul>
+  <p>You walk away with a real picture of your home's market context. Whether that leads to a listing with me or not is a separate question. The first conversation is yours to keep.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>08 / 12</span></div>
+</section>
+
+<!-- SLIDE 9 · MARKETING PLAN -->
+<section class="slide">
+  <div class="sl-mark">If we list together</div>
+  <div class="sl-num">09 / 12</div>
+  <h2>The Pearl Found Listing Launch.</h2>
+  <div class="cards3">
+    <div class="card">
+      <h3>Photography first</h3>
+      <p>Editorial Savannah photography. Lifestyle-in-frame. Asymmetrical composition. Real natural light. No empty-staged-room generic look.</p>
+    </div>
+    <div class="card">
+      <h3>Multi-channel launch</h3>
+      <p>MLS · IG · Facebook · YouTube · Blog · TikTok · Email blast to saved-search-match buyers — all live within 7 days of "Coming Soon."</p>
+    </div>
+    <div class="card">
+      <h3>Honest narrative</h3>
+      <p>Specific neighborhood detail · what an appraiser sees · what a buyer should know · who this home is for. Not "stunning property!"</p>
+    </div>
+  </div>
+  <p style="margin-top:1.4rem">Your listing isn't another address on a feed. It's a story we tell about a home that's leaving one chapter and starting the next.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>09 / 12</span></div>
+</section>
+
+<!-- SLIDE 10 · TESTIMONIAL -->
+<section class="slide">
+  <div class="sl-mark">In their words</div>
+  <div class="sl-num">10 / 12</div>
+  <blockquote>
+    "I was set on listing at $1.4M. Nikki walked me through the comparable bracket and showed me the recent Skidaway sales. The honest range was $1.25-1.32M. We listed at $1.295M and closed in 22 days at $1.288M. I would have lost three months chasing a number the comparables didn't support."
+    <cite>— Skidaway Island seller, 2025 closing</cite>
+  </blockquote>
+  <blockquote style="margin-top:2rem">
+    "Three other agents pitched us. Each came in with a higher 'price opinion.' Nikki came in with comparable-supported analysis and told us why two of those numbers were unrealistic. We picked her. She was right."
+    <cite>— Ardsley Park sellers, 2024 closing</cite>
+  </blockquote>
+  <p class="disclaimer">Asset note: testimonials shown are representative. Replace with verified past-client quotes from Lane 3 review-collection sweep.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>10 / 12</span></div>
+</section>
+
+<!-- SLIDE 11 · WHAT'S NEXT -->
+<section class="slide">
+  <div class="sl-mark">What's next</div>
+  <div class="sl-num">11 / 12</div>
+  <h2>The first 30 minutes is yours.</h2>
+  <p>Whether you list with me, list with someone else, or decide not to list at all — the conversation is the deliverable. You walk away with the comparable bracket, the positioning, and the honest answer.</p>
+  <p>If we work together after that: it's because the relationship makes sense, not because you got pushed.</p>
+  <div class="cta-card">
+    <h2 style="font-size:1.6rem">Book Your Pre-List Comparable Analysis</h2>
+    <p style="color:rgba(246,240,230,.85)">Microsoft Bookings · 30 minutes · No pressure</p>
+    <a class="cta-btn" href="mailto:nikki@gergacsrealty.com">Email · nikki@gergacsrealty.com</a>
+    <a class="cta-btn" href="tel:9123783427" style="background:transparent;color:#F6F0E6;border:1.5px solid var(--pearl);margin-left:.5rem">Call · (912) 378-3427</a>
+  </div>
+  <p class="disclaimer">Pre-list comparable analysis is a strategic pricing review based on recent local sales — it is not a USPAP-compliant appraisal. For lending, estate, divorce, or legal use, an appraisal report is required and is available separately through Gergacs Appraisals, LLC.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>11 / 12</span></div>
+</section>
+
+<!-- SLIDE 12 · CLOSE -->
+<section class="slide cover">
+  <div class="sl-num">12 / 12</div>
+  <h1>Your next pearl <em>awaits</em></h1>
+  <div class="lede" style="margin-top:1.4rem">Honest numbers. Boutique guidance. Realtor and Certified Appraiser. Born and raised in Savannah.</div>
+  <div class="pearl-mark">— Gergacs Realty —</div>
+  <div class="sl-foot"><span>nikki@gergacsrealty.com · (912) 378-3427</span><span>gergacsrealty.com</span></div>
+</section>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Relocating to Savannah — Gergacs Realty</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Trocchi:wght@400&family=Noto+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F6F0E6;--text:#141414;--sec:#3A3530;--muted:#7A6E5E;
+  --navy:#1E2A44;--bronze:#7A5B2E;--bronze-d:#5C4422;
+  --pearl:#C9B690;--pearl-d:#9A7D4E;
+  --border:#D8CFBF;--card:#FFFBF4;
+}
+body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+.deck{max-width:920px;margin:0 auto;padding:0}
+.slide{min-height:100vh;padding:6vh 6vw;display:flex;flex-direction:column;justify-content:center;page-break-after:always;border-bottom:1px solid var(--border);position:relative}
+.slide:last-child{page-break-after:auto}
+.sl-num{position:absolute;top:24px;right:32px;font-size:.65rem;color:var(--muted);letter-spacing:.18em;text-transform:uppercase}
+.sl-mark{position:absolute;top:24px;left:32px;font-size:.6rem;color:var(--bronze);letter-spacing:.28em;text-transform:uppercase;font-weight:700}
+.sl-foot{position:absolute;bottom:24px;left:32px;right:32px;display:flex;justify-content:space-between;font-size:.55rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+h1{font-family:'Trocchi',serif;font-size:3.2rem;line-height:1.05;color:var(--navy);margin-bottom:1rem;font-weight:400}
+h2{font-family:'Trocchi',serif;font-size:2.1rem;line-height:1.1;color:var(--text);margin-bottom:1.2rem;font-weight:400}
+h3{font-family:'Trocchi',serif;font-size:1.3rem;color:var(--bronze);margin-bottom:.5rem;font-weight:400}
+p{font-size:1.02rem;color:var(--sec);margin-bottom:.9rem;max-width:680px}
+.lede{font-size:1.35rem;color:var(--text);font-family:'Trocchi',serif;font-style:italic;line-height:1.4;max-width:720px}
+.tag{display:inline-block;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--bronze);font-weight:700;margin-bottom:1rem}
+.divider{width:60px;height:3px;background:linear-gradient(90deg,var(--bronze),var(--pearl));border-radius:2px;margin:1rem 0}
+.hero-img{width:100%;height:42vh;object-fit:cover;border-radius:14px;margin-bottom:1.6rem;box-shadow:0 12px 40px rgba(30,42,68,.18)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.split-img{height:50vh;object-fit:cover;border-radius:14px;box-shadow:0 12px 40px rgba(30,42,68,.18)}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem;margin-top:1.4rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.4rem;box-shadow:0 4px 16px rgba(30,42,68,.06)}
+.card h3{font-size:1.1rem;color:var(--navy)}
+.card p{font-size:.85rem;line-height:1.5}
+.bullets{list-style:none}
+.bullets li{font-size:1rem;color:var(--text);margin-bottom:.85rem;padding-left:1.7rem;position:relative;line-height:1.55}
+.bullets li::before{content:'';position:absolute;left:0;top:.55rem;width:11px;height:11px;background:var(--bronze);border-radius:50%}
+blockquote{font-family:'Trocchi',serif;font-style:italic;font-size:1.5rem;line-height:1.45;color:var(--text);border-left:4px solid var(--bronze);padding-left:1.4rem;margin:1rem 0;max-width:720px}
+blockquote cite{display:block;font-style:normal;font-family:'Noto Sans',sans-serif;font-size:.7rem;color:var(--bronze);letter-spacing:.16em;text-transform:uppercase;margin-top:.7rem;font-weight:700}
+.timeline{position:relative;padding-left:2rem}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--bronze);opacity:.3}
+.tl-item{padding-bottom:1.4rem;position:relative}
+.tl-item::before{content:'';position:absolute;left:-2rem;top:.4rem;width:18px;height:18px;background:var(--bronze);border:3px solid var(--bg);border-radius:50%}
+.tl-item h3{margin-bottom:.3rem}
+.tl-item .when{font-size:.65rem;color:var(--bronze);letter-spacing:.16em;text-transform:uppercase;font-weight:700;margin-bottom:.25rem}
+.cta-card{background:var(--navy);color:#F6F0E6;border-radius:14px;padding:2.4rem;margin-top:2rem;text-align:center;box-shadow:0 12px 40px rgba(30,42,68,.25)}
+.cta-card h2{color:#F6F0E6}
+.cta-btn{display:inline-block;padding:.9rem 2rem;background:linear-gradient(135deg,var(--pearl),var(--pearl-d));color:#1E2A44;border-radius:10px;text-decoration:none;font-weight:700;font-size:.92rem;margin-top:1rem;box-shadow:0 6px 20px rgba(201,182,144,.3)}
+.disclaimer{font-size:.75rem;color:var(--muted);font-style:italic;max-width:680px;margin-top:1.4rem;line-height:1.5}
+.cover{background:linear-gradient(160deg,#0E141F 0%,#1E2A44 50%,#3A4670 100%);color:#F6F0E6;text-align:center}
+.cover h1{color:#F6F0E6}
+.cover h1 em{color:var(--pearl);font-style:italic}
+.cover .lede{color:rgba(246,240,230,.8)}
+.cover .pearl-mark{font-family:'Trocchi',serif;font-style:italic;color:var(--pearl);letter-spacing:.4em;font-size:.85rem;margin-top:2rem}
+.cost-table{width:100%;border-collapse:collapse;margin:1.4rem 0}
+.cost-table th{background:var(--navy);color:#F6F0E6;padding:.8rem 1rem;text-align:left;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+.cost-table td{padding:.7rem 1rem;border-bottom:1px solid var(--border);font-size:.92rem}
+@media print{.slide{page-break-after:always;min-height:auto;padding:1in 1in}body{background:white}}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- SLIDE 1 · COVER -->
+<section class="slide cover">
+  <div class="sl-num">01 · Cover</div>
+  <h1>Relocating to <em>Savannah</em></h1>
+  <div class="lede" style="margin-top:1.4rem">A boutique guide for buyers from across the country and overseas, by a Realtor &amp; GA Certified Appraiser born and raised in the Lowcountry.</div>
+  <div class="pearl-mark">— Your Next Pearl Awaits —</div>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>Luxury without the pretense.</span></div>
+</section>
+
+<!-- SLIDE 2 · THE WELCOME -->
+<section class="slide">
+  <div class="sl-mark">Welcome</div>
+  <div class="sl-num">02 / 10</div>
+  <img class="hero-img" src="https://images.unsplash.com/photo-1564767655658-4e6b365884ff?w=1400&q=80" alt="Live oak with Spanish moss canopy in Savannah · golden hour"/>
+  <h2>Savannah doesn't hand you a home. She introduces you to one.</h2>
+  <p>And you only get to make a first impression once. The wrong agent rushes you through three weekends of showings. The right one starts with a question that has nothing to do with square footage.</p>
+  <p style="color:var(--bronze);font-style:italic">— Tell me about your Tuesday afternoons.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>02 / 10</span></div>
+</section>
+
+<!-- SLIDE 3 · WHAT MAKES A RELOCATOR'S MOVE WORK -->
+<section class="slide">
+  <div class="sl-mark">What works</div>
+  <div class="sl-num">03 / 10</div>
+  <h2>Three things every relocator wishes they'd known.</h2>
+  <div class="cards3">
+    <div class="card">
+      <h3>Light changes everything.</h3>
+      <p>The neighborhood you love on Saturday morning may be unbearable on Tuesday afternoon. Spend a weekend, a weekday, and an evening before you commit.</p>
+    </div>
+    <div class="card">
+      <h3>Insurance isn't optional.</h3>
+      <p>Hurricane, flood, wind — the math is real. Budget for it before you fall in love with a Tybee 1st-row home.</p>
+    </div>
+    <div class="card">
+      <h3>The marsh has seasons.</h3>
+      <p>Tides, mosquitoes, marsh-grass color, sunset angle — they all shift. The "Sunday cocktail dock" looks different in February than in June.</p>
+    </div>
+  </div>
+  <p style="margin-top:1.4rem">My job is to show you the seasonal truth before you sign anything.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>03 / 10</span></div>
+</section>
+
+<!-- SLIDE 4 · NEIGHBORHOOD MAP -->
+<section class="slide">
+  <div class="sl-mark">The neighborhoods</div>
+  <div class="sl-num">04 / 10</div>
+  <h2>Savannah by lifestyle, not by listing site.</h2>
+  <ul class="bullets">
+    <li><strong>Ardsley Park</strong> — historic charm, walkable, mature live oaks. Best for: families and lifestyle professionals who want neighborhood feel.</li>
+    <li><strong>Skidaway Island · The Landings</strong> — gated, golf, marsh views. Best for: empty-nesters, lifestyle retirees.</li>
+    <li><strong>Tybee Island</strong> — beach town, real community. Best for: lifestyle-first buyers and second-home converters.</li>
+    <li><strong>Pooler</strong> — newer construction, growing fast, suburban convenience. Best for: families, military relocations to Hunter AAF.</li>
+    <li><strong>Richmond Hill (Bryan County)</strong> — quieter, lower taxes, marsh-side living. Best for: right-sizers and quieter retirees.</li>
+    <li><strong>Habersham</strong> — coastal Carolina overflow, rural luxury. Best for: those willing to drive 25 minutes for what they want.</li>
+    <li><strong>Historic District</strong> — squares, cobblestone, ironwork. Best for: those who'll trade parking for proximity.</li>
+  </ul>
+  <p class="disclaimer">Each neighborhood comes with its own honest trade-offs. Full breakdown delivered in the discovery call.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>04 / 10</span></div>
+</section>
+
+<!-- SLIDE 5 · COST OF LIVING REALITY -->
+<section class="slide">
+  <div class="sl-mark">The math</div>
+  <div class="sl-num">05 / 10</div>
+  <h2>What relocators actually mis-budget.</h2>
+  <table class="cost-table">
+    <tr><th>What</th><th>What relocators expect</th><th>What it actually is</th></tr>
+    <tr><td>Hurricane / wind insurance</td><td>"Like normal homeowners"</td><td>+30-100% premium for coastal zones</td></tr>
+    <tr><td>Flood insurance</td><td>"Optional"</td><td>Required if mortgaged in flood zone — and most of Tybee is</td></tr>
+    <tr><td>Property taxes</td><td>"Low — it's the South"</td><td>Chatham 11.5 mills · Bryan 8.8 · Effingham 9.7 (verify current)</td></tr>
+    <tr><td>HOA fees</td><td>"Maybe $100/mo"</td><td>$200-1500/mo depending on community (Skidaway high)</td></tr>
+    <tr><td>Pollen / allergy season</td><td>(not budgeted)</td><td>~6 weeks in spring — real for some</td></tr>
+    <tr><td>Drive time to airport</td><td>"15 min"</td><td>Pooler 12 min · Bryan 25-35 min · Tybee 25 min · Habersham 30+</td></tr>
+  </table>
+  <p>None of these are deal-breakers. But they should be in the math from day one.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>05 / 10</span></div>
+</section>
+
+<!-- SLIDE 6 · MILITARY -->
+<section class="slide">
+  <div class="sl-mark">Military relocations</div>
+  <div class="sl-num">06 / 10</div>
+  <div class="split">
+    <img class="split-img" src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1000&q=80" alt="Coastal Georgia waterfront — Tybee or Skidaway"/>
+    <div>
+      <h2>If you're PCSing to Hunter AAF or Fort Stewart, the math is different.</h2>
+      <p>BAH rates, school zoning, drive-time to base, on-base vs off-base trade-offs, VA appraisal expectations — all distinct from civilian relocation.</p>
+      <p>I work with a number of relocating military families each year, and I have my own GA Certified Residential Appraiser credential — which means I understand both sides of the VA appraisal process from the inside.</p>
+    </div>
+  </div>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>06 / 10</span></div>
+</section>
+
+<!-- SLIDE 7 · THE DISCOVERY CALL -->
+<section class="slide">
+  <div class="sl-mark">The first call</div>
+  <div class="sl-num">07 / 10</div>
+  <h2>What our 30-minute discovery call covers.</h2>
+  <ul class="bullets">
+    <li>Where you're coming from + why now</li>
+    <li>What kind of Tuesday afternoon you want (this matters more than you think)</li>
+    <li>Your timing window: 90 days · 6 months · 12+ months</li>
+    <li>Budget reality vs target — including all the line items above</li>
+    <li>Three neighborhoods I think might fit, and why</li>
+    <li>What I'd want you to verify before our second conversation</li>
+    <li>How we'd structure showing trips (virtual first, in-person Saturdays)</li>
+  </ul>
+  <p style="font-style:italic;color:var(--bronze)">No pressure. No pitch. The 30 minutes either pays off — for you — or it doesn't.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>07 / 10</span></div>
+</section>
+
+<!-- SLIDE 8 · TIMELINE -->
+<section class="slide">
+  <div class="sl-mark">The journey</div>
+  <div class="sl-num">08 / 10</div>
+  <h2>Typical relocation timeline.</h2>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="when">Months -12 to -6</div>
+      <h3>Discovery + neighborhood research</h3>
+      <p>Discovery call · virtual neighborhood tours · school zoning · cost-of-living conversation</p>
+    </div>
+    <div class="tl-item">
+      <div class="when">Months -6 to -3</div>
+      <h3>First in-person showing trip</h3>
+      <p>Long weekend · 8-12 properties · two-three neighborhoods · I drive, you observe</p>
+    </div>
+    <div class="tl-item">
+      <div class="when">Months -3 to -1</div>
+      <h3>Narrow + offer</h3>
+      <p>Targeted second trip · 3-5 final candidates · offer prepared with appraiser-trained perspective on the comparable bracket</p>
+    </div>
+    <div class="tl-item">
+      <div class="when">Month -1 to closing</div>
+      <h3>Inspection · appraisal · close</h3>
+      <p>Coordination of inspection, lender appraisal, walkthrough, and move-in. SkySlope handles paperwork; I handle questions.</p>
+    </div>
+    <div class="tl-item">
+      <div class="when">Month +0 to +12</div>
+      <h3>Welcome to the Lowcountry</h3>
+      <p>Settling-in support · neighborhood introductions · ongoing market context</p>
+    </div>
+  </div>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>08 / 10</span></div>
+</section>
+
+<!-- SLIDE 9 · TESTIMONIAL -->
+<section class="slide">
+  <div class="sl-mark">In their words</div>
+  <div class="sl-num">09 / 10</div>
+  <blockquote>
+    "We had three competing relocation packages and one had a Realtor recommendation included. Nikki was the recommendation. From the first 30 minutes she felt different. We bought in Pooler and our oldest started fourth grade three blocks from the house."
+    <cite>— Relocating family from Bay Area, 2025 closing</cite>
+  </blockquote>
+  <blockquote style="margin-top:2rem">
+    "I'm a Navy spouse and my husband was PCSing to Hunter AAF. Nikki had us virtually walking through Pooler new builds within 48 hours of the first call, and she knew the BAH math cold. We closed remote three months later."
+    <cite>— Military family, 2025 closing</cite>
+  </blockquote>
+  <p class="disclaimer">Asset note: testimonials are representative — replace with actual past-client quotes once review-collection sweep complete.</p>
+  <div class="sl-foot"><span>Gergacs Realty</span><span>09 / 10</span></div>
+</section>
+
+<!-- SLIDE 10 · CTA -->
+<section class="slide">
+  <div class="sl-mark">Let's plan your move</div>
+  <div class="sl-num">10 / 10</div>
+  <h2>The Lowcountry isn't going anywhere. But the right home for you might.</h2>
+  <p>30 minutes. No pressure. Just the questions you don't know to ask yet.</p>
+  <div class="cta-card">
+    <h2 style="font-size:1.6rem">Plan Your Move</h2>
+    <p style="color:rgba(246,240,230,.85)">Microsoft Bookings · Discovery call · 30 minutes</p>
+    <a class="cta-btn" href="mailto:nikki@gergacsrealty.com">Email · nikki@gergacsrealty.com</a>
+    <a class="cta-btn" href="tel:9123783427" style="background:transparent;color:#F6F0E6;border:1.5px solid var(--pearl);margin-left:.5rem">Call · (912) 378-3427</a>
+  </div>
+  <div class="sl-foot"><span>Gergacs Realty · Luxury without the pretense.</span><span>Your Next Pearl Awaits.</span></div>
+</section>
+
+</div>
+</body>
+</html>

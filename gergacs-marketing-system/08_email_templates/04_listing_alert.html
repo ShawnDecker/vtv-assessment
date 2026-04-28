@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pearl Found — {{neighborhood}}</title>
+</head>
+<body style="margin:0;padding:0;background:#F6F0E6;font-family:Georgia,'Times New Roman',serif;color:#141414;line-height:1.6">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F6F0E6;padding:32px 16px">
+  <tr><td>
+    <table role="presentation" width="600" align="center" cellpadding="0" cellspacing="0" border="0" style="background:#FFFBF4;border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(30,42,68,.1)">
+
+      <!-- LISTING HERO IMAGE -->
+      <tr><td style="position:relative">
+        <img src="{{hero_listing_photo_url}}" alt="{{listing_address}} · {{neighborhood}} · hero exterior" width="600" style="display:block;width:100%;height:auto"/>
+      </td></tr>
+
+      <!-- BANNER -->
+      <tr><td style="padding:28px 36px 8px 36px;text-align:center">
+        <div style="font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:#7A5B2E;font-weight:700;font-family:Helvetica,Arial,sans-serif">Pearl Found &middot; {{neighborhood}}</div>
+      </td></tr>
+
+      <!-- TITLE -->
+      <tr><td style="padding:0 36px 8px 36px;text-align:center">
+        <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1.15;color:#1E2A44;margin:8px 0 4px 0;font-weight:normal">
+          {{listing_address}}
+        </h1>
+        <div style="font-family:Helvetica,Arial,sans-serif;font-size:14px;color:#7A6E5E;letter-spacing:.04em">
+          {{bedrooms}} bd &middot; {{bathrooms}} ba &middot; {{sqft}} sqft &middot; built {{year_built}}
+        </div>
+        <div style="font-family:Georgia,serif;font-size:24px;color:#7A5B2E;font-weight:normal;margin-top:12px">
+          ${{list_price}}
+        </div>
+      </td></tr>
+
+      <!-- BODY -->
+      <tr><td style="padding:24px 36px 8px 36px">
+        <p style="font-size:16px;color:#3A3530;margin:0 0 16px 0">Hi {{first_name}},</p>
+
+        <p style="font-size:16px;color:#3A3530;margin:0 0 16px 0">
+          A new listing just came on in {{neighborhood}} that matches what we&rsquo;ve been talking about. {{personalized_match_reason}}
+        </p>
+
+        <!-- SOUL OF THE HOME -->
+        <div style="background:#F6F0E6;border-left:3px solid #7A5B2E;padding:16px 20px;margin:24px 0;border-radius:0 8px 8px 0">
+          <p style="font-family:Georgia,serif;font-style:italic;font-size:17px;color:#1E2A44;margin:0;line-height:1.5">
+            {{soul_of_the_home}}
+          </p>
+        </div>
+
+        <!-- THREE THINGS THE APPRAISER SEES -->
+        <h3 style="font-family:Georgia,serif;font-size:18px;color:#1E2A44;margin:24px 0 8px 0;font-weight:normal">Three things I noticed:</h3>
+        <ul style="font-size:15px;color:#3A3530;margin:0 0 20px 0;padding-left:24px;line-height:1.7">
+          <li>{{appraiser_observation_1}}</li>
+          <li>{{appraiser_observation_2}}</li>
+          <li>{{appraiser_observation_3}}</li>
+        </ul>
+
+        <!-- GALLERY 3-UP -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="6" border="0" style="margin:20px 0">
+          <tr>
+            <td width="33%"><img src="{{gallery_photo_1}}" alt="{{listing_address}} interior" style="display:block;width:100%;height:auto;border-radius:8px"/></td>
+            <td width="33%"><img src="{{gallery_photo_2}}" alt="{{listing_address}} interior" style="display:block;width:100%;height:auto;border-radius:8px"/></td>
+            <td width="33%"><img src="{{gallery_photo_3}}" alt="{{listing_address}} interior" style="display:block;width:100%;height:auto;border-radius:8px"/></td>
+          </tr>
+        </table>
+
+        <!-- CTA -->
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:28px auto">
+          <tr><td style="background:linear-gradient(135deg,#1E2A44,#2A3654);border-radius:10px;box-shadow:0 4px 16px rgba(30,42,68,.25)">
+            <a href="https://outlook.office.com/bookwithme/REPLACE_WITH_BOOKINGS_LINK" style="display:inline-block;padding:14px 32px;color:#F6F0E6;text-decoration:none;font-family:Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:.04em">
+              Tour With Me This Weekend
+            </a>
+          </td></tr>
+        </table>
+
+        <p style="font-size:15px;color:#3A3530;margin:20px 0 8px 0;text-align:center">
+          Or reply with a yes and I&rsquo;ll get a slot on your calendar.
+        </p>
+
+        <p style="font-size:15px;color:#3A3530;margin:24px 0 8px 0">
+          Warmly,<br>
+          Nikki
+        </p>
+      </td></tr>
+
+      <tr><td style="padding:0 36px 24px 36px">
+        <div style="border-top:1px solid #D8CFBF;padding-top:20px;text-align:center">
+          <div style="font-family:Georgia,serif;font-style:italic;color:#7A5B2E;font-size:14px;letter-spacing:.18em">— Pearl Found —</div>
+        </div>
+      </td></tr>
+
+      <tr><td style="padding:24px 36px 32px 36px;background:#F6F0E6;text-align:center">
+        <div style="font-family:Helvetica,Arial,sans-serif;font-size:13px;color:#3A3530;margin-bottom:8px">
+          <strong>Nikki Gergacs</strong> &middot; Realtor &amp; Certified Residential Appraiser
+        </div>
+        <div style="font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#7A6E5E;margin-bottom:16px">
+          MLS# {{mls_number}} &middot; <a href="{{listing_url}}" style="color:#7A5B2E">View Full Listing</a><br>
+          <a href="mailto:nikki@gergacsrealty.com" style="color:#7A5B2E">nikki@gergacsrealty.com</a> &middot;
+          <a href="tel:9123783427" style="color:#7A5B2E">(912) 378-3427</a>
+        </div>
+        <div style="font-family:Helvetica,Arial,sans-serif;font-size:11px;color:#9A8E7E;font-style:italic;margin-top:8px">
+          Receiving this because you&rsquo;re on my saved-search list for {{neighborhood}}.<br>
+          <a href="{{unsubscribe_url}}" style="color:#9A8E7E">Manage preferences</a>
+        </div>
+        <div style="font-family:Helvetica,Arial,sans-serif;font-size:11px;color:#9A8E7E;margin-top:12px">
+          Gergacs Realty &middot; <em>Luxury without the pretense.</em>
+        </div>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
+
+<!-- IMAGE BRIEF · for production replacement:
+- HERO: the listing's actual best exterior photo (or interior money shot if exterior is weak). Use Coffee & Contracts overlay for "Pearl Found · {{neighborhood}}" branding.
+- 3-UP GALLERY: kitchen + primary bedroom + view/exterior detail OR 3 best interior shots
+- All photos should be from the actual listing photo shoot, properly licensed, in editorial style
+- AVOID: empty staged-room generic real-estate-photographer feel. Lifestyle-in-frame where possible.
+-->
+</body>
+</html>
