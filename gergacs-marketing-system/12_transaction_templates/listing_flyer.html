@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Listing Flyer · {{ADDRESS}}</title>
+<link href="https://fonts.googleapis.com/css2?family=Trocchi:wght@400&family=Noto+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@page{size:Letter;margin:0}
+body{font-family:'Noto Sans',sans-serif;background:#fff;color:#141414;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+:root{
+  --bg:#F6F0E6;--text:#141414;--sec:#3A3530;--muted:#7A6E5E;
+  --navy:#1E2A44;--bronze:#7A5B2E;--bronze-d:#5C4422;
+  --pearl:#C9B690;--pearl-d:#9A7D4E;
+  --border:#D8CFBF;--card:#FFFBF4;
+}
+.page{width:8.5in;height:11in;display:flex;flex-direction:column;page-break-after:always}
+.hero{position:relative;height:4.4in;overflow:hidden;background:linear-gradient(160deg,#0E141F,#1E2A44 50%,#3A4670)}
+.hero img{width:100%;height:100%;object-fit:cover;opacity:.92}
+.hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,20,31,.2) 0%,transparent 35%,rgba(14,20,31,.85) 100%);pointer-events:none}
+.hero-text{position:absolute;bottom:0;left:0;right:0;padding:.4in .6in;color:#F6F0E6;z-index:2}
+.hero-tag{font-size:9pt;letter-spacing:.32em;text-transform:uppercase;color:var(--pearl);font-weight:700;margin-bottom:.15in}
+.hero-text h1{font-family:'Trocchi',serif;font-size:36pt;line-height:1.05;font-weight:400;color:#F6F0E6;margin-bottom:.1in}
+.hero-text .neighborhood{font-family:'Trocchi',serif;font-style:italic;font-size:14pt;color:var(--pearl)}
+.hero-text .price{position:absolute;right:.6in;bottom:.6in;font-family:'Trocchi',serif;font-size:28pt;color:var(--pearl);font-weight:400}
+.specs{display:flex;justify-content:space-around;padding:.25in .6in;background:var(--bg);border-bottom:1px solid var(--border)}
+.spec{text-align:center}
+.spec .num{font-family:'Trocchi',serif;font-size:18pt;color:var(--navy);line-height:1}
+.spec .label{font-size:8pt;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:.04in}
+.body{flex:1;padding:.3in .6in;display:flex;gap:.4in}
+.left{flex:1.4}
+.right{flex:1}
+.section-tag{font-size:8pt;letter-spacing:.3em;text-transform:uppercase;color:var(--bronze);font-weight:700;margin-bottom:.05in}
+h2.heading{font-family:'Trocchi',serif;font-size:14pt;color:var(--navy);font-weight:400;margin-bottom:.1in;line-height:1.2}
+.divider{width:.4in;height:2px;background:linear-gradient(90deg,var(--bronze),var(--pearl));border-radius:1px;margin-bottom:.1in}
+p.body-copy{font-size:10pt;color:var(--sec);line-height:1.55;margin-bottom:.1in}
+.appraiser-note{background:var(--bg);border-left:3px solid var(--bronze);padding:.12in .15in;margin-top:.15in;border-radius:0 .04in .04in 0}
+.appraiser-note .label{font-size:8pt;letter-spacing:.18em;text-transform:uppercase;color:var(--bronze);font-weight:700;margin-bottom:.04in}
+.appraiser-note p{font-family:'Trocchi',serif;font-style:italic;font-size:10pt;color:var(--text);line-height:1.5}
+.feature-list{list-style:none;font-size:10pt;color:var(--sec);line-height:1.7}
+.feature-list li{padding-left:.18in;position:relative;margin-bottom:.04in}
+.feature-list li::before{content:'';position:absolute;left:0;top:.06in;width:.08in;height:.08in;background:var(--bronze);border-radius:50%}
+.cta-band{background:var(--navy);color:#F6F0E6;padding:.25in .6in;display:flex;justify-content:space-between;align-items:center}
+.cta-left{display:flex;flex-direction:column}
+.cta-left .agent-name{font-family:'Trocchi',serif;font-size:14pt;font-weight:400;line-height:1.1}
+.cta-left .agent-credential{font-size:8pt;color:rgba(246,240,230,.78);letter-spacing:.04em;margin-top:.05in}
+.cta-right{display:flex;flex-direction:column;text-align:right;font-size:9pt}
+.cta-right a{color:var(--pearl);text-decoration:none}
+.cta-right .strong{color:#F6F0E6;font-weight:700;font-size:11pt}
+.cta-right .qr-zone{margin-top:.05in;font-size:7pt;color:rgba(246,240,230,.5);font-style:italic}
+.tagline-band{padding:.08in .6in;background:var(--bg);text-align:center;font-family:'Trocchi',serif;font-style:italic;color:var(--bronze);font-size:9pt;letter-spacing:.3em}
+.disclaimer{padding:.05in .6in;background:#fff;font-size:6.5pt;color:var(--muted);line-height:1.4;font-style:italic}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HERO -->
+  <section class="hero">
+    <img src="{{HERO_PHOTO_URL}}" alt="{{ADDRESS}} — exterior"/>
+    <div class="hero-text">
+      <div class="hero-tag">Pearl Found · {{NEIGHBORHOOD}}</div>
+      <h1>{{ADDRESS_LINE_1}}</h1>
+      <div class="neighborhood">{{NEIGHBORHOOD}} &middot; {{CITY}}, GA</div>
+      <div class="price">${{LIST_PRICE}}</div>
+    </div>
+  </section>
+
+  <!-- SPECS BAR -->
+  <section class="specs">
+    <div class="spec"><div class="num">{{BEDS}}</div><div class="label">Bedrooms</div></div>
+    <div class="spec"><div class="num">{{BATHS}}</div><div class="label">Bathrooms</div></div>
+    <div class="spec"><div class="num">{{SQFT}}</div><div class="label">Sq Ft</div></div>
+    <div class="spec"><div class="num">{{YEAR_BUILT}}</div><div class="label">Built</div></div>
+    <div class="spec"><div class="num">MLS</div><div class="label">{{MLS_NUMBER}}</div></div>
+  </section>
+
+  <!-- BODY -->
+  <section class="body">
+    <div class="left">
+      <div class="section-tag">The Story</div>
+      <div class="divider"></div>
+      <h2 class="heading">{{HEADLINE}}</h2>
+      <p class="body-copy">{{HERO_PARAGRAPH}}</p>
+      <p class="body-copy">{{FEATURES_PARAGRAPH}}</p>
+      <p class="body-copy">{{NEIGHBORHOOD_PARAGRAPH}}</p>
+
+      <div class="appraiser-note">
+        <div class="label">An appraiser-trained perspective</div>
+        <p>{{APPRAISER_OBSERVATION}}</p>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="section-tag">Features</div>
+      <div class="divider"></div>
+      <ul class="feature-list">
+        <li>{{FEATURE_1}}</li>
+        <li>{{FEATURE_2}}</li>
+        <li>{{FEATURE_3}}</li>
+        <li>{{FEATURE_4}}</li>
+        <li>{{FEATURE_5}}</li>
+        <li>{{FEATURE_6}}</li>
+        <li>{{FEATURE_7}}</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- TAGLINE BAND -->
+  <div class="tagline-band">— Your Next Pearl Awaits —</div>
+
+  <!-- CTA -->
+  <section class="cta-band">
+    <div class="cta-left">
+      <span class="agent-name">Nikki Gergacs</span>
+      <span class="agent-credential">Realtor &middot; GA Certified Residential Appraiser CR287636</span>
+      <span class="agent-credential">Gergacs Realty &middot; Licensed under Next Move Real Estate</span>
+    </div>
+    <div class="cta-right">
+      <span class="strong">Showings by appointment</span>
+      <span><a href="tel:9123783427">(912) 378-3427</a></span>
+      <span><a href="mailto:nikki@gergacsrealty.com">nikki@gergacsrealty.com</a></span>
+      <span class="qr-zone">[ QR code → listing page ]</span>
+    </div>
+  </section>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer">
+    Information deemed reliable but not guaranteed. Buyer to verify all material facts including square footage, lot dimensions, school districts, flood zones, and HOA. Photos may include virtual staging or seasonal variations. <strong>Luxury without the pretense.</strong>
+  </div>
+
+</div>
+
+<!-- ============ POPULATING THIS TEMPLATE ============
+Replace these tokens with actual listing data:
+
+{{HERO_PHOTO_URL}}        Best exterior shot, ≥1600px wide
+{{ADDRESS_LINE_1}}        Street number + street name (e.g., "1428 East 51st Street")
+{{NEIGHBORHOOD}}          Specific (Ardsley Park / Skidaway / Tybee / Pooler / etc.)
+{{CITY}}                  Savannah / Tybee Island / Pooler / Richmond Hill / Rincon
+{{LIST_PRICE}}            Numbers only with comma (e.g., "1,295,000")
+{{BEDS}} {{BATHS}} {{SQFT}}  Numbers
+{{YEAR_BUILT}}            Year
+{{MLS_NUMBER}}            Six-digit local MLS#
+
+Body content (use gergacs-listing-describer skill to draft):
+{{HEADLINE}}              Short, period-appropriate, no "stunning"
+{{HERO_PARAGRAPH}}        ~50 words, the soul of the home
+{{FEATURES_PARAGRAPH}}    ~50 words, specific features (period detail, materials, layout)
+{{NEIGHBORHOOD_PARAGRAPH}} ~40 words, neighborhood context, walking distance to specific places
+{{APPRAISER_OBSERVATION}} 1-2 sentences, what an appraiser-trained eye specifically values about this home (USPAP-safe)
+{{FEATURE_1}} through {{FEATURE_7}}  Bullet-list features (specific, not "great location")
+
+PRINT TO PDF:
+Open this file in any browser, Ctrl+P, Save as PDF. Page is sized for Letter, full-bleed where applicable.
+============ -->
+</body>
+</html>
