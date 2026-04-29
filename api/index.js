@@ -3377,6 +3377,99 @@ Don't guess. Run the system.
       }
     }
 
+    // GET /api/pixel — 1x1 transparent GIF tracking pixel for email opens.
+    // Params: c=<campaign>, e=<recipient email>
+    // Logs event_type='email_open' (humans) or 'email_open_bot' (image prefetchers).
+    if (req.method === 'GET' && url.startsWith('/pixel')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const campaign = params.get('c') || 'unknown';
+      const email = (params.get('e') || '').toLowerCase().trim();
+
+      const PIXEL = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+
+      let contactId = null;
+      let emailKnown = false;
+      if (email) {
+        try {
+          const rows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+          if (rows.length) { contactId = rows[0].id; emailKnown = true; }
+        } catch (e) { /* non-fatal */ }
+      }
+
+      const ua = (req.headers['user-agent'] || '').toLowerCase();
+      const ref = req.headers['referer'] || '';
+      const prefetchUAs = ['googleimageproxy', 'ggpht.com', 'safelinks', 'mimecast', 'proofpoint',
+                           'barracuda', 'apple-mail-image-cache', 'image_proxy', 'mailpilot',
+                           'curl/', 'python-requests', 'wget'];
+      const campaignOk = /^(drip_step\d+|devotional|pulse_|coaching_|power_user|free_report|test)/.test(campaign);
+      const uaLooksBot = prefetchUAs.some(p => ua.includes(p));
+      const isBot = uaLooksBot || (!emailKnown && !campaignOk && email.length > 0);
+      const eventType = isBot ? 'email_open_bot' : 'email_open';
+
+      try {
+        const ipHash = crypto.createHash('sha256').update(clientIP || '').digest('hex').slice(0, 32);
+        await sql`
+          INSERT INTO analytics_events (event_type, contact_id, metadata, ip_hash, user_agent, referrer, created_at)
+          VALUES (${eventType}, ${contactId}, ${JSON.stringify({ campaign, email })}::jsonb, ${ipHash}, ${ua.slice(0, 500)}, ${ref || null}, NOW())
+        `;
+      } catch (e) { console.error('pixel log error (non-fatal):', e.message); }
+
+      res.setHeader('Content-Type', 'image/gif');
+      res.setHeader('Content-Length', String(PIXEL.length));
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+      res.writeHead(200);
+      return res.end(PIXEL);
+    }
+
+    // GET /api/click — Email click tracker + 302 redirect.
+    // Params: u=<encoded target url>, c=<campaign id>, e=<recipient email>
+    // Tags 'email_click' (human) vs 'email_click_bot' (gateway scanner).
+    if (req.method === 'GET' && url.startsWith('/click')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const target = params.get('u') || '';
+      const campaign = params.get('c') || 'unknown';
+      const email = (params.get('e') || '').toLowerCase().trim();
+
+      let parsed;
+      try { parsed = new URL(target); }
+      catch { return res.status(400).json({ error: 'Invalid target URL' }); }
+      const host = parsed.hostname.toLowerCase();
+      const allowed = host === 'valuetovictory.com' || host.endsWith('.valuetovictory.com')
+                    || host === 'buy.stripe.com' || host.endsWith('.stripe.com');
+      if (!allowed) return res.status(400).json({ error: 'Target domain not allowed' });
+
+      let contactId = null;
+      let emailKnown = false;
+      if (email) {
+        try {
+          const rows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+          if (rows.length) { contactId = rows[0].id; emailKnown = true; }
+        } catch (e) { /* non-fatal */ }
+      }
+
+      const ua = (req.headers['user-agent'] || '').toLowerCase();
+      const ref = req.headers['referer'] || '';
+      const accLang = req.headers['accept-language'] || '';
+      const botUAPatterns = ['bot', 'crawl', 'spider', 'facebook', 'safelinks', 'prefetch',
+                             'barracuda', 'mimecast', 'proofpoint', 'microsoftpreview', 'slackbot',
+                             'linkedinbot', 'whatsapp', 'curl/', 'python-requests'];
+      const campaignOk = /^(drip_step\d+|devotional|pulse_|coaching_|power_user|free_report|test)/.test(campaign);
+      const uaLooksBot = botUAPatterns.some(p => ua.includes(p));
+      const isBot = uaLooksBot || (!emailKnown && !campaignOk && email.length > 0);
+      const eventType = isBot ? 'email_click_bot' : 'email_click';
+
+      try {
+        const ipHash = crypto.createHash('sha256').update(clientIP || '').digest('hex').slice(0, 32);
+        await sql`
+          INSERT INTO analytics_events (event_type, contact_id, metadata, ip_hash, user_agent, referrer, created_at)
+          VALUES (${eventType}, ${contactId}, ${JSON.stringify({ campaign, target, email })}::jsonb, ${ipHash}, ${ua.slice(0, 500)}, ${ref || null}, NOW())
+        `;
+      } catch (e) { console.error('click log error (non-fatal):', e.message); }
+
+      res.writeHead(302, { Location: target });
+      return res.end();
+    }
+
     // ========== PRIVACY PREFERENCES ==========
     // GET /api/privacy?email=xxx&teamId=xxx — Get privacy prefs (accepts JWT or email)
     if (req.method === 'GET' && url.startsWith('/privacy')) {
