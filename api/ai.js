@@ -266,6 +266,10 @@ function extractJwtUser(req) {
 // Actions a member JWT is allowed to invoke. Admin x-api-key can invoke any action.
 const JWT_ALLOWED_ACTIONS = new Set(['health', 'coaching-insight', 'assessment-summary']);
 
+// Actions that require no auth at all (Victory Concierge routing is public-safe:
+// rule-based, no LLM call, returns no sensitive data).
+const PUBLIC_ACTIONS = new Set(['concierge-route']);
+
 // ========== MAIN HANDLER ==========
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -273,14 +277,18 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Auth: x-api-key (admin, all actions) OR JWT Bearer (member, allowlisted actions + own data only)
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+
+  const requestedAction = String(req.body?.action || '');
+  const isPublicAction = PUBLIC_ACTIONS.has(requestedAction);
+
+  // Auth: x-api-key (admin, all actions) OR JWT Bearer (member, allowlisted actions + own data only).
+  // Public actions skip auth entirely.
   const apiKey = req.headers['x-api-key'] || '';
   const validKey = process.env.ADMIN_API_KEY || '';
   const isAdmin = !!(validKey && apiKey === validKey);
-  const jwtUser = isAdmin ? null : extractJwtUser(req);
-  if (!isAdmin && !jwtUser) return res.status(401).json({ error: 'Unauthorized' });
-
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  const jwtUser = (isAdmin || isPublicAction) ? null : extractJwtUser(req);
+  if (!isPublicAction && !isAdmin && !jwtUser) return res.status(401).json({ error: 'Unauthorized' });
 
   const sql = neon(process.env.DATABASE_URL);
   const { action, contactId, assessmentId, prompt, context } = req.body || {};
@@ -301,7 +309,66 @@ module.exports = async (req, res) => {
     }
   }
 
-  const caller = isAdmin ? 'admin' : `member:${jwtUser?.contactId || '?'}`;
+  const caller = isAdmin ? 'admin' : (isPublicAction ? 'public' : `member:${jwtUser?.contactId || '?'}`);
+
+  // === ACTION: concierge-route — Victory Concierge routing decision ===
+  // Public action (no auth). Returns {agent, reason, route_url} from a deterministic
+  // rule based on (role, primary_need, has_assessment, weakest_pillar). No LLM call,
+  // no sensitive data returned. Concept doc:
+  // sandbox/claude-flow-lite/reanalysis/concept-victory-concierge.md
+  if (action === 'concierge-route') {
+    const role = String(context?.role || '').toLowerCase().trim();
+    const need = String(context?.primary_need || '').toLowerCase().trim();
+
+    let hasAssessment = false;
+    let weakest = null;
+    if (contactId) {
+      try {
+        const latest = await sql`SELECT weakest_pillar FROM assessments
+          WHERE contact_id = ${contactId}
+          ORDER BY completed_at DESC LIMIT 1`;
+        if (latest.length > 0) { hasAssessment = true; weakest = latest[0].weakest_pillar; }
+      } catch (_) { /* assessments table should exist; ignore read errors */ }
+    }
+
+    let agent, reason, route;
+    if (!hasAssessment) {
+      agent = 'Assessment';
+      reason = 'Start with the value assessment so the Concierge has signal to personalize on.';
+      route = '/';
+    } else if (role === 'couple' || role === 'couples' || role === 'relationship') {
+      agent = 'Relationship'; route = '/relationship-hub';
+      reason = 'Couple flow — starting you at the Relationship Hub.';
+    } else if (role === 'business' || role === 'team' || role === 'org') {
+      agent = 'Teams'; route = '/teams';
+      reason = 'Business / team flow — starting you at Teams.';
+    } else if (need === 'faith' || need === 'devotional' || need === 'spiritual') {
+      agent = 'Faith'; route = '/audiobook';
+      reason = 'Faith-first path — Running From Miracles + daily word.';
+    } else if (need === 'stuck' || need === 'feeling_stuck' || need === 'unstuck') {
+      agent = 'Stuck'; route = '/stuck';
+      reason = 'Quick unstuck diagnostic before we go deep.';
+    } else if (need === 'career' || need === 'coaching' || need === 'job') {
+      agent = 'Coaching'; route = '/coaching';
+      reason = 'Career / coaching lane.';
+    } else if (need === 'entrepreneur' || need === 'business_growth' || need === 'real_estate') {
+      agent = 'Growth'; route = '/consult';
+      reason = 'Entrepreneur / growth lane — book a consult.';
+    } else if (need === 'challenge' || need === 'events' || need === 'program') {
+      agent = 'Challenge'; route = '/challenge';
+      reason = '30/90-day challenge lane.';
+    } else {
+      const pillar = (weakest || 'time').toString().toLowerCase();
+      agent = 'PillarCoach'; route = '/framework/' + pillar;
+      reason = 'Pillar coach on your weakest pillar' + (weakest ? ': ' + weakest : '') + '.';
+    }
+
+    return res.json({
+      agent, reason, route_url: route,
+      has_assessment: hasAssessment,
+      weakest_pillar: weakest,
+    });
+  }
 
   // === ACTION: health — AI provider status (no LLM call) ===
   if (action === 'health') {
