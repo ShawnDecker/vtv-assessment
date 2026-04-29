@@ -8504,10 +8504,11 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             }
           } catch (e) { /* coaching_replies table may not exist yet */ }
 
-          // Check for assessment retake
+          // Check for assessment retake — completed_at is stored as TEXT
+          // (legacy schema), so cast explicitly for the timestamp comparison.
           const retake = await sql`SELECT id FROM assessments
             WHERE contact_id = ${seq.contact_id}
-            AND completed_at > NOW() - INTERVAL '48 hours'
+            AND completed_at::timestamptz > NOW() - INTERVAL '48 hours'
             ORDER BY completed_at DESC LIMIT 1`;
           const hasRetaken = retake.length > 0;
 
