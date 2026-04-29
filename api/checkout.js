@@ -31,7 +31,17 @@ const TIER_CONFIG = {
   premium:     { amount: 49700, name: 'Victory VIP',           dbTier: 'premium',    priceKey: 'premium',    mode: 'subscription' },
   // Dating-specific tiers
   'dating-gate':  { amount: 97,    name: 'Aligned Hearts Assessment Fee', dbTier: 'individual', mode: 'payment', isDating: true },
-  'dating-monthly': { amount: 2900, name: 'Aligned Hearts Monthly',       dbTier: 'individual', priceKey: 'individual', mode: 'subscription', isDating: true }
+  'dating-monthly': { amount: 2900, name: 'Aligned Hearts Monthly',       dbTier: 'individual', priceKey: 'individual', mode: 'subscription', isDating: true },
+  // One-time downloadable products — no membership tier, just a payment
+  'skill-pack-bundle': {
+    amount: 19700, // $197.00
+    name: 'VTV Top-10 Professionals Skill Pack Bundle',
+    dbTier: null,             // not a membership
+    mode: 'payment',          // one-time, not subscription
+    isDownload: true,
+    successPath: '/checkout/success?product=skill-pack-bundle&download=/downloads/vtv-skill-packs-bundle.zip',
+    description: '10 profession-specific skill packs (real estate, coaches, authors, pastors, consultants, small business, event producers, service pros, content creators, sales). Voice rules + 5 templates + 3 AI prompts + weekly metrics dashboard per pack. Single-user license. Does not include the P.I.N.K.T. book.',
+  }
 };
 
 const BASE_URL = process.env.BASE_URL || 'https://assessment.valuetovictory.com';
@@ -324,10 +334,13 @@ module.exports = async (req, res) => {
 
       const isOneTime = config.mode === 'payment';
       const isDating = config.isDating || false;
-      const successUrl = isDating
+      const isDownload = config.isDownload || false;
+      const successUrl = isDownload
+        ? `${BASE_URL}${config.successPath || '/checkout/success'}`
+        : isDating
         ? `${BASE_URL}/faith-match?payment=success&tier=${config.dbTier}`
         : `${BASE_URL}/member?welcome=true&tier=${config.dbTier}`;
-      const cancelUrl = isDating ? `${BASE_URL}/faith-match` : `${BASE_URL}/pricing`;
+      const cancelUrl = isDownload ? `${BASE_URL}/professionals` : isDating ? `${BASE_URL}/faith-match` : `${BASE_URL}/pricing`;
 
       let sessionParams;
 
@@ -346,7 +359,13 @@ module.exports = async (req, res) => {
           }],
           success_url: successUrl,
           cancel_url: cancelUrl,
-          metadata: { tier: config.dbTier, dating: isDating ? 'true' : 'false', payment_type: 'one_time' },
+          metadata: {
+            tier: config.dbTier || 'none',
+            dating: isDating ? 'true' : 'false',
+            download: isDownload ? 'true' : 'false',
+            product: tier,
+            payment_type: 'one_time',
+          },
           allow_promotion_codes: true
         };
       } else {

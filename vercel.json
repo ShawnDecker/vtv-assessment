@@ -99,6 +99,14 @@
       "dest": "/checkout-success.html"
     },
     {
+      "src": "/professionals",
+      "dest": "/professionals.html"
+    },
+    {
+      "src": "/skill-packs",
+      "dest": "/professionals.html"
+    },
+    {
       "src": "/privacy",
       "dest": "/privacy.html"
     },
