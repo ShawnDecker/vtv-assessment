@@ -8512,7 +8512,25 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             ORDER BY completed_at DESC LIMIT 1`;
           const hasRetaken = retake.length > 0;
 
-          // === CLASSIFY: Assign persona (now includes reply data) ===
+          // === OBSERVE: Recent user_feedback for this email — close the listening loop ===
+          // If a user has filed an unresolved bug or actively-investigating feedback in
+          // the last 14 days, the coaching loop should NOT push standard sales-y emails
+          // at them. Switches persona to 'investigating', applies a 7-day cooldown
+          // unless they're a fast_mover (who actually want continuity).
+          let openFeedback = [];
+          let recentBugReport = false;
+          try {
+            openFeedback = await sql`SELECT id, severity, status, category, created_at,
+                EXTRACT(epoch FROM (NOW() - created_at))/86400 AS age_days
+              FROM user_feedback
+              WHERE LOWER(email) = LOWER(${email})
+                AND status IN ('new', 'investigating')
+                AND created_at > NOW() - INTERVAL '14 days'
+              ORDER BY created_at DESC LIMIT 5`;
+            recentBugReport = openFeedback.some(f => f.category === 'bug');
+          } catch (fbErr) { /* user_feedback table may not exist in dev */ }
+
+          // === CLASSIFY: Assign persona (now includes reply + feedback data) ===
           let persona = 'standard';
           const replyBonus = latestReply ? 0.2 : 0;
           const streakBonus = replyStreak >= 3 ? 0.15 : replyStreak >= 2 ? 0.1 : 0;
@@ -8529,6 +8547,13 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             WHERE contact_id = ${seq.contact_id} ORDER BY completed_at DESC LIMIT 1`;
           if (latestAssessment.length > 0 && ['Momentum', 'Mastery'].includes(latestAssessment[0].score_range)) {
             persona = 'high_performer';
+          }
+
+          // OVERRIDE: open bug report from this user wins — empathy + cooldown.
+          // fast_mover stays fast_mover (they want continuity even when reporting).
+          if (recentBugReport && persona !== 'fast_mover') {
+            persona = 'investigating';
+            decision.feedback_signal = openFeedback.map(f => `#${f.id}/${f.category}/${f.severity}/${Math.round(f.age_days)}d`).join(',');
           }
 
           // === DECIDE: Apply rules sorted by weight ===
@@ -8577,6 +8602,19 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
               await sql`UPDATE agent_rules SET times_fired = times_fired + 1, last_fired_at = NOW()
                 WHERE id = ${rule.id}`;
             }
+          }
+
+          // 7-day cooldown after a bug report (unless fast_mover, who want continuity).
+          // Newest feedback is openFeedback[0] since query is ORDER BY created_at DESC.
+          if (persona === 'investigating' && openFeedback.length > 0 && openFeedback[0].age_days < 7 && persona !== 'fast_mover') {
+            shouldSkip = true;
+            decision.rules_fired.push('cooldown_after_bug_report');
+            decision.feedback_cooldown_days_remaining = Math.max(0, 7 - Math.floor(openFeedback[0].age_days));
+          }
+          // Empathy variant for investigating-persona who passes cooldown
+          if (persona === 'investigating' && !shouldSkip) {
+            variant = 'empathy';
+            decision.rules_fired.push('empathy_on_bug_report');
           }
 
           if (shouldSkip && persona !== 'fast_mover') {
