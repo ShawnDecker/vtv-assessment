@@ -34,13 +34,16 @@ const TIER_CONFIG = {
   'dating-monthly': { amount: 2900, name: 'Aligned Hearts Monthly',       dbTier: 'individual', priceKey: 'individual', mode: 'subscription', isDating: true },
   // One-time downloadable products — no membership tier, just a payment
   'skill-pack-bundle': {
-    amount: 19700, // $197.00
+    amount: 19700, // $197.00 charged as one-time line item
     name: 'VTV Top-10 Professionals Skill Pack Bundle',
-    dbTier: null,             // not a membership
-    mode: 'payment',          // one-time, not subscription
+    dbTier: 'individual',                // bundle includes 1mo VictoryPath membership free, then auto-renews
+    priceKey: 'individual',              // recurring $29/mo VictoryPath price
+    mode: 'subscription',                // hybrid: $197 once + $29/mo (30-day trial)
+    bundleWithMembership: true,          // marker: combine one-time $197 + recurring $29/mo + 30-day trial
+    trialDays: 30,
     isDownload: true,
     successPath: '/checkout/success?product=skill-pack-bundle&download=/downloads/vtv-skill-packs-bundle.zip',
-    description: '10 profession-specific skill packs (real estate, coaches, authors, pastors, consultants, small business, event producers, service pros, content creators, sales). Voice rules + 5 templates + 3 AI prompts + weekly metrics dashboard per pack. Single-user license. Does not include the P.I.N.K.T. book.',
+    description: '10 profession-specific skill packs (real estate, coaches, authors, pastors, consultants, small business, event producers, service pros, content creators, sales). Voice rules + 5 templates + 3 AI prompts + weekly metrics dashboard per pack. Includes 1 month free VTV Membership ($29 value), auto-renews at $29/mo after the trial. Cancel anytime.',
   }
 };
 
@@ -335,6 +338,7 @@ module.exports = async (req, res) => {
       const isOneTime = config.mode === 'payment';
       const isDating = config.isDating || false;
       const isDownload = config.isDownload || false;
+      const isBundle = config.bundleWithMembership === true;
       const successUrl = isDownload
         ? `${BASE_URL}${config.successPath || '/checkout/success'}`
         : isDating
@@ -367,6 +371,49 @@ module.exports = async (req, res) => {
             payment_type: 'one_time',
           },
           allow_promotion_codes: true
+        };
+      } else if (isBundle) {
+        // Hybrid: $197 one-time setup fee + $29/mo subscription with 30-day trial.
+        // Customer is charged $197 immediately for the bundle, gets membership free for 30 days,
+        // then auto-renews at $29/mo. Cancel anytime via member portal.
+        const priceId = ACTIVE_PRICES[config.priceKey];
+        console.log(`[Checkout] BUNDLE: $${(config.amount/100).toFixed(2)} setup + ${priceId} (${config.trialDays}-day trial)`);
+        sessionParams = {
+          mode: 'subscription',
+          line_items: [
+            // Recurring subscription line — $29/mo
+            { price: priceId, quantity: 1 },
+            // One-time setup fee for the Skill Pack Bundle
+            {
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: config.name,
+                  description: 'One-time purchase: 10 profession-specific skill packs (downloadable). Includes 1 month of VTV Membership free.'
+                },
+                unit_amount: config.amount,
+                tax_behavior: 'unspecified',
+              },
+              quantity: 1,
+            },
+          ],
+          subscription_data: {
+            trial_period_days: config.trialDays || 30,
+            metadata: {
+              bundle: 'skill-pack-bundle',
+              trial_source: 'skill_pack_bundle_bonus',
+            },
+          },
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          metadata: {
+            tier: config.dbTier,
+            product: tier,
+            bundle: 'skill-pack-bundle',
+            download: 'true',
+            payment_type: 'bundle_subscription',
+          },
+          allow_promotion_codes: true,
         };
       } else {
         // Subscription (recurring)
