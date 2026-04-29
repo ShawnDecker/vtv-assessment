@@ -1061,6 +1061,38 @@
 </head>
 <body>
 
+<!-- ===== IN-APP BROWSER ESCAPE BANNER ===== -->
+<!-- Meta IAB / Instagram / TikTok / LinkedIn in-app browsers inject autofill
+     scripts that throw TypeErrors on /member (caught Apr 16, 2026). They also
+     can't honor passkeys, autofill, or some auth flows. Detect + offer escape. -->
+<div id="iab-banner" style="display:none; background:#1a1a1a; color:#fff; padding:10px 16px; font-size:14px; border-bottom:2px solid #D4A847; text-align:center;">
+  <span>You're in an in-app browser. Some features (autofill, passkeys) won't work here.</span>
+  <a id="iab-open-btn" href="#" style="display:inline-block; margin-left:12px; background:#D4A847; color:#0a0a0a; padding:6px 14px; border-radius:6px; font-weight:bold; text-decoration:none;">Open in browser →</a>
+  <button onclick="document.getElementById('iab-banner').style.display='none'" style="margin-left:8px; background:transparent; border:1px solid #444; color:#999; padding:6px 10px; border-radius:6px; cursor:pointer;">Dismiss</button>
+</div>
+<script>
+(function() {
+  var ua = navigator.userAgent || '';
+  // Match Meta (FB/IG), TikTok, LinkedIn, Snap, Pinterest, X/Twitter in-app browsers
+  var iabRegex = /FBAN|FBAV|FB_IAB|MetaIAB|Instagram|TikTok|musical_ly|LinkedInApp|Snapchat|Pinterest|Twitter\/[0-9]|wv\)/i;
+  if (iabRegex.test(ua)) {
+    var banner = document.getElementById('iab-banner');
+    var btn = document.getElementById('iab-open-btn');
+    if (banner && btn) {
+      // intent:// (Android) or just a regular link (iOS opens in default browser via target=_blank)
+      var url = window.location.href;
+      var isAndroid = /Android/i.test(ua);
+      btn.href = isAndroid
+        ? 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end'
+        : url;
+      btn.target = '_blank';
+      btn.rel = 'noopener noreferrer';
+      banner.style.display = 'block';
+    }
+  }
+})();
+</script>
+
 <!-- ===== NAV ===== -->
 <nav class="top-nav">
   <a href="/" class="nav-logo">

@@ -9014,6 +9014,34 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           };
         }
 
+        // === USER FEEDBACK QUEUE ===
+        // Surface unresolved bugs + investigating items so they don't sit stale.
+        // Resolved/reviewed are excluded from the active queue but counted in summary.
+        let userFeedback = { active: [], summary: {} };
+        try {
+          const active = await sql`SELECT id, email, severity, status, category, page_url,
+              SUBSTRING(COALESCE(response, question, ''), 1, 200) AS text,
+              admin_notes, created_at,
+              EXTRACT(epoch FROM (NOW() - created_at))/86400 AS age_days
+            FROM user_feedback
+            WHERE status NOT IN ('resolved', 'reviewed', 'closed')
+            ORDER BY
+              CASE severity WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END,
+              created_at DESC
+            LIMIT 20`;
+          const summary = await sql`SELECT
+              COUNT(*) FILTER (WHERE status NOT IN ('resolved','reviewed','closed')) AS open,
+              COUNT(*) FILTER (WHERE status = 'investigating') AS investigating,
+              COUNT(*) FILTER (WHERE status = 'resolved') AS resolved,
+              COUNT(*) FILTER (WHERE category = 'bug' AND status NOT IN ('resolved','closed')) AS open_bugs,
+              COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days') AS new_7d,
+              COUNT(*) AS total
+            FROM user_feedback`;
+          userFeedback = { active, summary: summary[0] || {} };
+        } catch (fbErr) {
+          userFeedback = { active: [], summary: { error: fbErr.message } };
+        }
+
         return res.json({
           agents: agentRuns,
           health,
@@ -9023,6 +9051,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           recentDecisions,
           systems: systemRegistry,
           aiRouter,
+          userFeedback,
         });
       } catch (dashErr) {
         return res.status(500).json({ error: dashErr.message });

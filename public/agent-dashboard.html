@@ -326,6 +326,40 @@ function render(data) {
     html += '</div>';
   }
 
+  // === USER FEEDBACK QUEUE ===
+  // Surface unresolved bug reports + investigating items at the top of the
+  // dashboard so they don't sit for 24+ days like the Apr 13 reports did.
+  if (data.userFeedback) {
+    const fb = data.userFeedback;
+    const sum = fb.summary || {};
+    const open = parseInt(sum.open || 0);
+    const openBugs = parseInt(sum.open_bugs || 0);
+    if (open > 0) {
+      html += '<div class="section-title">User Feedback</div>';
+      html += '<div class="stat-row">';
+      html += stat(open, 'Open');
+      html += stat(openBugs, 'Open Bugs');
+      html += stat(parseInt(sum.investigating || 0), 'Investigating');
+      html += stat(parseInt(sum.new_7d || 0), 'New 7d');
+      html += stat(parseInt(sum.resolved || 0), 'Resolved');
+      html += '</div>';
+      for (const f of (fb.active || [])) {
+        const sevBadge = f.severity === 'critical' ? 'b-red'
+                      : f.severity === 'high' ? 'b-red'
+                      : f.severity === 'medium' ? 'b-yellow'
+                      : 'b-gold';
+        const ageColor = f.age_days > 14 ? '#ef4444' : f.age_days > 7 ? '#eab308' : '#71717a';
+        const pageLink = f.page_url ? `<a href="${f.page_url}" target="_blank" style="color:#a1a1aa;">${f.page_url.replace(/^https?:\/\/[^/]+/, '')}</a>` : '<span style="color:#52525b;">(no page)</span>';
+        html += `<div class="card" style="border-left:3px solid ${ageColor};">
+          <div class="name">#${f.id} <span class="badge ${sevBadge}">${f.severity || '?'}</span> <span class="badge b-yellow" style="margin-left:4px;">${f.status || 'open'}</span> <span class="badge b-gold" style="margin-left:4px;">${f.category || 'feedback'}</span></div>
+          <div class="meta">${f.email || 'anon'} · ${Math.round(f.age_days)}d ago · ${pageLink}</div>
+          <div class="detail">${(f.text || '').replace(/</g,'&lt;')}</div>
+          ${f.admin_notes ? `<div class="detail" style="color:#D4A847; margin-top:6px; font-style:italic;">📝 ${(f.admin_notes||'').replace(/</g,'&lt;')}</div>` : ''}
+        </div>`;
+      }
+    }
+  }
+
   // === EMAIL PERFORMANCE ===
   const es = data.email?.stats || {};
   if (es.total_sent) {
