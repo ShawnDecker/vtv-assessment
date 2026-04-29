@@ -13,7 +13,7 @@ note: "Public-facing version of the seller-prep content. Distinct from the priva
 > *21 years of valuing Lowcountry homes — distilled into 12 honest answers.*
 > *Luxury without the pretense.*
 
-Most agents will tell you what your home is worth.
+Most agents will give you a single magic number for your home.
 
 I'm a Realtor and a GA Certified Residential Appraiser. I won't.
 
