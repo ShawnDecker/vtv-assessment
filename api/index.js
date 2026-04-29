@@ -8454,15 +8454,16 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
       try {
         await ensureCoachingTable(sql);
 
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-
+        // Use server-side CURRENT_DATE rather than passing a JS Date string —
+        // the neon-serverless driver sends parameters as text and Postgres
+        // refuses to compare timestamp < text without an explicit cast,
+        // which threw "operator does not exist: text > timestamp with time zone".
         const sequences = await sql`
           SELECT cs.*, c.first_name, c.email as contact_email, c.id as contact_id
           FROM coaching_sequences cs
           JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
           WHERE cs.unsubscribed = false
-          AND (cs.last_sent_at IS NULL OR cs.last_sent_at < ${todayStart.toISOString()})
+          AND (cs.last_sent_at IS NULL OR cs.last_sent_at < CURRENT_DATE)
           LIMIT 50`;
 
         let sentCount = 0, skippedCount = 0, adaptedCount = 0;
