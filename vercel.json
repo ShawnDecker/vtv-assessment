@@ -327,6 +327,10 @@
       "dest": "/daily-word.html"
     },
     {
+      "src": "/remote",
+      "dest": "/remote.html"
+    },
+    {
       "src": "/admin/contacts",
       "dest": "/admin-contacts.html"
     },
