@@ -1737,7 +1737,9 @@
     if (tier === 'free') {
       actionsEl.innerHTML = '<a href="/pricing" class="btn btn-gold">Upgrade Membership</a>';
     } else {
-      actionsEl.innerHTML = '<button class="btn btn-ghost" id="manageSubBtn" onclick="manageSubscription()">Manage Subscription</button>';
+      actionsEl.innerHTML = '<button class="btn btn-ghost" id="manageSubBtn" onclick="manageSubscription()">Manage Subscription</button>' +
+        '<button class="btn btn-ghost" id="cancelSubBtn" onclick="manageSubscription()" style="margin-left:8px;border-color:rgba(239,68,68,0.3);color:#ef4444">Cancel Subscription</button>' +
+        '<div style="font-size:12px;color:var(--text-muted);margin-top:6px">Cancel takes 30 seconds — no questions asked. You keep access through the end of your current billing period.</div>';
     }
   }
 

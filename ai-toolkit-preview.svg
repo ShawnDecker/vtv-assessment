@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="800" height="480">
+  <defs>
+    <linearGradient id="aiBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1a1f"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <linearGradient id="aiAccent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="transparent"/>
+      <stop offset="50%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Card background -->
+  <rect width="800" height="480" rx="16" fill="url(#aiBg)"/>
+  <rect x="0" y="0" width="800" height="3" fill="url(#aiAccent)"/>
+
+  <!-- Eyebrow -->
+  <text x="400" y="50" font-family="Satoshi,sans-serif" font-size="11" fill="#22d3ee" letter-spacing="3" font-weight="700" text-anchor="middle">VTV AI SKILLS TOOLKIT · MEMBERS-ONLY DOWNLOAD</text>
+
+  <!-- Title -->
+  <text x="400" y="92" font-family="Instrument Serif,serif" font-style="italic" font-size="34" fill="#fff" text-anchor="middle">100 ways to use AI</text>
+  <text x="400" y="120" font-family="Instrument Serif,serif" font-style="italic" font-size="20" fill="#a1a1aa" text-anchor="middle">in your daily work</text>
+
+  <!-- Pill row: contents -->
+  <g font-family="Satoshi,sans-serif" font-size="11">
+    <rect x="100" y="155" width="160" height="34" rx="17" fill="#18181b" stroke="#27272a"/>
+    <text x="180" y="177" fill="#22d3ee" text-anchor="middle" font-weight="700">📝 100 Prompts</text>
+
+    <rect x="270" y="155" width="160" height="34" rx="17" fill="#18181b" stroke="#27272a"/>
+    <text x="350" y="177" fill="#a78bfa" text-anchor="middle" font-weight="700">⚙️ 12 Workflows</text>
+
+    <rect x="440" y="155" width="160" height="34" rx="17" fill="#18181b" stroke="#27272a"/>
+    <text x="520" y="177" fill="#fbbf24" text-anchor="middle" font-weight="700">🎯 Best-AI Matrix</text>
+
+    <rect x="610" y="155" width="160" height="34" rx="17" fill="#18181b" stroke="#27272a"/>
+    <text x="690" y="177" fill="#4ade80" text-anchor="middle" font-weight="700">🔒 Privacy Basics</text>
+  </g>
+
+  <!-- Sample categories grid -->
+  <g font-family="Satoshi,sans-serif">
+    <rect x="60" y="215" width="220" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
+    <text x="80" y="240" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY A · 1–15</text>
+    <text x="80" y="262" font-size="14" fill="#fff" font-weight="700">Writing & Editing</text>
+    <text x="80" y="278" font-size="10" fill="#a1a1aa">Tighten · rewrite · find buried lede · cut hedge words</text>
+
+    <rect x="290" y="215" width="220" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
+    <text x="310" y="240" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY B · 16–30</text>
+    <text x="310" y="262" font-size="14" fill="#fff" font-weight="700">Research & Synthesis</text>
+    <text x="310" y="278" font-size="10" fill="#a1a1aa">Summarize · steelman · timeline · counter-arguments</text>
+
+    <rect x="520" y="215" width="220" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
+    <text x="540" y="240" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY C · 31–45</text>
+    <text x="540" y="262" font-size="14" fill="#fff" font-weight="700">Planning & Decisions</text>
+    <text x="540" y="278" font-size="10" fill="#a1a1aa">Pre-mortem · 30-60-90 · highest leverage · reversible?</text>
+
+    <rect x="60" y="295" width="220" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
+    <text x="80" y="320" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY D · 46–60</text>
+    <text x="80" y="342" font-size="14" fill="#fff" font-weight="700">Email & Outreach</text>
+    <text x="80" y="358" font-size="10" fill="#a1a1aa">Cold opens · re-engage · subject lines · follow-ups</text>
+
+    <rect x="290" y="295" width="220" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
+    <text x="310" y="320" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY E · 61–75</text>
+    <text x="310" y="342" font-size="14" fill="#fff" font-weight="700">Meetings & Notes</text>
+    <text x="310" y="358" font-size="10" fill="#a1a1aa">Recap · action items · pull commitments · open Q's</text>
+
+    <rect x="520" y="295" width="220" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
+    <text x="540" y="320" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY F · 76–85</text>
+    <text x="540" y="342" font-size="14" fill="#fff" font-weight="700">Code & Tech</text>
+    <text x="540" y="358" font-size="10" fill="#a1a1aa">Explain · refactor · edge cases · convert languages</text>
+
+    <rect x="60" y="375" width="450" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
+    <text x="80" y="400" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY G · 86–100</text>
+    <text x="80" y="422" font-size="14" fill="#fff" font-weight="700">Personal & Daily Life</text>
+    <text x="80" y="438" font-size="10" fill="#a1a1aa">Plan your week · prep hard conversations · meal planning · journaling</text>
+
+    <!-- Best-AI matrix preview -->
+    <rect x="520" y="375" width="220" height="68" rx="10" fill="#0e0e10" stroke="rgba(34,211,238,0.3)"/>
+    <text x="540" y="400" font-size="10" fill="#22d3ee" letter-spacing="1.5" font-weight="700">+ BEST-AI MATRIX</text>
+    <text x="540" y="420" font-size="11" fill="#a1a1aa">Claude · ChatGPT · Gemini · Perplexity</text>
+    <text x="540" y="436" font-size="11" fill="#a1a1aa">Picked by task type</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="400" y="468" font-family="Instrument Serif,serif" font-style="italic" font-size="10" fill="#52525b" text-anchor="middle">Yours forever · use it · share with your team · no proprietary frameworks exposed</text>
+</svg>

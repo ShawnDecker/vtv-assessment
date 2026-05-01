@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" width="800" height="560">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a1f"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <linearGradient id="goldStroke" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="transparent"/>
+      <stop offset="50%" stop-color="#D4A847"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Editor background -->
+  <rect width="800" height="560" rx="14" fill="url(#bg)"/>
+
+  <!-- Top window bar -->
+  <rect width="800" height="38" rx="14" fill="#18181b"/>
+  <rect y="20" width="800" height="18" fill="#18181b"/>
+  <circle cx="20" cy="19" r="6" fill="#ef4444"/>
+  <circle cx="40" cy="19" r="6" fill="#fbbf24"/>
+  <circle cx="60" cy="19" r="6" fill="#4ade80"/>
+  <text x="400" y="24" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12" fill="#71717a" text-anchor="middle">01_real_estate_pros.md  ·  VTV Skill Pack Bundle  ·  10 packs</text>
+
+  <!-- Left sidebar (file list) -->
+  <rect x="0" y="38" width="200" height="522" fill="#0f0f12"/>
+  <text x="14" y="62" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="#52525b">SKILL-PACKS/</text>
+
+  <!-- File entries -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11">
+    <rect x="0" y="74" width="200" height="22" fill="#1f1f24"/>
+    <text x="20" y="89" fill="#D4A847">📄 01_real_estate_pros.md</text>
+    <text x="20" y="111" fill="#a1a1aa">📄 02_coaches_therapists.md</text>
+    <text x="20" y="133" fill="#a1a1aa">📄 03_authors_speakers.md</text>
+    <text x="20" y="155" fill="#a1a1aa">📄 04_pastors_ministry.md</text>
+    <text x="20" y="177" fill="#a1a1aa">📄 05_solo_consultants.md</text>
+    <text x="20" y="199" fill="#a1a1aa">📄 06_small_business.md</text>
+    <text x="20" y="221" fill="#a1a1aa">📄 07_event_producers.md</text>
+    <text x="20" y="243" fill="#a1a1aa">📄 08_service_pros.md</text>
+    <text x="20" y="265" fill="#a1a1aa">📄 09_content_creators.md</text>
+    <text x="20" y="287" fill="#a1a1aa">📄 10_sales_pros.md</text>
+    <text x="20" y="320" fill="#71717a">📄 README.md</text>
+  </g>
+
+  <!-- Editor content -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13">
+    <!-- Frontmatter -->
+    <text x="220" y="68" fill="#71717a">---</text>
+    <text x="220" y="86" fill="#a78bfa">title:</text>
+    <text x="280" y="86" fill="#4ade80">"Real Estate Professionals — Skill Pack"</text>
+    <text x="220" y="104" fill="#a78bfa">audience:</text>
+    <text x="296" y="104" fill="#4ade80">"agents, brokers, appraisers, lenders"</text>
+    <text x="220" y="122" fill="#a78bfa">framework:</text>
+    <text x="312" y="122" fill="#d4d4d8">VTV (Time · People · Influence · Numbers · Knowledge)</text>
+    <text x="220" y="140" fill="#a78bfa">includes:</text>
+    <text x="296" y="140" fill="#d4d4d8">voice rules · 5 templates · 3 AI prompts · weekly dashboard</text>
+    <text x="220" y="158" fill="#71717a">---</text>
+
+    <!-- H1 -->
+    <text x="220" y="190" fill="#D4A847" font-size="18" font-weight="700"># Real Estate Professionals — Skill Pack</text>
+
+    <!-- Section -->
+    <text x="220" y="226" fill="#fbbf24" font-size="14" font-weight="700">## 1 · Voice rules</text>
+
+    <!-- Bullets -->
+    <text x="232" y="252" fill="#d4d4d8">• Be specific. Replace "we'll see" with</text>
+    <text x="232" y="270" fill="#d4d4d8">  "I'll get back to you Tuesday by 3pm."</text>
+    <text x="232" y="294" fill="#d4d4d8">• One ask per message. If you list 3,</text>
+    <text x="232" y="312" fill="#d4d4d8">  you'll get zero.</text>
+    <text x="232" y="336" fill="#d4d4d8">• Numbers beat adjectives.</text>
+
+    <!-- Section -->
+    <text x="220" y="370" fill="#fbbf24" font-size="14" font-weight="700">## 2 · Templates (5)</text>
+
+    <!-- Template -->
+    <text x="232" y="396" fill="#22d3ee" font-weight="700">T1 — First-touch outreach</text>
+    <rect x="232" y="404" width="540" height="92" rx="6" fill="#0a0a0a" stroke="#27272a"/>
+    <text x="244" y="424" fill="#a1a1aa">&gt; Hi {first_name}, saw {specific_thing}.</text>
+    <text x="244" y="442" fill="#a1a1aa">&gt; I help {audience} cut {problem} by</text>
+    <text x="244" y="460" fill="#a1a1aa">&gt; {outcome}. 12-min walkthrough?</text>
+    <text x="244" y="478" fill="#D4A847">&gt; Calendar: {calendly_link}</text>
+  </g>
+
+  <!-- Status bar -->
+  <rect x="0" y="540" width="800" height="20" fill="#18181b"/>
+  <text x="14" y="554" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="#4ade80">● Single-user license</text>
+  <text x="180" y="554" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="#71717a">10 packs · 50 templates · 30 AI prompts · 10 dashboards</text>
+  <text x="600" y="554" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="#D4A847">$197 + 1mo membership</text>
+
+  <!-- Gold accent -->
+  <rect x="0" y="38" width="800" height="2" fill="url(#goldStroke)"/>
+</svg>

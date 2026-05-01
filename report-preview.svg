@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" width="800" height="520">
+  <defs>
+    <linearGradient id="rpBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1c1c20"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <linearGradient id="rpAccent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="transparent"/>
+      <stop offset="50%" stop-color="#D4A847"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Paper-like card -->
+  <rect width="800" height="520" rx="16" fill="url(#rpBg)"/>
+  <rect x="0" y="0" width="800" height="3" fill="url(#rpAccent)"/>
+
+  <!-- Header -->
+  <text x="400" y="45" font-family="Satoshi,sans-serif" font-size="10" fill="#D4A847" letter-spacing="3" font-weight="700" text-anchor="middle">VTV ACTION PLAN REPORT · TAILORED · $1.99</text>
+  <text x="400" y="78" font-family="Instrument Serif,serif" font-style="italic" font-size="22" fill="#fff" text-anchor="middle">Your 7-Day Fix List</text>
+  <text x="400" y="100" font-family="Satoshi,sans-serif" font-size="11" fill="#71717a" text-anchor="middle">Generated from your Master Value Score (171) · Updated for the next 7 days</text>
+
+  <!-- Divider -->
+  <line x1="60" y1="120" x2="740" y2="120" stroke="#27272a"/>
+
+  <!-- Day blocks -->
+  <g font-family="Satoshi,sans-serif">
+    <!-- Day 1 -->
+    <rect x="40" y="140" width="360" height="86" rx="10" fill="#18181b" stroke="#27272a"/>
+    <text x="56" y="162" font-size="9" fill="#D4A847" letter-spacing="1.5" font-weight="700">DAY 1 · MONDAY · TIME PILLAR</text>
+    <text x="56" y="184" font-size="13" fill="#fff" font-weight="700">Audit your top 3 calendar leaks</text>
+    <text x="56" y="202" font-size="11" fill="#a1a1aa">Move the 2pm sync to async. Reclaim 90 min.</text>
+    <text x="56" y="218" font-size="10" fill="#4ade80">+ Time recovered · estimated 90 min back</text>
+
+    <!-- Day 2 -->
+    <rect x="408" y="140" width="360" height="86" rx="10" fill="#18181b" stroke="#27272a"/>
+    <text x="424" y="162" font-size="9" fill="#f472b6" letter-spacing="1.5" font-weight="700">DAY 2 · TUESDAY · PEOPLE PILLAR</text>
+    <text x="424" y="184" font-size="13" fill="#fff" font-weight="700">Reach out to 1 underinvested relationship</text>
+    <text x="424" y="202" font-size="11" fill="#a1a1aa">Identified from your People map: contact #4.</text>
+    <text x="424" y="218" font-size="10" fill="#4ade80">+ 1 high-value reconnect · target: 12-min call</text>
+
+    <!-- Day 3 -->
+    <rect x="40" y="240" width="360" height="86" rx="10" fill="#18181b" stroke="#27272a"/>
+    <text x="56" y="262" font-size="9" fill="#60a5fa" letter-spacing="1.5" font-weight="700">DAY 3 · WEDNESDAY · NUMBERS PILLAR</text>
+    <text x="56" y="284" font-size="13" fill="#fff" font-weight="700">Recompute your effective hourly rate</text>
+    <text x="56" y="302" font-size="11" fill="#a1a1aa">Last month: $47/hr. Target: $63/hr.</text>
+    <text x="56" y="318" font-size="10" fill="#4ade80">+ Visibility on the leak that's costing $2,800/mo</text>
+
+    <!-- Day 4 -->
+    <rect x="408" y="240" width="360" height="86" rx="10" fill="#18181b" stroke="#27272a"/>
+    <text x="424" y="262" font-size="9" fill="#a78bfa" letter-spacing="1.5" font-weight="700">DAY 4 · THURSDAY · KNOWLEDGE PILLAR</text>
+    <text x="424" y="284" font-size="13" fill="#fff" font-weight="700">Apply 1 unread book to your weakest area</text>
+    <text x="424" y="302" font-size="11" fill="#a1a1aa">From your stack: chapter 3, in 25 minutes.</text>
+    <text x="424" y="318" font-size="10" fill="#4ade80">+ Convert dormant knowledge to applied score</text>
+
+    <!-- Day 5 -->
+    <rect x="40" y="340" width="360" height="86" rx="10" fill="#18181b" stroke="#27272a"/>
+    <text x="56" y="362" font-size="9" fill="#2dd4bf" letter-spacing="1.5" font-weight="700">DAY 5 · FRIDAY · INFLUENCE PILLAR</text>
+    <text x="56" y="384" font-size="13" fill="#fff" font-weight="700">Publish 1 piece of work in your voice</text>
+    <text x="56" y="402" font-size="11" fill="#a1a1aa">Format that punched above weight: short post.</text>
+    <text x="56" y="418" font-size="10" fill="#4ade80">+ Keeps Influence flywheel turning · 25 min</text>
+
+    <!-- Days 6-7 -->
+    <rect x="408" y="340" width="360" height="86" rx="10" fill="#18181b" stroke="#27272a"/>
+    <text x="424" y="362" font-size="9" fill="#D4A847" letter-spacing="1.5" font-weight="700">DAYS 6–7 · WEEKEND · TIME MULTIPLIER</text>
+    <text x="424" y="384" font-size="13" fill="#fff" font-weight="700">Re-run the 5-min assessment</text>
+    <text x="424" y="402" font-size="11" fill="#a1a1aa">Track which pillar moved. Repeat what worked.</text>
+    <text x="424" y="418" font-size="10" fill="#4ade80">+ See your new Master Value Score</text>
+  </g>
+
+  <!-- Footer -->
+  <line x1="60" y1="446" x2="740" y2="446" stroke="#27272a"/>
+  <text x="60" y="472" font-family="Satoshi,sans-serif" font-size="10" fill="#71717a">Tailored from your assessment · Updated weekly · Email delivery</text>
+  <text x="740" y="472" font-family="Satoshi,sans-serif" font-size="10" fill="#D4A847" font-weight="700" text-anchor="end">$1.99 · Members get this auto-delivered</text>
+
+  <!-- Watermark -->
+  <text x="400" y="498" font-family="Instrument Serif,serif" font-style="italic" font-size="10" fill="#52525b" text-anchor="middle">Value to Victory · The Lost Art of Value · Master Your Number</text>
+</svg>

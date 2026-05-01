@@ -269,11 +269,65 @@ module.exports = async (req, res) => {
         }
       }
 
+      // Handle trial_will_end (fires 3 days before trial converts) — required for ROSCA + CA/IL compliance
+      // This is the renewal-reminder email for the Skill Pack Bundle's 30-day free membership trial.
+      if (event.type === 'customer.subscription.trial_will_end') {
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
+        const trialEnd = subscription.trial_end; // unix timestamp
+        const isBundle = subscription.metadata?.bundle === 'skill-pack-bundle';
+
+        try {
+          // Get customer email
+          const customer = await stripe.customers.retrieve(customerId);
+          const email = customer?.email;
+          if (email) {
+            const trialEndDate = new Date(trialEnd * 1000);
+            const dateStr = trialEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+            // Send reminder via internal email API (api/email.js handles SMTP)
+            const emailRes = await fetch(`${BASE_URL}/api/email`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: email,
+                subject: isBundle
+                  ? 'Heads up — your free month of VTV Membership ends in 3 days'
+                  : 'Your VTV trial ends in 3 days',
+                html: `
+                  <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0a0a0a">
+                    <h2 style="color:#D4A847;margin-bottom:8px">3-day notice</h2>
+                    <p>Hi,</p>
+                    <p>Your <strong>30-day free VTV Membership</strong>${isBundle ? ' (included with your Skill Pack Bundle purchase)' : ''} ends on <strong>${dateStr}</strong>.</p>
+                    <p>After that, your subscription will auto-renew at <strong>$29/month</strong> on the same card on file. You can cancel anytime — no questions, no friction.</p>
+                    <p style="margin:24px 0">
+                      <a href="https://assessment.valuetovictory.com/member"
+                         style="display:inline-block;background:#0a0a0a;color:#D4A847;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700">
+                        Manage My Membership
+                      </a>
+                    </p>
+                    <p style="font-size:13px;color:#666">To cancel before you're charged, visit your member portal and click "Cancel Subscription." Cancellation is immediate and takes 30 seconds — we won't ask you why.</p>
+                    <p style="font-size:13px;color:#666">Questions? Just reply to this email — Shawn reads every message.</p>
+                    <hr style="border:none;border-top:1px solid #ddd;margin:24px 0">
+                    <p style="font-size:12px;color:#999">Value to Victory · Shawn E. Decker · valuetovictory@gmail.com</p>
+                  </div>
+                `,
+              }),
+            }).catch(e => { console.warn('[trial_will_end] email send failed:', e.message); });
+
+            console.log(`[trial_will_end] Sent reminder to ${email} (bundle=${isBundle}) for sub ${subscription.id}`);
+          }
+        } catch (e) {
+          console.error('[trial_will_end] Handler error (non-fatal):', e.message);
+        }
+      }
+
       // Track subscription events in analytics
       try {
         const eventType = event.type === 'checkout.session.completed' ? 'subscription_created'
           : event.type === 'customer.subscription.deleted' ? 'subscription_cancelled'
           : event.type === 'customer.subscription.updated' ? 'subscription_updated'
+          : event.type === 'customer.subscription.trial_will_end' ? 'subscription_trial_ending'
           : null;
         if (eventType) {
           await sql`INSERT INTO analytics_events (event_type, metadata) VALUES (${eventType}, ${JSON.stringify({ stripe_event: event.type, stripe_event_id: event.id })}::jsonb)`;

@@ -36,6 +36,17 @@
       "dest": "/api/cart-checkout.js"
     },
     {
+      "src": "/downloads/vtv-ai-starter-pack(\\.md)?",
+      "status": 410,
+      "headers": { "Cache-Control": "no-store" },
+      "dest": "/404.html"
+    },
+    {
+      "src": "/_internal/(.*)",
+      "status": 404,
+      "dest": "/404.html"
+    },
+    {
       "src": "/api/checkout/webhook",
       "dest": "/api/checkout.js"
     },
@@ -364,7 +375,19 @@
     },
     {
       "src": "/start",
-      "dest": "/funnel.html"
+      "dest": "/start.html"
+    },
+    {
+      "src": "/join",
+      "dest": "/join.html"
+    },
+    {
+      "src": "/quiz",
+      "dest": "/join.html"
+    },
+    {
+      "src": "/score",
+      "dest": "/join.html"
     },
     {
       "src": "/go",
