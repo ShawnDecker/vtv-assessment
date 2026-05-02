@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VTV Remote</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0a0a0a;color:#e4e4e7;font-family:Arial,Helvetica,sans-serif;min-height:100vh;}
+.header{text-align:center;padding:28px 16px 16px;position:sticky;top:0;background:#0a0a0a;z-index:10;border-bottom:1px solid #1a1a1a;}
+.brand{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;margin-bottom:4px;}
+h1{font-family:Georgia,serif;font-size:20px;font-style:italic;color:#fff;}
+.auth{max-width:400px;margin:60px auto;padding:0 20px;text-align:center;}
+.auth input{width:100%;padding:14px 16px;background:#18181b;border:1px solid #27272a;border-radius:8px;color:#e4e4e7;font-size:16px;margin-bottom:12px;outline:none;}
+.auth input:focus{border-color:#D4A847;}
+.auth button{width:100%;padding:14px;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:15px;font-weight:bold;border:none;border-radius:8px;cursor:pointer;}
+.auth .err{color:#ef4444;font-size:13px;margin-top:8px;display:none;}
+.main{max-width:500px;margin:0 auto;padding:16px 16px 60px;display:none;}
+.section{font-size:11px;font-weight:bold;color:#D4A847;letter-spacing:1.5px;text-transform:uppercase;margin:20px 0 10px;}
+.section:first-child{margin-top:8px;}
+.btn{display:block;width:100%;padding:14px 16px;margin-bottom:8px;border-radius:8px;font-size:14px;font-weight:bold;text-align:center;text-decoration:none;cursor:pointer;border:none;}
+.btn-gold{background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;}
+.btn-outline{background:transparent;border:1px solid #27272a;color:#e4e4e7;}
+.btn-outline:active{background:#18181b;}
+.btn-red{background:transparent;border:1px solid #ef4444;color:#ef4444;}
+.btn-green{background:transparent;border:1px solid #22c55e;color:#22c55e;}
+.result{background:#18181b;border:1px solid #27272a;border-radius:8px;padding:14px;margin:8px 0 16px;font-size:13px;color:#a1a1aa;display:none;word-break:break-word;}
+.result.ok{border-color:#22c55e;color:#22c55e;}
+.result.err{border-color:#ef4444;color:#ef4444;}
+.info{background:#18181b;border:1px solid #27272a;border-radius:8px;padding:14px;margin-bottom:8px;}
+.info .lbl{font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;}
+.info .val{font-size:14px;color:#e4e4e7;font-weight:bold;margin-top:2px;word-break:break-all;user-select:all;}
+.info .copy{float:right;font-size:11px;color:#D4A847;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="brand">VALUE TO VICTORY</div>
+  <h1>Remote Command Center</h1>
+</div>
+
+<div class="auth" id="auth">
+  <p style="color:#71717a;font-size:13px;margin-bottom:20px;">Enter your admin API key</p>
+  <input type="password" id="keyInput" placeholder="Admin API Key" autocomplete="off"/>
+  <button onclick="unlock()">Unlock</button>
+  <div class="err" id="authErr"></div>
+</div>
+
+<div class="main" id="main">
+  <div id="result" class="result"></div>
+
+  <div class="section">Send Emails Now</div>
+  <button class="btn btn-gold" onclick="trigger('/api/ceo-briefing')">Send CEO Briefing</button>
+  <button class="btn btn-outline" onclick="trigger('/api/coaching/send')">Send Coaching Emails</button>
+  <button class="btn btn-outline" onclick="trigger('/api/devotional/send')">Send Devotional</button>
+  <button class="btn btn-outline" onclick="trigger('/api/accountability/send')">Send Accountability</button>
+
+  <div class="section">Outreach</div>
+  <button class="btn btn-outline" onclick="trigger('/api/send-apology?key='+KEY)">Send Apology to All Users</button>
+  <button class="btn btn-outline" onclick="trigger('/api/send-vt-pitch?key='+KEY)">Send VT Pitch (15 Faculty)</button>
+  <button class="btn btn-outline" onclick="triggerBlueprint()">Send Blueprint to...</button>
+
+  <div class="section">Admin Actions</div>
+  <button class="btn btn-outline" onclick="trigger('/api/admin/email-log/backfill')">Backfill Email Log</button>
+  <button class="btn btn-outline" onclick="trigger('/api/story-links/seed')">Seed Story Links</button>
+  <button class="btn btn-outline" onclick="resetPin()">Reset Someone's PIN</button>
+
+  <div class="section">Quick Links</div>
+  <a class="btn btn-outline" href="https://assessment.valuetovictory.com/admin/contacts" target="_blank">Admin Command Center</a>
+  <a class="btn btn-outline" href="https://assessment.valuetovictory.com/agent-dashboard" target="_blank">Agent Dashboard</a>
+  <a class="btn btn-outline" href="https://assessment.valuetovictory.com/member" target="_blank">Member Portal</a>
+  <a class="btn btn-outline" href="https://assessment.valuetovictory.com/" target="_blank">Assessment Home</a>
+  <a class="btn btn-outline" href="https://assessment.valuetovictory.com/pricing" target="_blank">Pricing</a>
+  <a class="btn btn-outline" href="https://assessment.valuetovictory.com/investor-pitch" target="_blank">Investor Pitch</a>
+  <a class="btn btn-outline" href="https://console.neon.tech" target="_blank">Neon Database</a>
+  <a class="btn btn-outline" href="https://vercel.com/dashboard" target="_blank">Vercel Dashboard</a>
+  <a class="btn btn-outline" href="https://github.com/ShawnDecker/vtv-assessment" target="_blank">GitHub Repo</a>
+
+  <div class="section">Your Credentials</div>
+  <div class="info">
+    <span class="copy" onclick="copyVal('keyVal')">copy</span>
+    <div class="lbl">Admin API Key</div>
+    <div class="val" id="keyVal"></div>
+  </div>
+  <div class="info">
+    <div class="lbl">Your PIN</div>
+    <div class="val">8887</div>
+  </div>
+  <div class="info">
+    <div class="lbl">Your Email</div>
+    <div class="val">valuetovictory@gmail.com</div>
+  </div>
+
+  <div class="section">Daily Email Schedule (EST)</div>
+  <div class="info">
+    <div style="font-size:13px;color:#a1a1aa;line-height:1.8;">
+      6:00 AM — Devotional<br/>
+      6:30 AM — CEO Briefing<br/>
+      7:00 AM — Coaching Emails<br/>
+      6:00 PM — Accountability<br/>
+      Every 15m — Systems Agent
+    </div>
+  </div>
+</div>
+
+<script>
+let KEY = '';
+const BASE = 'https://assessment.valuetovictory.com';
+
+function unlock() {
+  KEY = document.getElementById('keyInput').value.trim();
+  if (!KEY) return;
+  showResult('Verifying...', '');
+  fetch(BASE+'/api/admin/analytics', {headers:{'x-api-key':KEY}})
+    .then(r=>{if(!r.ok)throw new Error('Invalid key');return r.json();})
+    .then(()=>{
+      document.getElementById('auth').style.display='none';
+      document.getElementById('main').style.display='block';
+      document.getElementById('keyVal').textContent=KEY;
+      document.getElementById('result').style.display='none';
+      try{sessionStorage.setItem('vtv_remote_key',KEY);}catch(e){}
+    })
+    .catch(e=>{
+      const err=document.getElementById('authErr');
+      err.textContent=e.message;err.style.display='block';
+      try{sessionStorage.removeItem('vtv_remote_key');}catch(e){}
+    });
+}
+
+// Auto-restore
+(function(){
+  try{
+    const k=sessionStorage.getItem('vtv_remote_key');
+    if(k){
+      KEY=k;
+      fetch(BASE+'/api/admin/analytics',{headers:{'x-api-key':k}})
+        .then(r=>{if(!r.ok)throw new Error('expired');return r.json();})
+        .then(()=>{
+          document.getElementById('auth').style.display='none';
+          document.getElementById('main').style.display='block';
+          document.getElementById('keyVal').textContent=KEY;
+        })
+        .catch(()=>{sessionStorage.removeItem('vtv_remote_key');});
+    }
+  }catch(e){}
+})();
+document.getElementById('keyInput').addEventListener('keydown',e=>{if(e.key==='Enter')unlock();});
+
+function showResult(msg, type) {
+  const r=document.getElementById('result');
+  r.textContent=msg;
+  r.className='result'+(type?' '+type:'');
+  r.style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function trigger(path) {
+  showResult('Sending...','');
+  const url = path.includes('?') ? BASE+path : BASE+path;
+  const headers = {};
+  if (!path.includes('key=')) headers['x-api-key'] = KEY;
+  fetch(url, {headers})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.error) showResult('Error: '+d.error,'err');
+      else showResult(JSON.stringify(d,null,2),'ok');
+    })
+    .catch(e=>showResult('Failed: '+e.message,'err'));
+}
+
+function triggerBlueprint() {
+  const to = prompt('Send blueprint to (comma-separated emails):','valuetovictory@gmail.com');
+  if (!to) return;
+  trigger('/api/send-blueprint?key='+KEY+'&to='+encodeURIComponent(to));
+}
+
+function resetPin() {
+  const email = prompt('Email address to reset:');
+  if (!email) return;
+  const pin = prompt('New PIN (4-6 digits):');
+  if (!pin) return;
+  showResult('Resetting...','');
+  fetch(BASE+'/api/admin/reset-pin', {
+    method:'POST',
+    headers:{'x-api-key':KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({email,pin})
+  })
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.error) showResult('Error: '+d.error,'err');
+      else showResult('PIN reset for '+email,'ok');
+    })
+    .catch(e=>showResult('Failed: '+e.message,'err'));
+}
+
+function copyVal(id) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(()=>showResult('Copied!','ok'));
+}
+</script>
+</body>
+</html>
