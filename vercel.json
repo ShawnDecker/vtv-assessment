@@ -2,6 +2,10 @@
   "version": 2,
   "crons": [
     {
+      "path": "/api/agent/run-all",
+      "schedule": "0 */6 * * *"
+    },
+    {
       "path": "/api/agent/systems/run",
       "schedule": "*/15 * * * *"
     },
