@@ -14,3 +14,11 @@ ehthumbs.db
 # gets committed. See bd-research/bni-swva-pro/README.md.
 *.local.md
 bd-research/**/CONTACTS_LOCAL.md
+
+# Claude session work folders + private notes (not for production repo)
+_claude/
+_internal/
+
+# Client-specific marketing repos that live HERE during dev but ship from
+# their own repo. Never push to vtv-assessment.
+gergacs-marketing-system/

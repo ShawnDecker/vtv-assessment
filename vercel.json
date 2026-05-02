@@ -20,6 +20,10 @@
     {
       "path": "/api/accountability/send",
       "schedule": "0 23 * * *"
+    },
+    {
+      "path": "/api/skill-pack-reminder",
+      "schedule": "0 13 * * *"
     }
   ],
   "routes": [
@@ -45,6 +49,10 @@
       "src": "/_internal/(.*)",
       "status": 404,
       "dest": "/404.html"
+    },
+    {
+      "src": "/api/skill-pack-reminder",
+      "dest": "/api/skill-pack-reminder.js"
     },
     {
       "src": "/api/checkout/webhook",
@@ -115,6 +123,10 @@
     },
     {
       "src": "/skill-packs",
+      "dest": "/professionals.html"
+    },
+    {
+      "src": "/skill-pack",
       "dest": "/professionals.html"
     },
     {

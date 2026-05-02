@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Privacy Notice · Value to Victory</title>
-<meta name="description" content="In plain language. With your rights up front.">
-<link rel="canonical" href="https://valuetovictory.com/privacy">
+<title>Security · Value to Victory</title>
+<meta name="description" content="How we protect your data and the systems that hold it.">
+<link rel="canonical" href="https://valuetovictory.com/security">
 <meta name="theme-color" content="#1a3a52">
 <style>
 :root{
@@ -48,82 +48,49 @@ tr:last-child td{border-bottom:none}
 <body>
 <header>
   <div class="eyebrow">Value to Victory · Trust Center</div>
-  <h1>Privacy Notice</h1>
-  <p class="subtitle">In plain language. With your rights up front.</p>
+  <h1>Security</h1>
+  <p class="subtitle">How we protect your data and the systems that hold it.</p>
   <p class="last-updated">Last updated: 2026-04-29</p>
 </header>
 <main>
 
 <section>
-  <h2>Your rights — start here</h2>
+  <h2>Our security commitments</h2>
+  <p>We treat the data you trust us with as if it were our own. Every control on this page exists to protect that trust.</p>
+  <div class="cta"><p><strong>SOC 2 readiness:</strong> we follow AICPA Trust Services Criteria across all five categories. Internal control matrix and policies are audit-ready and reviewed annually.</p></div>
+</section>
+<section>
+  <h2>Active controls</h2>
+  <div class="controls">
+    <div class="control"><div class="label">CC6 · Access</div><div class="name">MFA on every admin path</div><div class="desc">TOTP-based multi-factor on every operator account. SMS-only is not accepted.</div></div>
+    <div class="control"><div class="label">CC6 · Access</div><div class="name">Least-privilege roles</div><div class="desc">Role-based access · quarterly access reviews · 24-hour deprovisioning SLA.</div></div>
+    <div class="control"><div class="label">CC8 · Change</div><div class="name">PR-gated production changes</div><div class="desc">Branch protection · CODEOWNERS-required review · CI gates · git-signed history.</div></div>
+    <div class="control"><div class="label">A1 · Availability</div><div class="name">Daily backups · quarterly restore drill</div><div class="desc">Hourly snapshots + daily fulls · 30-day hot retention · tested restores quarterly.</div></div>
+    <div class="control"><div class="label">C1 · Confidentiality</div><div class="name">TLS in transit · encrypted at rest</div><div class="desc">TLS 1.2+ enforced · AES-256 column-level encryption for sensitive data classes.</div></div>
+    <div class="control"><div class="label">CC7 · Monitoring</div><div class="name">Append-only audit log</div><div class="desc">Every authentication event, admin action, sensitive read, and webhook is logged.</div></div>
+    <div class="control"><div class="label">CC9 · Vendors</div><div class="name">DPAs with every subprocessor</div><div class="desc">Every vendor handling confidential data has a DPA in place.</div></div>
+    <div class="control"><div class="label">CC7 · Incident</div><div class="name">72-hour breach notification</div><div class="desc">Documented IR plan · severity matrix · 72h notification SLA.</div></div>
+    <div class="control"><div class="label">P1 · Privacy</div><div class="name">DSAR portal</div><div class="desc">Access · export · correct · delete your data via account portal · 30-day SLA.</div></div>
+  </div>
+</section>
+<section>
+  <h2>Responsible disclosure</h2>
+  <p>If you believe you've found a vulnerability, email <a href="mailto:security@valuetovictory.com">security@valuetovictory.com</a>.</p>
   <ul>
-    <li><strong>Access:</strong> see all data we hold · 30-day SLA</li>
-    <li><strong>Correct:</strong> edit any data that's wrong</li>
-    <li><strong>Export:</strong> JSON or CSV download · 30-day SLA</li>
-    <li><strong>Delete:</strong> 30-day grace then permanent</li>
-    <li><strong>Restrict / object:</strong> stop specific processing without deleting your account</li>
-    <li><strong>Opt out:</strong> marketing emails — every email has unsubscribe</li>
-    <li><strong>Don't sell my info:</strong> we don't sell. CCPA opt-out at /account/privacy</li>
+    <li>72-hour acknowledgment SLA</li>
+    <li>Don't publicly disclose before we've had reasonable chance to investigate (typically 90 days)</li>
+    <li>Don't pivot or exfiltrate beyond demonstrating the issue</li>
   </ul>
 </section>
 <section>
-  <h2>What we collect</h2>
-  <h3>You give us</h3>
-  <ul>
-    <li>Email address (account)</li>
-    <li>Password (stored hashed — we never see your plaintext password)</li>
-    <li>Optional: name, photo, preferences</li>
-    <li>Content you create</li>
-    <li>Payment info entered on Stripe-hosted checkout (we never see card numbers)</li>
-  </ul>
-  <h3>We observe</h3>
-  <ul>
-    <li>IP address (for security · 90-day retention)</li>
-    <li>Browser/device user-agent</li>
-    <li>Aggregate usage patterns</li>
-    <li>Errors during your session</li>
-  </ul>
-</section>
-<section>
-  <h2>Why we collect it</h2>
+  <h2>Audit & compliance posture</h2>
   <table>
-    <tr><th>Purpose</th><th>Lawful basis</th></tr>
-    <tr><td>Provide the service</td><td>Contract with you</td></tr>
-    <tr><td>Process payments</td><td>Contract</td></tr>
-    <tr><td>Send transactional emails</td><td>Contract</td></tr>
-    <tr><td>Send marketing emails</td><td>Your opt-in consent (unsubscribe anytime)</td></tr>
-    <tr><td>Operate the service securely</td><td>Legitimate interest</td></tr>
-    <tr><td>Recordkeeping</td><td>Legal obligation</td></tr>
+    <tr><th>Framework</th><th>Status</th><th>Last review</th></tr>
+    <tr><td>SOC 2 Type II readiness</td><td>Documented controls · audit prep ongoing</td><td>2026-04-29</td></tr>
+    <tr><td>GDPR</td><td>DSAR · DPA template · subprocessor list live</td><td>2026-04-29</td></tr>
+    <tr><td>CCPA / CPRA</td><td>Privacy notice · opt-out paths</td><td>2026-04-29</td></tr>
+    <tr><td>State breach laws (US 50)</td><td>Notification matrix · 72h SLA</td><td>2026-04-29</td></tr>
   </table>
-</section>
-<section>
-  <h2>Who else sees your data</h2>
-  <p>Only vendors who help us run the service. Each one has a Data Processing Agreement and is bound by confidentiality. Full list at <a href="/subprocessors">/subprocessors</a>. Material additions get 30 days advance notice.</p>
-  <p><strong>We never sell your data.</strong> Not to advertisers, not to data brokers, not to anyone.</p>
-</section>
-<section>
-  <h2>How long we keep it</h2>
-  <table>
-    <tr><th>Data</th><th>Retention</th></tr>
-    <tr><td>Active account</td><td>While account is active</td></tr>
-    <tr><td>Account after cancellation</td><td>30 days then permanent delete</td></tr>
-    <tr><td>Receipts (financial)</td><td>7 years (US tax law)</td></tr>
-    <tr><td>Marketing opt-in records</td><td>3 years past unsubscribe</td></tr>
-    <tr><td>Web access logs</td><td>90 days</td></tr>
-    <tr><td>Auth audit logs</td><td>1 year</td></tr>
-  </table>
-</section>
-<section>
-  <h2>Regulator focus</h2>
-  <p>US (50 states) · GDPR (EU contacts) · CCPA · NY SHIELD · enterprise DPAs available</p>
-</section>
-<section>
-  <h2>Children's data</h2>
-  <p>Our service is not directed to children under 13 (US) or 16 (EU). We don't knowingly collect data from children.</p>
-</section>
-<section>
-  <h2>Contact</h2>
-  <p>Privacy questions: <a href="mailto:privacy@valuetovictory.com">privacy@valuetovictory.com</a></p>
 </section>
 
 <div class="bottom-nav">
