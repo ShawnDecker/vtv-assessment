@@ -33,6 +33,55 @@ const VTV_CONSTITUTION = {
   },
 };
 
+// ========== AGENT ↔ SKILL REGISTRY (universal skill integration) ==========
+// Mirrors ~/.claude/skill-registry.json (the machine-readable single source of
+// truth) so each in-app agent knows which skills are available to recommend or
+// hand off to. Each agent run includes `skillsAvailable` in its response + log,
+// so the dashboard and coordinator can act on it.
+const AGENT_SKILL_REGISTRY = {
+  systems: [
+    'vtv-qa-suite', 'vtv-qa-url-validator', 'vtv-qa-structural-integrity',
+    'vtv-rally-test-deep', 'anthropic-skills:vtv-infra',
+    'engineering:debug', 'engineering:incident-response', 'engineering:deploy-checklist',
+  ],
+  email: [
+    'client-voice-keeper', 'brand-voice:enforce-voice', 'vtv-qa-content-quality',
+    'anthropic-skills:vtv-content-rules', 'anthropic-skills:vtv-brand-guard',
+    'marketing:brand-review', 'marketing:email-sequence', 'customer-support:draft-response',
+  ],
+  website: [
+    'vtv-qa-suite', 'vtv-qa-url-validator', 'vtv-qa-brand-compliance',
+    'anthropic-skills:vtv-website-dev', 'anthropic-skills:vtv-website',
+    'design:accessibility-review', 'design:ux-copy',
+  ],
+  coordinator: [
+    'vtv-qa-suite', 'anthropic-skills:vtv-quick-ref',
+    'product-management:metrics-review', 'engineering:standup', 'enterprise-search:search',
+    'council', // anti-sycophancy 7-adviser stress test for any cross-agent decision
+  ],
+};
+
+// (agent, ruleKey) → skill that's the natural follow-up when the rule fires.
+// null means no skill applies (rule self-resolves or just waits).
+const RULE_SKILL_MAP = {
+  'email:empathy_on_bug_report': 'client-voice-keeper',
+  'email:cooldown_after_bug_report': null,
+  'email:low_open_rate_dampener': 'marketing:brand-review',
+  'email:cohort_graduating': 'client-voice-keeper',
+  'email:velocity_decelerating_nudge': 'marketing:email-sequence',
+  'email:best_variant_memory': null,
+  'systems:db_growth_alert': 'engineering:tech-debt',
+  'systems:tls_cert_expiring': 'engineering:incident-response',
+  'systems:vercel_platform_degraded': 'engineering:incident-response',
+  'systems:hubspot_down': 'engineering:debug',
+  'website:high_bounce_rate': 'design:design-critique',
+  'website:low_conversion_rate': 'design:ux-copy',
+};
+
+function recommendSkillForRule(agentName, ruleKey) {
+  return RULE_SKILL_MAP[`${agentName}:${ruleKey}`] || null;
+}
+
 // ========== SECURITY: Rate Limiting ==========
 const rateLimitStore = new Map();
 const RATE_LIMITS = {
@@ -2730,6 +2779,10 @@ Your weakest pillar is ${eWeakestPillar}. ${prescription.diagnosis || ''}
 View your full diagnostic report:
 ${BASE_URL}/report/${assessment.id}
 
+SURPRISED BY YOUR RESULTS?
+Book a free 15-minute debrief — I'll walk you through what your ${eWeakestPillar} score means, how it's affecting everything else, and what to do about it. No pitch. Just clarity.
+Book here: https://calendly.com/valuetovictory/30min
+
 ${productRec}
 ${fitcarnaSection}
 Your report includes:
@@ -4660,6 +4713,10 @@ ${roadmapText}
 View your full diagnostic report:
 ${BASE_URL}/report/${assessmentId}
 
+SURPRISED BY YOUR RESULTS?
+Book a free 15-minute debrief — I'll walk you through what your ${weakestPillar} score means, how it's affecting everything else, and what to do about it. No pitch. Just clarity.
+Book here: https://calendly.com/valuetovictory/30min
+
 ${productRec}
 ${fitcarnaSection}
 Your report includes:
@@ -4830,6 +4887,19 @@ ${roadmapHtml}
 <!-- Coaching CTA -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h2 style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#ffffff;">${tier.cta}</h2><p style="margin:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#8888a8;line-height:1.6;">Get a free coaching preparation report \u2014 personalized to your exact scores.<br>Choose your track: Personal, Real Estate, or Company.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;background:linear-gradient(135deg,#d4a853,#c89030);" align="center"><a href="${BASE_URL}/coaching?track=personal&amp;aid=${assessmentId}" target="_blank" style="display:inline-block;padding:16px 48px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:800;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Get Your Free Coaching Report &rarr;</a></td></tr></table></td></tr></table>
+
+<!-- Free Debrief CTA — Council of Seven recommendation 2026-05-02 -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px 8px 40px;text-align:center;">
+<div style="background:#111118;border:1px solid #2a2a44;border-radius:12px;padding:24px 20px;">
+<p style="margin:0 0 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;color:#d4a853;letter-spacing:2px;text-transform:uppercase;">Surprised by your results?</p>
+<h3 style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:800;color:#ffffff;">Book a Free 15-Minute Debrief</h3>
+<p style="margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8888a8;line-height:1.6;">Your weakest pillar is <strong style="color:#ef4444;">${weakestPillar}</strong>. In 15 minutes, I’ll walk you through exactly what it means, how it’s dragging your other scores down, and what to do about it. No pitch. Just clarity.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;background:linear-gradient(135deg,#d4a853,#c89030);" align="center"><a href="https://calendly.com/valuetovictory/30min" target="_blank" style="display:inline-block;padding:14px 40px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:800;color:#1a1a2e;text-decoration:none;letter-spacing:0.5px;">Book My Free Debrief →</a></td></tr></table>
+<p style="margin:8px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#4a4a64;">With Shawn Decker — author of The Value Engine, 23-year veteran appraiser, Navy vet.</p>
+</div></td></tr></table>
+
+<!-- Divider -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:12px 40px 0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
 
 <!-- Membership / Pricing CTA -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:16px 40px 32px 40px;text-align:center;">
@@ -8440,11 +8510,15 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           }
         }
 
-        // Log agent state
+        // Log agent state (with universal skill-integration block)
+        const systemsSkillsAvailable = AGENT_SKILL_REGISTRY.systems;
         await sql`INSERT INTO agent_state (agent_name, observations, decisions, actions_taken)
-          VALUES ('systems', ${JSON.stringify({ services })}::jsonb, ${JSON.stringify({ alerts })}::jsonb, ${JSON.stringify(actions)}::jsonb)`;
+          VALUES ('systems',
+            ${JSON.stringify({ services, skillsAvailable: systemsSkillsAvailable })}::jsonb,
+            ${JSON.stringify({ alerts })}::jsonb,
+            ${JSON.stringify(actions)}::jsonb)`;
 
-        return res.json({ success: true, services, alerts, actions, timestamp: new Date().toISOString() });
+        return res.json({ success: true, services, alerts, actions, skillsAvailable: systemsSkillsAvailable, timestamp: new Date().toISOString() });
       } catch (sysErr) {
         console.error('[agent/systems/run] Error:', sysErr);
         return res.status(500).json({ error: sysErr.message });
@@ -8912,13 +8986,21 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           }
         }
 
-        // Log agent state
+        // Log agent state (with universal skill-integration block)
+        const emailSkillsAvailable = AGENT_SKILL_REGISTRY.email;
+        // Annotate decisions: when a rule fires, attach its recommended skill follow-up
+        const decisionsWithSkillRecs = decisions.map(d => {
+          const firedRules = Array.isArray(d.firedRules) ? d.firedRules : (d.rule ? [d.rule] : []);
+          const recs = firedRules.map(r => recommendSkillForRule('email', r)).filter(Boolean);
+          return recs.length > 0 ? { ...d, skillRecommendations: recs } : d;
+        });
         await sql`INSERT INTO agent_state (agent_name, observations, decisions, actions_taken)
-          VALUES ('email', ${JSON.stringify({ total: sequences.length, personas: decisions.map(d => d.persona) })}::jsonb,
-                  ${JSON.stringify(decisions)}::jsonb,
-                  ${JSON.stringify({ sent: sentCount, skipped: skippedCount, adapted: adaptedCount })}::jsonb)`;
+          VALUES ('email',
+            ${JSON.stringify({ total: sequences.length, personas: decisions.map(d => d.persona), skillsAvailable: emailSkillsAvailable })}::jsonb,
+            ${JSON.stringify(decisionsWithSkillRecs)}::jsonb,
+            ${JSON.stringify({ sent: sentCount, skipped: skippedCount, adapted: adaptedCount })}::jsonb)`;
 
-        return res.json({ success: true, processed: sequences.length, sent: sentCount, skipped: skippedCount, adapted: adaptedCount, decisions });
+        return res.json({ success: true, processed: sequences.length, sent: sentCount, skipped: skippedCount, adapted: adaptedCount, decisions: decisionsWithSkillRecs, skillsAvailable: emailSkillsAvailable });
       } catch (emailAgentErr) {
         console.error('[agent/email/run] Error:', emailAgentErr);
         return res.status(500).json({ error: emailAgentErr.message });
@@ -9007,14 +9089,15 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           }
         }
 
-        // Log agent state
+        // Log agent state (with universal skill-integration block)
+        const websiteSkillsAvailable = AGENT_SKILL_REGISTRY.website;
         await sql`INSERT INTO agent_state (agent_name, observations, decisions, actions_taken)
           VALUES ('website',
-            ${JSON.stringify({ pages_analyzed: pageStats.length, bounce_rate: bounceData[0]?.overall_bounce_rate })}::jsonb,
+            ${JSON.stringify({ pages_analyzed: pageStats.length, bounce_rate: bounceData[0]?.overall_bounce_rate, skillsAvailable: websiteSkillsAvailable })}::jsonb,
             ${JSON.stringify(insights)}::jsonb,
             ${JSON.stringify({ pages_updated: pageResults.length })}::jsonb)`;
 
-        return res.json({ success: true, pages_analyzed: pageStats.length, pages: pageResults, insights, bounce_rate: bounceData[0]?.overall_bounce_rate || 'N/A' });
+        return res.json({ success: true, pages_analyzed: pageStats.length, pages: pageResults, insights, bounce_rate: bounceData[0]?.overall_bounce_rate || 'N/A', skillsAvailable: websiteSkillsAvailable });
       } catch (webErr) {
         console.error('[agent/website/run] Error:', webErr);
         return res.status(500).json({ error: webErr.message });
@@ -9088,14 +9171,15 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           }
         }
 
-        // Log coordination state
+        // Log coordination state (with universal skill-integration block)
+        const coordinatorSkillsAvailable = AGENT_SKILL_REGISTRY.coordinator;
         await sql`INSERT INTO agent_state (agent_name, observations, decisions, actions_taken)
           VALUES ('coordinator',
-            ${JSON.stringify({ systems: systemsState[0]?.run_at, email: emailState[0]?.run_at, website: websiteState[0]?.run_at })}::jsonb,
+            ${JSON.stringify({ systems: systemsState[0]?.run_at, email: emailState[0]?.run_at, website: websiteState[0]?.run_at, skillsAvailable: coordinatorSkillsAvailable })}::jsonb,
             ${JSON.stringify(coordActions)}::jsonb,
             ${JSON.stringify({ rules_evaluated: 4, actions_generated: coordActions.length })}::jsonb)`;
 
-        return res.json({ success: true, actions: coordActions, timestamp: new Date().toISOString() });
+        return res.json({ success: true, actions: coordActions, skillsAvailable: coordinatorSkillsAvailable, timestamp: new Date().toISOString() });
       } catch (coordErr) {
         console.error('[agent/coordination/run] Error:', coordErr);
         return res.status(500).json({ error: coordErr.message });
