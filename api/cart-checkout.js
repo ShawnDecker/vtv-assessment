@@ -71,10 +71,8 @@ module.exports = async (req, res) => {
       allow_promotion_codes: true,
     };
 
-    // Add trial for subscriptions
-    if (hasSubscription) {
-      sessionParams.subscription_data = { trial_period_days: 3 };
-    }
+    // NOTE: Silent 3-day trial removed 2026-05-02 (ROSCA violation - undisclosed trial auto-charges)
+    // If trials are re-enabled, add pre-purchase disclosure on all pages linking to cart checkout
 
     // Pre-fill email if provided
     if (email) {
