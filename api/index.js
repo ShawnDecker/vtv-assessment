@@ -9186,6 +9186,239 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
       }
     }
 
+    // ========== GET /api/agent/run-all — Master orchestration: runs ALL agents + triggers all automations ==========
+    if (req.method === 'GET' && url === '/agent/run-all') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const startTime = Date.now();
+      const results = {};
+
+      // 1. Systems Health Check
+      try {
+        const sysRes = await fetch(`https://${req.headers.host}/api/agent/systems/run`, {
+          headers: { 'x-api-key': process.env.ADMIN_API_KEY || '' }
+        });
+        results.systems = { status: sysRes.ok ? 'ok' : 'error', code: sysRes.status };
+      } catch (e) { results.systems = { status: 'failed', error: e.message }; }
+
+      // 2. Email Agent (adaptive coaching)
+      try {
+        const emailRes = await fetch(`https://${req.headers.host}/api/agent/email/run`, {
+          headers: { 'x-api-key': process.env.ADMIN_API_KEY || '' }
+        });
+        results.email = { status: emailRes.ok ? 'ok' : 'error', code: emailRes.status };
+      } catch (e) { results.email = { status: 'failed', error: e.message }; }
+
+      // 3. Website Analytics Agent
+      try {
+        const webRes = await fetch(`https://${req.headers.host}/api/agent/website/run`, {
+          headers: { 'x-api-key': process.env.ADMIN_API_KEY || '' }
+        });
+        results.website = { status: webRes.ok ? 'ok' : 'error', code: webRes.status };
+      } catch (e) { results.website = { status: 'failed', error: e.message }; }
+
+      // 4. Cross-Agent Coordination
+      try {
+        const coordRes = await fetch(`https://${req.headers.host}/api/agent/coordination/run`, {
+          headers: { 'x-api-key': process.env.ADMIN_API_KEY || '' }
+        });
+        results.coordination = { status: coordRes.ok ? 'ok' : 'error', code: coordRes.status };
+      } catch (e) { results.coordination = { status: 'failed', error: e.message }; }
+
+      // 5. Trigger n8n workflows (if configured)
+      const n8nBase = process.env.N8N_URL || process.env.N8N_WEBHOOK_URL?.replace(/\/webhook\/.*$/, '') || null;
+      if (n8nBase) {
+        try {
+          const n8nRes = await fetch(`${n8nBase}/healthz`, { signal: AbortSignal.timeout(5000) });
+          results.n8n = { status: n8nRes.ok ? 'healthy' : 'degraded', url: n8nBase };
+        } catch (e) { results.n8n = { status: 'unreachable', error: e.message }; }
+      } else {
+        results.n8n = { status: 'not_configured' };
+      }
+
+      // 6. Check Ollama local AI
+      const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+      try {
+        const olRes = await fetch(`${ollamaUrl}/api/tags`, { signal: AbortSignal.timeout(5000) });
+        if (olRes.ok) {
+          const olData = await olRes.json();
+          results.ollama = { status: 'running', models: (olData.models || []).length, url: ollamaUrl };
+        } else {
+          results.ollama = { status: 'error', code: olRes.status };
+        }
+      } catch (e) { results.ollama = { status: 'unreachable', error: e.message }; }
+
+      // 7. Platform stats snapshot
+      try {
+        const [contacts] = await sql`SELECT COUNT(*) as cnt FROM contacts`;
+        const [assessments] = await sql`SELECT COUNT(*) as cnt FROM assessments`;
+        const [datingProfiles] = await sql`SELECT COUNT(*) as cnt FROM dating_profiles`;
+        const [activeCoaching] = await sql`SELECT COUNT(*) as cnt FROM coaching_sequences WHERE unsubscribed = FALSE AND current_day < 8`;
+        results.platform = {
+          contacts: +contacts.cnt,
+          assessments: +assessments.cnt,
+          datingProfiles: +datingProfiles.cnt,
+          activeCoaching: +activeCoaching.cnt
+        };
+      } catch (e) { results.platform = { error: e.message }; }
+
+      // 8. Counselor/coaching request queue
+      try {
+        const pendingRequests = await sql`SELECT COUNT(*) as cnt FROM coaching_requests WHERE status = 'pending' OR status IS NULL`;
+        results.counselor = { pendingRequests: +pendingRequests.cnt };
+      } catch { results.counselor = { pendingRequests: 0 }; }
+
+      // Log the full orchestration run
+      const elapsed = Date.now() - startTime;
+      try {
+        await sql`INSERT INTO agent_state (agent_name, observations, decisions, actions_taken)
+          VALUES ('orchestrator',
+            ${JSON.stringify(results)}::jsonb,
+            ${JSON.stringify({ ran_all: true, elapsed_ms: elapsed })}::jsonb,
+            ${JSON.stringify({ agents_triggered: Object.keys(results).length })}::jsonb)`;
+      } catch {}
+
+      return res.json({
+        success: true,
+        elapsed_ms: elapsed,
+        timestamp: new Date().toISOString(),
+        agents: results
+      });
+    }
+
+    // ========== POST /api/counselor/assign — Assign a coaching request to a counselor ==========
+    if (req.method === 'POST' && url === '/counselor/assign') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const { requestId, counselorEmail, notes } = req.body || {};
+      if (!requestId) return res.status(400).json({ error: 'requestId required' });
+
+      try {
+        await sql`UPDATE coaching_requests SET status = 'assigned', assigned_to = ${counselorEmail || null}, admin_notes = ${notes || null}, updated_at = NOW() WHERE id = ${requestId}`;
+
+        // Notify counselor if email provided
+        if (counselorEmail && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+          const request = await sql`SELECT cr.*, c.first_name, c.email FROM coaching_requests cr JOIN contacts c ON c.id = cr.contact_id WHERE cr.id = ${requestId} LIMIT 1`;
+          if (request.length) {
+            const r = request[0];
+            const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD } });
+            await transporter.sendMail({
+              from: `"Value to Victory" <${process.env.GMAIL_USER}>`,
+              to: counselorEmail,
+              subject: `New Coaching Assignment — ${r.first_name || 'Client'}`,
+              html: `<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:2rem;"><h2 style="color:#D4A847;">New Coaching Assignment</h2><p>You've been assigned to coach <strong>${r.first_name}</strong> (${r.email}).</p>${notes ? `<p>Notes: ${notes}</p>` : ''}<p>View their report: <a href="https://assessment.valuetovictory.com/counselor-report/${r.assessment_id || ''}">Counselor Report</a></p><hr/><p style="color:#999;font-size:0.8rem;">Value to Victory Coaching System</p></div>`
+            });
+          }
+        }
+
+        return res.json({ ok: true, message: 'Coaching request assigned' });
+      } catch (e) { return res.status(500).json({ error: 'Server error' }); }
+    }
+
+    // ========== GET /api/counselor/queue — List pending coaching requests ==========
+    if (req.method === 'GET' && url === '/counselor/queue') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      try {
+        const requests = await sql`
+          SELECT cr.*, c.first_name, c.last_name, c.email,
+                 a.master_score, a.score_range, a.weakest_pillar
+          FROM coaching_requests cr
+          JOIN contacts c ON c.id = cr.contact_id
+          LEFT JOIN assessments a ON a.id = cr.assessment_id
+          WHERE cr.status IS NULL OR cr.status IN ('pending', 'assigned')
+          ORDER BY cr.created_at DESC
+          LIMIT 50
+        `;
+        return res.json({ requests, count: requests.length });
+      } catch (e) { return res.status(500).json({ error: 'Server error' }); }
+    }
+
+    // ========== POST /api/vault/save — Save content to the vault (devotionals, notes, memory) ==========
+    if (req.method === 'POST' && url === '/vault/save') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const { key, content, category, metadata } = req.body || {};
+      if (!key || !content) return res.status(400).json({ error: 'key and content required' });
+
+      try {
+        await sql`CREATE TABLE IF NOT EXISTS vault (
+          id SERIAL PRIMARY KEY,
+          key TEXT NOT NULL UNIQUE,
+          content TEXT NOT NULL,
+          category TEXT DEFAULT 'general',
+          metadata JSONB DEFAULT '{}',
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        )`;
+        await sql`INSERT INTO vault (key, content, category, metadata)
+          VALUES (${key}, ${content}, ${category || 'general'}, ${JSON.stringify(metadata || {})}::jsonb)
+          ON CONFLICT (key) DO UPDATE SET content = ${content}, category = ${category || 'general'}, metadata = ${JSON.stringify(metadata || {})}::jsonb, updated_at = NOW()`;
+        return res.json({ ok: true, key, saved: true });
+      } catch (e) { return res.status(500).json({ error: 'Server error' }); }
+    }
+
+    // ========== GET /api/vault/get — Retrieve from vault ==========
+    if (req.method === 'GET' && url.startsWith('/vault/get')) {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const params = new URL('http://x' + req.url).searchParams;
+      const key = params.get('key');
+      const category = params.get('category');
+
+      try {
+        await sql`CREATE TABLE IF NOT EXISTS vault (id SERIAL PRIMARY KEY, key TEXT NOT NULL UNIQUE, content TEXT NOT NULL, category TEXT DEFAULT 'general', metadata JSONB DEFAULT '{}', created_at TIMESTAMP DEFAULT NOW(), updated_at TIMESTAMP DEFAULT NOW())`;
+        let rows;
+        if (key) {
+          rows = await sql`SELECT * FROM vault WHERE key = ${key} LIMIT 1`;
+        } else if (category) {
+          rows = await sql`SELECT * FROM vault WHERE category = ${category} ORDER BY updated_at DESC LIMIT 50`;
+        } else {
+          rows = await sql`SELECT * FROM vault ORDER BY updated_at DESC LIMIT 50`;
+        }
+        return res.json({ items: rows, count: rows.length });
+      } catch (e) { return res.status(500).json({ error: 'Server error' }); }
+    }
+
+    // ========== POST /api/memory/save — Save persistent memory (cross-session context) ==========
+    if (req.method === 'POST' && url === '/memory/save') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const { key, value, context: ctx } = req.body || {};
+      if (!key || !value) return res.status(400).json({ error: 'key and value required' });
+
+      try {
+        await sql`CREATE TABLE IF NOT EXISTS agent_memory (
+          id SERIAL PRIMARY KEY,
+          key TEXT NOT NULL UNIQUE,
+          value TEXT NOT NULL,
+          context TEXT,
+          times_accessed INTEGER DEFAULT 0,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        )`;
+        await sql`INSERT INTO agent_memory (key, value, context)
+          VALUES (${key}, ${value}, ${ctx || null})
+          ON CONFLICT (key) DO UPDATE SET value = ${value}, context = ${ctx || null}, updated_at = NOW()`;
+        return res.json({ ok: true, key, saved: true });
+      } catch (e) { return res.status(500).json({ error: 'Server error' }); }
+    }
+
+    // ========== GET /api/memory/recall — Recall from memory ==========
+    if (req.method === 'GET' && url.startsWith('/memory/recall')) {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const params = new URL('http://x' + req.url).searchParams;
+      const key = params.get('key');
+      const search = params.get('search');
+
+      try {
+        await sql`CREATE TABLE IF NOT EXISTS agent_memory (id SERIAL PRIMARY KEY, key TEXT NOT NULL UNIQUE, value TEXT NOT NULL, context TEXT, times_accessed INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT NOW(), updated_at TIMESTAMP DEFAULT NOW())`;
+        let rows;
+        if (key) {
+          rows = await sql`UPDATE agent_memory SET times_accessed = times_accessed + 1 WHERE key = ${key} RETURNING *`;
+        } else if (search) {
+          rows = await sql`SELECT * FROM agent_memory WHERE key ILIKE ${'%' + search + '%'} OR value ILIKE ${'%' + search + '%'} OR context ILIKE ${'%' + search + '%'} ORDER BY updated_at DESC LIMIT 20`;
+        } else {
+          rows = await sql`SELECT * FROM agent_memory ORDER BY updated_at DESC LIMIT 50`;
+        }
+        return res.json({ items: rows, count: rows.length });
+      } catch (e) { return res.status(500).json({ error: 'Server error' }); }
+    }
+
     // GET /api/agent/dashboard — Unified agent dashboard data
     if (req.method === 'GET' && url === '/agent/dashboard') {
       try {
