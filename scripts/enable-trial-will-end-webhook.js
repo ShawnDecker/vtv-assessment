@@ -41,12 +41,24 @@ async function main() {
   console.log(`Currently subscribed to ${target.enabled_events.length} event(s):`);
   target.enabled_events.forEach(e => console.log('  -', e));
 
-  const has = target.enabled_events.includes('customer.subscription.trial_will_end') ||
-              target.enabled_events.includes('*');
-  if (has) {
-    console.log('\n✅ Already subscribed to customer.subscription.trial_will_end. No change needed.');
+  // Wildcard catches everything — no need to merge
+  if (target.enabled_events.includes('*')) {
+    console.log('\n✅ Webhook subscribed to wildcard "*". All required events covered.');
     return;
   }
+
+  // Verify ALL required events are present, not just trial_will_end.
+  // Earlier versions of this script only checked trial_will_end and exited early —
+  // which meant adding new events to REQUIRED_EVENTS later (e.g. invoice.paid,
+  // invoice.payment_failed) wouldn't actually subscribe them on re-run.
+  const missing = REQUIRED_EVENTS.filter(e => !target.enabled_events.includes(e));
+  if (missing.length === 0) {
+    console.log('\n✅ Already subscribed to all required events. No change needed.');
+    return;
+  }
+
+  console.log(`\nMissing ${missing.length} required event(s):`);
+  missing.forEach(e => console.log('  -', e));
 
   // Build the merged event list, preserving everything that was already enabled
   // plus the events we know we need.

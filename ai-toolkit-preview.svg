@@ -41,37 +41,37 @@
   <g font-family="Satoshi,sans-serif">
     <rect x="60" y="215" width="220" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
     <text x="80" y="240" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY A · 1–15</text>
-    <text x="80" y="262" font-size="14" fill="#fff" font-weight="700">Writing & Editing</text>
+    <text x="80" y="262" font-size="14" fill="#fff" font-weight="700">Writing &amp; Editing</text>
     <text x="80" y="278" font-size="10" fill="#a1a1aa">Tighten · rewrite · find buried lede · cut hedge words</text>
 
     <rect x="290" y="215" width="220" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
     <text x="310" y="240" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY B · 16–30</text>
-    <text x="310" y="262" font-size="14" fill="#fff" font-weight="700">Research & Synthesis</text>
+    <text x="310" y="262" font-size="14" fill="#fff" font-weight="700">Research &amp; Synthesis</text>
     <text x="310" y="278" font-size="10" fill="#a1a1aa">Summarize · steelman · timeline · counter-arguments</text>
 
     <rect x="520" y="215" width="220" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
     <text x="540" y="240" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY C · 31–45</text>
-    <text x="540" y="262" font-size="14" fill="#fff" font-weight="700">Planning & Decisions</text>
+    <text x="540" y="262" font-size="14" fill="#fff" font-weight="700">Planning &amp; Decisions</text>
     <text x="540" y="278" font-size="10" fill="#a1a1aa">Pre-mortem · 30-60-90 · highest leverage · reversible?</text>
 
     <rect x="60" y="295" width="220" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
     <text x="80" y="320" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY D · 46–60</text>
-    <text x="80" y="342" font-size="14" fill="#fff" font-weight="700">Email & Outreach</text>
+    <text x="80" y="342" font-size="14" fill="#fff" font-weight="700">Email &amp; Outreach</text>
     <text x="80" y="358" font-size="10" fill="#a1a1aa">Cold opens · re-engage · subject lines · follow-ups</text>
 
     <rect x="290" y="295" width="220" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
     <text x="310" y="320" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY E · 61–75</text>
-    <text x="310" y="342" font-size="14" fill="#fff" font-weight="700">Meetings & Notes</text>
+    <text x="310" y="342" font-size="14" fill="#fff" font-weight="700">Meetings &amp; Notes</text>
     <text x="310" y="358" font-size="10" fill="#a1a1aa">Recap · action items · pull commitments · open Q's</text>
 
     <rect x="520" y="295" width="220" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
     <text x="540" y="320" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY F · 76–85</text>
-    <text x="540" y="342" font-size="14" fill="#fff" font-weight="700">Code & Tech</text>
+    <text x="540" y="342" font-size="14" fill="#fff" font-weight="700">Code &amp; Tech</text>
     <text x="540" y="358" font-size="10" fill="#a1a1aa">Explain · refactor · edge cases · convert languages</text>
 
     <rect x="60" y="375" width="450" height="68" rx="10" fill="#111" stroke="#1e1e21"/>
     <text x="80" y="400" font-size="10" fill="#71717a" letter-spacing="1.5" font-weight="700">CATEGORY G · 86–100</text>
-    <text x="80" y="422" font-size="14" fill="#fff" font-weight="700">Personal & Daily Life</text>
+    <text x="80" y="422" font-size="14" fill="#fff" font-weight="700">Personal &amp; Daily Life</text>
     <text x="80" y="438" font-size="10" fill="#a1a1aa">Plan your week · prep hard conversations · meal planning · journaling</text>
 
     <!-- Best-AI matrix preview -->

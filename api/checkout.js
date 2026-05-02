@@ -55,10 +55,16 @@ module.exports = async (req, res) => {
   const origin = req.headers.origin || '';
   const corsOrigin = ALLOWED.includes(origin) ? origin : (origin.endsWith('.vercel.app') ? origin : ALLOWED[0]);
   res.setHeader('Access-Control-Allow-Origin', corsOrigin);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') return res.status(200).end();
+  // HEAD: respond 200 with no body — for link unfurls (Slack/X/FB), browser prefetches, ad-network landing-page validators
+  if (req.method === 'HEAD') {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).end();
+  }
 
   const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
   const url = req.url.split('?')[0].replace(/^\/api\/checkout/, '').replace(/^\/checkout/, '');
@@ -322,12 +328,112 @@ module.exports = async (req, res) => {
         }
       }
 
+      // Handle invoice.paid — every successful renewal charge (and the first post-trial charge)
+      if (event.type === 'invoice.paid') {
+        const invoice = event.data.object;
+        const subscriptionId = invoice.subscription;
+        const customerId = invoice.customer;
+        const amountPaid = invoice.amount_paid; // cents
+
+        if (subscriptionId) {
+          try {
+            await sql`
+              INSERT INTO audit_log (action, actor, target_table, target_id, new_values, ip_address)
+              VALUES ('stripe_invoice_paid', 'stripe_webhook', 'user_profiles', ${subscriptionId},
+                      ${JSON.stringify({
+                        subscriptionId,
+                        customerId,
+                        amountPaid,
+                        invoiceId: invoice.id,
+                        billingReason: invoice.billing_reason
+                      })}::jsonb,
+                      ${req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'stripe'})
+            `;
+          } catch (e) { /* non-fatal */ }
+          console.log(`[invoice.paid] sub=${subscriptionId} amount=$${(amountPaid/100).toFixed(2)} reason=${invoice.billing_reason}`);
+        }
+      }
+
+      // Handle invoice.payment_failed — Stripe Smart Retries handles re-attempts.
+      // We log + email the user, but only on the first attempt (subsequent retries are
+      // handled by Stripe's native dunning emails to avoid duplicates).
+      if (event.type === 'invoice.payment_failed') {
+        const invoice = event.data.object;
+        const subscriptionId = invoice.subscription;
+        const customerId = invoice.customer;
+        const amountDue = invoice.amount_due;
+        const attemptCount = invoice.attempt_count;
+
+        if (customerId) {
+          try {
+            const customer = await stripe.customers.retrieve(customerId);
+            const email = customer?.email;
+
+            if (email) {
+              // Resolve a one-click portal URL for "Update payment method"
+              let portalUrl = `${BASE_URL}/member`;
+              try {
+                const portalSession = await stripe.billingPortal.sessions.create({
+                  customer: customerId,
+                  return_url: `${BASE_URL}/member`,
+                });
+                portalUrl = portalSession.url;
+              } catch (_) { /* fall back to /member */ }
+
+              // Send card-declined email only on attempt 1
+              if (attemptCount === 1) {
+                await fetch(`${BASE_URL}/api/email`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    to: email,
+                    subject: 'Card declined — quick fix',
+                    html: `
+                      <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0a0a0a;background:#f5efe1">
+                        <h2 style="color:#D4A847;margin-bottom:8px">Your $${(amountDue/100).toFixed(2)} charge didn't go through</h2>
+                        <p>Hi,</p>
+                        <p>Your VTV Membership renewal was declined. Most common reasons: card expired, billing-address mismatch, or daily-limit guard.</p>
+                        <p style="margin:24px 0">
+                          <a href="${portalUrl}" style="display:inline-block;background:#0a0a0a;color:#D4A847;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700">
+                            Update payment method
+                          </a>
+                        </p>
+                        <p>Stripe will retry automatically over the next few days. If it fails three more times, your membership pauses (you keep the Skill Pack — you just stop receiving updates).</p>
+                        <p>Reply to this email if you need help.</p>
+                        <p>— Shawn</p>
+                        <hr style="border:none;border-top:1px solid #ddd;margin:24px 0">
+                        <p style="font-size:12px;color:#999">Value to Victory · Shawn E. Decker · valuetovictory@gmail.com</p>
+                      </div>
+                    `,
+                  }),
+                }).catch(e => { console.warn('[invoice.payment_failed] email send failed:', e.message); });
+              }
+
+              // Audit log every failure (not just the first)
+              try {
+                await sql`
+                  INSERT INTO audit_log (action, actor, target_table, target_id, new_values, ip_address)
+                  VALUES ('stripe_invoice_payment_failed', 'stripe_webhook', 'user_profiles',
+                          ${subscriptionId || customerId},
+                          ${JSON.stringify({ subscriptionId, customerId, amountDue, attemptCount, email })}::jsonb,
+                          ${req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'stripe'})
+                `;
+              } catch (_) { /* non-fatal */ }
+            }
+          } catch (e) {
+            console.error('[invoice.payment_failed] Handler error (non-fatal):', e.message);
+          }
+        }
+      }
+
       // Track subscription events in analytics
       try {
         const eventType = event.type === 'checkout.session.completed' ? 'subscription_created'
           : event.type === 'customer.subscription.deleted' ? 'subscription_cancelled'
           : event.type === 'customer.subscription.updated' ? 'subscription_updated'
           : event.type === 'customer.subscription.trial_will_end' ? 'subscription_trial_ending'
+          : event.type === 'invoice.paid' ? 'invoice_paid'
+          : event.type === 'invoice.payment_failed' ? 'invoice_payment_failed'
           : null;
         if (eventType) {
           await sql`INSERT INTO analytics_events (event_type, metadata) VALUES (${eventType}, ${JSON.stringify({ stripe_event: event.type, stripe_event_id: event.id })}::jsonb)`;
