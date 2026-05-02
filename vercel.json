@@ -84,6 +84,10 @@
       "dest": "/api/dating.js"
     },
     {
+      "src": "/api/growth/(.*)",
+      "dest": "/api/growth-agents.js"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     },

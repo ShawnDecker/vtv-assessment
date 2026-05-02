@@ -84,19 +84,49 @@
     .platform-item .plat-icon { font-size: 2.5rem; }
     .platform-item .plat-name { font-size: 0.7rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.5rem; font-weight: 700; }
 
-    /* CTA */
-    .cta-section { text-align: center; padding: 3rem 1.5rem; background: linear-gradient(180deg, #0a0a0a, #1a1510); border-top: 1px solid rgba(212,168,71,0.2); }
-    .cta-section h2 { font-family: 'Instrument Serif', serif; font-size: 1.75rem; font-style: italic; color: #fff; margin-bottom: 0.75rem; }
-    .cta-section p { color: #a1a1aa; font-size: 0.9rem; margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto; }
-    .cta-btn {
-      display: inline-block; padding: 0.875rem 2.5rem;
-      background: linear-gradient(135deg, #D4A847, #b8942e);
-      color: #0a0a0a; font-weight: 800; font-size: 0.95rem;
-      border-radius: 0.5rem; text-decoration: none;
+    /* Intake Form */
+    .intake-section { max-width: 640px; margin: 0 auto; padding: 3rem 1.5rem; border-top: 1px solid rgba(212,168,71,0.2); background: linear-gradient(180deg, #0a0a0a, #1a1510); }
+    .intake-section h2 { font-family: 'Instrument Serif', serif; font-size: 1.75rem; font-style: italic; color: #fff; text-align: center; margin-bottom: 0.5rem; }
+    .intake-sub { text-align: center; color: #a1a1aa; font-size: 0.88rem; margin-bottom: 0.5rem; }
+    .intake-required { text-align: center; color: #71717a; font-size: 0.72rem; margin-bottom: 2rem; font-style: italic; }
+    .form-step { display: none; }
+    .form-step.active { display: block; }
+    .step-header { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A847; font-weight: 700; margin-bottom: 1.5rem; text-align: center; }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 700; color: #e4e4e7; margin-bottom: 0.4rem; }
+    .form-group label .req { color: #ef4444; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 0.75rem 1rem; background: #18181b; border: 1px solid #27272a;
+      border-radius: 0.5rem; color: #e4e4e7; font-size: 0.88rem; font-family: inherit;
+      transition: border-color 0.2s;
     }
-    .cta-btn:hover { opacity: 0.9; text-decoration: none; }
-    .cta-links { margin-top: 1.5rem; }
-    .cta-links a { font-size: 0.82rem; color: #71717a; margin: 0 0.75rem; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #D4A847; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-group select option { background: #18181b; color: #e4e4e7; }
+    .form-group .hint { font-size: 0.72rem; color: #71717a; margin-top: 0.25rem; }
+    .form-nav { display: flex; justify-content: space-between; margin-top: 1.5rem; gap: 1rem; }
+    .btn-back { padding: 0.75rem 1.5rem; background: transparent; border: 1px solid #27272a; border-radius: 0.5rem; color: #a1a1aa; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-back:hover { border-color: #52525b; }
+    .btn-next, .btn-submit { padding: 0.75rem 2rem; background: linear-gradient(135deg, #D4A847, #b8942e); border: none; border-radius: 0.5rem; color: #0a0a0a; font-size: 0.85rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+    .btn-next:hover, .btn-submit:hover { opacity: 0.9; }
+    .btn-next:disabled, .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+    .progress-bar { display: flex; gap: 0.35rem; margin-bottom: 2rem; justify-content: center; }
+    .progress-dot { width: 2.5rem; height: 4px; border-radius: 2px; background: #27272a; transition: background 0.3s; }
+    .progress-dot.filled { background: #D4A847; }
+    .form-error { color: #ef4444; font-size: 0.78rem; margin-top: 0.25rem; display: none; }
+
+    .intake-result { display: none; text-align: center; padding: 2rem 0; }
+    .intake-result.show { display: block; }
+    .result-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .result-title { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1.5rem; color: #fff; margin-bottom: 0.75rem; }
+    .result-message { color: #a1a1aa; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto; }
+    .score-display { display: flex; justify-content: center; gap: 1.5rem; margin: 1.5rem 0; }
+    .score-item { text-align: center; }
+    .score-value { font-size: 1.75rem; font-weight: 900; color: #D4A847; }
+    .score-label { font-size: 0.65rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em; }
+    .calendly-frame { border-radius: 0.75rem; margin-top: 1.5rem; border: 1px solid #27272a; }
+    .declined-box { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 2rem; max-width: 520px; margin: 0 auto; text-align: left; }
+    .values-notice { background: #18181b; border: 1px solid #27272a; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem; font-size: 0.75rem; color: #71717a; line-height: 1.5; }
 
     .footer { text-align: center; padding: 2rem 1.5rem; border-top: 1px solid #1a1a1a; }
     .footer .brand { font-family: 'Instrument Serif', serif; font-style: italic; color: #D4A847; margin-bottom: 0.5rem; }
@@ -108,6 +138,7 @@
       .team-grid { grid-template-columns: repeat(3, 1fr); }
       .steps { grid-template-columns: 1fr 1fr; }
       .metrics-grid { grid-template-columns: 1fr 1fr; }
+      .score-display { flex-wrap: wrap; }
     }
   </style>
 </head>
@@ -130,35 +161,30 @@
           <div class="service-desc">We scale campaigns across Meta, TikTok, and Google to drive user acquisition and revenue &mdash; with CAC in focus. Every dollar is tracked, tested, and optimized.</div>
           <div class="service-tag">Meta &bull; TikTok &bull; Google</div>
         </div>
-
         <div class="service-card">
           <div class="service-icon">&#127912;</div>
           <div class="service-name">Creative Production</div>
           <div class="service-desc">We produce scroll-stopping creatives, hooks, and ad copy designed to grab attention and convert cold audiences. From concept to launch in days, not weeks.</div>
           <div class="service-tag">Ad Copy &bull; Video &bull; Graphics</div>
         </div>
-
         <div class="service-card">
           <div class="service-icon">&#128187;</div>
           <div class="service-name">Landing Pages &amp; Funnels</div>
           <div class="service-desc">Custom landing pages and conversion funnels designed to drive signups, purchases, and LTV. Always tested. Always improving. Built on our proven design system.</div>
           <div class="service-tag">CRO &bull; A/B Testing &bull; Funnels</div>
         </div>
-
         <div class="service-card">
           <div class="service-icon">&#128202;</div>
           <div class="service-name">Transparent Reporting</div>
           <div class="service-desc">See how every dollar performs with real-time reporting on CAC, ROAS, and retention. No fluff. Just insights you can act on. Biweekly growth syncs with your team.</div>
           <div class="service-tag">CAC &bull; ROAS &bull; LTV</div>
         </div>
-
         <div class="service-card">
           <div class="service-icon">&#129309;</div>
           <div class="service-name">Strategic Partnership</div>
           <div class="service-desc">From offer testing to funnel optimization, we&rsquo;ve done this across dozens of consumer brands. We&rsquo;re not just a vendor &mdash; we&rsquo;re your growth partner with skin in the game.</div>
           <div class="service-tag">Strategy &bull; Consulting &bull; Growth</div>
         </div>
-
         <div class="service-card">
           <div class="service-icon">&#128218;</div>
           <div class="service-name">Guides &amp; Tools</div>
@@ -187,26 +213,10 @@
       <div class="section-label">How It Works</div>
       <h2>From Strategy to Scale in 4 Steps</h2>
       <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-title">Discovery Call</div>
-          <div class="step-desc">We learn your brand, goals, audience, and budget. 30 minutes.</div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-title">Strategy & Creative</div>
-          <div class="step-desc">Your pod builds a launch plan: ad creatives, landing pages, targeting.</div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-title">Launch & Test</div>
-          <div class="step-desc">Campaigns go live. We test hooks, audiences, and offers in the first 14 days.</div>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <div class="step-title">Optimize & Scale</div>
-          <div class="step-desc">Weekly optimization. Biweekly syncs. We double down on what works and cut what doesn't.</div>
-        </div>
+        <div class="step"><div class="step-num">1</div><div class="step-title">Growth Profile</div><div class="step-desc">Complete the intake form below. We analyze your business before we ever get on a call.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-title">Design Report</div><div class="step-desc">Our AI generates a custom strategy brief — feasibility, market, and channel recommendations.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-title">Discovery Call</div><div class="step-desc">We walk through the report together. 30 minutes. No fluff.</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-title">Launch &amp; Scale</div><div class="step-desc">Your pod builds, launches, and optimizes. Weekly syncs. Every dollar tracked.</div></div>
       </div>
     </div>
 
@@ -238,15 +248,225 @@
 
   </div>
 
-  <!-- CTA -->
-  <div class="cta-section">
-    <h2>Ready to Grow?</h2>
-    <p>Book a free 30-minute discovery call. We&rsquo;ll map your growth strategy and show you exactly how we&rsquo;d scale your brand.</p>
-    <a href="https://calendly.com/valuetovictory/30min" class="cta-btn">Book Your Discovery Call</a>
-    <div class="cta-links">
-      <a href="https://assessment.valuetovictory.com">Take the Assessment</a>
-      <a href="https://assessment.valuetovictory.com/pricing">View Pricing</a>
-      <a href="https://valuetovictory.com">VTV Home</a>
+  <!-- ============================================================ -->
+  <!-- GROWTH PROFILE INTAKE FORM — replaces simple CTA             -->
+  <!-- ============================================================ -->
+  <div class="intake-section" id="intakeSection">
+    <h2>Start Your Growth Profile</h2>
+    <p class="intake-sub">Complete this questionnaire to receive a custom AI-generated design report before your discovery call. All fields marked <span style="color:#ef4444;">*</span> are required.</p>
+    <p class="intake-required">This form takes about 3 minutes. Your report will be ready before we speak.</p>
+
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-dot filled"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+    </div>
+
+    <form id="intakeForm" novalidate>
+      <!-- STEP 1: Who You Are -->
+      <div class="form-step active" data-step="1">
+        <div class="step-header">Step 1 of 4 &mdash; About You</div>
+
+        <div class="form-group">
+          <label>Your Full Name <span class="req">*</span></label>
+          <input type="text" name="contactName" required placeholder="e.g. Sarah Johnson" />
+        </div>
+        <div class="form-group">
+          <label>Email Address <span class="req">*</span></label>
+          <input type="email" name="email" required placeholder="sarah@company.com" />
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" name="phone" placeholder="(555) 123-4567" />
+        </div>
+        <div class="form-group">
+          <label>Company / Brand Name <span class="req">*</span></label>
+          <input type="text" name="companyName" required placeholder="e.g. FaithFit Coaching" />
+        </div>
+        <div class="form-group">
+          <label>Company Website</label>
+          <input type="url" name="website" placeholder="https://yourcompany.com" />
+          <div class="hint">If you don't have one yet, that's okay.</div>
+        </div>
+
+        <div class="form-nav">
+          <div></div>
+          <button type="button" class="btn-next" onclick="nextStep(1)">Next: Your Business</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Your Business -->
+      <div class="form-step" data-step="2">
+        <div class="step-header">Step 2 of 4 &mdash; Your Business</div>
+
+        <div class="form-group">
+          <label>Industry / Niche <span class="req">*</span></label>
+          <select name="industry" required>
+            <option value="">Select your industry...</option>
+            <option value="Health & Fitness">Health & Fitness</option>
+            <option value="Faith & Ministry">Faith & Ministry</option>
+            <option value="Coaching & Consulting">Coaching & Consulting</option>
+            <option value="Education & Online Courses">Education & Online Courses</option>
+            <option value="E-commerce / DTC">E-commerce / Direct-to-Consumer</option>
+            <option value="SaaS / Software">SaaS / Software</option>
+            <option value="Real Estate">Real Estate</option>
+            <option value="Financial Services">Financial Services</option>
+            <option value="Beauty & Wellness">Beauty & Wellness</option>
+            <option value="Food & Beverage">Food & Beverage</option>
+            <option value="Nonprofit">Nonprofit</option>
+            <option value="Professional Services">Professional Services</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Business Model <span class="req">*</span></label>
+          <select name="businessModel" required>
+            <option value="">How do you make money?</option>
+            <option value="Subscription / Membership">Subscription / Membership</option>
+            <option value="One-time Product Sales">One-time Product Sales</option>
+            <option value="Service / Consulting">Service / Consulting Fees</option>
+            <option value="Digital Products / Courses">Digital Products / Courses</option>
+            <option value="E-commerce">E-commerce (Physical Products)</option>
+            <option value="Lead Generation">Lead Generation</option>
+            <option value="Donations / Fundraising">Donations / Fundraising</option>
+            <option value="Hybrid / Multiple">Hybrid / Multiple Revenue Streams</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Monthly Revenue (approximate) <span class="req">*</span></label>
+          <select name="monthlyRevenue" required>
+            <option value="">Select range...</option>
+            <option value="Pre-revenue">Pre-revenue (not yet launched)</option>
+            <option value="Under $5,000">Under $5,000/mo</option>
+            <option value="$5,000 - $15,000">$5,000 - $15,000/mo</option>
+            <option value="$15,000 - $50,000">$15,000 - $50,000/mo</option>
+            <option value="$50,000 - $100,000">$50,000 - $100,000/mo</option>
+            <option value="$100,000 - $500,000">$100,000 - $500,000/mo</option>
+            <option value="$500,000+">$500,000+/mo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Current Monthly Ad Spend</label>
+          <select name="monthlyAdSpend">
+            <option value="">Select range...</option>
+            <option value="$0 - Not running ads">$0 — Not currently running ads</option>
+            <option value="Under $1,000">Under $1,000/mo</option>
+            <option value="$1,000 - $5,000">$1,000 - $5,000/mo</option>
+            <option value="$5,000 - $15,000">$5,000 - $15,000/mo</option>
+            <option value="$15,000 - $50,000">$15,000 - $50,000/mo</option>
+            <option value="$50,000+">$50,000+/mo</option>
+          </select>
+        </div>
+
+        <div class="form-nav">
+          <button type="button" class="btn-back" onclick="prevStep(2)">Back</button>
+          <button type="button" class="btn-next" onclick="nextStep(2)">Next: Your Market</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Your Market & Audience -->
+      <div class="form-step" data-step="3">
+        <div class="step-header">Step 3 of 4 &mdash; Your Market</div>
+
+        <div class="form-group">
+          <label>Who is your ideal customer? <span class="req">*</span></label>
+          <textarea name="targetAudience" required placeholder="Describe your target audience — age, demographics, interests, pain points. The more specific, the better our analysis."></textarea>
+          <div class="hint">Example: "Christian women ages 28-45 who want to improve their marriages but feel stuck. Active on Instagram and Facebook."</div>
+        </div>
+        <div class="form-group">
+          <label>What platforms are you currently using for marketing?</label>
+          <input type="text" name="currentPlatforms" placeholder="e.g. Facebook, Instagram, Google, Email, TikTok, None" />
+        </div>
+        <div class="form-group">
+          <label>What is your #1 growth goal right now? <span class="req">*</span></label>
+          <select name="primaryGoal" required>
+            <option value="">Select your primary goal...</option>
+            <option value="Get more leads / signups">Get more leads / signups</option>
+            <option value="Increase online sales">Increase online sales</option>
+            <option value="Build brand awareness">Build brand awareness</option>
+            <option value="Launch a new product or service">Launch a new product or service</option>
+            <option value="Reduce customer acquisition cost">Reduce customer acquisition cost (CAC)</option>
+            <option value="Scale what's already working">Scale what's already working</option>
+            <option value="Start running paid ads for the first time">Start running paid ads for the first time</option>
+            <option value="Improve conversion rates">Improve conversion rates</option>
+          </select>
+        </div>
+
+        <div class="form-nav">
+          <button type="button" class="btn-back" onclick="prevStep(3)">Back</button>
+          <button type="button" class="btn-next" onclick="nextStep(3)">Next: Final Details</button>
+        </div>
+      </div>
+
+      <!-- STEP 4: Challenges & Timeline -->
+      <div class="form-step" data-step="4">
+        <div class="step-header">Step 4 of 4 &mdash; Challenges &amp; Timeline</div>
+
+        <div class="form-group">
+          <label>What is your biggest marketing challenge right now? <span class="req">*</span></label>
+          <textarea name="biggestChallenge" required placeholder="Be honest — what's not working? Where are you stuck? What have you tried that didn't produce results?"></textarea>
+        </div>
+        <div class="form-group">
+          <label>When are you looking to get started?</label>
+          <select name="timeline">
+            <option value="">Select timeline...</option>
+            <option value="Immediately / ASAP">Immediately / ASAP</option>
+            <option value="Within 2 weeks">Within 2 weeks</option>
+            <option value="1-3 months">1-3 months</option>
+            <option value="3-6 months">3-6 months</option>
+            <option value="Just exploring options">Just exploring options</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Anything else we should know?</label>
+          <textarea name="additionalNotes" placeholder="Previous agency experiences, specific concerns, goals for the call, etc."></textarea>
+        </div>
+
+        <div class="values-notice">
+          <strong style="color:#a1a1aa;">Our Values Commitment:</strong> Value to Victory partners exclusively with brands whose products and services contribute positively to their communities. We do not provide marketing services for industries including adult content, gambling, tobacco, cannabis, weapons, or predatory lending. By submitting this form, you confirm your business aligns with these values.
+        </div>
+
+        <div class="form-nav">
+          <button type="button" class="btn-back" onclick="prevStep(4)">Back</button>
+          <button type="submit" class="btn-submit" id="submitBtn">Submit Growth Profile</button>
+        </div>
+      </div>
+    </form>
+
+    <!-- RESULT: Success — Calendly unlocked -->
+    <div class="intake-result" id="resultSuccess">
+      <div class="result-icon">&#9989;</div>
+      <div class="result-title">Your Growth Profile Looks Strong</div>
+      <div class="result-message" id="successMessage">We're generating your custom design report now. Book your discovery call below — we'll have your strategy brief ready before we meet.</div>
+      <div class="score-display" id="scoreDisplay">
+        <div class="score-item"><div class="score-value" id="scoreFeasibility">—</div><div class="score-label">Feasibility</div></div>
+        <div class="score-item"><div class="score-value" id="scoreMarket">—</div><div class="score-label">Market</div></div>
+        <div class="score-item"><div class="score-value" id="scoreReadiness">—</div><div class="score-label">Readiness</div></div>
+        <div class="score-item"><div class="score-value" id="scoreOverall">—</div><div class="score-label">Overall</div></div>
+      </div>
+      <iframe src="https://calendly.com/valuetovictory/30min" class="calendly-frame" width="100%" height="650" frameborder="0"></iframe>
+    </div>
+
+    <!-- RESULT: Pending review (low score) -->
+    <div class="intake-result" id="resultPending">
+      <div class="result-icon">&#128203;</div>
+      <div class="result-title">Thank You — We'll Be in Touch</div>
+      <div class="result-message" id="pendingMessage">Your Growth Profile has been submitted. Our team will review your information and reach out within 24 hours to discuss next steps and determine if VTV Growth Services is the right fit.</div>
+      <div class="score-display" id="scoreDisplayPending">
+        <div class="score-item"><div class="score-value" id="scoreFeasibilityP">—</div><div class="score-label">Feasibility</div></div>
+        <div class="score-item"><div class="score-value" id="scoreMarketP">—</div><div class="score-label">Market</div></div>
+        <div class="score-item"><div class="score-value" id="scoreReadinessP">—</div><div class="score-label">Readiness</div></div>
+        <div class="score-item"><div class="score-value" id="scoreOverallP">—</div><div class="score-label">Overall</div></div>
+      </div>
+    </div>
+
+    <!-- RESULT: Declined (values mismatch) -->
+    <div class="intake-result" id="resultDeclined">
+      <div class="declined-box">
+        <div class="result-title" style="text-align:left;font-size:1.25rem;margin-bottom:1rem;">Thank You for Your Interest</div>
+        <p class="result-message" id="declinedMessage" style="text-align:left;margin-bottom:0;"></p>
+      </div>
     </div>
   </div>
 
@@ -254,6 +474,119 @@
     <div class="brand">Value to Victory</div>
     <div class="copy">&copy; 2026 Value to Victory &mdash; Shawn E. Decker<br>valuetovictory.com</div>
   </div>
+
+  <script>
+  (function() {
+    var currentStep = 1;
+    var totalSteps = 4;
+
+    window.nextStep = function(from) {
+      var step = document.querySelector('[data-step="' + from + '"]');
+      var fields = step.querySelectorAll('[required]');
+      var valid = true;
+      fields.forEach(function(f) {
+        if (!f.value.trim()) {
+          f.style.borderColor = '#ef4444';
+          valid = false;
+        } else {
+          f.style.borderColor = '#27272a';
+        }
+      });
+      if (from === 1) {
+        var emailField = step.querySelector('[name="email"]');
+        if (emailField && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailField.value)) {
+          emailField.style.borderColor = '#ef4444';
+          valid = false;
+        }
+      }
+      if (!valid) return;
+
+      step.classList.remove('active');
+      currentStep = from + 1;
+      document.querySelector('[data-step="' + currentStep + '"]').classList.add('active');
+      updateProgress();
+      document.getElementById('intakeSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    window.prevStep = function(from) {
+      document.querySelector('[data-step="' + from + '"]').classList.remove('active');
+      currentStep = from - 1;
+      document.querySelector('[data-step="' + currentStep + '"]').classList.add('active');
+      updateProgress();
+    };
+
+    function updateProgress() {
+      var dots = document.querySelectorAll('.progress-dot');
+      dots.forEach(function(d, i) {
+        d.classList.toggle('filled', i < currentStep);
+      });
+    }
+
+    document.getElementById('intakeForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      var form = e.target;
+      var data = {
+        contactName: form.contactName.value.trim(),
+        email: form.email.value.trim(),
+        phone: form.phone.value.trim(),
+        companyName: form.companyName.value.trim(),
+        website: form.website.value.trim(),
+        industry: form.industry.value,
+        businessModel: form.businessModel.value,
+        monthlyRevenue: form.monthlyRevenue.value,
+        monthlyAdSpend: form.monthlyAdSpend.value,
+        targetAudience: form.targetAudience.value.trim(),
+        primaryGoal: form.primaryGoal.value,
+        biggestChallenge: form.biggestChallenge.value.trim(),
+        currentPlatforms: form.currentPlatforms.value.trim(),
+        timeline: form.timeline.value
+      };
+
+      fetch('/api/growth/intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        // Hide form
+        document.getElementById('intakeForm').style.display = 'none';
+        document.getElementById('progressBar').style.display = 'none';
+        document.querySelector('.intake-sub').style.display = 'none';
+        document.querySelector('.intake-required').style.display = 'none';
+
+        if (res.declined) {
+          document.getElementById('declinedMessage').textContent = res.message;
+          document.getElementById('resultDeclined').classList.add('show');
+        } else if (res.calendlyUnlocked) {
+          document.getElementById('scoreFeasibility').textContent = res.scores.feasibility;
+          document.getElementById('scoreMarket').textContent = res.scores.market;
+          document.getElementById('scoreReadiness').textContent = res.scores.readiness;
+          document.getElementById('scoreOverall').textContent = res.scores.overall;
+          if (res.message) document.getElementById('successMessage').textContent = res.message;
+          document.getElementById('resultSuccess').classList.add('show');
+        } else {
+          document.getElementById('scoreFeasibilityP').textContent = res.scores ? res.scores.feasibility : '—';
+          document.getElementById('scoreMarketP').textContent = res.scores ? res.scores.market : '—';
+          document.getElementById('scoreReadinessP').textContent = res.scores ? res.scores.readiness : '—';
+          document.getElementById('scoreOverallP').textContent = res.scores ? res.scores.overall : '—';
+          if (res.message) document.getElementById('pendingMessage').textContent = res.message;
+          document.getElementById('resultPending').classList.add('show');
+        }
+      })
+      .catch(function(err) {
+        btn.disabled = false;
+        btn.textContent = 'Submit Growth Profile';
+        alert('Something went wrong. Please try again.');
+        console.error(err);
+      });
+    });
+  })();
+  </script>
 
 </body>
 </html>
