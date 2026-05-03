@@ -1975,7 +1975,7 @@ module.exports = async (req, res) => {
     // JWT path returns full profile. Email-only path (coaching email deep-links)
     // returns a narrow, non-PII response: firstName + latest assessment pillar
     // scores only. No stripe IDs, teams, phone, email, last name, or tier data.
-    if (req.method === 'GET' && url.startsWith('/member') && !url.startsWith('/member/portal')) {
+    if (req.method === 'GET' && url.startsWith('/member') && !url.startsWith('/member/portal') && !url.startsWith('/member/preferences')) {
       const params = new URL('http://x' + req.url).searchParams;
       const jwtUser = extractUser(req);
       const rawEmail = params.get('email') || '';
