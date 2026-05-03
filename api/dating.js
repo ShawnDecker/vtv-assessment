@@ -727,6 +727,7 @@ module.exports = async (req, res) => {
                     <a href="https://assessment.valuetovictory.com/faith-match" style="display:inline-block;padding:14px 36px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:8px;font-size:1rem;">Send a Message →</a>
                   </div>
                   <p style="color:#606060;font-size:0.75rem;text-align:center;">Aligned Hearts by Value to Victory — Values-Based Dating</p>
+                  <p style="color:#606060;font-size:0.7rem;text-align:center;margin-top:0.5rem;"><a href="https://assessment.valuetovictory.com/faith-match" style="color:#909090;">Notification settings</a> · <a href="mailto:valuetovictory@gmail.com?subject=Unsubscribe Aligned Hearts notifications" style="color:#909090;">Unsubscribe</a></p>
                 </div>`;
 
               // Email to the person who just swiped (me)
@@ -773,6 +774,7 @@ module.exports = async (req, res) => {
                       <a href="https://assessment.valuetovictory.com/faith-match" style="display:inline-block;padding:14px 36px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:8px;font-size:1rem;">See Who Likes You →</a>
                     </div>
                     <p style="color:#606060;font-size:0.75rem;text-align:center;">Aligned Hearts by Value to Victory — Values-Based Dating</p>
+                    <p style="color:#606060;font-size:0.7rem;text-align:center;margin-top:0.5rem;"><a href="https://assessment.valuetovictory.com/faith-match" style="color:#909090;">Notification settings</a> · <a href="mailto:valuetovictory@gmail.com?subject=Unsubscribe Aligned Hearts notifications" style="color:#909090;">Unsubscribe</a></p>
                   </div>`
               }).catch(() => {});
             } catch(e) { console.error('Like notification error:', e.message); }
@@ -919,6 +921,7 @@ module.exports = async (req, res) => {
                     <a href="https://assessment.valuetovictory.com/faith-match" style="display:inline-block;padding:12px 32px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:8px;">Reply Now →</a>
                   </div>
                   <p style="color:#606060;font-size:0.75rem;text-align:center;">Aligned Hearts by Value to Victory</p>
+                  <p style="color:#606060;font-size:0.7rem;text-align:center;margin-top:0.5rem;"><a href="https://assessment.valuetovictory.com/faith-match" style="color:#909090;">Notification settings</a> · <a href="mailto:valuetovictory@gmail.com?subject=Unsubscribe Aligned Hearts notifications" style="color:#909090;">Unsubscribe</a></p>
                 </div>`
             }).catch(() => {});
           }
