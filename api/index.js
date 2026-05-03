@@ -5336,6 +5336,136 @@ ${roadmapHtml}
       }
     }
 
+    // GET /api/admin/question-quality — Back-test assessment question effectiveness
+    if (req.method === 'GET' && url === '/admin/question-quality') {
+      try {
+        // Question-level stats: avg score, answer count, variance
+        const questions = await sql`
+          SELECT qb.id, qb.pillar, qb.sub_category, qb.field_name,
+            LEFT(qb.question, 80) as question_preview,
+            COUNT(ah.id) as times_answered,
+            ROUND(AVG(ah.answer_value)::numeric, 2) as avg_score,
+            ROUND(STDDEV(ah.answer_value)::numeric, 2) as score_stddev,
+            MIN(ah.answer_value) as min_score,
+            MAX(ah.answer_value) as max_score
+          FROM question_bank qb
+          LEFT JOIN answer_history ah ON ah.question_id = qb.id
+          GROUP BY qb.id, qb.pillar, qb.sub_category, qb.field_name, qb.question
+          ORDER BY times_answered DESC
+        `;
+
+        // Pillar-level correlation: do pillar scores correlate with each other?
+        const pillarCorrelation = await sql`
+          SELECT
+            ROUND(CORR(time_total, people_total)::numeric, 3) as time_people,
+            ROUND(CORR(time_total, influence_total)::numeric, 3) as time_influence,
+            ROUND(CORR(time_total, numbers_total)::numeric, 3) as time_numbers,
+            ROUND(CORR(time_total, knowledge_total)::numeric, 3) as time_knowledge,
+            ROUND(CORR(people_total, influence_total)::numeric, 3) as people_influence,
+            ROUND(CORR(people_total, numbers_total)::numeric, 3) as people_numbers,
+            ROUND(CORR(people_total, knowledge_total)::numeric, 3) as people_knowledge,
+            ROUND(CORR(influence_total, numbers_total)::numeric, 3) as influence_numbers,
+            ROUND(CORR(influence_total, knowledge_total)::numeric, 3) as influence_knowledge,
+            ROUND(CORR(numbers_total, knowledge_total)::numeric, 3) as numbers_knowledge
+          FROM assessments WHERE time_total > 0
+        `;
+
+        // Score range distribution by pillar — are scores clustering?
+        const pillarDistribution = await sql`
+          SELECT
+            ROUND(AVG(time_total)::numeric, 1) as time_avg,
+            ROUND(AVG(people_total)::numeric, 1) as people_avg,
+            ROUND(AVG(influence_total)::numeric, 1) as influence_avg,
+            ROUND(AVG(numbers_total)::numeric, 1) as numbers_avg,
+            ROUND(AVG(knowledge_total)::numeric, 1) as knowledge_avg,
+            ROUND(STDDEV(time_total)::numeric, 1) as time_stddev,
+            ROUND(STDDEV(people_total)::numeric, 1) as people_stddev,
+            ROUND(STDDEV(influence_total)::numeric, 1) as influence_stddev,
+            ROUND(STDDEV(numbers_total)::numeric, 1) as numbers_stddev,
+            ROUND(STDDEV(knowledge_total)::numeric, 1) as knowledge_stddev,
+            COUNT(*) as total_assessments
+          FROM assessments
+        `;
+
+        // Weakest pillar frequency — is one pillar always weakest?
+        const weakestFreq = await sql`
+          SELECT weakest_pillar, COUNT(*) as cnt,
+            ROUND(COUNT(*)::numeric / NULLIF((SELECT COUNT(*) FROM assessments WHERE weakest_pillar IS NOT NULL), 0) * 100, 1) as pct
+          FROM assessments WHERE weakest_pillar IS NOT NULL
+          GROUP BY weakest_pillar ORDER BY cnt DESC
+        `;
+
+        // Question discrimination: which questions have the most variance (good discriminators)
+        const bestDiscriminators = questions
+          .filter(q => Number(q.times_answered) >= 5 && q.score_stddev)
+          .sort((a,b) => Number(b.score_stddev) - Number(a.score_stddev))
+          .slice(0, 10);
+
+        // Worst questions: low variance = everyone answers the same (poor discriminator)
+        const worstDiscriminators = questions
+          .filter(q => Number(q.times_answered) >= 5 && q.score_stddev)
+          .sort((a,b) => Number(a.score_stddev) - Number(b.score_stddev))
+          .slice(0, 10);
+
+        // Ceiling/floor questions: avg near 5 or near 1
+        const ceilingQuestions = questions
+          .filter(q => Number(q.times_answered) >= 5 && Number(q.avg_score) >= 4.0)
+          .sort((a,b) => Number(b.avg_score) - Number(a.avg_score));
+
+        const floorQuestions = questions
+          .filter(q => Number(q.times_answered) >= 5 && Number(q.avg_score) <= 2.0)
+          .sort((a,b) => Number(a.avg_score) - Number(b.avg_score));
+
+        // Reassessment improvement tracking
+        let improvementData = [];
+        try {
+          improvementData = await sql`
+            SELECT c.id, c.first_name,
+              (SELECT a.master_score FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at ASC LIMIT 1) as first_score,
+              (SELECT a.master_score FROM assessments a WHERE a.contact_id = c.id ORDER BY a.completed_at DESC LIMIT 1) as latest_score,
+              (SELECT COUNT(*) FROM assessments a WHERE a.contact_id = c.id) as assessment_count
+            FROM contacts c
+            WHERE (SELECT COUNT(*) FROM assessments a WHERE a.contact_id = c.id) >= 2
+          `;
+        } catch(e) {}
+
+        const recommendations = [];
+        if (weakestFreq.length > 0 && Number(weakestFreq[0].pct) > 40) {
+          recommendations.push({ priority: 'HIGH', issue: `${weakestFreq[0].weakest_pillar} is the weakest pillar ${weakestFreq[0].pct}% of the time. Consider rebalancing question difficulty or adding more nuanced questions for this pillar.` });
+        }
+        if (ceilingQuestions.length > 5) {
+          recommendations.push({ priority: 'MEDIUM', issue: `${ceilingQuestions.length} questions have avg scores above 4.0 — most people score high on these, reducing their diagnostic value. Consider making them harder or replacing them.` });
+        }
+        if (floorQuestions.length > 5) {
+          recommendations.push({ priority: 'MEDIUM', issue: `${floorQuestions.length} questions have avg scores below 2.0 — most people score low. These may be too hard or poorly worded.` });
+        }
+        if (worstDiscriminators.length > 0 && Number(worstDiscriminators[0].score_stddev) < 0.5) {
+          recommendations.push({ priority: 'LOW', issue: `Some questions have very low variance (stddev < 0.5) — everyone answers the same way. These don't help differentiate users.` });
+        }
+
+        return res.json({
+          totalQuestions: questions.length,
+          questions: questions.map(q => ({
+            id: q.id, pillar: q.pillar, subCategory: q.sub_category,
+            fieldName: q.field_name, preview: q.question_preview,
+            timesAnswered: Number(q.times_answered), avgScore: Number(q.avg_score),
+            stddev: Number(q.score_stddev), min: Number(q.min_score), max: Number(q.max_score)
+          })),
+          pillarCorrelation: pillarCorrelation[0] || {},
+          pillarDistribution: pillarDistribution[0] || {},
+          weakestPillarFrequency: weakestFreq,
+          bestDiscriminators: bestDiscriminators.map(q => ({ id: q.id, pillar: q.pillar, subCategory: q.sub_category, preview: q.question_preview, stddev: Number(q.score_stddev), avg: Number(q.avg_score), n: Number(q.times_answered) })),
+          worstDiscriminators: worstDiscriminators.map(q => ({ id: q.id, pillar: q.pillar, subCategory: q.sub_category, preview: q.question_preview, stddev: Number(q.score_stddev), avg: Number(q.avg_score), n: Number(q.times_answered) })),
+          ceilingQuestions: ceilingQuestions.map(q => ({ id: q.id, pillar: q.pillar, preview: q.question_preview, avg: Number(q.avg_score), n: Number(q.times_answered) })),
+          floorQuestions: floorQuestions.map(q => ({ id: q.id, pillar: q.pillar, preview: q.question_preview, avg: Number(q.avg_score), n: Number(q.times_answered) })),
+          improvementTracking: improvementData.map(d => ({ name: d.first_name, firstScore: d.first_score, latestScore: d.latest_score, assessments: Number(d.assessment_count), delta: d.latest_score - d.first_score })),
+          recommendations
+        });
+      } catch(e) {
+        return res.json({ error: e.message });
+      }
+    }
+
     // GET /api/admin/feedback-summary — aggregated feedback data (Feature 4)
     if (req.method === 'GET' && url === '/admin/feedback-summary') {
       try {
