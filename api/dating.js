@@ -59,6 +59,7 @@ function cors(req, res) {
 module.exports = async (req, res) => {
   cors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method === 'HEAD') return res.status(200).end();
 
   // Rate limiting
   const clientIP = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
@@ -435,6 +436,11 @@ module.exports = async (req, res) => {
       }
 
       const existing = await sql`SELECT id FROM dating_profiles WHERE contact_id = ${user.contactId}`;
+
+      // Validate string lengths server-side
+      if (b.bio && b.bio.length > 500) return res.status(400).json({ error: 'Bio too long (max 500 characters)' });
+      if (b.display_name && b.display_name.length > 50) return res.status(400).json({ error: 'Display name too long (max 50 characters)' });
+      if (b.location_city && b.location_city.length > 100) return res.status(400).json({ error: 'City name too long' });
 
       if (existing.length) {
         // Update
