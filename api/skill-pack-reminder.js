@@ -2,10 +2,55 @@
 // Sends the day-24 trial reminder email to skill-pack-bundle subscribers whose trial
 // ends in ~7 days. Idempotent via audit_log lookup — never double-sends.
 //
-// State law (CA AB-390, NY §527-a, IL AB-3220, VT, CT) requires advance notice before
-// auto-renewal of a paid subscription. Stripe's native trial_will_end fires day 27 (3 days
-// before end). This cron supplements with a 7-day notice (day 24 of a 30-day trial),
-// matching the Day-24 email drafted for the JARVIS / Skill Pack campaign.
+// ─── STATE-LEVEL ROSCA MATRIX ─────────────────────────────────────────────────
+// Subscription auto-renewal is regulated state-by-state. The matrix below was
+// compiled in the 2026-05-03 vault audit (Yale Lawyer voice). Update any time a
+// new state's law changes, OR a new VTV product type (annual billing, free-to-paid
+// trial of a different length, etc.) gets added.
+//
+// CURRENT VTV COVERAGE: Only the skill-pack-bundle has a trial-to-paid mechanic.
+// All other VTV subscriptions (VictoryPath $29, Value Builder $47, Victory VIP
+// $497, dating-monthly $29) are no-trial month-to-month, which means CA AB-390 +
+// NY § 527-a are SATISFIED by Stripe's standard receipt + cancel-anytime portal.
+// Other states' renewal-reminder requirements DO NOT trigger month-to-month
+// because there is no "renewal" — each month is a fresh charge with the same
+// disclosure already on the original checkout. ANNUAL billing would change this.
+//
+// IF VTV LATER ADDS:
+//   - Annual billing on any tier → trigger CA AB-390 (15-45 day pre-renewal
+//     notice for all annual subs > $200), NY GBL § 527-a (30-60 day notice for
+//     auto-renewing annual), IL 815 ILCS 601/15 (clear annual notice).
+//   - Free-to-paid trial on a NEW product → must include this product in the
+//     `BUNDLES_REQUIRING_DAY24_NOTICE` set below.
+//   - Sales to minors or COPPA scenarios → out of scope; do not enable.
+//
+// STATE MATRIX (ROSCA-style auto-renewal + trial-conversion notice rules):
+//
+//   STATE | Statute                  | Trigger                          | Notice rule
+//   ------|--------------------------|----------------------------------|----------------------------------
+//   CA    | AB-390 / Bus & Prof §17602| Free trial → paid; annual >$200  | Pre-renewal 3-21 days; cancel link
+//   NY    | GBL § 527-a              | Free-to-paid; annual auto-renew  | 15-45 days pre-renewal
+//   IL    | 815 ILCS 601/15          | Auto-renewing contracts          | Annual notice required
+//   VT    | 9 V.S.A. § 2454a         | Auto-renewing contracts >$50/yr  | Pre-renewal notice + opt-out
+//   CT    | § 42-126b                | Auto-renewing contracts >$100/yr | Pre-renewal notice + cancel
+//   FED   | ROSCA / 15 U.S.C. § 8403 | Online negative-option marketing | Clear consent + simple cancel
+//
+// Today this cron handles ONLY the federal ROSCA + state trial-conversion case
+// (free trial → paid) for the skill-pack-bundle. The 7-day-prior reminder
+// satisfies the strictest state requirement (CA's 3-21 day window) for the
+// trial-to-paid transition. The Stripe Customer Portal (one-click cancel) plus
+// the order-confirmation email together satisfy the federal "simple cancel"
+// requirement.
+//
+// Set of bundle-tags that require the day-24 reminder. Add new product tags
+// here when launching new free-trial products. Anything not in this set is
+// SKIPPED by this cron with no side effects.
+const BUNDLES_REQUIRING_DAY24_NOTICE = new Set([
+  'skill-pack-bundle',
+  // Future products with free trials get added here. Examples (NOT live):
+  // 'value-builder-trial-30', 'victory-vip-trial-7'
+]);
+// ──────────────────────────────────────────────────────────────────────────────
 
 const Stripe = require('stripe');
 const { neon } = require('@neondatabase/serverless');
@@ -49,9 +94,12 @@ module.exports = async (req, res) => {
       for (const sub of subs.data) {
         results.processed++;
 
-        // Only skill-pack-bundle subscriptions need the day-24 reminder.
+        // Only bundles in the ROSCA matrix above need the day-24 reminder.
         // Other tiers don't have a 30-day trial structure that justifies a 7-day notice.
-        if (sub.metadata?.bundle !== 'skill-pack-bundle') {
+        // To add a new product to this list, append its bundle tag to
+        // BUNDLES_REQUIRING_DAY24_NOTICE at the top of this file.
+        const bundleTag = sub.metadata?.bundle;
+        if (!bundleTag || !BUNDLES_REQUIRING_DAY24_NOTICE.has(bundleTag)) {
           results.skipped++;
           continue;
         }
