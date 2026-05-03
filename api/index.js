@@ -1336,11 +1336,11 @@ function isCronAuthorized(req) {
   const adminKey = process.env.ADMIN_API_KEY || '';
   if (adminKey && apiKey === adminKey) return true;
   // Vercel cron secret (CRON_SECRET env var — set in Vercel dashboard)
+  // Vercel cron scheduler sends Authorization: Bearer <CRON_SECRET> when secret is configured.
+  // We REQUIRE the secret match — never accept x-vercel-cron header alone, since spoofing risk.
   const authHeader = req.headers['authorization'] || '';
   const cronSecret = process.env.CRON_SECRET || '';
   if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true;
-  // Vercel internal cron header (set by Vercel's cron scheduler, validated by CRON_SECRET)
-  if (cronSecret && req.headers['x-vercel-cron'] === '1') return true;
   return false;
 }
 
@@ -1676,15 +1676,33 @@ module.exports = async (req, res) => {
       return res.json({ success: true, message: 'PIN set successfully' });
     }
 
-    // POST /api/member/verify-pin — Verify PIN for member portal login
+    // POST /api/member/verify-pin — Verify PIN for member portal login (with brute-force lockout)
     if (req.method === 'POST' && url === '/member/verify-pin') {
       const b = req.body || {};
       const email = (b.email || '').toLowerCase().trim();
       const pin = (b.pin || '').trim();
       if (!email || !pin) return res.status(400).json({ error: 'Email and PIN required' });
 
+      // Brute-force protection: 5 failed attempts per email+IP in 15 min = lockout
+      const MAX_ATTEMPTS = 5;
+      const LOCKOUT_MINUTES = 15;
+      try {
+        const recentFails = await sql`
+          SELECT COUNT(*) as cnt FROM audit_log
+          WHERE action = 'member_pin_failed'
+            AND created_at > NOW() - INTERVAL '15 minutes'
+            AND (ip_address = ${clientIP} OR new_values->>'email' = ${email})
+        `;
+        if (Number(recentFails[0]?.cnt || 0) >= MAX_ATTEMPTS) {
+          return res.status(429).json({ verified: false, error: `Too many failed attempts. Try again in ${LOCKOUT_MINUTES} minutes.` });
+        }
+      } catch(e) { /* audit_log may not exist — allow login attempt */ }
+
       const rows = await sql`SELECT id, first_name, pin_hash FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
-      if (rows.length === 0) return res.json({ verified: false, error: 'No account found' });
+      if (rows.length === 0) {
+        try { await auditLog(sql, { action: 'member_pin_failed', actor: 'unknown', newValues: { email, reason: 'no_account' }, ip: clientIP }); } catch(e) {}
+        return res.json({ verified: false, error: 'No account found' });
+      }
 
       // If no PIN set, auto-set it for them (first login) — use PBKDF2
       if (!rows[0].pin_hash) {
@@ -1694,6 +1712,7 @@ module.exports = async (req, res) => {
       } else {
         const pinResult = verifyPin(pin, rows[0].pin_hash);
         if (!pinResult.valid) {
+          try { await auditLog(sql, { action: 'member_pin_failed', actor: 'unknown', targetTable: 'contacts', targetId: rows[0].id, newValues: { email }, ip: clientIP }); } catch(e) {}
           return res.json({ verified: false, error: 'Incorrect PIN' });
         }
         // Auto-upgrade legacy SHA-256 hash to PBKDF2
@@ -2163,11 +2182,15 @@ module.exports = async (req, res) => {
       }
     }
 
-    // GET /api/member/preferences?email=X — Retrieve user preferences (accepts JWT or email)
+    // GET /api/member/preferences?email=X — Retrieve user preferences (JWT required)
     if (req.method === 'GET' && url.startsWith('/member/preferences')) {
       const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const params = new URL('http://x' + req.url).searchParams;
-      const email = (jwtUser?.email || params.get('email') || '').toLowerCase().trim();
+      const requestedEmail = (params.get('email') || '').toLowerCase().trim();
+      const jwtEmail = (jwtUser.email || '').toLowerCase().trim();
+      if (requestedEmail && requestedEmail !== jwtEmail) return res.status(403).json({ error: 'Access denied — you can only view your own preferences' });
+      const email = jwtEmail || requestedEmail;
       if (!email) return res.status(400).json({ error: 'Email required' });
 
       try {
@@ -2443,10 +2466,14 @@ module.exports = async (req, res) => {
     // Users land here immediately after completing an assessment, before they've logged in.
     // Only returns assessment scores and answer history — no PII beyond what they submitted.
     if (req.method === 'GET' && url.startsWith('/user/history')) {
-      const params = new URL('http://x' + req.url).searchParams;
       const jwtUser = extractUser(req);
-      const email = (jwtUser?.email || params.get('email') || '').toLowerCase().trim();
-      if (!email) return res.json({ error: 'Email required', answered: [], assessments: [] });
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
+      const params = new URL('http://x' + req.url).searchParams;
+      const requestedEmail = (params.get('email') || '').toLowerCase().trim();
+      const jwtEmail = (jwtUser.email || '').toLowerCase().trim();
+      if (requestedEmail && requestedEmail !== jwtEmail) return res.status(403).json({ error: 'Access denied — you can only view your own history' });
+      const email = jwtEmail || requestedEmail;
+      if (!email) return res.status(400).json({ error: 'Email required', answered: [], assessments: [] });
 
       const contactRows = await sql`SELECT * FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
       if (contactRows.length === 0) return res.json({ answered: [], assessments: [], isNewUser: true });
@@ -2955,9 +2982,18 @@ Don't guess. Run the system.
 
     // GET /api/teams/:id/results
     // CRITICAL: Individual identities are ALWAYS masked for organizations.
-    // Team admins NEVER see who filled out what. Only member numbers.
+    // Team admins NEVER see who filled out what. Only member numbers. JWT required + team membership check.
     if (req.method === 'GET' && url.match(/^\/teams\/\d+\/results$/)) {
+      const jwtUser = extractUser(req);
+      const apiKey = req.headers['x-api-key'] || '';
+      const isAdmin = process.env.ADMIN_API_KEY && apiKey === process.env.ADMIN_API_KEY;
+      if (!jwtUser && !isAdmin) return res.status(401).json({ error: 'Authentication required.' });
       const teamId = parseInt(url.split('/')[2]);
+      // Verify the JWT user is a member of this team (admins bypass)
+      if (jwtUser && !isAdmin) {
+        const userTeams = (jwtUser.teamIds || []).map(t => Number(t));
+        if (!userTeams.includes(teamId)) return res.status(403).json({ error: 'You are not a member of this team.' });
+      }
       const team = await sql`SELECT * FROM teams WHERE id = ${teamId} LIMIT 1`;
       if (team.length === 0) return res.status(404).json({ error: 'Team not found' });
 
@@ -3207,9 +3243,17 @@ Don't guess. Run the system.
       }
     }
 
-    // GET /api/teams/:id/report — Generate anonymized aggregate report data for the CMA email
+    // GET /api/teams/:id/report — Generate anonymized aggregate report (JWT + team membership required)
     if (req.method === 'GET' && url.match(/^\/teams\/\d+\/report$/)) {
+      const jwtUser = extractUser(req);
+      const apiKey = req.headers['x-api-key'] || '';
+      const isAdmin = process.env.ADMIN_API_KEY && apiKey === process.env.ADMIN_API_KEY;
+      if (!jwtUser && !isAdmin) return res.status(401).json({ error: 'Authentication required.' });
       const teamId = parseInt(url.split('/')[2]);
+      if (jwtUser && !isAdmin) {
+        const userTeams = (jwtUser.teamIds || []).map(t => Number(t));
+        if (!userTeams.includes(teamId)) return res.status(403).json({ error: 'You are not a member of this team.' });
+      }
       try {
         const team = await sql`SELECT * FROM teams WHERE id = ${teamId} LIMIT 1`;
         if (team.length === 0) return res.status(404).json({ error: 'Team not found' });
@@ -3326,8 +3370,11 @@ Don't guess. Run the system.
         const cmaEmail = team[0].company_email;
         if (!cmaEmail) return res.status(400).json({ error: 'No company CMA email configured for this team. Update team settings first.' });
 
-        // Fetch report data (reuse report logic)
-        const reportRes = await fetch(`${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}/api/teams/${teamId}/report`);
+        // Fetch report data (reuse report logic) — forward auth headers since /report requires JWT/admin
+        const internalAuthHeaders = {};
+        if (req.headers['authorization']) internalAuthHeaders['Authorization'] = req.headers['authorization'];
+        if (req.headers['x-api-key']) internalAuthHeaders['x-api-key'] = req.headers['x-api-key'];
+        const reportRes = await fetch(`${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}/api/teams/${teamId}/report`, { headers: internalAuthHeaders });
         let reportData;
         try {
           reportData = await reportRes.json();
@@ -3524,11 +3571,15 @@ Don't guess. Run the system.
     }
 
     // ========== PRIVACY PREFERENCES ==========
-    // GET /api/privacy?email=xxx&teamId=xxx — Get privacy prefs (accepts JWT or email)
+    // GET /api/privacy?email=xxx&teamId=xxx — Get privacy prefs (JWT required, self-access only)
     if (req.method === 'GET' && url.startsWith('/privacy')) {
       const jwtUser = extractUser(req);
+      if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
       const params = new URL('http://x' + req.url).searchParams;
-      const email = (jwtUser?.email || params.get('email') || '').toLowerCase().trim();
+      const requestedEmail = (params.get('email') || '').toLowerCase().trim();
+      const jwtEmail = (jwtUser.email || '').toLowerCase().trim();
+      if (requestedEmail && requestedEmail !== jwtEmail) return res.status(403).json({ error: 'Access denied — you can only view your own privacy settings' });
+      const email = jwtEmail || requestedEmail;
       const teamId = params.get('teamId');
       if (!email) return res.status(400).json({ error: 'email required' });
 
@@ -6874,11 +6925,16 @@ This link expires in 24 hours.
       }
     }
 
-    // GET /api/coaching/replies?email=X — Get reply history and streak for a user
+    // GET /api/coaching/replies?email=X — Get reply history (JWT required, self-access only)
     if (req.method === 'GET' && url.startsWith('/coaching/replies')) {
       try {
+        const jwtUser = extractUser(req);
+        if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
         const params = new URL('http://x' + req.url).searchParams;
-        const email = (params.get('email') || '').toLowerCase().trim();
+        const requestedEmail = (params.get('email') || '').toLowerCase().trim();
+        const jwtEmail = (jwtUser.email || '').toLowerCase().trim();
+        if (requestedEmail && requestedEmail !== jwtEmail) return res.status(403).json({ error: 'Access denied' });
+        const email = jwtEmail || requestedEmail;
         if (!email) return res.status(400).json({ error: 'email required' });
 
         // Check if table exists
@@ -8600,7 +8656,8 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           AND action_completed = false`;
         return res.json({ success: true });
       } catch (actionErr) {
-        return res.status(500).json({ error: actionErr.message });
+        console.error('[report-action] error:', actionErr.message);
+        return res.status(500).json({ error: 'Failed to record action' });
       }
     }
 
@@ -9755,7 +9812,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
               AND (dp.opted_out IS NULL OR dp.opted_out = false)
               AND LOWER(c.email) NOT IN (
                 SELECT LOWER(recipient) FROM email_log
-                WHERE email_type = 'devotional' AND created_at::date = CURRENT_DATE
+                WHERE email_type = 'devotional' AND sent_at::date = CURRENT_DATE
               )
             ORDER BY c.id ASC
           `;

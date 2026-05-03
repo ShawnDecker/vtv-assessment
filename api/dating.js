@@ -23,6 +23,12 @@ function extractToken(req) {
   return null;
 }
 
+// Server-side HTML escaping for email templates
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 const ALLOWED_ORIGINS = ['https://valuetovictory.com','https://www.valuetovictory.com','https://assessment.valuetovictory.com','https://shawnedecker.com','http://localhost:3000','http://localhost:5173'];
 
 // Rate limiting
@@ -709,7 +715,7 @@ module.exports = async (req, res) => {
                     <h1 style="color:#D4A847;font-size:1.8rem;margin:0.5rem 0;">It's a Match!</h1>
                   </div>
                   <p style="color:#a0a0a0;text-align:center;font-size:1rem;line-height:1.6;">
-                    ${recipientName}, you and <strong style="color:#fff;">${matchName}</strong> both liked each other on Aligned Hearts!
+                    ${escHtml(recipientName)}, you and <strong style="color:#fff;">${escHtml(matchName)}</strong> both liked each other on Aligned Hearts!
                   </p>
                   <div style="text-align:center;margin:2rem 0;">
                     <a href="https://assessment.valuetovictory.com/faith-match" style="display:inline-block;padding:14px 36px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:8px;font-size:1rem;">Send a Message →</a>
@@ -721,7 +727,7 @@ module.exports = async (req, res) => {
               transporter.sendMail({
                 from: '"Aligned Hearts" <' + process.env.GMAIL_USER + '>',
                 to: myFullProfile[0].email,
-                subject: "It's a Match! 💘 You and " + theirFullProfile[0].display_name + " connected",
+                subject: "It's a Match! You and " + escHtml(theirFullProfile[0].display_name) + " connected",
                 html: matchHtml(myFullProfile[0].first_name || myFullProfile[0].display_name, theirFullProfile[0].display_name)
               }).catch(() => {});
 
@@ -754,7 +760,7 @@ module.exports = async (req, res) => {
                       <h1 style="color:#D4A847;font-size:1.6rem;margin:0.5rem 0;">You've Got an Admirer!</h1>
                     </div>
                     <p style="color:#a0a0a0;text-align:center;font-size:1rem;line-height:1.6;">
-                      ${theirFullProfile[0].first_name || theirFullProfile[0].display_name}, someone on Aligned Hearts just liked your profile!
+                      ${escHtml(theirFullProfile[0].first_name || theirFullProfile[0].display_name)}, someone on Aligned Hearts just liked your profile!
                     </p>
                     <p style="color:#707070;text-align:center;font-size:0.85rem;">Log in to see who it is. If you like them back — it's a match!</p>
                     <div style="text-align:center;margin:2rem 0;">
@@ -849,6 +855,8 @@ module.exports = async (req, res) => {
     if (path === 'message' && req.method === 'POST') {
       const { match_id, message } = req.body;
       if (!match_id || !message) return res.status(400).json({ error: 'match_id and message required' });
+      if (typeof message !== 'string') return res.status(400).json({ error: 'Message must be text' });
+      if (message.length > 2000) return res.status(400).json({ error: 'Message too long (max 2000 characters)' });
 
       const myProfile = await sql`SELECT id FROM dating_profiles WHERE contact_id = ${user.contactId}`;
       if (!myProfile.length) return res.status(404).json({ error: 'No profile' });
@@ -888,7 +896,7 @@ module.exports = async (req, res) => {
             transporter.sendMail({
               from: '"Aligned Hearts" <' + process.env.GMAIL_USER + '>',
               to: otherPerson[0].email,
-              subject: (sender[0]?.display_name || 'Someone') + " sent you a message 💬",
+              subject: escHtml(sender[0]?.display_name || 'Someone') + " sent you a message",
               html: `
                 <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:2rem;background:#0a0a0a;color:#f0f0f0;border-radius:12px;">
                   <div style="text-align:center;margin-bottom:1.5rem;">
@@ -896,10 +904,10 @@ module.exports = async (req, res) => {
                     <h1 style="color:#D4A847;font-size:1.4rem;margin:0.5rem 0;">New Message</h1>
                   </div>
                   <p style="color:#a0a0a0;text-align:center;font-size:1rem;line-height:1.6;">
-                    ${otherPerson[0].first_name || otherPerson[0].display_name}, <strong style="color:#fff;">${sender[0]?.display_name || 'Your match'}</strong> just sent you a message on Aligned Hearts.
+                    ${escHtml(otherPerson[0].first_name || otherPerson[0].display_name)}, <strong style="color:#fff;">${escHtml(sender[0]?.display_name || 'Your match')}</strong> just sent you a message on Aligned Hearts.
                   </p>
                   <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:1rem;margin:1.5rem 0;text-align:center;">
-                    <p style="color:#ccc;font-style:italic;font-size:0.9rem;">"${message.substring(0, 100)}${message.length > 100 ? '...' : ''}"</p>
+                    <p style="color:#ccc;font-style:italic;font-size:0.9rem;">"${escHtml(message.substring(0, 100))}${message.length > 100 ? '...' : ''}"</p>
                   </div>
                   <div style="text-align:center;margin:1.5rem 0;">
                     <a href="https://assessment.valuetovictory.com/faith-match" style="display:inline-block;padding:12px 32px;background:#D4A847;color:#000;text-decoration:none;font-weight:bold;border-radius:8px;">Reply Now →</a>
