@@ -22,3 +22,10 @@ _internal/
 # Client-specific marketing repos that live HERE during dev but ship from
 # their own repo. Never push to vtv-assessment.
 gergacs-marketing-system/
+
+# CLAUDE.md / context files — may contain credentials or PINs for AI sessions.
+# Keep on disk for Claude Code to read locally; never commit to a public repo.
+# Added 2026-05-03 after CLAUDE.md was found tracked with ADMIN_API_KEY + PIN.
+CLAUDE.md
+CLAUDE.local.md
+.claude.md
