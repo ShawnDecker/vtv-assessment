@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FAF6EE"/>
+      <stop offset="100%" stop-color="#F4ECE3"/>
+    </linearGradient>
+    <radialGradient id="orb1" cx="0.18" cy="0.05" r="0.55">
+      <stop offset="0%" stop-color="#FFD9A0" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#FFD9A0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb2" cx="0.82" cy="0.18" r="0.5">
+      <stop offset="0%" stop-color="#FFC2D6" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#FFC2D6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb3" cx="0.5" cy="0.85" r="0.6">
+      <stop offset="0%" stop-color="#C8BEEB" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#C8BEEB" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="goldText" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9c6e1c"/>
+      <stop offset="50%" stop-color="#D4A847"/>
+      <stop offset="100%" stop-color="#9c6e1c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1080" height="1080" fill="url(#bg)"/>
+  <rect width="1080" height="1080" fill="url(#orb1)"/>
+  <rect width="1080" height="1080" fill="url(#orb2)"/>
+  <rect width="1080" height="1080" fill="url(#orb3)"/>
+
+  <!-- Brand -->
+  <text x="540" y="120" font-family="Satoshi,sans-serif" font-size="22" letter-spacing="6" font-weight="700" fill="#5a5a73" text-anchor="middle">VALUE TO VICTORY</text>
+
+  <!-- Status pill -->
+  <rect x="395" y="160" width="290" height="48" rx="24" fill="rgba(74,222,128,0.12)" stroke="rgba(22,163,74,0.4)"/>
+  <circle cx="430" cy="184" r="6" fill="#16a34a"/>
+  <text x="540" y="190" font-family="Satoshi,sans-serif" font-size="15" letter-spacing="2" font-weight="700" fill="#15803d" text-anchor="middle">FREE 5-MINUTE ASSESSMENT</text>
+
+  <!-- Big headline -->
+  <text x="540" y="320" font-family="Instrument Serif,serif" font-size="76" font-weight="400" fill="#1a1a2e" text-anchor="middle">What's your</text>
+  <text x="540" y="408" font-family="Instrument Serif,serif" font-size="92" font-style="italic" font-weight="400" fill="url(#goldText)" text-anchor="middle">Master Value</text>
+  <text x="540" y="498" font-family="Instrument Serif,serif" font-size="92" font-style="italic" font-weight="400" fill="url(#goldText)" text-anchor="middle">Score?</text>
+
+  <!-- Sub -->
+  <text x="540" y="568" font-family="Satoshi,sans-serif" font-size="26" fill="#5a5a73" text-anchor="middle">5 pillars · one number · the fix list</text>
+
+  <!-- Score visual card -->
+  <rect x="280" y="620" width="520" height="200" rx="24" fill="rgba(255,255,255,0.7)" stroke="rgba(212,168,71,0.3)" stroke-width="2"/>
+  <text x="540" y="668" font-family="Satoshi,sans-serif" font-size="14" letter-spacing="3" font-weight="700" fill="#8a8aa3" text-anchor="middle">SAMPLE MEMBER · 90 DAYS</text>
+  <text x="540" y="755" font-family="Satoshi,sans-serif" font-size="120" font-weight="900" fill="#b8842a" text-anchor="middle">171</text>
+  <text x="540" y="795" font-family="Instrument Serif,serif" font-style="italic" font-size="22" fill="#5a5a73" text-anchor="middle">+10 hrs/week recovered</text>
+
+  <!-- Pillars row -->
+  <g font-family="Satoshi,sans-serif" font-size="22" font-weight="900">
+    <text x="240" y="900" fill="#b8842a" text-anchor="middle">P</text>
+    <text x="380" y="900" fill="#b8842a" text-anchor="middle">I</text>
+    <text x="540" y="900" fill="#b8842a" text-anchor="middle">N</text>
+    <text x="700" y="900" fill="#b8842a" text-anchor="middle">K</text>
+    <text x="840" y="900" fill="#b8842a" text-anchor="middle">T</text>
+  </g>
+  <g font-family="Satoshi,sans-serif" font-size="14" letter-spacing="2" fill="#8a8aa3" font-weight="700">
+    <text x="240" y="930" text-anchor="middle">PEOPLE</text>
+    <text x="380" y="930" text-anchor="middle">INFLUENCE</text>
+    <text x="540" y="930" text-anchor="middle">NUMBERS</text>
+    <text x="700" y="930" text-anchor="middle">KNOWLEDGE</text>
+    <text x="840" y="930" text-anchor="middle">TIME</text>
+  </g>
+
+  <!-- CTA -->
+  <rect x="290" y="980" width="500" height="70" rx="35" fill="#1a1a2e"/>
+  <text x="540" y="1024" font-family="Satoshi,sans-serif" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">assessment.valuetovictory.com/join</text>
+</svg>
