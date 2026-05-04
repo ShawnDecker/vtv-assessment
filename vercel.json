@@ -18,12 +18,8 @@
       "schedule": "30 11 * * *"
     },
     {
-      "path": "/api/coaching/send",
+      "path": "/api/daily-brief/send",
       "schedule": "0 12 * * *"
-    },
-    {
-      "path": "/api/accountability/send",
-      "schedule": "0 23 * * *"
     },
     {
       "path": "/api/cron-birthday",

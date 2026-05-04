@@ -6807,7 +6807,306 @@ This link expires in 24 hours.
       }
     }
 
-    // GET /api/coaching/send — called by cron job to send daily coaching emails
+    // ========== UNIFIED DAILY BRIEF ==========
+    // GET /api/daily-brief/send — One email per day per member.
+    // Replaces /coaching/send + /accountability/send (Council 2026-05-04 verdict:
+    // Customer + Strategist voted to consolidate). Sections:
+    //   1. Header: VTV branding + Day N + Score + pillar bars
+    //   2. Today's Coaching Lesson — phase-aware (Days 1-8 daily, 9-16 deep dive,
+    //      17-20 advanced, 21+ weekly), personalized to weakest pillar
+    //   3. Tonight's Reflection — Honest 24 frame + accountability prompt
+    //   4. Today's Word — devotional with pillar connection (if available)
+    //   5. Streak + action completion rate (if engaged)
+    //   6. Feedback CTAs + Dashboard
+    //   7. Footer + single unsubscribe link
+    if (req.method === 'GET' && url === '/daily-brief/send') {
+      if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+      try {
+        await ensureCoachingTable(sql);
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const sequences = await sql`
+          SELECT cs.*, c.id as contact_id, c.first_name
+          FROM coaching_sequences cs
+          INNER JOIN contacts c ON LOWER(c.email) = LOWER(cs.email)
+          WHERE cs.unsubscribed = FALSE
+            AND (cs.last_sent_at IS NULL OR cs.last_sent_at < ${todayStart.toISOString()})
+          ORDER BY cs.id`;
+
+        if (sequences.length === 0) return res.json({ sent: 0, message: 'No active members.' });
+
+        let transporter = null;
+        if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+          transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD } });
+        }
+        if (!transporter) return res.status(500).json({ error: 'Email creds missing' });
+
+        // Today's devotional (shared across all members)
+        let devotional = null;
+        try {
+          const fs = require('fs'); const path = require('path');
+          const devs = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'devotionals.json'), 'utf-8'));
+          const startDate = new Date('2026-04-06');
+          const diffDays = Math.floor((Date.now() - startDate.getTime()) / 86400000);
+          devotional = devs[((diffDays % 60) + 60) % 60] || devs[0];
+        } catch (e) { /* devotional table may not exist */ }
+
+        const results = [];
+        let sentCount = 0, skippedCount = 0;
+
+        for (const seq of sequences) {
+          try {
+            // Day-0 skip
+            const startedDate = new Date(seq.started_at); startedDate.setHours(0, 0, 0, 0);
+            if (startedDate.getTime() >= todayStart.getTime() && seq.current_day === 0) {
+              results.push({ email: seq.email, status: 'skipped', reason: 'assessment was today' });
+              skippedCount++; continue;
+            }
+
+            // Cadence: Days 1-8 daily, 9-16 every 2d, 17-20 every 3d, 21+ weekly
+            if (seq.last_sent_at) {
+              const daysSinceLast = Math.floor((todayStart.getTime() - new Date(seq.last_sent_at).getTime()) / 86400000);
+              const minDays = seq.current_day < 8 ? 1 : seq.current_day < 16 ? 2 : seq.current_day < 20 ? 3 : 7;
+              if (daysSinceLast < minDays) {
+                results.push({ email: seq.email, status: 'skipped', reason: `cadence: phase ${seq.current_day < 8 ? 1 : seq.current_day < 16 ? 2 : seq.current_day < 20 ? 3 : 4} needs ${minDays}d, only ${daysSinceLast}d` });
+                skippedCount++; continue;
+              }
+            }
+
+            // Dedup gate (P0 from Council)
+            const _gate = await emailCanSend(sql, seq.email, 'daily_brief');
+            if (!_gate.allowed) {
+              results.push({ email: seq.email, status: 'skipped', reason: _gate.reason });
+              skippedCount++; continue;
+            }
+
+            // Pull assessment + prescription
+            const aRows = await sql`SELECT a.*, c.first_name, c.email FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE a.id = ${seq.assessment_id} LIMIT 1`;
+            if (aRows.length === 0) { results.push({ email: seq.email, status: 'skipped', reason: 'no assessment' }); skippedCount++; continue; }
+            const a = aRows[0];
+            let prescription;
+            try {
+              prescription = typeof a.prescription === 'string' ? JSON.parse(a.prescription) : a.prescription;
+            } catch (e) { prescription = generatePrescription(a); }
+            if (!prescription) { skippedCount++; continue; }
+
+            const nextDay = seq.current_day + 1;
+            const firstName = escapeHtml(seq.first_name || a.first_name || 'Friend');
+            const email = seq.email;
+            const weakest = prescription.weakestPillar;
+            const weakestScore = prescription.weakestScore;
+            const masterScore = a.master_score || 0;
+            const scoreRange = a.score_range || 'Growth';
+            const phase = nextDay <= 8 ? 'Daily Coaching' : nextDay <= 16 ? 'Deep Dive' : nextDay <= 20 ? 'Advanced' : 'Weekly Check-In';
+            const unsubToken = Buffer.from(email).toString('base64');
+            const unsubUrl = `${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(email)}&token=${unsubToken}`;
+            const reportUrl = `${BASE_URL}/report/${a.id}`;
+            const checkInUrl = `${BASE_URL}/coaching-reply?email=${encodeURIComponent(email)}&day=${nextDay}`;
+            const feedbackUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('What did the Value Engine help you with today?')}`;
+            const bugUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
+
+            // Generate the day's coaching content (existing function)
+            const coaching = generateCoachingEmail(nextDay, a, prescription, email);
+
+            // Pillar bars
+            const pillarBar = `
+              <table width="100%" cellpadding="0" cellspacing="0" style="font-size:10px;color:#6a6a84;letter-spacing:1px;margin:0 0 16px;">
+              <tr>
+                <td width="20%" style="text-align:center;${weakest==='Time'?'color:#D4A847;font-weight:bold;':''}">T:${a.time_total||0}</td>
+                <td width="20%" style="text-align:center;${weakest==='People'?'color:#D4A847;font-weight:bold;':''}">P:${a.people_total||0}</td>
+                <td width="20%" style="text-align:center;${weakest==='Influence'?'color:#D4A847;font-weight:bold;':''}">I:${a.influence_total||0}</td>
+                <td width="20%" style="text-align:center;${weakest==='Numbers'?'color:#D4A847;font-weight:bold;':''}">N:${a.numbers_total||0}</td>
+                <td width="20%" style="text-align:center;${weakest==='Knowledge'?'color:#D4A847;font-weight:bold;':''}">K:${a.knowledge_total||0}</td>
+              </tr>
+              <tr>
+                <td style="padding:2px;"><div style="background:#2a2a44;height:4px;border-radius:2px;"><div style="width:${Math.round(((a.time_total||0)/50)*100)}%;background:${weakest==='Time'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+                <td style="padding:2px;"><div style="background:#2a2a44;height:4px;border-radius:2px;"><div style="width:${Math.round(((a.people_total||0)/50)*100)}%;background:${weakest==='People'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+                <td style="padding:2px;"><div style="background:#2a2a44;height:4px;border-radius:2px;"><div style="width:${Math.round(((a.influence_total||0)/50)*100)}%;background:${weakest==='Influence'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+                <td style="padding:2px;"><div style="background:#2a2a44;height:4px;border-radius:2px;"><div style="width:${Math.round(((a.numbers_total||0)/50)*100)}%;background:${weakest==='Numbers'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+                <td style="padding:2px;"><div style="background:#2a2a44;height:4px;border-radius:2px;"><div style="width:${Math.round(((a.knowledge_total||0)/50)*100)}%;background:${weakest==='Knowledge'?'#D4A847':'#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
+              </tr>
+              </table>`;
+
+            // Streak + reply context (best-effort)
+            let lastReply = null, replyStreak = 0, actionRate = 0;
+            try {
+              const replies = await sql`SELECT mood, action_completed, coaching_day FROM coaching_replies WHERE LOWER(email) = LOWER(${email}) ORDER BY created_at DESC LIMIT 10`;
+              if (replies.length > 0) {
+                lastReply = replies[0]; replyStreak = 1;
+                const days = replies.map(r => r.coaching_day).sort((x,y)=>y-x);
+                for (let i = 0; i < days.length-1; i++) { if (days[i]-days[i+1] <= 2) replyStreak++; else break; }
+              }
+            } catch (e) { /* table may not exist */ }
+            try {
+              const eng = await sql`SELECT COUNT(*) as t, SUM(CASE WHEN action_completed THEN 1 ELSE 0 END) as c FROM email_engagement WHERE LOWER(email) = LOWER(${email})`;
+              if (Number(eng[0]?.t || 0) > 0) actionRate = Math.round((Number(eng[0].c) / Number(eng[0].t)) * 100);
+            } catch (e) { /* non-fatal */ }
+
+            const streakBlock = replyStreak >= 2 ? `
+              <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:12px 20px;margin:0 0 16px;text-align:center;">
+                <span style="font-size:24px;font-weight:900;color:#D4A847;">${replyStreak}</span>
+                <span style="font-size:13px;color:#a1a1aa;"> day check-in streak</span>
+                <span style="font-size:11px;color:#52525b;display:block;margin-top:4px;">Action completion rate: ${actionRate}%</span>
+              </div>` : '';
+
+            // Devotional with pillar connection
+            let devBlock = '';
+            if (devotional) {
+              const themes = (devotional.themes || []).map(t => String(t).toLowerCase());
+              const pillarThemes = {
+                Time: ['patience','waiting','seasons','time','urgency'],
+                People: ['family','love','relationships','trust','friends','community'],
+                Influence: ['leadership','faith','courage','obedience','voice'],
+                Numbers: ['money','provision','poverty','work','finances'],
+                Knowledge: ['wisdom','learning','growth','truth','understanding']
+              }[weakest] || [];
+              const connects = themes.some(t => pillarThemes.some(p => t.includes(p)));
+              devBlock = `
+              <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:18px 22px;margin:0 0 20px;">
+                <p style="color:#D4A847;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 4px;">Today's Word</p>
+                <p style="color:#71717a;font-size:11px;margin:0 0 10px;">Day ${devotional.day_number || ''} &mdash; ${escapeHtml(devotional.chapter_title || '')}</p>
+                ${connects ? `<p style="color:#D4A847;font-size:12px;font-style:italic;margin:0 0 8px;">This connects to your ${weakest} journey.</p>` : ''}
+                <p style="color:#e4e4e7;font-size:14px;font-style:italic;line-height:1.6;margin:0 0 6px;">"${escapeHtml(devotional.scripture_text || '')}"</p>
+                <p style="color:#71717a;font-size:12px;margin:0 0 10px;">&mdash; ${escapeHtml(devotional.scripture_reference || '')}</p>
+                <a href="${BASE_URL}/daily-word" style="color:#D4A847;font-size:13px;text-decoration:none;">Read full devotional &rarr;</a>
+              </div>`;
+            }
+
+            // Honest 24 reflection block
+            const honest24 = `
+              <div style="background:#111118;border-left:3px solid #D4A847;padding:14px 18px;margin:0 0 16px;border-radius:0 8px 8px 0;">
+                <p style="color:#D4A847;font-size:14px;font-weight:bold;margin:0 0 6px;">Tonight's Reflection</p>
+                <table width="100%" cellpadding="0" cellspacing="0"><tr>
+                  <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:9px;color:#71717a;letter-spacing:1px;">WORK</div><div style="font-size:15px;color:#e4e4e7;font-weight:bold;">9-10h</div></td>
+                  <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:9px;color:#71717a;letter-spacing:1px;">DAILY</div><div style="font-size:15px;color:#e4e4e7;font-weight:bold;">2-3h</div></td>
+                  <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:9px;color:#D4A847;letter-spacing:1px;font-weight:bold;">GROWTH</div><div style="font-size:15px;color:#D4A847;font-weight:bold;">4-5h</div></td>
+                  <td width="25%" style="text-align:center;padding:4px;"><div style="font-size:9px;color:#71717a;letter-spacing:1px;">SLEEP</div><div style="font-size:15px;color:#e4e4e7;font-weight:bold;">6-7h</div></td>
+                </tr></table>
+                <p style="color:#a1a1aa;font-size:13px;line-height:1.6;margin:10px 0 0;">Before you close out today: <strong style="color:#e4e4e7;">how much of your growth window went to ${weakest}?</strong> Be honest. Even 10 minutes counts.</p>
+              </div>`;
+
+            // Convert coaching plain-text body to HTML paragraphs
+            const coachingHtmlBody = (coaching.text || '')
+              .split('\n\n')
+              .map(p => `<p style="color:#c0c0d8;font-size:15px;line-height:1.7;margin:0 0 14px;white-space:pre-wrap;">${escapeHtml(p).replace(/^(YOUR MOVE TODAY:|YOUR 10-MINUTE CHALLENGE:|YOUR 90-MINUTE DAILY BLOCK:|YOUR DAILY SYSTEM:|YOUR 1 \(The Massive Goal\):|YOUR 3 \(Key Tasks\):|YOUR 5 \(Quick Wins for Today\):|YOUR FINAL MOVE:|YOUR MOVE THIS WEEK:|THE CASCADE EFFECT:|HERE&#39;S WHY THIS WORKS:|THE OPPOSITE ACTION TECHNIQUE:|THE 3-QUESTION ACCOUNTABILITY CHECK:|YOUR 10-MINUTE CHALLENGE:|THE PEOPLE AUDIT:|THE NUMBERS:|YOUR CURRENT STATUS:|THE WEEKLY SYSTEM \(going forward\):|THIS WEEK&#39;S CHALLENGE:|HERE&#39;S WHAT TO EXPECT:|THE HONEST TRUTH:)/gm, '<strong style="color:#D4A847;text-transform:uppercase;letter-spacing:1px;font-size:13px;display:block;margin-bottom:6px;">$1</strong>')}</p>`)
+              .join('');
+
+            const subject = `${firstName} — Day ${nextDay}: ${coaching.subject.replace(/^[^—]+—\s*/, '').slice(0, 80)}`;
+
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 16px;"><tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+  <!-- HEADER -->
+  <tr><td style="text-align:center;padding-bottom:16px;">
+    <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;margin-bottom:6px;">VALUE TO VICTORY</div>
+    <div style="font-family:Georgia,serif;font-size:24px;font-style:italic;color:#ffffff;">Your Daily Brief</div>
+    <div style="font-size:12px;color:#71717a;margin-top:6px;">Day ${nextDay} &middot; ${phase} &middot; ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
+    <div style="font-size:11px;color:#52525b;margin-top:2px;">Master Score ${masterScore} (${scoreRange}) &middot; Focus: ${weakest} ${weakestScore}/50</div>
+  </td></tr>
+
+  <!-- PILLAR BARS -->
+  <tr><td style="padding:0 8px 12px;">${pillarBar}</td></tr>
+
+  <!-- BODY CARD -->
+  <tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:32px 28px;">
+
+    <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 18px;">${firstName},</p>
+
+    ${streakBlock}
+
+    <!-- TODAY'S COACHING -->
+    <div style="margin:0 0 24px;">
+      <p style="color:#D4A847;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;border-bottom:1px solid #27272a;padding-bottom:6px;">Today's Coaching</p>
+      ${coachingHtmlBody}
+    </div>
+
+    <!-- TONIGHT'S REFLECTION -->
+    ${honest24}
+
+    <div style="text-align:center;margin:0 0 24px;">
+      <a href="${checkInUrl}" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;border-radius:8px;">Log Tonight's Check-In &rarr;</a>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #27272a;margin:24px 0;"/>
+
+    <!-- DEVOTIONAL -->
+    ${devBlock}
+
+    <!-- FEEDBACK -->
+    <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:16px 20px;margin:0 0 16px;">
+      <p style="color:#a1a1aa;font-size:13px;line-height:1.5;margin:0 0 12px;">Your feedback shapes everything we build:</p>
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td width="50%" style="padding-right:6px;">
+          <a href="${feedbackUrl}" style="display:block;text-align:center;background:#0a0a0a;border:1px solid #D4A847;color:#D4A847;font-size:12px;font-weight:bold;text-decoration:none;padding:10px 8px;border-radius:8px;">Share What Helped</a>
+        </td>
+        <td width="50%" style="padding-left:6px;">
+          <a href="${bugUrl}" style="display:block;text-align:center;background:#0a0a0a;border:1px solid #52525b;color:#71717a;font-size:12px;font-weight:bold;text-decoration:none;padding:10px 8px;border-radius:8px;">Report an Issue</a>
+        </td>
+      </tr></table>
+    </div>
+
+    <p style="color:#71717a;font-size:13px;line-height:1.6;margin:0;font-style:italic;">I'm in your corner.<br/>&mdash; Shawn</p>
+
+  </td></tr>
+
+  <!-- DASHBOARD CTA -->
+  <tr><td style="text-align:center;padding-top:20px;">
+    <a href="${BASE_URL}/member" style="display:inline-block;background:#18181b;border:1px solid #27272a;color:#a1a1aa;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:8px;">Open Dashboard</a>
+    <a href="${reportUrl}" style="display:inline-block;background:#18181b;border:1px solid #27272a;color:#a1a1aa;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:8px;margin-left:8px;">View Report</a>
+  </td></tr>
+
+  <!-- FOOTER -->
+  <tr><td style="text-align:center;padding-top:24px;">
+    <p style="color:#52525b;font-size:11px;margin:0 0 4px;">&copy; 2026 Value to Victory &middot; Goodview, VA</p>
+    <p style="color:#3f3f46;font-size:10px;margin:0;">You're receiving this because you completed the Value Engine Assessment.</p>
+    <p style="color:#3f3f46;font-size:10px;margin:8px 0 0;"><a href="${unsubUrl}" style="color:#6a6a84;text-decoration:underline;">Unsubscribe from Daily Brief</a></p>
+  </td></tr>
+
+</table></td></tr></table></body></html>`;
+
+            // Engagement tracking
+            let engId = null;
+            try {
+              const eng = await sql`INSERT INTO email_engagement (contact_id, email, coaching_day, email_variant) VALUES (${seq.contact_id || null}, ${email.toLowerCase()}, ${nextDay}, 'daily_brief') RETURNING id`;
+              engId = eng[0]?.id;
+            } catch (e) { /* non-fatal */ }
+
+            let finalHtml = html;
+            if (engId) {
+              const trackBase = `${BASE_URL}/api/agent/email`;
+              finalHtml = finalHtml.replace(/href="(https?:\/\/[^"]+)"/g, (m, u) => `href="${trackBase}/track-click?id=${engId}&url=${encodeURIComponent(u)}"`);
+              const pixel = `<img src="${trackBase}/track-open?id=${engId}" width="1" height="1" style="display:none" alt=""/>`;
+              finalHtml = finalHtml.includes('</body>') ? finalHtml.replace('</body>', pixel + '</body>') : finalHtml + pixel;
+            }
+
+            await transporter.sendMail({
+              from: `"Shawn @ Value Engine" <${process.env.GMAIL_USER}>`,
+              to: email, subject, html: finalHtml, text: coaching.text
+            });
+
+            // Increment current_day, update last_sent_at
+            await sql`UPDATE coaching_sequences SET current_day = ${nextDay}, last_sent_at = NOW() WHERE id = ${seq.id}`;
+
+            results.push({ email, status: 'sent', day: nextDay, weakest, streak: replyStreak });
+            sentCount++;
+            await logEmail(sql, { recipient: email, emailType: 'daily_brief', subject, contactId: seq.contact_id, assessmentId: seq.assessment_id, metadata: { day: nextDay, weakest, streak: replyStreak, engagementId: engId } });
+          } catch (sendErr) {
+            console.error(`[daily-brief] error for ${maskEmail(seq.email)}:`, sendErr.message);
+            results.push({ email: seq.email, status: 'error', error: sendErr.message });
+          }
+        }
+
+        return res.json({ sent: sentCount, skipped: skippedCount, total: sequences.length, results });
+      } catch (briefErr) {
+        console.error('[daily-brief/send] Handler error:', briefErr);
+        return res.status(500).json({ error: 'Daily brief send failed', detail: briefErr.message });
+      }
+    }
+
+    // GET /api/coaching/send — DEPRECATED: now delegates to /daily-brief/send
     if (req.method === 'GET' && url === '/coaching/send') {
       if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
