@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080">
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0a0a"/>
+      <stop offset="1" stop-color="#1c1c20"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.6">
+      <stop offset="0" stop-color="#D4A847" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#D4A847" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F5C76A"/>
+      <stop offset="1" stop-color="#B8862E"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1080" fill="url(#bg1)"/>
+  <rect width="1080" height="1080" fill="url(#glow)"/>
+  <text x="540" y="180" font-family="Arial, Helvetica, sans-serif" font-size="22" letter-spacing="6" font-weight="700" fill="#22d3ee" text-anchor="middle">VTV TOP-10 PROFESSIONALS</text>
+  <text x="540" y="370" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="120" font-weight="400" fill="#ffffff" text-anchor="middle">Stop renting</text>
+  <text x="540" y="500" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="120" font-weight="400" fill="#ffffff" text-anchor="middle">your AI workflows.</text>
+  <text x="540" y="640" font-family="Georgia, 'Times New Roman', serif" font-size="115" font-weight="700" fill="url(#goldGrad)" text-anchor="middle">Own them.</text>
+  <line x1="380" y1="720" x2="700" y2="720" stroke="#D4A847" stroke-width="2"/>
+  <text x="540" y="800" font-family="Arial, sans-serif" font-size="34" font-weight="600" fill="#d4d4d8" text-anchor="middle">10 skill packs · Jarvis design · 1 month free</text>
+  <rect x="290" y="850" width="500" height="100" rx="14" fill="url(#goldGrad)"/>
+  <text x="540" y="910" font-family="Arial, sans-serif" font-size="44" font-weight="800" fill="#0a0a0a" text-anchor="middle">$197 · BUY ONCE</text>
+  <text x="540" y="1000" font-family="Arial, sans-serif" font-size="22" font-weight="500" fill="#a1a1aa" text-anchor="middle">assessment.valuetovictory.com/professionals</text>
+</svg>

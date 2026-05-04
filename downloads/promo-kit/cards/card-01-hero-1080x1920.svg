@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a0a0a"/>
+      <stop offset="0.5" stop-color="#1c1c20"/>
+      <stop offset="1" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.45" r="0.5">
+      <stop offset="0" stop-color="#D4A847" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#D4A847" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F5C76A"/>
+      <stop offset="1" stop-color="#B8862E"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <rect width="1080" height="1920" fill="url(#glow)"/>
+  <text x="540" y="320" font-family="Arial, sans-serif" font-size="26" letter-spacing="8" font-weight="700" fill="#22d3ee" text-anchor="middle">VTV TOP-10 PROFESSIONALS</text>
+  <text x="540" y="560" font-family="Georgia, serif" font-style="italic" font-size="140" font-weight="400" fill="#fff" text-anchor="middle">Stop renting</text>
+  <text x="540" y="720" font-family="Georgia, serif" font-style="italic" font-size="140" font-weight="400" fill="#fff" text-anchor="middle">your AI</text>
+  <text x="540" y="880" font-family="Georgia, serif" font-style="italic" font-size="140" font-weight="400" fill="#fff" text-anchor="middle">workflows.</text>
+  <line x1="320" y1="980" x2="760" y2="980" stroke="#D4A847" stroke-width="3"/>
+  <text x="540" y="1110" font-family="Georgia, serif" font-size="140" font-weight="700" fill="url(#gold)" text-anchor="middle">Own them.</text>
+  <text x="540" y="1290" font-family="Arial, sans-serif" font-size="38" font-weight="600" fill="#d4d4d8" text-anchor="middle">10 skill packs · Jarvis design</text>
+  <text x="540" y="1350" font-family="Arial, sans-serif" font-size="38" font-weight="600" fill="#d4d4d8" text-anchor="middle">1 month free membership</text>
+  <rect x="240" y="1450" width="600" height="130" rx="18" fill="url(#gold)"/>
+  <text x="540" y="1530" font-family="Arial, sans-serif" font-size="56" font-weight="800" fill="#0a0a0a" text-anchor="middle">$197 · BUY ONCE</text>
+  <text x="540" y="1700" font-family="Arial, sans-serif" font-size="28" font-weight="500" fill="#a1a1aa" text-anchor="middle">assessment.valuetovictory.com</text>
+  <text x="540" y="1740" font-family="Arial, sans-serif" font-size="28" font-weight="500" fill="#a1a1aa" text-anchor="middle">/professionals</text>
+  <text x="540" y="1840" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#22d3ee" text-anchor="middle">↑ TAP THE LINK IN BIO</text>
+</svg>

@@ -414,6 +414,14 @@
       "dest": "/start.html"
     },
     {
+      "src": "/promo-kit",
+      "dest": "/promo-kit.html"
+    },
+    {
+      "src": "/promo",
+      "dest": "/promo-kit.html"
+    },
+    {
       "src": "/join",
       "dest": "/join.html"
     },

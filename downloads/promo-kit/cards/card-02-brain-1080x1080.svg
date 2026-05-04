@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0a0a"/>
+      <stop offset="1" stop-color="#101822"/>
+    </linearGradient>
+    <radialGradient id="cyanGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1080" height="1080" fill="url(#bg2)"/>
+  <circle cx="540" cy="540" r="280" fill="url(#cyanGlow)"/>
+  <!-- Brain graph nodes + edges -->
+  <g stroke="#22d3ee" stroke-width="1.5" stroke-opacity="0.6" fill="none">
+    <line x1="540" y1="540" x2="380" y2="420"/>
+    <line x1="540" y1="540" x2="700" y2="420"/>
+    <line x1="540" y1="540" x2="380" y2="660"/>
+    <line x1="540" y1="540" x2="700" y2="660"/>
+    <line x1="540" y1="540" x2="540" y2="370"/>
+    <line x1="540" y1="540" x2="540" y2="710"/>
+    <line x1="540" y1="540" x2="320" y2="540"/>
+    <line x1="540" y1="540" x2="760" y2="540"/>
+    <line x1="380" y1="420" x2="540" y2="370"/>
+    <line x1="700" y1="420" x2="540" y2="370"/>
+    <line x1="380" y1="660" x2="540" y2="710"/>
+    <line x1="700" y1="660" x2="540" y2="710"/>
+    <line x1="320" y1="540" x2="380" y2="420"/>
+    <line x1="320" y1="540" x2="380" y2="660"/>
+    <line x1="760" y1="540" x2="700" y2="420"/>
+    <line x1="760" y1="540" x2="700" y2="660"/>
+  </g>
+  <g>
+    <circle cx="540" cy="540" r="42" fill="#D4A847" stroke="#fff" stroke-width="3"/>
+    <circle cx="380" cy="420" r="22" fill="#22d3ee"/>
+    <circle cx="700" cy="420" r="22" fill="#22d3ee"/>
+    <circle cx="380" cy="660" r="22" fill="#22d3ee"/>
+    <circle cx="700" cy="660" r="22" fill="#22d3ee"/>
+    <circle cx="540" cy="370" r="18" fill="#a78bfa"/>
+    <circle cx="540" cy="710" r="18" fill="#a78bfa"/>
+    <circle cx="320" cy="540" r="18" fill="#4ade80"/>
+    <circle cx="760" cy="540" r="18" fill="#4ade80"/>
+  </g>
+  <text x="540" y="555" font-family="Arial, sans-serif" font-size="36" font-weight="800" fill="#0a0a0a" text-anchor="middle">YOU</text>
+  <text x="540" y="160" font-family="Arial, sans-serif" font-size="22" letter-spacing="6" font-weight="700" fill="#22d3ee" text-anchor="middle">YOUR JARVIS · INSPIRED BY IRON MAN</text>
+  <text x="540" y="900" font-family="Georgia, serif" font-style="italic" font-size="78" font-weight="700" fill="#fff" text-anchor="middle">Your second brain,</text>
+  <text x="540" y="980" font-family="Georgia, serif" font-style="italic" font-size="78" font-weight="700" fill="#22d3ee" text-anchor="middle">on your machine.</text>
+  <text x="540" y="1040" font-family="Arial, sans-serif" font-size="20" fill="#a1a1aa" text-anchor="middle">$197 · /professionals · local · private · yours</text>
+</svg>
