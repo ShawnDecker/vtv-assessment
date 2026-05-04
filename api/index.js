@@ -3431,7 +3431,7 @@ Don't guess. Run the system.
 
     // ========== BIRTHDAY REWARDS ==========
     // GET /api/birthday?email=xxx — Get user's birthday opt-in status
-    if (req.method === 'GET' && url.startsWith('/birthday') && !url.startsWith('/birthday/optout')) {
+    if (req.method === 'GET' && url.startsWith('/birthday') && !url.startsWith('/birthday/optout') && !url.startsWith('/birthday/partners')) {
       const params = new URL('http://x' + req.url).searchParams;
       const email = (params.get('email') || '').toLowerCase().trim();
       if (!email) return res.status(400).json({ error: 'email required' });
