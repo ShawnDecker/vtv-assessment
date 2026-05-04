@@ -8095,26 +8095,32 @@ else if(cm==='idea'){document.getElementById('tyTitle').textContent='Great Idea!
         const todayStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
         // === METRICS ===
-        const totalContacts = await sql`SELECT COUNT(*) as cnt FROM contacts`;
-        const totalAssessments = await sql`SELECT COUNT(*) as cnt FROM assessments`;
+        // Demo/test accounts excluded from all signup + assessment counts so the
+        // morning briefing reflects real humans only. Patterns: @*.test domains,
+        // @example.com, @test.com, demo-*@, finaltest*@, test+*@.
+        // (After 2026-05-04 cleanup that removed 11 demo contacts seeded by the
+        //  Aligned Hearts dating-app fixture.)
+        const totalContacts = await sql`SELECT COUNT(*) as cnt FROM contacts WHERE email NOT ILIKE '%@%.test' AND email NOT ILIKE '%@example.com' AND email NOT ILIKE '%@test.com' AND email NOT ILIKE 'demo-%' AND email NOT ILIKE 'finaltest%' AND email NOT ILIKE 'test+%@%' AND email NOT ILIKE 'test@valuetovictory.com'`;
+        const totalAssessments = await sql`SELECT COUNT(*) as cnt FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE c.email NOT ILIKE '%@%.test' AND c.email NOT ILIKE '%@example.com' AND c.email NOT ILIKE '%@test.com' AND c.email NOT ILIKE 'demo-%' AND c.email NOT ILIKE 'finaltest%' AND c.email NOT ILIKE 'test+%@%' AND c.email NOT ILIKE 'test@valuetovictory.com'`;
 
-        // New signups (24h, 7d, 30d)
-        const new24h = await sql`SELECT COUNT(*) as cnt FROM contacts WHERE created_at >= ${yesterday.toISOString()}`;
-        const new7d = await sql`SELECT COUNT(*) as cnt FROM contacts WHERE created_at >= ${last7.toISOString()}`;
-        const new30d = await sql`SELECT COUNT(*) as cnt FROM contacts WHERE created_at >= ${last30.toISOString()}`;
+        // New signups (24h, 7d, 30d) — real humans only
+        const new24h = await sql`SELECT COUNT(*) as cnt FROM contacts WHERE created_at >= ${yesterday.toISOString()} AND email NOT ILIKE '%@%.test' AND email NOT ILIKE '%@example.com' AND email NOT ILIKE '%@test.com' AND email NOT ILIKE 'demo-%' AND email NOT ILIKE 'finaltest%' AND email NOT ILIKE 'test+%@%' AND email NOT ILIKE 'test@valuetovictory.com'`;
+        const new7d = await sql`SELECT COUNT(*) as cnt FROM contacts WHERE created_at >= ${last7.toISOString()} AND email NOT ILIKE '%@%.test' AND email NOT ILIKE '%@example.com' AND email NOT ILIKE '%@test.com' AND email NOT ILIKE 'demo-%' AND email NOT ILIKE 'finaltest%' AND email NOT ILIKE 'test+%@%' AND email NOT ILIKE 'test@valuetovictory.com'`;
+        const new30d = await sql`SELECT COUNT(*) as cnt FROM contacts WHERE created_at >= ${last30.toISOString()} AND email NOT ILIKE '%@%.test' AND email NOT ILIKE '%@example.com' AND email NOT ILIKE '%@test.com' AND email NOT ILIKE 'demo-%' AND email NOT ILIKE 'finaltest%' AND email NOT ILIKE 'test+%@%' AND email NOT ILIKE 'test@valuetovictory.com'`;
 
-        // New assessments (24h, 7d, 30d)
-        const assess24h = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE completed_at >= ${yesterday.toISOString()}`;
-        const assess7d = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE completed_at >= ${last7.toISOString()}`;
-        const assess30d = await sql`SELECT COUNT(*) as cnt FROM assessments WHERE completed_at >= ${last30.toISOString()}`;
+        // New assessments (24h, 7d, 30d) — real humans only
+        const assess24h = await sql`SELECT COUNT(*) as cnt FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE a.completed_at >= ${yesterday.toISOString()} AND c.email NOT ILIKE '%@%.test' AND c.email NOT ILIKE '%@example.com' AND c.email NOT ILIKE '%@test.com' AND c.email NOT ILIKE 'demo-%' AND c.email NOT ILIKE 'finaltest%' AND c.email NOT ILIKE 'test+%@%' AND c.email NOT ILIKE 'test@valuetovictory.com'`;
+        const assess7d = await sql`SELECT COUNT(*) as cnt FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE a.completed_at >= ${last7.toISOString()} AND c.email NOT ILIKE '%@%.test' AND c.email NOT ILIKE '%@example.com' AND c.email NOT ILIKE '%@test.com' AND c.email NOT ILIKE 'demo-%' AND c.email NOT ILIKE 'finaltest%' AND c.email NOT ILIKE 'test+%@%' AND c.email NOT ILIKE 'test@valuetovictory.com'`;
+        const assess30d = await sql`SELECT COUNT(*) as cnt FROM assessments a JOIN contacts c ON a.contact_id = c.id WHERE a.completed_at >= ${last30.toISOString()} AND c.email NOT ILIKE '%@%.test' AND c.email NOT ILIKE '%@example.com' AND c.email NOT ILIKE '%@test.com' AND c.email NOT ILIKE 'demo-%' AND c.email NOT ILIKE 'finaltest%' AND c.email NOT ILIKE 'test+%@%' AND c.email NOT ILIKE 'test@valuetovictory.com'`;
 
-        // Latest signups (last 24h with detail)
-        const recentSignups = await sql`SELECT id, first_name, last_name, email, created_at FROM contacts WHERE created_at >= ${yesterday.toISOString()} ORDER BY created_at DESC`;
+        // Latest signups (last 24h with detail) — real humans only
+        const recentSignups = await sql`SELECT id, first_name, last_name, email, created_at FROM contacts WHERE created_at >= ${yesterday.toISOString()} AND email NOT ILIKE '%@%.test' AND email NOT ILIKE '%@example.com' AND email NOT ILIKE '%@test.com' AND email NOT ILIKE 'demo-%' AND email NOT ILIKE 'finaltest%' AND email NOT ILIKE 'test+%@%' AND email NOT ILIKE 'test@valuetovictory.com' ORDER BY created_at DESC`;
 
-        // Latest assessments (last 24h with detail)
+        // Latest assessments (last 24h with detail) — real humans only
         const recentAssessments = await sql`SELECT a.id, a.master_score, a.score_range, a.weakest_pillar, a.completed_at, a.depth, c.first_name, c.last_name, c.email
           FROM assessments a JOIN contacts c ON a.contact_id = c.id
           WHERE a.completed_at >= ${yesterday.toISOString()}
+            AND c.email NOT ILIKE '%@%.test' AND c.email NOT ILIKE '%@example.com' AND c.email NOT ILIKE '%@test.com' AND c.email NOT ILIKE 'demo-%' AND c.email NOT ILIKE 'finaltest%' AND c.email NOT ILIKE 'test+%@%' AND c.email NOT ILIKE 'test@valuetovictory.com'
           ORDER BY a.completed_at DESC`;
 
         // Score distribution
