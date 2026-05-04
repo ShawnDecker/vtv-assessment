@@ -131,7 +131,7 @@ Each post includes: HOOK · BODY · CTA · HASHTAGS · suggested visual.
 ### Post 16
 **Hook:** Iron Man had Jarvis. You can have one too. Locally. For $197.
 **Body:** Inspired by Iron Man. Built for your business. The design structure ships with every Skill Pack Bundle. Wires into your own Obsidian vault. Runs on your machine.
-**CTA:** See the Jarvis in action (90s walkthrough) → /professionals
+**CTA:** See the Jarvis in action (42s walkthrough) → /professionals
 **Hashtags:** #Jarvis #IronMan #AIAssistant #SecondBrain #PKM
 **Visual:** card-03-jarvis (1080×1920)
 
