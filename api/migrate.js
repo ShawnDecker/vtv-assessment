@@ -33,6 +33,21 @@ async function handleAnalytics(req, res) {
   const sql = neon(process.env.DATABASE_URL);
   const results = [];
 
+  // 0. Performance: functional index on LOWER(email) — speeds up case-insensitive lookups
+  try {
+    await sql`CREATE INDEX IF NOT EXISTS idx_contacts_email_lower ON contacts (LOWER(email))`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_coaching_sequences_email_lower ON coaching_sequences (LOWER(email))`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_coaching_replies_email_lower ON coaching_replies (LOWER(email))`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_email_engagement_email_lower ON email_engagement (LOWER(email))`;
+    // Add devotional opt-out + disabled/deleted columns for security
+    await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS devotional_opt_out BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS disabled BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP`;
+    results.push({ migration: 'email indexes + opt-out + disabled cols', status: 'ok' });
+  } catch (e) {
+    results.push({ migration: 'email indexes + opt-out cols', status: 'error', error: e.message });
+  }
+
   // 1. Analytics Events table — tracks all platform events for funnel analysis
   try {
     await sql`

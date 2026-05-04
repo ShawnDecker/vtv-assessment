@@ -1936,10 +1936,23 @@ module.exports = async (req, res) => {
           return res.status(401).json({ error: 'Token expired beyond refresh window. Please log in.' });
         }
 
-        // Verify the contact still exists
+        // Verify the contact still exists, isn't disabled/deleted, and PIN hasn't been rotated since token was issued
         if (!payload.email) return res.status(401).json({ error: 'Invalid token payload' });
-        const contactRows = await sql`SELECT id, first_name FROM contacts WHERE LOWER(email) = LOWER(${payload.email}) LIMIT 1`;
+        const contactRows = await sql`SELECT id, first_name, pin_set_at, disabled, deleted_at FROM contacts WHERE LOWER(email) = LOWER(${payload.email}) LIMIT 1`;
         if (contactRows.length === 0) return res.status(401).json({ error: 'Account not found' });
+
+        const contact = contactRows[0];
+        // Block disabled or deleted accounts from refreshing
+        if (contact.disabled === true || contact.deleted_at) {
+          return res.status(401).json({ error: 'Account is no longer active. Please log in again or contact support.' });
+        }
+        // If PIN was rotated AFTER this token was issued, force re-login
+        if (contact.pin_set_at && payload.iat) {
+          const pinSetEpoch = Math.floor(new Date(contact.pin_set_at).getTime() / 1000);
+          if (pinSetEpoch > payload.iat) {
+            return res.status(401).json({ error: 'Credentials have changed. Please log in again.' });
+          }
+        }
 
         // Issue new token with current tier + team IDs
         let tier = 'free';
@@ -3913,14 +3926,31 @@ Don't guess. Run the system.
     // GET /api/action-plan/{assessmentId} — Generate personalized 30-day action plan
     // Returns a day-by-day action plan tailored to user's weakest pillar + sub-category.
     // This is what the $1.99 Action Plan Report unlocks (previously just 3 generic steps).
+    // SECURITY: requires JWT (self-access) OR admin x-api-key. Returns no PII (firstName only).
     if (req.method === 'GET' && url.match(/^\/action-plan\/\d+$/)) {
       const assessmentId = parseInt(url.split('/action-plan/')[1]);
       try {
-        const aRows = await sql`SELECT a.*, c.first_name, c.last_name, c.email
+        const jwtUser = extractUser(req);
+        const adminKeyHeader = req.headers['x-api-key'] || '';
+        const isAdmin = adminKeyHeader && process.env.ADMIN_API_KEY && adminKeyHeader === process.env.ADMIN_API_KEY;
+
+        const aRows = await sql`SELECT a.*, c.first_name, c.email, c.id as cid
           FROM assessments a JOIN contacts c ON a.contact_id = c.id
           WHERE a.id = ${assessmentId} LIMIT 1`;
         if (aRows.length === 0) return res.status(404).json({ error: 'Assessment not found' });
         const a = aRows[0];
+
+        // Ownership check: JWT must match the contact who took the assessment
+        if (!isAdmin) {
+          if (!jwtUser) return res.status(401).json({ error: 'Authentication required. Please log in.' });
+          const tokenContactId = jwtUser.contactId || jwtUser.contact_id;
+          const tokenEmail = (jwtUser.email || '').toLowerCase();
+          const ownsAssessment = (tokenContactId && Number(tokenContactId) === Number(a.cid))
+            || (tokenEmail && tokenEmail === (a.email || '').toLowerCase());
+          if (!ownsAssessment) {
+            return res.status(403).json({ error: 'Access denied — you can only view your own action plan' });
+          }
+        }
         const prescription = typeof a.prescription === 'string' ? JSON.parse(a.prescription) : (a.prescription || {});
 
         const weakest = a.weakest_pillar || 'Time';
@@ -3981,7 +4011,7 @@ Don't guess. Run the system.
             week2: [
               { day: 8, title: 'Active listening', steps: ['In every conversation today, ask one follow-up question before responding.', 'Listen for what they\'re NOT saying.', 'Communication Clarity is a muscle.'] },
               { day: 9, title: 'Speak truth', steps: ['Tell one person something real you\'ve been holding back.', 'Not a complaint. Not a secret. An honest observation or affirmation.', 'Truth builds trust.'] },
-              { day: 10, title: 'Cut a Taker', steps: ['Identify one relationship that consistently drains you with no return.', 'Reduce access this week — cancel, decline, reschedule.', 'Not cruel. Just honest about capacity.'] },
+              { day: 10, title: 'Audit access, not relationships', steps: ['Identify one relationship that consistently drains you with no return.', 'This week, audit how much access they have to your peak hours and energy — not whether they belong in your life, but how much of you they get right now.', 'Adjust one thing: a shorter call, a delayed reply, a smaller window. Capacity is honest, not cruel.'] },
               { day: 11, title: 'Alliance building', steps: ['Pick one person in your field who\'s 2 levels ahead of you.', 'Write them a short, specific message — no ask, just appreciation.', 'Networks grow through deposits, not withdrawals.'] },
               { day: 12, title: 'Family anchor', steps: ['Spend 30 uninterrupted minutes with one family member.', 'No phone. No multitasking. Just them.', 'Family is the People pillar\'s foundation.'] },
               { day: 13, title: 'Apology or restoration', steps: ['Is there someone you owe an apology or course-correction?', 'Handle it this week. Short. Honest. No defense.', 'The ${weakest} pillar rises fastest when old debts clear.'] },
@@ -4143,7 +4173,7 @@ Don't guess. Run the system.
 
         return res.json({
           assessmentId: a.id,
-          contact: { firstName: a.first_name, lastName: a.last_name, email: a.email },
+          contact: { firstName: a.first_name }, // PII stripped — no lastName or email returned
           assessment: {
             masterScore: a.master_score,
             scoreRange: a.score_range,
@@ -7288,6 +7318,34 @@ This link expires in 24 hours.
       }
     }
 
+    // GET /api/devotional/opt-out — Opt out of devotional emails ONLY (keep coaching)
+    if (req.method === 'GET' && url.startsWith('/devotional/opt-out')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = (params.get('email') || '').toLowerCase().trim();
+      const token = params.get('token');
+
+      const expectedToken = Buffer.from(email + '|devotional').toString('base64');
+      if (!email || !token || token !== expectedToken) {
+        res.setHeader('Content-Type', 'text/html');
+        return res.status(400).send('<!DOCTYPE html><html><body style="margin:0;padding:40px;background:#0a0a0a;color:#fff;font-family:Arial,sans-serif;text-align:center;"><h1 style="color:#D4A847;">Invalid Link</h1><p style="color:#a0a0b8;">This opt-out link is not valid.</p></body></html>');
+      }
+
+      try {
+        await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS devotional_opt_out BOOLEAN DEFAULT FALSE`;
+        await sql`UPDATE contacts SET devotional_opt_out = TRUE WHERE LOWER(email) = ${email}`;
+      } catch (e) { /* non-fatal */ }
+
+      res.setHeader('Content-Type', 'text/html');
+      return res.status(200).send(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Devotional Opt-Out</title></head><body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,sans-serif;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:500px;margin:60px auto;">
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:48px 32px;text-align:center;">
+<h1 style="margin:0 0 12px;font-size:22px;color:#fff;">No more Daily Word emails</h1>
+<p style="margin:0 0 16px;color:#a1a1aa;line-height:1.6;font-size:15px;">You'll keep getting your coaching emails — just no more devotionals.</p>
+<p style="margin:0 0 24px;color:#71717a;font-size:13px;line-height:1.6;">Your faith journey is yours. We respect that. If you ever change your mind, just reply to any coaching email and we'll turn them back on.</p>
+<a href="${BASE_URL}/member" style="display:inline-block;padding:12px 28px;background:#D4A847;color:#0a0a0a;font-weight:bold;border-radius:6px;text-decoration:none;font-size:14px;">Back to Dashboard</a>
+</td></tr></table></body></html>`);
+    }
+
     // GET /api/coaching/unsubscribe — unsubscribe from coaching emails
     if (req.method === 'GET' && (url === '/coaching/unsubscribe' || url.startsWith('/coaching/unsubscribe'))) {
       const params = new URL('http://x' + req.url).searchParams;
@@ -10374,8 +10432,14 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         }
         const chapterContent = loadChapterExcerpt(dev.chapter_number);
 
+        // Ensure devotional_opt_out column exists (migration on first run)
+        try {
+          await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS devotional_opt_out BOOLEAN DEFAULT FALSE`;
+        } catch (e) { /* non-fatal */ }
+
         // Get subscribers: active coaching users + paid members + explicit opt-ins
         // Daily dedup — skip anyone already sent today
+        // RESPECT contacts.devotional_opt_out — one-click opt-out from email footer
         let subscribers = [];
         try {
           subscribers = await sql`
@@ -10385,6 +10449,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             LEFT JOIN user_profiles up ON up.contact_id = c.id
             LEFT JOIN coaching_sequences cs ON LOWER(cs.email) = LOWER(c.email)
             WHERE c.email IS NOT NULL AND c.email != ''
+              AND (c.devotional_opt_out IS NULL OR c.devotional_opt_out = false)
               AND (
                 dp.id IS NOT NULL
                 OR up.membership_tier IN ('individual','couple','premium')
@@ -10398,12 +10463,12 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             ORDER BY c.id ASC
           `;
         } catch(e) {
-          // Fallback: coaching_sequences members
           try {
             subscribers = await sql`
               SELECT DISTINCT c.id as contact_id, c.email, c.first_name FROM contacts c
               INNER JOIN coaching_sequences cs ON LOWER(cs.email) = LOWER(c.email)
               WHERE c.email IS NOT NULL AND c.email != '' AND cs.unsubscribed = false
+                AND (c.devotional_opt_out IS NULL OR c.devotional_opt_out = false)
               ORDER BY c.id ASC`;
           } catch(e2) {
             subscribers = [];
@@ -10607,9 +10672,11 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
     <p style="color:#52525b;font-size:11px;margin:0 0 6px;">Running From Miracles &mdash; 60-Day Devotional</p>
     <p style="color:#3f3f46;font-size:10px;margin:0 0 8px;">by Shawn E. Decker &middot; &copy; 2026 Value to Victory &middot; Goodview, VA</p>
     <p style="color:#3f3f46;font-size:10px;margin:0;">
-      You're receiving this devotional because you opted in.
+      You're receiving this Daily Word because you took the assessment or opted in.
       <br/>
-      <a href="${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(sub.email)}&token=${encodeURIComponent(Buffer.from(sub.email).toString('base64'))}" style="color:#6a6a84;text-decoration:underline;">Unsubscribe from Daily Word</a>
+      <a href="${BASE_URL}/api/devotional/opt-out?email=${encodeURIComponent(sub.email)}&token=${encodeURIComponent(Buffer.from(sub.email + '|devotional').toString('base64'))}" style="color:#6a6a84;text-decoration:underline;">No more devotionals (keep coaching)</a>
+      &nbsp;&middot;&nbsp;
+      <a href="${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(sub.email)}&token=${encodeURIComponent(Buffer.from(sub.email).toString('base64'))}" style="color:#6a6a84;text-decoration:underline;">Unsubscribe from all VTV emails</a>
     </p>
   </td></tr>
 
