@@ -51,6 +51,30 @@
       "dest": "/404.html"
     },
     {
+      "src": "/(CLAUDE|DB_SCHEMA|DEPLOYMENT|SECURITY_TOOLING|TEAM-SETUP|VTV-SYSTEM-ARCHITECTURE|vtv-team-skill|build-jarvis)\\.md",
+      "status": 404,
+      "headers": { "Cache-Control": "no-store" },
+      "dest": "/404.html"
+    },
+    {
+      "src": "/public/(.*)",
+      "status": 404,
+      "headers": { "Cache-Control": "no-store" },
+      "dest": "/404.html"
+    },
+    {
+      "src": "/(bd-research|content|docs|scripts|twa)/(.*)",
+      "status": 404,
+      "headers": { "Cache-Control": "no-store" },
+      "dest": "/404.html"
+    },
+    {
+      "src": "/(package|package-lock|tsconfig|\\.eslintrc|\\.prettierrc)\\.json$",
+      "status": 404,
+      "headers": { "Cache-Control": "no-store" },
+      "dest": "/404.html"
+    },
+    {
       "src": "/api/skill-pack-reminder",
       "dest": "/api/skill-pack-reminder.js"
     },
