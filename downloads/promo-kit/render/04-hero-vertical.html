@@ -1,89 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Card 04 · Hero Vertical · 1080×1920</title>
-<link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
-<link href="https://fonts.bunny.net/css?family=instrument-serif:400,400i|inter:400,500,700,800,900|jetbrains-mono:400,700&display=swap" rel="stylesheet">
+<html lang="en"><head><meta charset="UTF-8"><title>04 · Hero Vertical · 1080×1920 · v3</title>
+<link rel="stylesheet" href="_shared.css">
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{background:#000;font-family:'Inter',sans-serif}
-  .card{
-    width:1080px;height:1920px;position:relative;overflow:hidden;color:#fff;
-    background:
-      radial-gradient(ellipse 70% 40% at 50% 30%, rgba(212,168,71,0.25), transparent 60%),
-      radial-gradient(ellipse 60% 35% at 50% 75%, rgba(34,211,238,0.18), transparent 60%),
-      linear-gradient(180deg,#0a0a0a 0%,#1a1018 35%,#0a0a0a 70%,#0d1418 100%);
-    isolation:isolate;
-  }
-  .card::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='0.85'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");opacity:0.12;mix-blend-mode:overlay;pointer-events:none}
-  .card::after{
-    content:'';position:absolute;inset:0;pointer-events:none;
-    background:linear-gradient(0deg,transparent 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);
-    background-size:80px 80px;
-    mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 75%);
-  }
-  .inner{position:relative;z-index:2;padding:120px 90px;height:100%;display:flex;flex-direction:column;justify-content:space-between}
-  .top{text-align:center}
-  .badge{display:inline-flex;align-items:center;gap:12px;padding:14px 24px;border-radius:999px;background:rgba(255,255,255,0.06);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.14);font-size:16px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#22d3ee;margin-bottom:24px}
-  .badge::before{content:'';width:10px;height:10px;border-radius:50%;background:#22d3ee;box-shadow:0 0 16px #22d3ee}
-  .brand{font-family:'Instrument Serif',serif;font-style:italic;font-size:30px;color:rgba(255,255,255,0.55);letter-spacing:0.02em}
-  .h1{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;font-size:160px;line-height:0.92;letter-spacing:-0.02em;color:#fff;text-shadow:0 4px 50px rgba(0,0,0,0.6)}
-  .strike{position:relative;display:inline-block}
-  .strike::after{content:'';position:absolute;left:-4%;right:-4%;top:54%;height:8px;background:linear-gradient(90deg,transparent,#f87171,transparent);transform:rotate(-2deg)}
-  .accent{
-    background:linear-gradient(135deg,#fde68a 0%,#D4A847 40%,#92400e 100%);
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-    font-style:normal;font-weight:700;
-    filter:drop-shadow(0 4px 30px rgba(212,168,71,0.4));
-  }
-  .middle{text-align:center}
-  .sub{margin-top:50px;font-size:32px;font-weight:500;color:rgba(255,255,255,0.75);line-height:1.4;max-width:880px;margin-left:auto;margin-right:auto}
-  .sub strong{color:#fff;font-weight:700}
-  .chips{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:40px;max-width:920px;margin-left:auto;margin-right:auto}
-  .chip{padding:12px 20px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);font-size:18px;font-weight:600;color:rgba(255,255,255,0.88);letter-spacing:0.01em}
-  .chip.gold{border-color:rgba(212,168,71,0.45);color:#fde68a;background:rgba(212,168,71,0.1)}
-  .bottom{text-align:center}
-  .price-block{display:inline-flex;flex-direction:column;align-items:center;padding:50px 80px;border-radius:24px;background:linear-gradient(135deg,rgba(212,168,71,0.18),rgba(212,168,71,0.04));border:1px solid rgba(212,168,71,0.5);box-shadow:0 24px 80px rgba(212,168,71,0.2),inset 0 1px 0 rgba(255,255,255,0.1)}
-  .price-amt{font-family:'Inter';font-weight:900;font-size:180px;line-height:1;letter-spacing:-0.05em;background:linear-gradient(135deg,#fde68a 0%,#D4A847 50%,#92400e 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .price-label{font-size:24px;color:rgba(255,255,255,0.7);font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin-top:8px}
-  .url-row{margin-top:50px;font-family:'JetBrains Mono',monospace;font-size:24px;color:rgba(255,255,255,0.55);letter-spacing:0.04em}
-  .url-row .arrow{color:#22d3ee;font-weight:700;display:block;margin-top:8px;font-size:30px}
-  .tap{margin-top:30px;font-size:22px;font-weight:800;color:#22d3ee;letter-spacing:0.18em;text-transform:uppercase}
-  .tap-arrow{display:inline-block;margin-right:8px;animation:bounce 1.4s ease-in-out infinite}
-  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-</style>
-</head>
-<body>
-<div class="card">
+  .ghost{right:-100px;top:48%;transform:translateY(-50%);font-size:1100px;line-height:0.8}
+  .stack-vis{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);z-index:3;width:560px;height:560px}
+  .sc{position:absolute;width:280px;height:340px;border-radius:18px;background:linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(20px);box-shadow:0 30px 60px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1);padding:24px}
+  .sc .num{font-family:'JetBrains Mono',monospace;font-size:14px;color:rgba(255,255,255,0.45);letter-spacing:0.18em;font-weight:700}
+  .sc .ttl{margin-top:18px;font-family:'Instrument Serif',serif;font-style:italic;font-size:34px;color:#fff;line-height:1.1}
+  .sc .ico{position:absolute;bottom:24px;right:24px;width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#D4A847,#92400e);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;font-weight:900;box-shadow:0 6px 16px rgba(212,168,71,0.4)}
+  .s1{left:0;top:50px;transform:rotate(-8deg);opacity:0.45;filter:blur(0.6px)}
+  .s2{left:140px;top:30px;transform:rotate(-3deg);opacity:0.7}
+  .s3{left:280px;top:10px;transform:rotate(0deg);opacity:0.85}
+  .s4{left:420px;top:30px;transform:rotate(3deg);opacity:0.7}
+  .s5{left:560px;top:50px;transform:rotate(8deg);opacity:0.45;filter:blur(0.6px)}
+  .v-headline{position:relative;z-index:5;text-align:center;padding:0 60px;margin-top:60px}
+  .v-headline .h1{font-size:200px;line-height:0.92}
+  .price-block{display:flex;flex-direction:column;align-items:center;padding:50px 80px;border-radius:28px;background:linear-gradient(135deg,rgba(212,168,71,0.18),rgba(212,168,71,0.04));border:1.5px solid rgba(212,168,71,0.55);box-shadow:0 30px 100px rgba(212,168,71,0.25),inset 0 1px 0 rgba(255,255,255,0.15)}
+  .price-block .pre{font-family:'JetBrains Mono',monospace;font-size:14px;color:#fde68a;letter-spacing:0.28em;text-transform:uppercase;font-weight:700;margin-bottom:10px}
+  .price-block .v{font-family:'Inter';font-weight:900;font-size:240px;line-height:0.85;letter-spacing:-0.06em;background:linear-gradient(135deg,#fef3c7 0%,#fbbf24 30%,#D4A847 65%,#92400e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 12px 60px rgba(212,168,71,0.5))}
+  .price-block .post{margin-top:8px;font-size:24px;color:rgba(255,255,255,0.65);font-weight:600;letter-spacing:0.04em}
+  .price-block .post .strike-old{text-decoration:line-through;text-decoration-color:rgba(248,113,113,0.7);text-decoration-thickness:2px;color:rgba(255,255,255,0.45);margin-right:10px}
+  .v-cta{margin-top:50px;font-family:'JetBrains Mono',monospace;font-size:28px;color:rgba(255,255,255,0.6);letter-spacing:0.04em;text-align:center}
+  .v-cta .arrow{color:#22d3ee;font-weight:700;display:block;margin-top:8px;font-size:34px}
+  .tap{margin-top:38px;font-size:24px;font-weight:800;color:#22d3ee;letter-spacing:0.22em;text-transform:uppercase;text-align:center}
+  .tap-arrow{display:inline-block;margin-right:10px;animation:bounce 1.4s ease-in-out infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+</style></head><body>
+<div class="card vt">
+  <div class="mesh gold"></div>
+  <div class="ghost gold">$</div>
+
+  <div class="stack-vis">
+    <div class="sc s1"><div class="num">/ 06</div><div class="ttl">Small<br>Business</div><div class="ico">▲</div></div>
+    <div class="sc s2"><div class="num">/ 07</div><div class="ttl">Event<br>Producers</div><div class="ico">★</div></div>
+    <div class="sc s3"><div class="num">/ 08</div><div class="ttl">Service<br>Pros</div><div class="ico">◆</div></div>
+    <div class="sc s4"><div class="num">/ 09</div><div class="ttl">Content<br>Creators</div><div class="ico">▶</div></div>
+    <div class="sc s5"><div class="num">/ 10</div><div class="ttl">Sales<br>Pros</div><div class="ico">⚡</div></div>
+  </div>
+
   <div class="inner">
     <div class="top">
-      <div class="badge">VTV Top-10 Skill Pack</div>
-      <div class="brand">Value to Victory</div>
+      <div class="ribbon">🏆 Founders · First 100 Only</div>
+      <div class="meta">VTV TOP-10 PROFESSIONALS<br>SKILL PACK BUNDLE<br><b>VOL. 04 · REELS</b></div>
     </div>
-    <div class="middle">
+
+    <div class="v-headline">
+      <div class="idx" style="justify-content:center"><span class="num">No. 04</span><span class="ln"></span><span class="lbl">Reel · The Hero</span></div>
       <div class="h1"><span class="strike">Stop renting</span></div>
-      <div class="h1">your AI</div>
-      <div class="h1">workflows.</div>
-      <div class="h1" style="margin-top:30px"><span class="accent">Own them.</span></div>
-      <div class="sub"><strong>10 profession-specific skill packs</strong> + a Jarvis-style design structure that wires into your own Obsidian vault.</div>
-      <div class="chips">
-        <span class="chip">Voice rules</span>
-        <span class="chip">5 templates</span>
-        <span class="chip">3 AI prompts</span>
-        <span class="chip">Weekly dashboard</span>
-        <span class="chip gold">+ Jarvis design</span>
-      </div>
+      <div class="h1">your AI.</div>
+      <div class="h1" style="margin-top:30px"><span class="gold">Own it.</span></div>
     </div>
-    <div class="bottom">
+
+    <div style="display:flex;flex-direction:column;align-items:center">
       <div class="price-block">
-        <div class="price-amt">$197</div>
-        <div class="price-label">once · yours forever</div>
+        <div class="pre">Founders · pay once · forever</div>
+        <div class="v">$197</div>
+        <div class="post"><span class="strike-old">$497</span>after the first 100, founders pricing closes</div>
       </div>
-      <div class="url-row">assessment.valuetovictory.com<span class="arrow">→ /professionals</span></div>
-      <div class="tap"><span class="tap-arrow">↑</span> Tap the link in bio</div>
+      <div class="v-cta">assessment.valuetovictory.com<span class="arrow">→ /professionals</span></div>
+      <div class="tap"><span class="tap-arrow">↑</span> Tap link in bio</div>
     </div>
   </div>
 </div>
-</body>
-</html>
+</body></html>

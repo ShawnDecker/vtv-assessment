@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>12 · Jarvis Vertical · 1080×1920 · v3</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  .ghost{right:-80px;top:50%;transform:translateY(-50%);font-size:760px;line-height:0.85}
+  .stage{position:relative;z-index:3;margin:60px auto;width:780px;height:780px}
+  .stage svg.lines{position:absolute;inset:0;width:100%;height:100%}
+  .stage .core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:240px;height:240px;border-radius:50%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,0.7) 0%,rgba(255,255,255,0) 35%),radial-gradient(circle at 50% 50%,#fef3c7 0%,#fde68a 18%,#D4A847 50%,#92400e 90%);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),inset 0 -25px 70px rgba(146,64,14,0.6),0 0 0 16px rgba(212,168,71,0.06),0 0 0 1px rgba(212,168,71,0.2),0 0 140px rgba(212,168,71,0.55),0 0 280px rgba(212,168,71,0.3),0 30px 80px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;font-family:'Inter';font-weight:900;font-size:46px;color:#1a0f00;letter-spacing:0.08em}
+  .stage .ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:240px;height:240px;border-radius:50%;border:2px solid rgba(212,168,71,0.5);animation:p 3s ease-out infinite}
+  .stage .ring.r2{animation-delay:1s;border-color:rgba(34,211,238,0.4)}
+  .stage .ring.r3{animation-delay:2s;border-color:rgba(167,139,250,0.35)}
+  @keyframes p{0%{transform:translate(-50%,-50%) scale(1);opacity:0.7}100%{transform:translate(-50%,-50%) scale(2.6);opacity:0}}
+  .node{position:absolute;border-radius:50%;transform:translate(-50%,-50%)}
+  .ncyan{background:radial-gradient(circle at 30% 30%,#a5f3fc,#22d3ee 40%,#0e7490);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),0 0 36px rgba(34,211,238,0.7),0 8px 20px rgba(0,0,0,0.5)}
+  .npurple{background:radial-gradient(circle at 30% 30%,#ddd6fe,#a78bfa 40%,#6d28d9);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),0 0 32px rgba(167,139,250,0.7),0 8px 20px rgba(0,0,0,0.5)}
+  .ngold{background:radial-gradient(circle at 30% 30%,#fde68a,#D4A847 40%,#92400e);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),0 0 32px rgba(212,168,71,0.8),0 8px 20px rgba(0,0,0,0.5)}
+  .v-headline{text-align:center;padding:0 50px;margin-top:0}
+  .v-headline .h1{font-size:170px}
+  .price-block{display:flex;flex-direction:column;align-items:center;padding:46px 70px;border-radius:26px;background:linear-gradient(135deg,rgba(212,168,71,0.18),rgba(212,168,71,0.04));border:1.5px solid rgba(212,168,71,0.55);box-shadow:0 30px 100px rgba(212,168,71,0.25),inset 0 1px 0 rgba(255,255,255,0.15)}
+  .price-block .pre{font-family:'JetBrains Mono',monospace;font-size:13px;color:#fde68a;letter-spacing:0.28em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+  .price-block .v{font-family:'Inter';font-weight:900;font-size:200px;line-height:0.85;letter-spacing:-0.06em;background:linear-gradient(135deg,#fef3c7 0%,#fbbf24 30%,#D4A847 65%,#92400e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 12px 60px rgba(212,168,71,0.5))}
+  .price-block .post{margin-top:8px;font-size:20px;color:rgba(255,255,255,0.65);font-weight:600;letter-spacing:0.04em}
+  .price-block .post .strike-old{text-decoration:line-through;text-decoration-color:rgba(248,113,113,0.7);text-decoration-thickness:2px;color:rgba(255,255,255,0.45);margin-right:10px}
+  .v-cta{margin-top:36px;font-family:'JetBrains Mono',monospace;font-size:24px;color:rgba(255,255,255,0.6);text-align:center}
+  .v-cta .arrow{color:#22d3ee;font-weight:700;display:block;margin-top:6px;font-size:30px}
+  .tap{margin-top:32px;font-size:22px;font-weight:800;color:#22d3ee;letter-spacing:0.22em;text-transform:uppercase;text-align:center}
+  .tap-arrow{display:inline-block;margin-right:10px;animation:bounce 1.4s ease-in-out infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+</style></head><body>
+<div class="card vt">
+  <div class="mesh cyan"></div>
+  <div class="ghost cyan">brain</div>
+  <div class="inner">
+    <div class="top">
+      <div class="ribbon">🏆 Founders · First 100 Only</div>
+      <div class="meta">JARVIS · IRON MAN INSPIRED<br>YOUR HOME AI SYSTEM<br><b>VOL. 12 · REELS</b></div>
+    </div>
+
+    <div class="v-headline">
+      <div class="idx" style="justify-content:center"><span class="num">No. 12</span><span class="ln"></span><span class="lbl">Reel · The Brain</span></div>
+      <div class="h1">Your knowledge,</div>
+      <div class="h1"><span class="cyan">connected.</span></div>
+    </div>
+
+    <div class="stage">
+      <svg class="lines" viewBox="0 0 780 780" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lc2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity="0.7"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0.1"/></linearGradient>
+          <linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D4A847" stop-opacity="0.8"/><stop offset="1" stop-color="#D4A847" stop-opacity="0.2"/></linearGradient>
+          <linearGradient id="lp2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a78bfa" stop-opacity="0.6"/><stop offset="1" stop-color="#a78bfa" stop-opacity="0.1"/></linearGradient>
+        </defs>
+        <g fill="none" stroke-width="1.6">
+          <path d="M 390 390 Q 290 280 180 180" stroke="url(#lc2)"/>
+          <path d="M 390 390 Q 490 280 600 180" stroke="url(#lc2)"/>
+          <path d="M 390 390 Q 290 500 180 600" stroke="url(#lc2)"/>
+          <path d="M 390 390 Q 490 500 600 600" stroke="url(#lc2)"/>
+          <path d="M 390 390 Q 390 260 390 130" stroke="url(#lg2)" stroke-width="2"/>
+          <path d="M 390 390 Q 390 520 390 650" stroke="url(#lg2)" stroke-width="2"/>
+          <path d="M 390 390 Q 260 390 100 390" stroke="url(#lp2)"/>
+          <path d="M 390 390 Q 520 390 680 390" stroke="url(#lp2)"/>
+        </g>
+      </svg>
+      <div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div>
+      <div class="node ncyan" style="left:23%;top:23%;width:42px;height:42px"></div>
+      <div class="node ncyan" style="left:77%;top:23%;width:42px;height:42px"></div>
+      <div class="node ncyan" style="left:23%;top:77%;width:42px;height:42px"></div>
+      <div class="node ncyan" style="left:77%;top:77%;width:42px;height:42px"></div>
+      <div class="node ngold" style="left:50%;top:17%;width:36px;height:36px"></div>
+      <div class="node ngold" style="left:50%;top:83%;width:36px;height:36px"></div>
+      <div class="node npurple" style="left:13%;top:50%;width:36px;height:36px"></div>
+      <div class="node npurple" style="left:87%;top:50%;width:36px;height:36px"></div>
+      <div class="core">YOU</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div class="price-block">
+        <div class="pre">Founders · pay once · forever</div>
+        <div class="v">$197</div>
+        <div class="post"><span class="strike-old">$497</span>after first 100</div>
+      </div>
+      <div class="v-cta">assessment.valuetovictory.com<span class="arrow">→ /professionals</span></div>
+      <div class="tap"><span class="tap-arrow">↑</span> Tap link in bio</div>
+    </div>
+  </div>
+</div>
+</body></html>
