@@ -3429,6 +3429,97 @@ Don't guess. Run the system.
       return res.json(rows[0]);
     }
 
+    // ========== BIRTHDAY REWARDS ==========
+    // GET /api/birthday?email=xxx — Get user's birthday opt-in status
+    if (req.method === 'GET' && url.startsWith('/birthday') && !url.startsWith('/birthday/optout')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = (params.get('email') || '').toLowerCase().trim();
+      if (!email) return res.status(400).json({ error: 'email required' });
+      const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (contactRows.length === 0) return res.status(404).json({ error: 'Contact not found' });
+      try {
+        const rows = await sql`SELECT birth_month, birth_day, birth_year, reward_optin, partner_consent, zip_code, last_reward_year FROM birthday_rewards WHERE contact_id = ${contactRows[0].id} LIMIT 1`;
+        return res.json({ optin: rows.length > 0, data: rows[0] || null });
+      } catch (e) {
+        return res.json({ optin: false, error: 'Birthday tables not initialized. Run /api/migrate-birthday.' });
+      }
+    }
+
+    // POST /api/birthday — Set or update birthday opt-in
+    if (req.method === 'POST' && url === '/birthday') {
+      const b = req.body || {};
+      const email = (b.email || '').toLowerCase().trim();
+      const month = parseInt(b.birthMonth || b.birth_month, 10);
+      const day = parseInt(b.birthDay || b.birth_day, 10);
+      const year = b.birthYear ? parseInt(b.birthYear, 10) : null;
+      const optin = b.optin !== false;
+      const partnerConsent = b.partnerConsent || {};
+      const zipCode = (b.zipCode || '').substring(0, 10);
+
+      if (!email || !month || !day) return res.status(400).json({ error: 'email, birthMonth, birthDay required' });
+      if (month < 1 || month > 12 || day < 1 || day > 31) return res.status(400).json({ error: 'Invalid birth month or day' });
+
+      // COPPA: reject if year given and user is under 13
+      if (year) {
+        const age = new Date().getUTCFullYear() - year;
+        if (age < 13) return res.status(400).json({ error: 'Must be 13 or older to opt in.' });
+      }
+
+      const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (contactRows.length === 0) return res.status(404).json({ error: 'Contact not found. Take an assessment first.' });
+      const contactId = contactRows[0].id;
+      const ipHash = crypto.createHash('sha256').update(clientIP).digest('hex').substring(0, 16);
+
+      try {
+        await sql`INSERT INTO birthday_rewards (contact_id, birth_month, birth_day, birth_year, reward_optin, partner_consent, zip_code, consent_ip_hash, consent_at, updated_at)
+          VALUES (${contactId}, ${month}, ${day}, ${year}, ${optin}, ${JSON.stringify(partnerConsent)}::jsonb, ${zipCode || null}, ${ipHash}, NOW(), NOW())
+          ON CONFLICT (contact_id) DO UPDATE SET
+            birth_month = EXCLUDED.birth_month,
+            birth_day = EXCLUDED.birth_day,
+            birth_year = COALESCE(EXCLUDED.birth_year, birthday_rewards.birth_year),
+            reward_optin = EXCLUDED.reward_optin,
+            partner_consent = EXCLUDED.partner_consent,
+            zip_code = COALESCE(EXCLUDED.zip_code, birthday_rewards.zip_code),
+            consent_ip_hash = EXCLUDED.consent_ip_hash,
+            consent_at = NOW(),
+            updated_at = NOW()`;
+
+        // Track analytics
+        try { await sql`INSERT INTO analytics_events (event_type, contact_id, metadata) VALUES ('birthday_optin', ${contactId}, ${JSON.stringify({ month, day, optin })}::jsonb)`; } catch (e) { /* non-fatal */ }
+
+        return res.json({ success: true, message: optin ? 'Birthday rewards activated. Look out for a gift on your special day!' : 'Birthday opt-in saved (rewards disabled).' });
+      } catch (e) {
+        return res.status(500).json({ error: 'Could not save birthday. Migration may be needed.', details: e.message });
+      }
+    }
+
+    // GET /api/birthday/optout?email=xxx — One-click unsubscribe (for email footer)
+    if (req.method === 'GET' && url.startsWith('/birthday/optout')) {
+      const params = new URL('http://x' + req.url).searchParams;
+      const email = (params.get('email') || '').toLowerCase().trim();
+      if (!email) return res.status(400).send('<html><body><h1>Email required</h1></body></html>');
+      const contactRows = await sql`SELECT id FROM contacts WHERE LOWER(email) = ${email} LIMIT 1`;
+      if (contactRows.length === 0) return res.status(404).send('<html><body><h1>Email not found</h1></body></html>');
+      try {
+        await sql`UPDATE birthday_rewards SET reward_optin = false, updated_at = NOW() WHERE contact_id = ${contactRows[0].id}`;
+        try { await sql`INSERT INTO analytics_events (event_type, contact_id, metadata) VALUES ('birthday_optout', ${contactRows[0].id}, '{}'::jsonb)`; } catch (e) {}
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(`<!DOCTYPE html><html><head><title>Unsubscribed</title><style>body{font-family:Arial,sans-serif;background:#0a0a0a;color:#fff;text-align:center;padding:80px 20px;}h1{color:#d4a853;}p{color:#a1a1aa;}a{color:#d4a853;}</style></head><body><h1>You're unsubscribed.</h1><p>You won't receive any more birthday emails from Value to Victory.</p><p><a href="https://assessment.valuetovictory.com/settings">Manage all email preferences</a></p></body></html>`);
+      } catch (e) {
+        return res.status(500).send('<html><body><h1>Error</h1></body></html>');
+      }
+    }
+
+    // GET /api/birthday/partners — List active partner brands (for SEO landing + opt-in UI)
+    if (req.method === 'GET' && url === '/birthday/partners') {
+      try {
+        const partners = await sql`SELECT slug, name, logo_url, website, category, values_alignment, offer_template, status FROM partner_brands ORDER BY name ASC`;
+        return res.json({ partners });
+      } catch (e) {
+        return res.json({ partners: [], error: 'Partner table not initialized.' });
+      }
+    }
+
     // ========== ANALYTICS TRACKING ==========
     // POST /api/track — Log an analytics event
     if (req.method === 'POST' && url === '/track') {

@@ -26,6 +26,10 @@
       "schedule": "0 23 * * *"
     },
     {
+      "path": "/api/cron-birthday",
+      "schedule": "0 12 * * *"
+    },
+    {
       "path": "/api/skill-pack-reminder",
       "schedule": "0 13 * * *"
     }
@@ -93,6 +97,14 @@
     {
       "src": "/api/migrate-analytics",
       "dest": "/api/migrate.js"
+    },
+    {
+      "src": "/api/migrate-birthday",
+      "dest": "/api/migrate-birthday.js"
+    },
+    {
+      "src": "/api/cron-birthday",
+      "dest": "/api/cron-birthday.js"
     },
     {
       "src": "/api/devotional-today",
@@ -180,6 +192,14 @@
     {
       "src": "/framework/time",
       "dest": "/framework-time.html"
+    },
+    {
+      "src": "/birthday-rewards",
+      "dest": "/birthday-rewards.html"
+    },
+    {
+      "src": "/birthday",
+      "dest": "/birthday-rewards.html"
     },
     {
       "src": "/framework/people",
