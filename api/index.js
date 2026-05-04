@@ -1,6 +1,7 @@
 const { neon } = require('@neondatabase/serverless');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const { canSend: emailCanSend } = require('../lib/email-dedup');
 const BASE_URL = process.env.BASE_URL || 'https://assessment.valuetovictory.com';
 
 // ========== VTV COACHING CONSTITUTION ==========
@@ -6855,6 +6856,15 @@ This link expires in 24 hours.
               continue;
             }
 
+            // Email dedup gate (P0 fix 2026-05-04 — Council + 5-voice verdict)
+            // Blocks: same-day same-type duplicates AND >2 marketing emails/day to same recipient
+            const _gate = await emailCanSend(sql, seq.email, 'coaching');
+            if (!_gate.allowed) {
+              results.push({ email: seq.email, status: 'skipped', reason: _gate.reason });
+              skippedCount++;
+              continue;
+            }
+
             // Cadence control: Phase 1 (days 0-8) = daily, Phase 2 (9-16) = every 2 days,
             // Phase 3 (17-20) = every 3 days, Phase 4 (21+) = weekly
             if (seq.last_sent_at) {
@@ -7313,6 +7323,12 @@ This link expires in 24 hours.
           try {
             const firstName = escapeHtml(member.first_name || 'Friend');
             const email = member.email;
+            // Email dedup gate (P0 fix 2026-05-04 — Council + 5-voice verdict)
+            const _gate = await emailCanSend(sql, email, 'accountability');
+            if (!_gate.allowed) {
+              results.push({ email, status: 'skipped', reason: _gate.reason });
+              continue;
+            }
             const coachingDay = member.current_day || 1;
             const unsubToken = Buffer.from(email).toString('base64');
             const unsubUrl = `${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(email)}&token=${unsubToken}`;
@@ -7710,6 +7726,11 @@ else if(cm==='idea'){document.getElementById('tyTitle').textContent='Great Idea!
       if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
       try {
         const ceoEmail = 'valuetovictory@gmail.com';
+        // Email dedup gate (P0 fix 2026-05-04 — prevents the Apr 30 double-fire)
+        const _ceoGate = await emailCanSend(sql, ceoEmail, 'ceo_briefing');
+        if (!_ceoGate.allowed) {
+          return res.json({ sent: 0, skipped: true, reason: _ceoGate.reason });
+        }
         const now = new Date();
         const yesterday = new Date(now - 24 * 60 * 60 * 1000);
         const last7 = new Date(now - 7 * 24 * 60 * 60 * 1000);
@@ -10076,6 +10097,12 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
 
         for (const sub of subscribers) {
           try {
+            // Email dedup gate (P0 fix 2026-05-04 — Council + 5-voice verdict)
+            const _gate = await emailCanSend(sql, sub.email, 'devotional');
+            if (!_gate.allowed) {
+              results.push({ email: sub.email, status: 'skipped', reason: _gate.reason });
+              continue;
+            }
             const firstName = escapeHtml(sub.first_name || 'Friend');
 
             // Look up the subscriber's weakest pillar for personalized connection

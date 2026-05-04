@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.2.0",
+  "project": "vtv-assessment",
+  "updated": "2026-05-03",
+  "owner_of_record": "Shawn",
+  "scope_lock_default": true,
+  "spec": "../_claude/specs/feature-list-scope-lock.md",
+  "source_of_truth": "CLAUDE.md (operational context) + memory/feedback_security_audit_2026_05_03.md (audit state)",
+  "seed_note": "Conservative seed 2026-05-03 — only items confirmed in memory. Add features as Shawn defines real scope-locked work. Several active threads (Aligned Hearts bug fixes · multi-agent observability · Skill Pack tracking) are active in code but not yet seeded — promote when scope-locked.",
+  "tiers": [
+    { "id": "T1", "label": "Active hardening (post-audit)", "active": true },
+    { "id": "T2", "label": "Phase 0 audit (engineering partner RFP)", "active": true },
+    { "id": "T3", "label": "Future scope (not yet locked)", "active": false }
+  ],
+  "features": [
+    {
+      "id": "F-T1-A",
+      "tier": "T1",
+      "name": "Post-2026-05-03 security audit regression watch",
+      "owner": "Shawn",
+      "status": "in-progress",
+      "blocker": null,
+      "next_action": "Re-audit JWT enforcement on any new endpoint added after 2026-05-03 commit 9b8e9e5; ensure ?email= bypass cannot reappear via merge",
+      "acceptance": [
+        "All 8 protected endpoints still return 401 without bearer token (re-curl after any merge)",
+        "promote-lessons.py PR-001 (JWT email bypass) returns no violations on api/**",
+        "Branch merges into master are followed by a re-audit checklist run before deploy"
+      ],
+      "acceptance_cmd": [
+        null,
+        "python ../_claude/specs/promote-lessons.py --check --rule PR-001 --root .",
+        null
+      ],
+      "verified_by": null,
+      "verified_at": null,
+      "verifier_evidence_path": null,
+      "scope_lock": true,
+      "created": "2026-05-03",
+      "last_updated": "2026-05-03"
+    },
+    {
+      "id": "F-T1-B",
+      "tier": "T1",
+      "name": "Multi-agent freeze regression watch",
+      "owner": "Shawn",
+      "status": "not-started",
+      "blocker": null,
+      "next_action": "Monitor agent_state for date-cast bugs; promote-lessons.py PR-002 enforces text-vs-timestamp guard. Verify daily that 15 cron-driven n8n workflows still fire.",
+      "acceptance": [
+        "agent_state queries use CURRENT_DATE not string-equality (PR-002 passes)",
+        "agent-dashboard.html shows all agents healthy daily",
+        "Any new date comparison goes through commit 2089958 pattern review"
+      ],
+      "acceptance_cmd": [
+        "python ../_claude/specs/promote-lessons.py --check --rule PR-002 --root .",
+        null,
+        null
+      ],
+      "verified_by": null,
+      "verified_at": null,
+      "verifier_evidence_path": null,
+      "scope_lock": true,
+      "created": "2026-05-03",
+      "last_updated": "2026-05-03"
+    },
+    {
+      "id": "F-T2-A",
+      "tier": "T2",
+      "name": "Engineering partner Phase 0 audit RFP (n8n + Stripe webhook resilience)",
+      "owner": "Shawn",
+      "status": "blocked",
+      "blocker": "RFP not yet sent — pending IP attorney intake (book audit + provisional triage) before sharing system access",
+      "next_action": "Send RFP Mon May 5 to Gun.io / ReactSquad / Toptal / Test Double / thoughtbot for $1.5–4K Phase 0 audit, IP-clean (no P.I.N.K. / Lost Art exposure)",
+      "acceptance": [
+        "RFP sent to all 5 candidates by 2026-05-09",
+        "At least 2 substantive responses received within 7 days",
+        "Phase 0 audit scope locked with chosen vendor before any code access granted",
+        "IP attorney intake completed before sharing assessment platform"
+      ],
+      "acceptance_cmd": [null, null, null, null],
+      "verified_by": null,
+      "verified_at": null,
+      "verifier_evidence_path": null,
+      "scope_lock": true,
+      "created": "2026-05-03",
+      "last_updated": "2026-05-03"
+    }
+  ]
+}
