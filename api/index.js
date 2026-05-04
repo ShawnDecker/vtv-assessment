@@ -10334,6 +10334,46 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         const dayIndex = ((diffDays % 60) + 60) % 60;
         const dev = devotionals[dayIndex] || devotionals[0];
 
+        // === CHAPTER EXCERPT LOADER ===
+        // Pulls actual chapter prose from data/rfm-chapters/NN-*.md, strips front matter,
+        // and returns a clean excerpt + total word count for the progress reader.
+        function loadChapterExcerpt(chapterNum) {
+          try {
+            const fs2 = require('fs');
+            const path2 = require('path');
+            const dir = path2.join(__dirname, '..', 'data', 'rfm-chapters');
+            const files = fs2.readdirSync(dir);
+            const padded = String(chapterNum).padStart(2, '0');
+            const file = files.find(f => f.startsWith(padded + '-'));
+            if (!file) return null;
+            let raw = fs2.readFileSync(path2.join(dir, file), 'utf-8');
+            // Strip YAML front matter
+            raw = raw.replace(/^---[\s\S]*?---\s*/, '');
+            // Drop the H1 title heading
+            raw = raw.replace(/^#\s+.+\n+/, '');
+            // Collapse runs of whitespace, normalize line breaks within paragraphs
+            const paragraphs = raw
+              .split(/\n\s*\n/)
+              .map(p => p.replace(/\s+/g, ' ').trim())
+              .filter(p => p.length > 40 && !p.startsWith('#') && !p.match(/^\d+\s/));
+            const totalWords = paragraphs.join(' ').split(/\s+/).length;
+            // Take first 2-3 paragraphs up to ~700 chars for the excerpt
+            let excerpt = '';
+            const usedParas = [];
+            for (const p of paragraphs) {
+              if (excerpt.length + p.length > 800 && usedParas.length >= 1) break;
+              usedParas.push(p);
+              excerpt = usedParas.join('\n\n');
+              if (usedParas.length >= 3) break;
+            }
+            return { excerpt, totalWords, paragraphCount: paragraphs.length };
+          } catch (e) {
+            console.error('[loadChapterExcerpt] error for chapter', chapterNum, e.message);
+            return null;
+          }
+        }
+        const chapterContent = loadChapterExcerpt(dev.chapter_number);
+
         // Get subscribers: active coaching users + paid members + explicit opt-ins
         // Daily dedup — skip anyone already sent today
         let subscribers = [];
@@ -10420,47 +10460,159 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
               </div>`;
             }
 
-            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
-<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 16px;"><tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
-<tr><td style="text-align:center;padding-bottom:20px;">
-  <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;margin-bottom:6px;">RUNNING FROM MIRACLES</div>
-  <div style="font-family:Georgia,serif;font-size:22px;font-style:italic;color:#ffffff;">Daily Word</div>
-  <div style="font-size:12px;color:#71717a;margin-top:4px;">Day ${dev.day_number} of 60 &mdash; ${today.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>
-</td></tr>
-<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:36px 28px;">
-  <p style="color:#e4e4e7;font-size:16px;line-height:1.6;margin:0 0 16px;">${firstName},</p>
-  ${pillarNote}
-  <div style="font-family:Georgia,serif;font-size:20px;color:#D4A847;font-style:italic;margin-bottom:4px;">${dev.title}</div>
-  <div style="font-size:12px;color:#71717a;margin-bottom:20px;">Chapter: ${dev.chapter_title} &mdash; Theme: ${dev.theme}</div>
-  <div style="background:#111118;border-left:3px solid #D4A847;padding:16px 20px;margin:0 0 24px;border-radius:0 8px 8px 0;">
-    <p style="color:#D4A847;font-size:13px;font-weight:bold;margin:0 0 6px;">${dev.scripture_reference}</p>
-    <p style="color:#e4e4e7;font-size:15px;font-style:italic;line-height:1.6;margin:0;">"${dev.scripture_text}"</p>
-  </div>
-  <p style="color:#a1a1aa;font-size:14px;line-height:1.7;margin:0 0 20px;">${dev.reflection}</p>
-  <hr style="border:none;border-top:1px solid #27272a;margin:20px 0;"/>
-  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:16px 20px;margin-bottom:20px;">
-    <p style="color:#D4A847;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 8px;">Today's Prayer</p>
-    <p style="color:#e4e4e7;font-size:14px;font-style:italic;line-height:1.6;margin:0;">${dev.prayer}</p>
-  </div>
-  <div style="background:#111118;border:1px solid #27272a;border-radius:8px;padding:16px 20px;">
-    <p style="color:#22c55e;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 8px;">Action Step</p>
-    <p style="color:#e4e4e7;font-size:14px;line-height:1.6;margin:0;">${dev.action_step}</p>
-  </div>
-  <div style="background:rgba(212,168,71,0.08);border:1px solid rgba(212,168,71,0.2);border-radius:8px;padding:16px 20px;margin-top:16px;text-align:center;">
-    <p style="color:#D4A847;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 6px;">Today&rsquo;s Reading</p>
-    <p style="color:#a1a1aa;font-size:13px;line-height:1.5;margin:0 0 10px;">Chapter ${dev.chapter_number}: &ldquo;${dev.chapter_title}&rdquo; from <em>Running From Miracles</em> by Shawn E. Decker</p>
-    <a href="https://assessment.valuetovictory.com/audiobook" style="display:inline-block;background:transparent;border:1px solid #D4A847;color:#D4A847;font-size:12px;font-weight:bold;text-decoration:none;padding:8px 20px;border-radius:6px;">Listen to the Audiobook &rarr;</a>
-  </div>
-</td></tr>
-<tr><td style="text-align:center;padding-top:24px;">
-  <a href="${BASE_URL}/daily-word" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:8px;">Read Online</a>
-</td></tr>
-<tr><td style="text-align:center;padding-top:20px;">
-  <p style="color:#52525b;font-size:11px;margin:0;">&copy; 2026 Value to Victory &mdash; Shawn E. Decker</p>
-  <p style="color:#3f3f46;font-size:10px;margin:6px 0 0;">Running From Miracles &mdash; 60-Day Devotional</p>
-</td></tr>
+            // === VISUAL SECTIONS ===
+            // Theme badges
+            const themes = [dev.theme, dev.secondary_theme].filter(Boolean);
+            const themeBadges = themes.map(t => `<span style="display:inline-block;background:rgba(212,168,71,0.12);border:1px solid rgba(212,168,71,0.4);color:#D4A847;font-size:10px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border-radius:12px;margin:2px 4px 2px 0;">${escapeHtml(t)}</span>`).join('');
+
+            // Reading progress bar (Day X of 60)
+            const progressPct = Math.round((dev.day_number / 60) * 100);
+            const progressBar = `
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:10px 0 18px;">
+                <tr><td>
+                  <div style="background:#27272a;border-radius:99px;height:6px;overflow:hidden;">
+                    <div style="background:linear-gradient(90deg,#D4A847,#f5d68a);width:${progressPct}%;height:6px;border-radius:99px;"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;font-size:10px;color:#52525b;margin-top:6px;letter-spacing:1px;">
+                    <span style="float:left;">DAY ${dev.day_number}</span>
+                    <span style="float:right;">${60 - dev.day_number} TO GO</span>
+                  </div>
+                </td></tr>
+              </table>`;
+
+            // Chapter excerpt card (the new "more of the chapter" feature)
+            let chapterExcerptHtml = '';
+            if (chapterContent && chapterContent.excerpt) {
+              const excerptParas = chapterContent.excerpt
+                .split('\n\n')
+                .filter(p => p.trim().length > 0)
+                .map(p => `<p style="color:#d4d4d8;font-size:15px;line-height:1.8;margin:0 0 14px;font-family:Georgia,serif;">${escapeHtml(p)}</p>`)
+                .join('');
+              chapterExcerptHtml = `
+                <div style="background:linear-gradient(180deg,#0f0f15 0%,#18181b 100%);border:1px solid #27272a;border-left:4px solid #D4A847;border-radius:10px;padding:28px 28px 24px;margin:0 0 24px;position:relative;">
+                  <div style="position:absolute;top:14px;right:18px;font-family:Georgia,serif;font-size:64px;color:rgba(212,168,71,0.15);line-height:1;">&rdquo;</div>
+                  <p style="color:#D4A847;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin:0 0 4px;">From the Chapter</p>
+                  <p style="color:#71717a;font-size:11px;margin:0 0 16px;letter-spacing:0.5px;">Chapter ${dev.chapter_number} &middot; ${escapeHtml(dev.chapter_title)} &middot; ${chapterContent.totalWords.toLocaleString()} words total</p>
+                  ${excerptParas}
+                  <div style="margin-top:16px;padding-top:14px;border-top:1px solid #27272a;text-align:center;">
+                    <a href="${BASE_URL}/audiobook?chapter=${dev.chapter_number}" style="display:inline-block;color:#D4A847;font-size:13px;font-weight:bold;text-decoration:none;padding:8px 16px;">&#9656; Listen to this chapter &nbsp;&middot;&nbsp; <span style="color:#a1a1aa;text-decoration:underline;">Continue reading &rarr;</span></a>
+                  </div>
+                </div>`;
+            }
+
+            // Subject — punchier, scripture-led
+            const subjectLine = `Day ${dev.day_number}/60: "${dev.title.replace(/^Day \d+:\s*/i,'')}" — ${dev.scripture_reference}`;
+
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>${escapeHtml(subjectLine)}</title></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 14px;"><tr><td align="center">
+<table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;">
+
+  <!-- HERO HEADER -->
+  <tr><td>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#1a1410 0%,#0a0a0a 60%);border:1px solid #27272a;border-radius:16px 16px 0 0;border-bottom:none;">
+      <tr><td style="padding:32px 32px 22px;text-align:center;">
+        <div style="display:inline-block;background:linear-gradient(135deg,#D4A847,#f5d68a);color:#0a0a0a;font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;padding:5px 14px;border-radius:12px;margin-bottom:14px;">&#10024; Daily Word &#10024;</div>
+        <div style="font-family:Georgia,'Times New Roman',serif;font-size:34px;font-style:italic;color:#ffffff;line-height:1.1;letter-spacing:-0.5px;margin:8px 0 4px;">Running From<br/><span style="color:#D4A847;">Miracles</span></div>
+        <div style="font-size:11px;color:#71717a;letter-spacing:2px;text-transform:uppercase;margin-top:10px;">A 60-Day Devotional Journey</div>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <!-- BODY -->
+  <tr><td>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#18181b;border:1px solid #27272a;border-top:none;border-radius:0;padding:0;">
+      <tr><td style="padding:28px 32px;">
+
+        <!-- Greeting + Date Strip -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;"><tr>
+          <td><p style="color:#e4e4e7;font-size:17px;margin:0;font-weight:600;">${firstName},</p></td>
+          <td style="text-align:right;"><p style="color:#52525b;font-size:11px;margin:0;letter-spacing:1px;text-transform:uppercase;">${today.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</p></td>
+        </tr></table>
+
+        <!-- Progress Bar -->
+        ${progressBar}
+
+        <!-- Pillar match callout (if relevant) -->
+        ${pillarNote}
+
+        <!-- Chapter Title Block -->
+        <div style="text-align:center;padding:16px 0 22px;border-bottom:1px solid #27272a;margin-bottom:24px;">
+          <div style="font-size:11px;color:#52525b;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;">Chapter ${dev.chapter_number}</div>
+          <div style="font-family:Georgia,serif;font-size:26px;color:#ffffff;line-height:1.2;margin-bottom:10px;">${escapeHtml(dev.title)}</div>
+          <div style="margin-top:10px;">${themeBadges}</div>
+        </div>
+
+        <!-- SCRIPTURE — large featured block -->
+        <div style="background:linear-gradient(135deg,rgba(212,168,71,0.08),rgba(212,168,71,0.02));border:1px solid rgba(212,168,71,0.3);border-radius:12px;padding:28px 26px;margin:0 0 26px;text-align:center;position:relative;">
+          <div style="font-family:Georgia,serif;font-size:80px;color:rgba(212,168,71,0.25);line-height:0.6;margin-bottom:-10px;">&ldquo;</div>
+          <p style="color:#f5f5f5;font-family:Georgia,serif;font-size:19px;font-style:italic;line-height:1.6;margin:0 0 14px;">${escapeHtml(dev.scripture_text)}</p>
+          <p style="color:#D4A847;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin:0;">&mdash; ${escapeHtml(dev.scripture_reference)} &mdash;</p>
+        </div>
+
+        <!-- CHAPTER EXCERPT (the "more of the chapter" block) -->
+        ${chapterExcerptHtml}
+
+        <!-- REFLECTION -->
+        <div style="margin:0 0 24px;">
+          <div style="display:inline-block;background:#27272a;color:#D4A847;font-size:10px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;padding:4px 12px;border-radius:4px;margin-bottom:14px;">Reflection</div>
+          <p style="color:#d4d4d8;font-size:15px;line-height:1.75;margin:0;">${escapeHtml(dev.reflection)}</p>
+        </div>
+
+        <!-- PRAYER -->
+        <div style="background:#0f0f15;border:1px solid #27272a;border-radius:10px;padding:22px 24px;margin:0 0 18px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;"><tr>
+            <td style="vertical-align:middle;width:32px;"><div style="background:rgba(212,168,71,0.15);width:32px;height:32px;border-radius:50%;text-align:center;line-height:32px;font-size:16px;color:#D4A847;">&#10073;</div></td>
+            <td style="vertical-align:middle;padding-left:10px;"><p style="color:#D4A847;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin:0;">Today's Prayer</p></td>
+          </tr></table>
+          <p style="color:#e4e4e7;font-size:14px;font-style:italic;line-height:1.7;margin:0;font-family:Georgia,serif;">${escapeHtml(dev.prayer)}</p>
+        </div>
+
+        <!-- ACTION STEP -->
+        <div style="background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.02));border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:22px 24px;margin:0 0 24px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;"><tr>
+            <td style="vertical-align:middle;width:32px;"><div style="background:rgba(34,197,94,0.2);width:32px;height:32px;border-radius:8px;text-align:center;line-height:32px;font-size:16px;color:#22c55e;font-weight:bold;">&#10003;</div></td>
+            <td style="vertical-align:middle;padding-left:10px;"><p style="color:#22c55e;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin:0;">Today's Action Step</p></td>
+          </tr></table>
+          <p style="color:#e4e4e7;font-size:15px;line-height:1.65;margin:0;font-weight:500;">${escapeHtml(dev.action_step)}</p>
+        </div>
+
+        <!-- AUDIOBOOK CTA -->
+        <div style="background:linear-gradient(135deg,#1f1a14,#0f0d0a);border:1px solid rgba(212,168,71,0.4);border-radius:12px;padding:22px 24px;margin:0 0 8px;text-align:center;">
+          <div style="display:inline-block;background:rgba(212,168,71,0.15);width:48px;height:48px;border-radius:50%;text-align:center;line-height:48px;font-size:22px;color:#D4A847;margin-bottom:10px;">&#9658;</div>
+          <p style="color:#D4A847;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin:0 0 4px;">Listen to Today's Chapter</p>
+          <p style="color:#a1a1aa;font-size:13px;margin:0 0 14px;">Hear Shawn read &ldquo;${escapeHtml(dev.chapter_title)}&rdquo; in his own voice</p>
+          <a href="${BASE_URL}/audiobook?chapter=${dev.chapter_number}" style="display:inline-block;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:11px 28px;border-radius:8px;letter-spacing:0.5px;">&#9658;&nbsp;&nbsp;Play Chapter ${dev.chapter_number}</a>
+        </div>
+
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <!-- BOTTOM CTA STRIP -->
+  <tr><td>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;border:1px solid #27272a;border-top:none;border-radius:0 0 16px 16px;padding:0;">
+      <tr><td style="padding:18px 32px;text-align:center;">
+        <a href="${BASE_URL}/daily-word" style="display:inline-block;color:#a1a1aa;font-size:12px;font-weight:bold;text-decoration:none;padding:6px 14px;letter-spacing:1px;text-transform:uppercase;">Read Online</a>
+        <span style="color:#27272a;">&middot;</span>
+        <a href="${BASE_URL}/audiobook" style="display:inline-block;color:#a1a1aa;font-size:12px;font-weight:bold;text-decoration:none;padding:6px 14px;letter-spacing:1px;text-transform:uppercase;">Audiobook</a>
+        <span style="color:#27272a;">&middot;</span>
+        <a href="${BASE_URL}/member" style="display:inline-block;color:#a1a1aa;font-size:12px;font-weight:bold;text-decoration:none;padding:6px 14px;letter-spacing:1px;text-transform:uppercase;">Dashboard</a>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <!-- FOOTER -->
+  <tr><td style="text-align:center;padding:24px 16px;">
+    <p style="color:#52525b;font-size:11px;margin:0 0 6px;">Running From Miracles &mdash; 60-Day Devotional</p>
+    <p style="color:#3f3f46;font-size:10px;margin:0 0 8px;">by Shawn E. Decker &middot; &copy; 2026 Value to Victory &middot; Goodview, VA</p>
+    <p style="color:#3f3f46;font-size:10px;margin:0;">
+      You're receiving this devotional because you opted in.
+      <br/>
+      <a href="${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(sub.email)}&token=${encodeURIComponent(Buffer.from(sub.email).toString('base64'))}" style="color:#6a6a84;text-decoration:underline;">Unsubscribe from Daily Word</a>
+    </p>
+  </td></tr>
+
 </table></td></tr></table></body></html>`;
 
             // Engagement tracking
@@ -10486,7 +10638,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             await transporter.sendMail({
               from: `"Running From Miracles" <${process.env.GMAIL_USER}>`,
               to: sub.email,
-              subject: `Day ${dev.day_number}: ${dev.title} — ${dev.scripture_reference}`,
+              subject: subjectLine,
               html: finalHtml,
             });
             sentCount++;
