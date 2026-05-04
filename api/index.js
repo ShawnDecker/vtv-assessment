@@ -10716,7 +10716,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             });
             sentCount++;
             results.push({ email: sub.email, status: 'sent' });
-            await logEmail(sql, { recipient: sub.email, emailType: 'devotional', subject: `Day ${dev.day_number}: ${dev.title}`, contactId: sub.contact_id, metadata: { day: dev.day_number, chapter: dev.chapter_title, engagementId: devEngId, pillarMatch: !!pillarNote } });
+            await logEmail(sql, { recipient: sub.email, emailType: 'devotional', subject: subjectLine, contactId: sub.contact_id, metadata: { day: dev.day_number, chapter: dev.chapter_title, engagementId: devEngId, pillarMatch: !!pillarNote } });
 
             // Update progress
             try {
