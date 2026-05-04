@@ -117,6 +117,20 @@
   @keyframes spin { to { transform:rotate(360deg); } }
 
   .collapsible-header { cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
+  /* Top 3 — Team Brief */
+  .top3-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; margin-bottom:16px; }
+  .top3-card { background:#18181b; border:1px solid #27272a; border-radius:10px; padding:14px; }
+  .top3-head { font-size:13px; font-weight:bold; color:#D4A847; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .top3-icon { font-size:16px; }
+  .top3-list { list-style:none; padding:0; margin:0; }
+  .top3-list li { padding:8px 0; border-bottom:1px solid #1f1f23; }
+  .top3-list li:last-child { border-bottom:none; }
+  .t3-line1 { font-size:13px; font-weight:600; color:#e4e4e7; margin-bottom:2px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .t3-line2 { font-size:11px; color:#71717a; word-break:break-all; }
+  .t3-line3 { font-size:10px; color:#52525b; margin-top:2px; }
+  .t3-body { font-size:12px; color:#a1a1aa; line-height:1.5; margin-top:4px; }
+  .top3-empty { font-size:12px; color:#71717a; font-style:italic; padding:8px 0; }
+
   .collapsible-header .toggle { font-size:10px; color:#52525b; transition:transform 0.2s; }
   .collapsible-header .toggle.open { transform:rotate(90deg); }
   .collapsible-body { overflow:hidden; transition:max-height 0.3s ease; }
@@ -240,6 +254,70 @@ async function loadDashboard() {
 function render(data) {
   const el = document.getElementById('liveData');
   let html = '';
+
+  // === TEAM BRIEF — TOP 3 THIS WEEK ===
+  if (data.topThree) {
+    const t3 = data.topThree;
+    html += '<div class="section-title">Team Brief &mdash; Top 3 This Week</div>';
+    html += '<div class="top3-grid">';
+
+    // 1. Recent paid/free signups (last 14 days, last 3, demo/test filtered)
+    html += '<div class="top3-card">';
+    html += '<div class="top3-head"><span class="top3-icon">&#127881;</span> Recent Signups</div>';
+    if (t3.signups && t3.signups.length) {
+      html += '<ul class="top3-list">';
+      for (const s of t3.signups) {
+        const name = [s.first_name, s.last_name].filter(Boolean).join(' ') || s.email;
+        const tier = s.membership_tier && s.membership_tier !== 'free'
+          ? `<span class="badge b-gold">${s.membership_tier}</span>`
+          : '<span class="badge b-yellow">free</span>';
+        html += `<li><div class="t3-line1">${name} ${tier}</div>
+                     <div class="t3-line2">${s.email}</div>
+                     <div class="t3-line3">${timeAgo(s.created_at)}</div></li>`;
+      }
+      html += '</ul>';
+    } else {
+      html += '<div class="top3-empty">No new signups in the last 14 days.</div>';
+    }
+    html += '</div>';
+
+    // 2. Priorities (hardcoded in api/index.js, edit there)
+    html += '<div class="top3-card">';
+    html += '<div class="top3-head"><span class="top3-icon">&#127919;</span> Priorities</div>';
+    if (t3.priorities && t3.priorities.length) {
+      html += '<ul class="top3-list">';
+      for (const p of t3.priorities) {
+        const ub = p.urgency === 'critical' ? 'b-red' : p.urgency === 'high' ? 'b-yellow' : 'b-gold';
+        html += `<li><div class="t3-line1"><span class="badge ${ub}">${p.urgency}</span> ${p.owner ? '· ' + p.owner : ''}</div>
+                     <div class="t3-body">${p.text}</div></li>`;
+      }
+      html += '</ul>';
+    } else {
+      html += '<div class="top3-empty">No active priorities surfaced.</div>';
+    }
+    html += '</div>';
+
+    // 3. Ships (hardcoded in api/index.js, update on commit)
+    html += '<div class="top3-card">';
+    html += '<div class="top3-head"><span class="top3-icon">&#128674;</span> Recent Ships</div>';
+    if (t3.ships && t3.ships.length) {
+      html += '<ul class="top3-list">';
+      for (const s of t3.ships) {
+        const commit = s.commit
+          ? `<a href="https://github.com/ShawnDecker/vtv-assessment/commit/${s.commit}" target="_blank" style="color:#D4A847;">${s.commit.substring(0, 7)}</a>`
+          : '';
+        html += `<li><div class="t3-line1">${s.date} ${commit}</div>
+                     <div class="t3-body">${s.text}</div></li>`;
+      }
+      html += '</ul>';
+    } else {
+      html += '<div class="top3-empty">No recent ships logged.</div>';
+    }
+    html += '</div>';
+
+    html += '</div>'; // close top3-grid
+  }
+
 
   // === AI ROUTER (local ↔ cloud) ===
   if (data.aiRouter) {

@@ -10238,6 +10238,79 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           userFeedback = { active: [], summary: { error: fbErr.message } };
         }
 
+        // === TOP 3 — TEAM BRIEF ============================================
+        // Surfaces the three things the team should see when they open the
+        // dashboard. Signups are live SQL. Priorities and ships are hardcoded
+        // constants — edit them when something changes (commit + push). The
+        // dashboard renders blank for any empty section, so removing items is
+        // safe.
+        //
+        // To update: edit TEAM_BRIEF_PRIORITIES or TEAM_BRIEF_SHIPS below,
+        // commit, push. Vercel auto-deploys in ~1 min and the team sees the
+        // new content on next refresh.
+        const TEAM_BRIEF_PRIORITIES = [
+          {
+            urgency: 'critical',
+            text: 'Rotate ADMIN_API_KEY + Shawn PIN + Shanda PIN — credentials were public in CLAUDE.md (commit 64515a9). Code rotation done; key rotation owed.',
+            owner: 'Shawn',
+          },
+          {
+            urgency: 'high',
+            text: 'Past-appraisal-client revival emails — 5–10 personalized sends/day for 2 weeks. Template at 02-SOPs/past-client-revival-email.md.',
+            owner: 'Shawn',
+          },
+          {
+            urgency: 'high',
+            text: 'Infra audit + cuts to $2K/mo. Open last 3 months CC statement; decide KILL/DOWNGRADE/KEEP per 02-SOPs/infra-audit-2026-05-03.md.',
+            owner: 'Shawn',
+          },
+        ];
+
+        const TEAM_BRIEF_SHIPS = [
+          {
+            date: '2026-05-03',
+            text: 'CLAUDE.md untracked + sanitized; .gitignore now blocks future leaks.',
+            commit: 'f8c7623',
+          },
+          {
+            date: '2026-05-03',
+            text: 'ROSCA state-by-state matrix added to skill-pack-reminder cron with refactored bundle Set.',
+            commit: 'c590533',
+          },
+          {
+            date: '2026-04-26',
+            text: 'All daily crons normalized to Eastern Standard Time (devotional 6:00 / brief 6:30 / coaching 7:00 / accountability 18:00).',
+            commit: '7cc1b0a',
+          },
+        ];
+
+        let topThreeSignups = [];
+        try {
+          topThreeSignups = await sql`
+            SELECT
+              c.id, c.first_name, c.last_name, c.email, c.created_at,
+              up.membership_tier
+            FROM contacts c
+            LEFT JOIN user_profiles up ON up.contact_id = c.id
+            WHERE c.created_at > NOW() - INTERVAL '14 days'
+              AND c.email NOT ILIKE '%@%.test'
+              AND c.email NOT ILIKE '%@example.com'
+              AND c.email NOT ILIKE '%@test.com'
+              AND c.email NOT ILIKE 'demo-%'
+              AND c.email NOT ILIKE 'finaltest%'
+              AND c.email NOT ILIKE 'test+%@%'
+              AND c.email NOT ILIKE 'test@valuetovictory.com'
+            ORDER BY c.created_at DESC
+            LIMIT 3`;
+        } catch (e) { /* contacts schema may differ in dev */ }
+
+        const topThree = {
+          signups: topThreeSignups,
+          priorities: TEAM_BRIEF_PRIORITIES,
+          ships: TEAM_BRIEF_SHIPS,
+        };
+        // === END TOP 3 ====================================================
+
         return res.json({
           agents: agentRuns,
           health,
@@ -10248,6 +10321,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           systems: systemRegistry,
           aiRouter,
           userFeedback,
+          topThree,
         });
       } catch (dashErr) {
         return res.status(500).json({ error: dashErr.message });
