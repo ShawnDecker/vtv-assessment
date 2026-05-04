@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Card 01 · Hero · 1080×1080</title>
+<link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+<link href="https://fonts.bunny.net/css?family=instrument-serif:400,400i|inter:400,500,700,800,900|jetbrains-mono:400,700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#000;font-family:'Inter',-apple-system,sans-serif}
+  .card{
+    width:1080px;height:1080px;position:relative;overflow:hidden;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 35%, rgba(212,168,71,0.22), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 80% 90%, rgba(34,211,238,0.18), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 15% 85%, rgba(167,139,250,0.15), transparent 60%),
+      linear-gradient(135deg, #0a0a0a 0%, #1a1018 50%, #0a0a0a 100%);
+    color:#fff;
+    isolation:isolate;
+  }
+  /* film grain */
+  .card::before{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/></svg>");
+    opacity:0.13;mix-blend-mode:overlay;
+  }
+  /* mesh accent — diagonal line grid */
+  .card::after{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background-image:
+      linear-gradient(0deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size:60px 60px;
+    mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 70%);
+  }
+  .inner{position:relative;z-index:2;width:100%;height:100%;padding:90px 80px;display:flex;flex-direction:column;justify-content:space-between}
+  .top{display:flex;justify-content:space-between;align-items:center}
+  .badge{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:10px 18px;border-radius:999px;
+    background:rgba(255,255,255,0.06);backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.12);
+    font-size:13px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;
+    color:#22d3ee;
+  }
+  .badge::before{content:'';width:8px;height:8px;border-radius:50%;background:#22d3ee;box-shadow:0 0 12px #22d3ee}
+  .brand{
+    font-family:'Instrument Serif',serif;font-style:italic;font-size:24px;
+    color:rgba(255,255,255,0.6);letter-spacing:0.02em;
+  }
+  .headline{margin-top:auto;margin-bottom:60px}
+  .h1{
+    font-family:'Instrument Serif',serif;font-weight:400;font-style:italic;
+    font-size:128px;line-height:0.95;letter-spacing:-0.02em;color:#fff;
+    text-shadow:0 4px 40px rgba(0,0,0,0.5);
+  }
+  .h1 .accent{
+    background:linear-gradient(135deg,#fbbf24 0%,#D4A847 40%,#92400e 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    font-style:normal;font-weight:700;
+    text-shadow:none;
+    filter:drop-shadow(0 4px 30px rgba(212,168,71,0.4));
+  }
+  .h1 .strike{position:relative;display:inline-block}
+  .h1 .strike::after{
+    content:'';position:absolute;left:-4%;right:-4%;top:54%;height:6px;
+    background:linear-gradient(90deg,transparent,#f87171,transparent);
+    transform:rotate(-2deg);
+  }
+  .sub{
+    margin-top:36px;font-size:24px;font-weight:500;color:rgba(255,255,255,0.7);
+    letter-spacing:0.01em;line-height:1.4;max-width:780px;
+  }
+  .sub strong{color:#fff;font-weight:700}
+  .bottom{display:flex;align-items:center;justify-content:space-between;gap:24px}
+  .price{
+    display:flex;align-items:baseline;gap:14px;
+  }
+  .price .amt{
+    font-family:'Inter',sans-serif;font-weight:900;font-size:108px;letter-spacing:-0.04em;
+    background:linear-gradient(135deg,#fbbf24 0%,#D4A847 50%,#92400e 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    line-height:0.9;
+  }
+  .price .label{font-size:18px;color:rgba(255,255,255,0.55);font-weight:600;letter-spacing:0.18em;text-transform:uppercase}
+  .url{
+    text-align:right;font-family:'JetBrains Mono',monospace;font-size:14px;
+    color:rgba(255,255,255,0.5);letter-spacing:0.04em;
+  }
+  .url .arrow{color:#22d3ee;font-size:18px;font-weight:700}
+  .feature-row{
+    display:flex;gap:8px;margin-top:24px;flex-wrap:wrap;
+  }
+  .chip{
+    padding:8px 14px;border-radius:8px;
+    background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+    font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);
+    letter-spacing:0.02em;
+  }
+  .chip.gold{border-color:rgba(212,168,71,0.4);color:#D4A847;background:rgba(212,168,71,0.08)}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="inner">
+    <div class="top">
+      <div class="badge">VTV Top-10 Skill Pack</div>
+      <div class="brand">Value to Victory</div>
+    </div>
+    <div class="headline">
+      <div class="h1"><span class="strike">Stop renting</span></div>
+      <div class="h1">your AI workflows.</div>
+      <div class="h1"><span class="accent">Own them.</span></div>
+      <div class="sub">10 profession-specific skill packs + a Jarvis-style design structure that wires into <strong>your own</strong> Obsidian vault.</div>
+      <div class="feature-row">
+        <span class="chip">Voice rules</span>
+        <span class="chip">5 templates</span>
+        <span class="chip">3 AI prompts</span>
+        <span class="chip">Weekly dashboard</span>
+        <span class="chip gold">+ Jarvis design</span>
+      </div>
+    </div>
+    <div class="bottom">
+      <div class="price">
+        <span class="amt">$197</span>
+        <span class="label">once · yours forever</span>
+      </div>
+      <div class="url">assessment.valuetovictory.com<br><span class="arrow">→</span> /professionals</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
