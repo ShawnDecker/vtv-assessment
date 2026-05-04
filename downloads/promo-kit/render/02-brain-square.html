@@ -4,138 +4,186 @@
 <meta charset="UTF-8">
 <title>Card 02 · Brain · 1080×1080</title>
 <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
-<link href="https://fonts.bunny.net/css?family=instrument-serif:400,400i|inter:400,500,700,800,900|jetbrains-mono:400&display=swap" rel="stylesheet">
+<link href="https://fonts.bunny.net/css?family=instrument-serif:400,400i|inter:400,500,700,800,900|jetbrains-mono:400,700&display=swap" rel="stylesheet">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{background:#000;font-family:'Inter',sans-serif}
   .card{
     width:1080px;height:1080px;position:relative;overflow:hidden;color:#fff;
     background:
-      radial-gradient(ellipse 80% 70% at 50% 50%, rgba(34,211,238,0.18), transparent 60%),
-      radial-gradient(ellipse 60% 50% at 20% 100%, rgba(167,139,250,0.18), transparent 60%),
-      linear-gradient(180deg, #050a14 0%, #0a0f1c 50%, #050a14 100%);
+      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(34,211,238,0.18), transparent 65%),
+      radial-gradient(ellipse 50% 40% at 80% 20%, rgba(167,139,250,0.22), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 20% 90%, rgba(212,168,71,0.18), transparent 60%),
+      linear-gradient(135deg,#040714 0%,#0a0f24 40%,#0a0518 100%);
     isolation:isolate;
   }
-  .card::before{
+  /* film grain */
+  .card::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='0.92' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");opacity:0.14;mix-blend-mode:overlay;pointer-events:none}
+  /* particle dots */
+  .card::after{
     content:'';position:absolute;inset:0;pointer-events:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
-    opacity:0.1;mix-blend-mode:overlay;
+    background-image:
+      radial-gradient(1px 1px at 12% 18%,rgba(255,255,255,0.6),transparent),
+      radial-gradient(1px 1px at 84% 22%,rgba(34,211,238,0.7),transparent),
+      radial-gradient(2px 2px at 23% 67%,rgba(167,139,250,0.5),transparent),
+      radial-gradient(1px 1px at 67% 78%,rgba(255,255,255,0.5),transparent),
+      radial-gradient(1.5px 1.5px at 92% 55%,rgba(212,168,71,0.6),transparent),
+      radial-gradient(1px 1px at 8% 82%,rgba(34,211,238,0.5),transparent),
+      radial-gradient(1px 1px at 50% 8%,rgba(255,255,255,0.4),transparent),
+      radial-gradient(1.5px 1.5px at 38% 42%,rgba(255,255,255,0.3),transparent),
+      radial-gradient(1px 1px at 75% 92%,rgba(167,139,250,0.5),transparent),
+      radial-gradient(2px 2px at 62% 33%,rgba(34,211,238,0.4),transparent);
   }
-  .inner{position:relative;z-index:2;width:100%;height:100%;padding:80px;display:flex;flex-direction:column}
+  .inner{position:relative;z-index:3;padding:70px;height:100%;display:flex;flex-direction:column}
   .badge{
     align-self:flex-start;display:inline-flex;align-items:center;gap:10px;
-    padding:10px 18px;border-radius:999px;
-    background:rgba(34,211,238,0.1);backdrop-filter:blur(20px);
+    padding:11px 20px;border-radius:999px;
+    background:rgba(34,211,238,0.08);backdrop-filter:blur(20px);
     border:1px solid rgba(34,211,238,0.3);
-    font-size:13px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#67e8f9;
+    font-size:13px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#a5f3fc;
   }
-  .badge::before{content:'';width:8px;height:8px;border-radius:50%;background:#22d3ee;box-shadow:0 0 16px #22d3ee}
-  .graph{flex:1;position:relative;display:flex;align-items:center;justify-content:center}
-  .graph svg{width:680px;height:680px;filter:drop-shadow(0 20px 60px rgba(34,211,238,0.3))}
-  .node-core{
+  .badge::before{content:'';width:8px;height:8px;border-radius:50%;background:#22d3ee;box-shadow:0 0 16px #22d3ee,0 0 4px #fff}
+  .stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;margin:30px 0}
+  .stage svg.lines{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+  .nodes{position:absolute;inset:0;z-index:2}
+  .node{position:absolute;border-radius:50%;transform:translate(-50%,-50%)}
+  /* far back nodes — blurred, smaller */
+  .n-bg{filter:blur(2.5px);opacity:0.6}
+  /* center node — frosted glass orb */
+  .core{
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    width:120px;height:120px;border-radius:50%;
-    background:radial-gradient(circle at 30% 30%, #fde68a, #D4A847 40%, #92400e);
+    width:180px;height:180px;border-radius:50%;z-index:3;
+    background:
+      radial-gradient(circle at 32% 28%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 35%),
+      radial-gradient(circle at 50% 50%, #fef3c7 0%, #fde68a 18%, #D4A847 50%, #92400e 90%);
     box-shadow:
-      0 0 0 6px rgba(255,255,255,0.08),
-      0 0 0 1px rgba(255,255,255,0.3) inset,
-      0 16px 40px rgba(212,168,71,0.6),
-      0 0 80px rgba(212,168,71,0.4);
+      inset 0 0 0 1px rgba(255,255,255,0.4),
+      inset 0 -20px 50px rgba(146,64,14,0.6),
+      0 0 0 12px rgba(212,168,71,0.06),
+      0 0 0 1px rgba(212,168,71,0.2),
+      0 0 100px rgba(212,168,71,0.5),
+      0 0 200px rgba(212,168,71,0.3),
+      0 30px 60px rgba(0,0,0,0.6);
     display:flex;align-items:center;justify-content:center;
-    font-size:24px;font-weight:900;color:#1a0f00;letter-spacing:0.04em;
   }
-  .pulse{
+  .core .label{
+    font-family:'Inter';font-weight:900;font-size:34px;
+    color:#1a0f00;letter-spacing:0.08em;
+    text-shadow:0 1px 0 rgba(255,255,255,0.4);
+  }
+  /* pulse rings */
+  .ring{
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    width:120px;height:120px;border-radius:50%;
-    border:2px solid rgba(212,168,71,0.4);
-    animation:pulse 2.4s ease-out infinite;
+    width:180px;height:180px;border-radius:50%;
+    border:1.5px solid rgba(212,168,71,0.5);
+    animation:pulse 3s ease-out infinite;z-index:1;
   }
-  .pulse.p2{animation-delay:1.2s}
-  @keyframes pulse{
-    0%{transform:translate(-50%,-50%) scale(1);opacity:0.7}
-    100%{transform:translate(-50%,-50%) scale(2.6);opacity:0}
-  }
-  .headline{text-align:center;margin-top:40px}
-  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:14px;color:rgba(255,255,255,0.55);letter-spacing:0.3em;text-transform:uppercase;margin-bottom:18px}
-  .h1{
-    font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;
-    font-size:80px;line-height:1.0;letter-spacing:-0.01em;
-  }
+  .ring.r2{animation-delay:1s;border-color:rgba(34,211,238,0.4)}
+  .ring.r3{animation-delay:2s;border-color:rgba(167,139,250,0.35)}
+  @keyframes pulse{0%{transform:translate(-50%,-50%) scale(1);opacity:0.7}100%{transform:translate(-50%,-50%) scale(3);opacity:0}}
+  /* headline */
+  .copy{text-align:center;margin-top:auto}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:13px;color:rgba(255,255,255,0.55);letter-spacing:0.32em;text-transform:uppercase;margin-bottom:14px}
+  .h1{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;font-size:96px;line-height:0.95;letter-spacing:-0.015em;color:#fff;text-shadow:0 4px 40px rgba(0,0,0,0.6)}
   .h1 .glow{
-    background:linear-gradient(135deg,#67e8f9 0%,#22d3ee 50%,#0891b2 100%);
+    background:linear-gradient(135deg,#a5f3fc 0%,#22d3ee 40%,#0e7490 100%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
-    filter:drop-shadow(0 4px 24px rgba(34,211,238,0.5));
+    filter:drop-shadow(0 0 30px rgba(34,211,238,0.6));
     font-weight:700;font-style:normal;
   }
-  .footer-row{display:flex;justify-content:space-between;align-items:center;margin-top:36px;padding-top:28px;border-top:1px solid rgba(255,255,255,0.08)}
-  .price{font-family:'Inter';font-weight:900;font-size:42px;color:#D4A847;letter-spacing:-0.02em}
-  .url{font-family:'JetBrains Mono',monospace;font-size:14px;color:rgba(255,255,255,0.5)}
+  .footer{display:flex;justify-content:space-between;align-items:center;margin-top:32px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08)}
+  .price{font-family:'Inter';font-weight:900;font-size:46px;letter-spacing:-0.04em;background:linear-gradient(135deg,#fde68a,#D4A847);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .url{font-family:'JetBrains Mono',monospace;font-size:14px;color:rgba(255,255,255,0.55);text-align:right}
+  .url .arrow{color:#22d3ee;font-weight:700;display:block;margin-top:4px}
 </style>
 </head>
 <body>
 <div class="card">
   <div class="inner">
-    <div class="badge">Inspired by Iron Man · Built for your business</div>
-    <div class="graph">
-      <svg viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
+    <div class="badge" style="color:#86efac;border-color:rgba(134,239,172,0.4);background:rgba(22,163,74,0.12)">🏆 Founders · First 100 Only</div>
+
+    <div class="stage">
+      <!-- Curved bezier connections -->
+      <svg class="lines" viewBox="0 0 940 580" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <radialGradient id="nodeBlue" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stop-color="#67e8f9"/>
-            <stop offset="1" stop-color="#0891b2"/>
-          </radialGradient>
-          <radialGradient id="nodePurple" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stop-color="#c4b5fd"/>
-            <stop offset="1" stop-color="#7c3aed"/>
-          </radialGradient>
-          <radialGradient id="nodeGreen" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stop-color="#86efac"/>
-            <stop offset="1" stop-color="#16a34a"/>
-          </radialGradient>
-          <filter id="glow"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <linearGradient id="lineCyan" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#22d3ee" stop-opacity="0.7"/>
+            <stop offset="1" stop-color="#22d3ee" stop-opacity="0.1"/>
+          </linearGradient>
+          <linearGradient id="lineGold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#D4A847" stop-opacity="0.8"/>
+            <stop offset="1" stop-color="#D4A847" stop-opacity="0.2"/>
+          </linearGradient>
+          <linearGradient id="linePurple" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#a78bfa" stop-opacity="0.6"/>
+            <stop offset="1" stop-color="#a78bfa" stop-opacity="0.1"/>
+          </linearGradient>
+          <filter id="lineGlow"><feGaussianBlur stdDeviation="2"/></filter>
         </defs>
-        <!-- edges -->
-        <g stroke="rgba(34,211,238,0.4)" stroke-width="1.5" fill="none">
-          <line x1="340" y1="340" x2="160" y2="200"/>
-          <line x1="340" y1="340" x2="520" y2="200"/>
-          <line x1="340" y1="340" x2="160" y2="480"/>
-          <line x1="340" y1="340" x2="520" y2="480"/>
-          <line x1="340" y1="340" x2="340" y2="120"/>
-          <line x1="340" y1="340" x2="340" y2="560"/>
-          <line x1="340" y1="340" x2="100" y2="340"/>
-          <line x1="340" y1="340" x2="580" y2="340"/>
-          <line x1="160" y1="200" x2="340" y2="120"/>
-          <line x1="520" y1="200" x2="340" y2="120"/>
-          <line x1="160" y1="480" x2="340" y2="560"/>
-          <line x1="520" y1="480" x2="340" y2="560"/>
-          <line x1="100" y1="340" x2="160" y2="200"/>
-          <line x1="100" y1="340" x2="160" y2="480"/>
-          <line x1="580" y1="340" x2="520" y2="200"/>
-          <line x1="580" y1="340" x2="520" y2="480"/>
-          <line x1="160" y1="200" x2="340" y2="340" stroke="rgba(212,168,71,0.7)" stroke-width="2"/>
-        </g>
-        <g filter="url(#glow)">
-          <circle cx="160" cy="200" r="22" fill="url(#nodeBlue)"/>
-          <circle cx="520" cy="200" r="22" fill="url(#nodeBlue)"/>
-          <circle cx="160" cy="480" r="22" fill="url(#nodeBlue)"/>
-          <circle cx="520" cy="480" r="22" fill="url(#nodeBlue)"/>
-          <circle cx="340" cy="120" r="18" fill="url(#nodePurple)"/>
-          <circle cx="340" cy="560" r="18" fill="url(#nodePurple)"/>
-          <circle cx="100" cy="340" r="18" fill="url(#nodeGreen)"/>
-          <circle cx="580" cy="340" r="18" fill="url(#nodeGreen)"/>
+        <g fill="none" stroke-width="1.4" filter="url(#lineGlow)">
+          <!-- Center to inner ring -->
+          <path d="M 470 290 Q 380 220 280 160" stroke="url(#lineCyan)"/>
+          <path d="M 470 290 Q 560 220 660 160" stroke="url(#lineCyan)"/>
+          <path d="M 470 290 Q 380 360 280 420" stroke="url(#lineCyan)"/>
+          <path d="M 470 290 Q 560 360 660 420" stroke="url(#lineCyan)"/>
+          <path d="M 470 290 Q 470 200 470 110" stroke="url(#lineGold)" stroke-width="2"/>
+          <path d="M 470 290 Q 470 380 470 470" stroke="url(#lineGold)" stroke-width="2"/>
+          <path d="M 470 290 Q 350 290 200 290" stroke="url(#linePurple)"/>
+          <path d="M 470 290 Q 590 290 740 290" stroke="url(#linePurple)"/>
+          <!-- Outer connections -->
+          <path d="M 280 160 Q 200 200 130 100" stroke="url(#lineCyan)" stroke-opacity="0.4"/>
+          <path d="M 660 160 Q 740 200 810 100" stroke="url(#lineCyan)" stroke-opacity="0.4"/>
+          <path d="M 280 420 Q 200 480 100 500" stroke="url(#linePurple)" stroke-opacity="0.4"/>
+          <path d="M 660 420 Q 760 470 850 510" stroke="url(#linePurple)" stroke-opacity="0.4"/>
+          <path d="M 470 110 Q 380 60 320 40" stroke="url(#lineGold)" stroke-opacity="0.3"/>
+          <path d="M 470 110 Q 560 60 620 40" stroke="url(#lineGold)" stroke-opacity="0.3"/>
         </g>
       </svg>
-      <div class="pulse"></div>
-      <div class="pulse p2"></div>
-      <div class="node-core">YOU</div>
+
+      <div class="ring"></div>
+      <div class="ring r2"></div>
+      <div class="ring r3"></div>
+
+      <!-- Nodes (positioned absolute over .stage which is centered) -->
+      <div class="nodes">
+        <!-- Background blurred nodes -->
+        <div class="node n-bg" style="left:13%;top:18%;width:14px;height:14px;background:radial-gradient(circle at 30% 30%,#67e8f9,#0e7490);box-shadow:0 0 20px #22d3ee"></div>
+        <div class="node n-bg" style="left:88%;top:18%;width:12px;height:12px;background:radial-gradient(circle at 30% 30%,#67e8f9,#0e7490);box-shadow:0 0 20px #22d3ee"></div>
+        <div class="node n-bg" style="left:11%;top:88%;width:10px;height:10px;background:radial-gradient(circle at 30% 30%,#c4b5fd,#7c3aed);box-shadow:0 0 18px #a78bfa"></div>
+        <div class="node n-bg" style="left:90%;top:90%;width:14px;height:14px;background:radial-gradient(circle at 30% 30%,#c4b5fd,#7c3aed);box-shadow:0 0 18px #a78bfa"></div>
+        <div class="node n-bg" style="left:34%;top:7%;width:8px;height:8px;background:radial-gradient(circle at 30% 30%,#fde68a,#D4A847);box-shadow:0 0 14px #D4A847"></div>
+        <div class="node n-bg" style="left:66%;top:7%;width:8px;height:8px;background:radial-gradient(circle at 30% 30%,#fde68a,#D4A847);box-shadow:0 0 14px #D4A847"></div>
+
+        <!-- Mid ring nodes -->
+        <div class="node" style="left:30%;top:28%;width:32px;height:32px;background:radial-gradient(circle at 30% 30%,#a5f3fc,#22d3ee 40%,#0e7490);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),0 0 32px rgba(34,211,238,0.7),0 8px 20px rgba(0,0,0,0.5)"></div>
+        <div class="node" style="left:70%;top:28%;width:32px;height:32px;background:radial-gradient(circle at 30% 30%,#a5f3fc,#22d3ee 40%,#0e7490);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),0 0 32px rgba(34,211,238,0.7),0 8px 20px rgba(0,0,0,0.5)"></div>
+        <div class="node" style="left:30%;top:72%;width:32px;height:32px;background:radial-gradient(circle at 30% 30%,#a5f3fc,#22d3ee 40%,#0e7490);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),0 0 32px rgba(34,211,238,0.7),0 8px 20px rgba(0,0,0,0.5)"></div>
+        <div class="node" style="left:70%;top:72%;width:32px;height:32px;background:radial-gradient(circle at 30% 30%,#a5f3fc,#22d3ee 40%,#0e7490);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),0 0 32px rgba(34,211,238,0.7),0 8px 20px rgba(0,0,0,0.5)"></div>
+        <div class="node" style="left:50%;top:18%;width:26px;height:26px;background:radial-gradient(circle at 30% 30%,#fde68a,#D4A847 40%,#92400e);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),0 0 28px rgba(212,168,71,0.8),0 8px 20px rgba(0,0,0,0.5)"></div>
+        <div class="node" style="left:50%;top:82%;width:26px;height:26px;background:radial-gradient(circle at 30% 30%,#fde68a,#D4A847 40%,#92400e);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),0 0 28px rgba(212,168,71,0.8),0 8px 20px rgba(0,0,0,0.5)"></div>
+        <div class="node" style="left:18%;top:50%;width:26px;height:26px;background:radial-gradient(circle at 30% 30%,#ddd6fe,#a78bfa 40%,#6d28d9);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),0 0 28px rgba(167,139,250,0.7),0 8px 20px rgba(0,0,0,0.5)"></div>
+        <div class="node" style="left:82%;top:50%;width:26px;height:26px;background:radial-gradient(circle at 30% 30%,#ddd6fe,#a78bfa 40%,#6d28d9);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),0 0 28px rgba(167,139,250,0.7),0 8px 20px rgba(0,0,0,0.5)"></div>
+
+        <!-- Small detail nodes -->
+        <div class="node" style="left:42%;top:35%;width:10px;height:10px;background:#86efac;box-shadow:0 0 14px #4ade80"></div>
+        <div class="node" style="left:58%;top:35%;width:10px;height:10px;background:#86efac;box-shadow:0 0 14px #4ade80"></div>
+        <div class="node" style="left:42%;top:65%;width:10px;height:10px;background:#fca5a5;box-shadow:0 0 14px #f87171"></div>
+        <div class="node" style="left:58%;top:65%;width:10px;height:10px;background:#fca5a5;box-shadow:0 0 14px #f87171"></div>
+      </div>
+
+      <!-- Center orb -->
+      <div class="core"><span class="label">YOU</span></div>
     </div>
-    <div class="headline">
+
+    <div class="copy">
       <div class="eyebrow">Your second brain · on your machine</div>
-      <div class="h1">Your knowledge, <span class="glow">finally</span></div>
-      <div class="h1"><span class="glow">connected.</span></div>
+      <div class="h1">Your knowledge,</div>
+      <div class="h1"><span class="glow">finally connected.</span></div>
     </div>
-    <div class="footer-row">
+
+    <div class="footer">
       <div class="price">$197</div>
-      <div class="url">assessment.valuetovictory.com/professionals</div>
+      <div class="url">assessment.valuetovictory.com<span class="arrow">→ /professionals</span></div>
     </div>
   </div>
 </div>

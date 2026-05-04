@@ -47,20 +47,45 @@
     font-family:'Instrument Serif',serif;font-style:italic;font-size:30px;color:rgba(255,255,255,0.7);
   }
   .ours{
-    margin-top:16px;padding:32px;border-radius:18px;
+    position:relative;margin-top:18px;padding:38px 36px;border-radius:22px;
     background:
-      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(212,168,71,0.3), transparent 70%),
-      linear-gradient(135deg,#1a1208,#0a0a0a);
-    border:1px solid rgba(212,168,71,0.5);
-    box-shadow:0 20px 60px rgba(212,168,71,0.15);
+      radial-gradient(ellipse 100% 80% at 50% 0%, rgba(212,168,71,0.45), transparent 70%),
+      linear-gradient(135deg,#251806 0%,#0f0a02 100%);
+    border:1.5px solid rgba(212,168,71,0.6);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.15),
+      0 0 0 1px rgba(212,168,71,0.1),
+      0 30px 80px rgba(212,168,71,0.25),
+      0 0 120px rgba(212,168,71,0.15);
     display:flex;justify-content:space-between;align-items:center;
+    overflow:hidden;
   }
-  .ours .l{font-size:22px;font-weight:700;color:#fff}
-  .ours .l .sub{display:block;font-size:13px;color:rgba(212,168,71,0.7);font-weight:600;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:4px}
+  .ours::before{
+    content:'';position:absolute;inset:0;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><filter id='n'><feTurbulence baseFrequency='0.85'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/></svg>");
+    opacity:0.15;mix-blend-mode:overlay;pointer-events:none;
+  }
+  .ours::after{
+    content:'';position:absolute;top:-50%;left:-10%;width:50%;height:200%;
+    background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,0.08) 50%,transparent 70%);
+    transform:rotate(15deg);pointer-events:none;
+  }
+  .ours .l{font-size:24px;font-weight:700;color:#fff;position:relative;z-index:1}
+  .ours .l .sub{display:block;font-size:13px;color:#fde68a;font-weight:800;letter-spacing:0.22em;text-transform:uppercase;margin-bottom:6px}
   .ours .v{
-    font-family:'Inter';font-weight:900;font-size:64px;letter-spacing:-0.04em;
-    background:linear-gradient(135deg,#fde68a,#D4A847,#92400e);
+    position:relative;z-index:1;
+    font-family:'Inter';font-weight:900;font-size:90px;letter-spacing:-0.05em;line-height:0.9;
+    background:linear-gradient(135deg,#fef3c7 0%,#fbbf24 35%,#D4A847 65%,#92400e 100%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 24px rgba(212,168,71,0.5));
+  }
+  .savings{
+    position:absolute;top:-14px;right:24px;z-index:2;
+    padding:6px 14px;border-radius:999px;
+    background:linear-gradient(135deg,#16a34a,#15803d);
+    border:1px solid rgba(134,239,172,0.5);
+    font-size:13px;font-weight:800;color:#fff;letter-spacing:0.15em;text-transform:uppercase;
+    box-shadow:0 8px 20px rgba(22,163,74,0.4);
   }
 </style>
 </head>
@@ -81,6 +106,7 @@
     <div class="total"><div class="l">12-month total</div><div class="v">$8,520</div></div>
     <div class="vs">vs.</div>
     <div class="ours">
+      <div class="savings">Founders · First 100</div>
       <div class="l"><span class="sub">VTV Skill Pack Bundle</span>10 packs · Jarvis design · forever</div>
       <div class="v">$197</div>
     </div>
