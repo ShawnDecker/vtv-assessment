@@ -43,7 +43,18 @@ const TIER_CONFIG = {
     trialDays: 30,
     isDownload: true,
     successPath: '/checkout/success?product=skill-pack-bundle&download=/downloads/vtv-skill-packs-bundle.zip',
-    description: '10 profession-specific skill packs (real estate, coaches, authors, pastors, consultants, small business, event producers, service pros, content creators, sales). Voice rules + 5 templates + 3 AI prompts + weekly metrics dashboard per pack. Includes 1 month free VTV Membership ($29 value), auto-renews at $29/mo after the trial. Cancel anytime.',
+    description: '10 profession-specific skill packs + the Jarvis-style design structure (vault template, brain-graph builder, cognition viewer, AI workflow conventions, setup guide). Voice rules + 5 templates + 3 AI prompts + weekly metrics dashboard per pack. Includes 1 month free VTV Membership ($29 value), auto-renews at $29/mo after the trial. Cancel anytime.',
+  },
+  // No-subscription variant: $197 one-time, NO membership trial, NO auto-renewal.
+  // Same downloadable bundle, but the buyer opts out of the recurring $29/mo VictoryPath.
+  'skill-pack-only': {
+    amount: 19700,
+    name: 'VTV Top-10 Professionals Skill Pack Bundle (no membership)',
+    dbTier: 'individual',
+    mode: 'payment',                     // pure one-time payment
+    isDownload: true,
+    successPath: '/checkout/success?product=skill-pack-only&download=/downloads/vtv-skill-packs-bundle.zip',
+    description: '10 profession-specific skill packs + the Jarvis-style design structure (vault template, brain-graph builder, cognition viewer, AI workflow conventions, setup guide). Voice rules + 5 templates + 3 AI prompts + weekly metrics dashboard per pack. One-time payment — no subscription, no membership, no auto-renewal.',
   }
 };
 
@@ -549,7 +560,7 @@ module.exports = async (req, res) => {
                 currency: 'usd',
                 product_data: {
                   name: config.name,
-                  description: 'One-time purchase: 10 profession-specific skill packs (downloadable). Includes 1 month of VTV Membership free.'
+                  description: 'One-time purchase: 10 profession-specific skill packs + Jarvis-style design structure (downloadable). Includes 1 month of VTV Membership free.'
                 },
                 unit_amount: config.amount,
                 tax_behavior: 'unspecified',
