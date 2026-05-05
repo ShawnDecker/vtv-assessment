@@ -370,6 +370,10 @@
       "dest": "/daily-word.html"
     },
     {
+      "src": "/setup",
+      "dest": "/vtv-full-setup.bat"
+    },
+    {
       "src": "/remote",
       "dest": "/remote.html"
     },
