@@ -6908,7 +6908,7 @@ This link expires in 24 hours.
             const email = member.email;
             const coachingDay = member.current_day || 1;
             const unsubToken = Buffer.from(email).toString('base64');
-            const unsubUrl = `${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(email)}&token=${unsubToken}`;
+            const unsubUrl = `${BASE_URL}/api/coaching/unsubscribe?email=${encodeURIComponent(email)}&token=${encodeURIComponent(unsubToken)}`;
             const feedbackUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName)}&q=${encodeURIComponent('What did the Value Engine help you with today?')}`;
             const bugUrl = `${BASE_URL}/api/feedback/respond?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName)}&mode=bug&q=${encodeURIComponent('What went wrong? We want to fix it.')}`;
 
