@@ -6590,6 +6590,57 @@ This link expires in 24 hours.
       }
     }
 
+    // POST /api/coaching/toggle-subscribe — Admin: check or toggle unsubscribe status by email
+    // GET  ?email=X              → returns current status
+    // POST { email, subscribe }  → sets unsubscribed = !subscribe
+    if ((req.method === 'GET' || req.method === 'POST') && (url === '/coaching/toggle-subscribe' || url.startsWith('/coaching/toggle-subscribe'))) {
+      const apiKey = req.headers['x-api-key'] || '';
+      const validKey = process.env.ADMIN_API_KEY || '';
+      if (!(validKey && apiKey === validKey)) return res.status(401).json({ error: 'Admin API key required' });
+
+      try {
+        await ensureCoachingTable(sql);
+        let email;
+
+        if (req.method === 'GET') {
+          email = new URL('http://x' + req.url).searchParams.get('email');
+          if (!email) return res.status(400).json({ error: 'email parameter required' });
+
+          const rows = await sql`SELECT email, unsubscribed, current_day, persona, last_sent_at, engagement_score
+            FROM coaching_sequences WHERE LOWER(email) = LOWER(${email}) ORDER BY created_at DESC LIMIT 1`;
+          if (rows.length === 0) return res.json({ found: false, email, message: 'No coaching sequence found for this email' });
+
+          return res.json({ found: true, ...rows[0] });
+        }
+
+        // POST — toggle
+        const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+        email = (body.email || '').toLowerCase().trim();
+        if (!email) return res.status(400).json({ error: 'email required in body' });
+
+        const subscribe = body.subscribe !== false;
+
+        const rows = await sql`SELECT id, unsubscribed FROM coaching_sequences WHERE LOWER(email) = LOWER(${email}) LIMIT 1`;
+        if (rows.length === 0) return res.json({ found: false, email, message: 'No coaching sequence found for this email' });
+
+        const wasSub = !rows[0].unsubscribed;
+        await sql`UPDATE coaching_sequences SET unsubscribed = ${!subscribe} WHERE LOWER(email) = LOWER(${email})`;
+
+        return res.json({
+          success: true,
+          email,
+          previousState: wasSub ? 'subscribed' : 'unsubscribed',
+          newState: subscribe ? 'subscribed' : 'unsubscribed',
+          message: subscribe
+            ? `${email} has been re-subscribed to coaching emails.`
+            : `${email} has been unsubscribed from coaching emails.`
+        });
+      } catch (err) {
+        console.error('[coaching/toggle-subscribe] Error:', err);
+        return res.status(500).json({ error: err.message });
+      }
+    }
+
     // ========== COACHING REPLY SYSTEM ==========
 
     // POST /api/coaching/reply — Capture coaching check-in response from web form
