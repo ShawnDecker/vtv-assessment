@@ -9,14 +9,27 @@ const { neon } = require('@neondatabase/serverless');
 // ============================================================================
 
 // --- Local Ollama models ---------------------------------------------------
+// Updated 2026-05-12 — Hermes 3 added for function-call / agent-loop work.
 // Updated 2026-04-20 to match models actually installed on the dev machine.
 // Override any via env vars (e.g., LOCAL_MODEL_COACHING=mistral-small).
+// See: memory/reference_ollama_lineup.md for the role-by-role map.
 const LOCAL_MODELS = {
   'coaching-insight':    process.env.LOCAL_MODEL_COACHING    || 'qwen3:8b',
   'assessment-summary':  process.env.LOCAL_MODEL_SUMMARY     || 'mistral-small',
   'email-draft':         process.env.LOCAL_MODEL_EMAIL       || 'qwen3:8b',
   'content-generate':    process.env.LOCAL_MODEL_CONTENT     || 'qwen3:8b',
   'devotional-generate': process.env.LOCAL_MODEL_DEVOTIONAL  || 'mistral-small',
+  // Function-call tier — bench-driven 2026-05-12 (see _claude/scripts/hermes-bench/):
+  //   qwen3:8b = 4/4 accuracy (incl. refusal), ~32s avg latency. Reliable default.
+  //   hermes3:8b = 3/4 with native ChatML format, ~27s. Faster but fails refusal case.
+  //   hermes3:3b = 0/4 with native format. Removed from routing.
+  //   phi4-mini = 3/4 but hallucinates on refusal.
+  // Default = qwen3:8b for accuracy. Use hermes3:8b ONLY when speed > one-shot correctness
+  // (and you can retry/validate downstream).
+  'function-call':       process.env.LOCAL_MODEL_FUNCALL     || 'qwen3:8b',
+  'function-call-fast':  process.env.LOCAL_MODEL_FUNCALL_FAST|| 'hermes3:8b',
+  'agent-loop':          process.env.LOCAL_MODEL_AGENT_LOOP  || 'qwen3:8b',
+  'tool-use':            process.env.LOCAL_MODEL_TOOL_USE    || 'qwen3:8b',
 };
 const OLLAMA_HOST = process.env.OLLAMA_HOST || process.env.OLLAMA_URL || 'http://localhost:11434';
 
@@ -118,6 +131,12 @@ function pickTier(action, prompt, context) {
     'devotional-generate': 'small',
     'content-generate':    'small',
     'email-draft':         'frontier',   // writes as Shawn's persona — accuracy matters
+    // Hermes 3 tier (function-calling / agent work). Cloud fallback = Haiku
+    // (small) because Haiku 4.5 has strong native tool-use support.
+    'function-call':       'small',
+    'function-call-fast':  'small',
+    'agent-loop':          'small',
+    'tool-use':            'small',
   };
   let tier = defaults[action] || 'small';
   if (action === 'content-generate' && prompt) {
@@ -235,6 +254,333 @@ async function isOllamaAvailable() {
   } catch { return false; }
 }
 
+// ============================================================================
+// TOOL-CALL ESCALATION TIER (added 2026-05-12)
+// Local Ollama → Haiku → Opus with validation between each step.
+// Every successful escalation records a (failed_local, corrected) pair to
+// `tool_call_corrections` — the learning dataset for future fine-tuning OR
+// for routing decisions (which prompts always escalate → just delegate).
+// ============================================================================
+
+const TOOL_CALL_ACTIONS = new Set([
+  'function-call', 'function-call-fast', 'agent-loop', 'tool-use',
+]);
+
+// Validate a model's tool-call output against the provided tool catalog.
+// Accepts both Hermes ChatML format (<tool_call>...</tool_call>) and generic
+// {tool, args} JSON. Returns {valid, tool, args, reason, raw}.
+function validateToolCallOutput(rawText, tools) {
+  const text = (rawText || '').trim();
+  const toolNames = new Set(tools.map(t => t.function?.name || t.name).filter(Boolean));
+
+  // Hermes ChatML <tool_call>{...}</tool_call>
+  const hermesMatch = text.match(/<tool_call>([\s\S]*?)<\/tool_call>/);
+  if (hermesMatch) {
+    const inner = hermesMatch[1].trim();
+    if (inner === 'null' || inner === '"null"') {
+      return { valid: true, tool: null, args: null, reason: null, raw: text };
+    }
+    try {
+      const parsed = JSON.parse(inner);
+      const tool = parsed.name || parsed.tool;
+      const args = parsed.arguments || parsed.args || {};
+      if (!tool) return { valid: false, reason: 'missing_tool_name', raw: text };
+      if (!toolNames.has(tool)) return { valid: false, reason: 'hallucinated_tool', tool, raw: text };
+      return { valid: true, tool, args, reason: null, raw: text };
+    } catch (e) {
+      return { valid: false, reason: 'bad_tool_call_json', raw: text };
+    }
+  }
+
+  // Generic {tool, args} JSON (strip code fences first)
+  const cleaned = text.replace(/```(?:json)?/gi, '').trim();
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return { valid: false, reason: 'no_json_found', raw: text };
+  try {
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (parsed.tool === null) return { valid: true, tool: null, args: null, reason: null, raw: text };
+    if (!parsed.tool) return { valid: false, reason: 'missing_tool_field', raw: text };
+    if (!toolNames.has(parsed.tool)) return { valid: false, reason: 'hallucinated_tool', tool: parsed.tool, raw: text };
+    return { valid: true, tool: parsed.tool, args: parsed.args || {}, reason: null, raw: text };
+  } catch (e) {
+    return { valid: false, reason: 'bad_json', raw: text };
+  }
+}
+
+// Build the Hermes 3 / qwen3 native ChatML system prompt for tool calling.
+function buildToolCallSystemPrompt(tools, modelHint = 'generic') {
+  const isHermes = /hermes/i.test(modelHint);
+  const toolsJson = JSON.stringify(tools, null, 2);
+  if (isHermes) {
+    return `You are a function calling AI model. You are provided with function signatures within <tools></tools> XML tags. You may call one or more functions to assist with the user query.
+
+<tools>
+${toolsJson}
+</tools>
+
+For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags as follows:
+<tool_call>{"name":"<function-name>","arguments":<args-json-object>}</tool_call>
+
+If no function fits the user request, respond with exactly: <tool_call>null</tool_call>`;
+  }
+  // Generic (qwen3, phi4-mini, etc.) — explicit JSON-only contract
+  const toolsText = tools.map(t => {
+    const f = t.function || t;
+    const props = f.parameters?.properties || {};
+    const args = Object.keys(props).map(k => `${k}: ${props[k].type || 'any'}`).join(', ');
+    return `- ${f.name}(${args})${f.description ? '  // ' + f.description : ''}`;
+  }).join('\n');
+  return `You are a function-calling assistant. Available tools:
+${toolsText}
+
+Reply ONLY with valid JSON in this exact format and nothing else:
+{"tool":"<name>","args":{...}}
+
+If no tool fits the request, reply exactly: {"tool":null,"args":null}
+
+No prose. No markdown. No code fences. No explanation.`;
+}
+
+// Call Ollama for a tool-call task. Returns {text, latency_ms, usage}.
+async function callOllamaForTool(model, tools, userMessage) {
+  const systemPrompt = buildToolCallSystemPrompt(tools, model);
+  const start = Date.now();
+  const resp = await fetch(`${OLLAMA_HOST}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+      stream: false,
+      options: { temperature: 0.1 },
+    }),
+    signal: AbortSignal.timeout(90000),
+  });
+  if (!resp.ok) throw new Error(`Ollama tool-call error: ${resp.status}`);
+  const data = await resp.json();
+  return {
+    text: data.message?.content || '',
+    latency_ms: Date.now() - start,
+    usage: { input_tokens: data.prompt_eval_count || 0, output_tokens: data.eval_count || 0 },
+  };
+}
+
+// Call Anthropic for a tool-call task using their native tool-use API.
+// Returns {text, tool, args, model, tier, latency_ms, usage} — already
+// structured because Anthropic's API exposes tool_use blocks natively.
+async function callAnthropicForTool(tier, tools, userMessage) {
+  const client = getAnthropic();
+  if (!client) throw new Error('ANTHROPIC_API_KEY not set');
+  const model = tier === 'frontier' ? FRONTIER_MODEL : SMALL_MODEL;
+  // Map our tool schema to Anthropic's input_schema shape
+  const anthropicTools = tools.map(t => {
+    const f = t.function || t;
+    return {
+      name: f.name,
+      description: f.description || '',
+      input_schema: f.parameters || { type: 'object', properties: {} },
+    };
+  });
+  const start = Date.now();
+  const response = await client.messages.create({
+    model,
+    max_tokens: 1024,
+    tools: anthropicTools,
+    tool_choice: { type: 'auto' },
+    messages: [{ role: 'user', content: userMessage }],
+  });
+  const latency_ms = Date.now() - start;
+  const toolUseBlock = (response.content || []).find(b => b.type === 'tool_use');
+  const textBlock = (response.content || []).find(b => b.type === 'text');
+  const u = response.usage || {};
+  const usage = {
+    input_tokens: u.input_tokens || 0,
+    output_tokens: u.output_tokens || 0,
+    cache_read_tokens: u.cache_read_input_tokens || 0,
+    cache_write_tokens: u.cache_creation_input_tokens || 0,
+  };
+  if (toolUseBlock) {
+    return {
+      tool: toolUseBlock.name, args: toolUseBlock.input,
+      text: JSON.stringify({ tool: toolUseBlock.name, args: toolUseBlock.input }),
+      model, tier, latency_ms, usage,
+    };
+  }
+  // No tool_use block = model chose not to call a tool (refusal pattern)
+  return {
+    tool: null, args: null,
+    text: textBlock?.text || '',
+    model, tier, latency_ms, usage,
+  };
+}
+
+// LEARNING TABLE — every escalation event captures a (failed_local, corrected)
+// pair. This becomes the training corpus for future fine-tuning or for
+// routing decisions ("this prompt class always escalates, skip local").
+let _correctionsReady = false;
+async function ensureToolCorrectionsTable(sql) {
+  if (_correctionsReady) return;
+  try {
+    await sql`CREATE TABLE IF NOT EXISTS tool_call_corrections (
+      id SERIAL PRIMARY KEY,
+      action TEXT NOT NULL,
+      prompt TEXT NOT NULL,
+      tools_json JSONB,
+      local_model TEXT,
+      local_output TEXT,
+      local_failure_reason TEXT,
+      corrected_model TEXT NOT NULL,
+      corrected_tier TEXT,
+      corrected_output TEXT,
+      corrected_tool TEXT,
+      corrected_args JSONB,
+      reviewed BOOLEAN DEFAULT FALSE,
+      caller TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_tcc_created ON tool_call_corrections(created_at DESC)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_tcc_local_failure ON tool_call_corrections(local_failure_reason)`;
+    _correctionsReady = true;
+  } catch (e) {
+    console.error('[tool_call_corrections] migration failed (non-fatal):', e.message);
+  }
+}
+
+async function recordCorrection(sql, c) {
+  try {
+    await sql`INSERT INTO tool_call_corrections
+      (action, prompt, tools_json, local_model, local_output, local_failure_reason,
+       corrected_model, corrected_tier, corrected_output, corrected_tool, corrected_args, caller)
+      VALUES
+      (${c.action}, ${c.prompt}, ${JSON.stringify(c.tools)}::jsonb,
+       ${c.local_model}, ${c.local_output}, ${c.local_failure_reason},
+       ${c.corrected_model}, ${c.corrected_tier}, ${c.corrected_output},
+       ${c.corrected_tool}, ${c.corrected_args ? JSON.stringify(c.corrected_args) : null}::jsonb,
+       ${c.caller || null})`;
+  } catch (e) {
+    console.warn('[tool_call_corrections] insert failed (non-fatal):', e.message);
+  }
+}
+
+// Orchestrator: try local → Haiku → Opus, validating between each step.
+// Returns {tool, args, model, tier, attempts, escalated_from} on success
+// or throws on total failure (all three tiers invalid).
+async function callToolCallWithEscalation({ action, tools, userMessage, caller, sql, forceProvider }) {
+  const overallStart = Date.now();
+  const attempts = [];
+  let localFailure = null;
+
+  // ---- Step 1: Local Ollama (skipped if forceProvider='cloud') ----
+  const ollamaUp = forceProvider === 'cloud' ? false : await isOllamaAvailable();
+  if (ollamaUp) {
+    const localModel = LOCAL_MODELS[action] || 'qwen3:8b';
+    try {
+      const r = await callOllamaForTool(localModel, tools, userMessage);
+      const v = validateToolCallOutput(r.text, tools);
+      attempts.push({ step: 'local', model: localModel, tier: 'local', provider: 'ollama', ...r, validation: v });
+      await logInvocation(sql, {
+        caller, action, model: `ollama/${localModel}`, tier: 'local', provider: 'ollama',
+        tokens_in: r.usage.input_tokens, tokens_out: r.usage.output_tokens,
+        latency_ms: r.latency_ms,
+        success: v.valid,
+        error_message: v.valid ? null : `validation:${v.reason}`,
+      });
+      if (v.valid) {
+        return { tool: v.tool, args: v.args, model: `ollama/${localModel}`, tier: 'local', attempts: 1, escalated_from: null, total_ms: Date.now() - overallStart };
+      }
+      localFailure = { model: localModel, output: r.text, reason: v.reason };
+    } catch (e) {
+      attempts.push({ step: 'local', error: e.message });
+      // continue to escalation
+    }
+  }
+
+  // ---- Step 2: Anthropic small (Haiku) ----
+  try {
+    const r = await callAnthropicForTool('small', tools, userMessage);
+    const v = r.tool === null && !r.text
+      ? { valid: false, reason: 'haiku_no_tool_no_text' }
+      : { valid: true, tool: r.tool, args: r.args };  // Anthropic native API returns structured tool_use
+    attempts.push({ step: 'haiku', ...r, validation: v });
+    const escFrom = localFailure ? `ollama/${localFailure.model}:${localFailure.reason}` : null;
+    await logInvocation(sql, {
+      caller, action, model: r.model, tier: 'small', provider: 'anthropic',
+      tokens_in: r.usage.input_tokens, tokens_out: r.usage.output_tokens,
+      cache_read_tokens: r.usage.cache_read_tokens, cache_write_tokens: r.usage.cache_write_tokens,
+      cost_usd: estimateCostUsd(r.model, r.usage),
+      latency_ms: r.latency_ms,
+      success: v.valid,
+      escalated_from: escFrom,
+      error_message: v.valid ? null : `validation:${v.reason}`,
+    });
+    if (v.valid) {
+      // LEARNING SIGNAL — record the (failed_local, correct_escalated) pair
+      if (localFailure) {
+        await recordCorrection(sql, {
+          action, prompt: userMessage, tools,
+          local_model: `ollama/${localFailure.model}`,
+          local_output: localFailure.output,
+          local_failure_reason: localFailure.reason,
+          corrected_model: r.model,
+          corrected_tier: 'small',
+          corrected_output: r.text,
+          corrected_tool: v.tool,
+          corrected_args: v.args,
+          caller,
+        });
+      }
+      return { tool: v.tool, args: v.args, model: r.model, tier: 'small', attempts: attempts.length, escalated_from: escFrom, total_ms: Date.now() - overallStart };
+    }
+  } catch (e) {
+    attempts.push({ step: 'haiku', error: e.message });
+  }
+
+  // ---- Step 3: Anthropic frontier (Opus) ----
+  const r = await callAnthropicForTool('frontier', tools, userMessage);
+  const v = r.tool === null && !r.text
+    ? { valid: false, reason: 'opus_no_tool_no_text' }
+    : { valid: true, tool: r.tool, args: r.args };
+  attempts.push({ step: 'opus', ...r, validation: v });
+  const escFrom = localFailure
+    ? `ollama/${localFailure.model}:${localFailure.reason}|haiku:fail`
+    : 'haiku:fail';
+  await logInvocation(sql, {
+    caller, action, model: r.model, tier: 'frontier', provider: 'anthropic',
+    tokens_in: r.usage.input_tokens, tokens_out: r.usage.output_tokens,
+    cache_read_tokens: r.usage.cache_read_tokens, cache_write_tokens: r.usage.cache_write_tokens,
+    cost_usd: estimateCostUsd(r.model, r.usage),
+    latency_ms: r.latency_ms,
+    success: v.valid,
+    escalated_from: escFrom,
+    error_message: v.valid ? null : `validation:${v.reason}`,
+  });
+  if (v.valid) {
+    if (localFailure) {
+      await recordCorrection(sql, {
+        action, prompt: userMessage, tools,
+        local_model: `ollama/${localFailure.model}`,
+        local_output: localFailure.output,
+        local_failure_reason: localFailure.reason,
+        corrected_model: r.model,
+        corrected_tier: 'frontier',
+        corrected_output: r.text,
+        corrected_tool: v.tool,
+        corrected_args: v.args,
+        caller,
+      });
+    }
+    return { tool: v.tool, args: v.args, model: r.model, tier: 'frontier', attempts: attempts.length, escalated_from: escFrom, total_ms: Date.now() - overallStart };
+  }
+
+  // All three tiers exhausted
+  const err = new Error('Tool-call escalation exhausted all tiers');
+  err.attempts = attempts;
+  throw err;
+}
+
 // ========== AUTH HELPERS ==========
 // Inline JWT verify — matches createJWT / verifyJWT in api/index.js.
 // Kept local so api/ai.js stays independent (Vercel bundles each function separately).
@@ -319,6 +665,35 @@ module.exports = async (req, res) => {
       anthropic: { configured: !!process.env.ANTHROPIC_API_KEY, small: SMALL_MODEL, frontier: FRONTIER_MODEL },
       taskModels: LOCAL_MODELS,
     });
+  }
+
+  // === ACTIONS: function-call / function-call-fast / agent-loop / tool-use ===
+  // New escalation tier (2026-05-12). Body: {action, tools: [...], userMessage, context?}
+  // Returns: {tool, args, model, tier, attempts, escalated_from, total_ms}
+  if (TOOL_CALL_ACTIONS.has(action)) {
+    // Admin-only for now (catalog has tools that touch payment/email/db)
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'function-call tier requires admin auth' });
+    }
+    const tools = req.body?.tools;
+    const userMessage = req.body?.userMessage || req.body?.prompt;
+    if (!Array.isArray(tools) || tools.length === 0) {
+      return res.status(400).json({ error: 'tools array required (OpenAI-style function specs)' });
+    }
+    if (!userMessage || typeof userMessage !== 'string') {
+      return res.status(400).json({ error: 'userMessage (or prompt) string required' });
+    }
+    await ensureModelInvocationsTable(sql);
+    await ensureToolCorrectionsTable(sql);
+    try {
+      const result = await callToolCallWithEscalation({
+        action, tools, userMessage, caller, sql,
+        forceProvider: context?.provider === 'cloud' ? 'cloud' : null,
+      });
+      return res.json(result);
+    } catch (e) {
+      return res.status(502).json({ error: 'Tool-call escalation exhausted', detail: e.message, attempts: e.attempts });
+    }
   }
 
   try {
@@ -478,7 +853,7 @@ ${VTV_TONE}
     }
 
     else {
-      return res.status(400).json({ error: `Unknown action: ${action}. Valid: health, coaching-insight, assessment-summary, email-draft, content-generate, devotional-generate` });
+      return res.status(400).json({ error: `Unknown action: ${action}. Valid: health, coaching-insight, assessment-summary, email-draft, content-generate, devotional-generate, function-call, function-call-fast, agent-loop, tool-use` });
     }
 
     // ========== ROUTE TO PROVIDER ==========
