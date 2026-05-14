@@ -320,12 +320,29 @@ module.exports = async (req, res) => {
     const role = String(context?.role || '').toLowerCase().trim();
     const need = String(context?.primary_need || '').toLowerCase().trim();
 
+    // `concierge-route` is public, but contact IDs are sequential SERIAL — so
+    // returning has_assessment / weakest_pillar based on an arbitrary contactId
+    // would let an unauthenticated caller enumerate other users' assessment
+    // traits. Only honor `contactId` when the caller proves ownership (matching
+    // JWT) or is admin. Otherwise fall back to the cold-start path.
+    let trustedContactId = null;
+    if (contactId) {
+      if (isAdmin) {
+        trustedContactId = contactId;
+      } else {
+        const owner = extractJwtUser(req);
+        if (owner && String(owner.contactId) === String(contactId)) {
+          trustedContactId = contactId;
+        }
+      }
+    }
+
     let hasAssessment = false;
     let weakest = null;
-    if (contactId) {
+    if (trustedContactId) {
       try {
         const latest = await sql`SELECT weakest_pillar FROM assessments
-          WHERE contact_id = ${contactId}
+          WHERE contact_id = ${trustedContactId}
           ORDER BY completed_at DESC LIMIT 1`;
         if (latest.length > 0) { hasAssessment = true; weakest = latest[0].weakest_pillar; }
       } catch (_) { /* assessments table should exist; ignore read errors */ }
