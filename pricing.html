@@ -173,6 +173,98 @@
       margin-top: 0.25rem;
     }
 
+    /* Founder confidence callout */
+    .founder-callout {
+      max-width: 920px;
+      margin: 2.5rem auto 1.5rem;
+      padding: 2.25rem 2rem;
+      background: linear-gradient(135deg, rgba(212,168,71,0.10) 0%, rgba(28,25,23,0.55) 50%, rgba(212,168,71,0.06) 100%);
+      border: 1px solid rgba(212,168,71,0.38);
+      border-radius: 1rem;
+      text-align: center;
+    }
+    .founder-callout-text {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.55rem;
+      font-style: italic;
+      line-height: 1.55;
+      color: #f4f4f5;
+      margin: 0 0 1rem;
+    }
+    .founder-callout-text .accent {
+      color: #D4A847;
+      font-style: normal;
+      font-weight: 700;
+    }
+    .founder-callout-attr {
+      font-family: 'Satoshi', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #a1a1aa;
+      margin: 0;
+    }
+    .founder-callout-top {
+      margin-top: 0.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .founder-callout-top .founder-callout-text {
+      font-size: 1.75rem;
+    }
+    @media (max-width: 640px) {
+      .founder-callout { padding: 1.75rem 1.25rem; }
+      .founder-callout-text { font-size: 1.2rem; }
+      .founder-callout-top .founder-callout-text { font-size: 1.3rem; }
+    }
+
+    /* Teaser tagline (rhetorical-question block above the 3 free cards) */
+    .teaser-tagline {
+      max-width: 760px;
+      margin: 1.75rem auto 2.25rem;
+      padding: 1.75rem 1.75rem 1.5rem;
+      text-align: center;
+      border-top: 1px solid rgba(212,168,71,0.22);
+      border-bottom: 1px solid rgba(212,168,71,0.22);
+      background: linear-gradient(180deg, rgba(212,168,71,0.04) 0%, rgba(0,0,0,0) 100%);
+    }
+    .teaser-tagline-setup {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: #a1a1aa;
+      margin: 0 0 0.85rem;
+      font-weight: 400;
+    }
+    .teaser-tagline-question {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.65rem;
+      font-style: italic;
+      line-height: 1.2;
+      color: #D4A847;
+      margin: 0 0 0.85rem;
+    }
+    .teaser-tagline-punch {
+      font-size: 1.05rem;
+      line-height: 1.55;
+      color: #f4f4f5;
+      margin: 0;
+      font-weight: 500;
+    }
+    .teaser-tagline .accent {
+      color: #D4A847;
+      font-weight: 700;
+    }
+    .teaser-tagline em {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.15em;
+      color: #D4A847;
+    }
+    @media (max-width: 640px) {
+      .teaser-tagline { padding: 1.25rem 1rem; margin: 1.25rem auto 1.75rem; }
+      .teaser-tagline-setup { font-size: 0.85rem; }
+      .teaser-tagline-question { font-size: 1.3rem; }
+      .teaser-tagline-punch { font-size: 0.95rem; }
+    }
+
     /* Divider */
     .card-divider {
       border: none;
@@ -396,6 +488,94 @@
       .pricing-card { padding: 1.75rem 1.25rem 1.5rem; }
       .card-price .amount { font-size: 2.25rem; }
     }
+
+    /* ===== Add-ons section (Skill Pack, LOAV, Coaching, Reports) ===== */
+    .addons-section, .free-section { margin: 3rem auto 1rem; max-width: 1180px; padding: 0 1.5rem; }
+    .addons-header { text-align: center; margin-bottom: 2rem; }
+    .section-title-eyebrow { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #D4A847; font-weight: 700; margin-bottom: 0.5rem; }
+    .addons-title { font-family: 'Instrument Serif', serif; font-size: 2rem; font-style: italic; color: #fff; margin-bottom: 0.5rem; }
+    .addons-sub { font-size: 0.95rem; color: #a1a1aa; max-width: 600px; margin: 0 auto; }
+    .addons-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+    .addon-card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 0.875rem;
+      padding: 1.5rem 1.25rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .addon-card:hover { transform: translateY(-3px); border-color: rgba(212,168,71,0.4); }
+    .addon-label { font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: #71717a; font-weight: 700; margin-bottom: 0.5rem; }
+    .addon-name { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+    .addon-price { font-size: 1.85rem; font-weight: 900; color: #D4A847; line-height: 1; margin-bottom: 0.8rem; }
+    .addon-price .addon-period { font-size: 0.75rem; font-weight: 500; color: #71717a; margin-left: 0.4rem; }
+    .addon-blurb { font-size: 0.82rem; color: #a1a1aa; line-height: 1.5; margin-bottom: 0.9rem; }
+    .addon-perks { list-style: none; padding: 0; margin: 0 0 1rem; font-size: 0.78rem; color: #d4d4d8; }
+    .addon-perks li { padding: 0.25rem 0; padding-left: 0.85rem; position: relative; line-height: 1.4; }
+    .addon-perks li::before { content: '·'; color: #D4A847; position: absolute; left: 0; font-weight: 700; }
+    .addon-cta {
+      display: block;
+      text-align: center;
+      background: transparent;
+      border: 1px solid #D4A847;
+      color: #D4A847;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 0.65rem 0.5rem;
+      border-radius: 0.5rem;
+      margin-top: auto;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    .addon-cta:hover { background: #D4A847; color: #0a0a0a; }
+
+    /* ===== Free lead-magnet cards ===== */
+    .free-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .free-card {
+      background: linear-gradient(135deg, rgba(34,197,94,0.04), rgba(34,197,94,0.02));
+      border: 1px solid rgba(34,197,94,0.2);
+      border-radius: 0.875rem;
+      padding: 1.5rem 1.25rem;
+      text-decoration: none;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+      display: block;
+    }
+    .free-card:hover { transform: translateY(-3px); border-color: rgba(34,197,94,0.5); }
+    .free-icon { font-size: 1.75rem; margin-bottom: 0.6rem; }
+    .free-name { font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem; }
+    .free-desc { font-size: 0.82rem; color: #a1a1aa; line-height: 1.5; }
+
+    /* ===== OOS paperback notice ===== */
+    .oos-notice {
+      max-width: 1180px;
+      margin: 3rem auto 1.5rem;
+      padding: 1.5rem 1.5rem;
+      background: linear-gradient(135deg, rgba(239,68,68,0.04), rgba(239,68,68,0.01));
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 0.875rem;
+    }
+    .oos-title { font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem; }
+    .oos-sub { font-size: 0.88rem; color: #a1a1aa; margin-bottom: 1rem; }
+    .oos-trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .oos-card { background: #18181b; border: 1px solid #27272a; border-radius: 0.625rem; padding: 1rem 1.1rem; text-decoration: none; display: block; transition: border-color 0.2s ease, transform 0.2s ease; }
+    .oos-card:hover { border-color: rgba(212,168,71,0.5); transform: translateY(-2px); }
+    .oos-card-label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: #D4A847; font-weight: 700; margin-bottom: 0.3rem; }
+    .oos-card-name { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.3rem; }
+    .oos-card-desc { font-size: 0.78rem; color: #a1a1aa; line-height: 1.45; }
+
+    @media (max-width: 980px) {
+      .addons-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 720px) {
+      .free-grid, .oos-trio { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
+      .addons-grid { grid-template-columns: 1fr; }
+      .addons-title { font-size: 1.6rem; }
+    }
   </style>
 </head>
 <body>
@@ -407,12 +587,54 @@
     <p class="subtitle">Invest in yourself, your relationship, and the value you bring to the people who matter most.</p>
   </header>
 
+  <!-- Founder tag line (top of page) — 2026-05-21 -->
+  <div class="founder-callout founder-callout-top">
+    <p class="founder-callout-text">
+      "For someone that's studied <span class="accent">Value</span> for 25+ years &mdash;
+      go find better for the <span class="accent">VALUE</span>.
+      Then come back and <span class="accent">BUY it</span>, cause you know I'm right."
+    </p>
+    <p class="founder-callout-attr">&mdash; Shawn E. Decker, founder</p>
+  </div>
+
   <!-- Pricing Cards -->
   <section class="pricing-container">
     <div class="promo-banner">
       <p>Lock in your rate &mdash; promo pricing ends December 31, 2026</p>
       <p class="promo-sub">Prices increase in 2027. Subscribe now to keep your current rate for the next 12 months.</p>
     </div>
+
+    <!-- Teasers (Free Lead Magnets) — moved to top per 2026-05-21 -->
+    <section class="free-section">
+      <div class="addons-header">
+        <div class="section-title-eyebrow">No Cost, Real Value</div>
+        <h2 class="addons-title">Teasers — start anywhere</h2>
+        <p class="addons-sub">No card, no commitment. Try the system before you pay for any of it.</p>
+      </div>
+      <div class="free-grid">
+        <a href="/free-book" class="free-card">
+          <div class="free-icon">&#128218;</div>
+          <div class="free-name">Email Free E-Book Sample</div>
+          <div class="free-desc">Running From Miracles e-book sample, delivered to your inbox.</div>
+        </a>
+        <a href="/daily-word" class="free-card">
+          <div class="free-icon">&#128221;</div>
+          <div class="free-name">Free Daily Devotionals</div>
+          <div class="free-desc">Running From Miracles 60-day cycle. One short scripture + reflection + action step per day.</div>
+        </a>
+        <a href="/start" class="free-card">
+          <div class="free-icon">&#127919;</div>
+          <div class="free-name">Free 4-Rules Coaching</div>
+          <div class="free-desc">8 daily emails covering the 8+8+8, 1-3-5, 10-Minute, and 90/90/1 rules. No card required.</div>
+        </a>
+      </div>
+      <div class="teaser-tagline">
+        <p class="teaser-tagline-setup">They say you have to target only <span class="accent">1 problem</span> to make money on social media&hellip;</p>
+        <p class="teaser-tagline-question">Did I get it wrong?</p>
+        <p class="teaser-tagline-punch">Because I had <span class="accent">lots of them</span> &mdash; and I needed help with <em>all</em> of them.</p>
+      </div>
+    </section>
+
     <div class="pricing-grid">
 
       <!-- Tier 1: VictoryPath -->
@@ -436,7 +658,7 @@
           <li><span class="check">&#10003;</span> Monthly Value to Victory Mastermind</li>
           <li><span class="check">&#10003;</span> 30-day Personal Value Challenge</li>
           <li><span class="check">&#10003;</span> All 3 premium reports included FREE</li>
-          <li><span class="check">&#10003;</span> 15% off all coaching sessions</li>
+          <li><span class="check">&#10003;</span> 10% off coaching &amp; select products</li>
           <li><span class="check">&#10003;</span> Email updates and future tool improvements</li>
         </ul>
         <a href="/api/checkout?tier=victorypath" class="cta-btn primary">Start My Path &mdash; $29/mo</a>
@@ -463,7 +685,7 @@
           <li><span class="check">&#10003;</span> Complete toolkit &amp; playbook access</li>
           <li><span class="check">&#10003;</span> Private community access</li>
           <li><span class="check">&#10003;</span> Relationship &amp; Leadership assessment modes</li>
-          <li><span class="check">&#10003;</span> 25% off all coaching sessions</li>
+          <li><span class="check">&#10003;</span> 15% off coaching &amp; select products</li>
           <li><span class="check">&#10003;</span> Priority notice of events</li>
         </ul>
         <a href="/api/checkout?tier=builder" class="cta-btn gold">Start Building &mdash; $47/mo</a>
@@ -483,9 +705,8 @@
         <hr class="card-divider" />
         <p class="includes-note">Everything in VictoryPath &amp; Value Builder, plus:</p>
         <ul class="benefits">
-          <li><span class="check">&#10003;</span> 1 coaching session/month (1hr personal OR 30min RE consulting)</li>
-          <li><span class="check">&#10003;</span> 50% off all additional coaching sessions</li>
-          <li><span class="check">&#10003;</span> 25% off Real Estate consulting</li>
+          <li><span class="check">&#10003;</span> 1 complimentary coaching session/month (1hr personal OR 30min RE consulting)</li>
+          <li><span class="check">&#10003;</span> 20% off coaching &amp; select products (highest member discount)</li>
           <li><span class="check">&#10003;</span> VIP Mastermind group</li>
           <li><span class="check">&#10003;</span> Direct author access</li>
           <li><span class="check">&#10003;</span> Exclusive VIP events &amp; retreats</li>
@@ -497,13 +718,105 @@
 
     </div>
 
-    <!-- Coaching Rates -->
+    <!-- Add-Ons & One-Time Products -->
+    <section class="addons-section">
+      <div class="addons-header">
+        <div class="section-title-eyebrow">Add-Ons &amp; One-Time</div>
+        <h2 class="addons-title">Single purchases &amp; books</h2>
+        <p class="addons-sub">No subscription required. Member discounts apply where shown.</p>
+      </div>
+      <div class="addons-grid">
+
+        <!-- Skill Pack Bundle -->
+        <div class="addon-card">
+          <div class="addon-label">SKILL PACK BUNDLE</div>
+          <div class="addon-name">VTV Top-10 Professionals</div>
+          <div class="addon-price">$197<span class="addon-period">one-time</span></div>
+          <p class="addon-blurb">10 profession-specific playbooks + Jarvis-style design structure. Includes 30-day free VTV Membership trial (then $29/mo, opt-in only).</p>
+          <ul class="addon-perks">
+            <li>10 skill packs (5 templates + 3 AI prompts + weekly metrics each)</li>
+            <li>Instant download (ZIP) + lifetime access</li>
+            <li>Or buy bundle-only — no subscription</li>
+          </ul>
+          <a href="/professionals" class="addon-cta">View Skill Pack &rarr;</a>
+        </div>
+
+        <!-- LOAV E-Book -->
+        <div class="addon-card">
+          <div class="addon-label">PRESALE &middot; DEC 1, 2026</div>
+          <div class="addon-name">The Lost Art of Value</div>
+          <div class="addon-price">$17.77<span class="addon-period">e-book presale</span></div>
+          <p class="addon-blurb">Time for P.I.N.K. — Shawn Decker's first book. Digital-only for the first 5,000 copies, then print. Releases December 1, 2026.</p>
+          <ul class="addon-perks">
+            <li>Locked-in presale rate — early-buyer pricing</li>
+            <li>Includes companion daily devotional (free)</li>
+            <li>Real chapters, real frameworks, zero filler</li>
+          </ul>
+          <a href="/api/checkout?tier=loav-presale" class="addon-cta">Lock in the presale &rarr;</a>
+        </div>
+
+        <!-- Personal Coaching -->
+        <div class="addon-card">
+          <div class="addon-label">COACHING SESSION</div>
+          <div class="addon-name">Personal Coaching</div>
+          <div class="addon-price">$240<span class="addon-period">first session</span></div>
+          <p class="addon-blurb">$300/hr regular rate. 20% off your first session. Members get an ongoing discount: VictoryPath 10% &middot; Builder 15% &middot; VIP 20%.</p>
+          <ul class="addon-perks">
+            <li>1-on-1 with Shawn Decker (60 min)</li>
+            <li>Real Estate Coaching: $240 first 30-min &middot; $400 first 60-min</li>
+            <li>VIP members: 1 complimentary session/month included</li>
+          </ul>
+          <a href="/consult" class="addon-cta">Book a Session &rarr;</a>
+        </div>
+
+        <!-- Reports -->
+        <div class="addon-card">
+          <div class="addon-label">PREMIUM REPORTS</div>
+          <div class="addon-name">3 Pillar Reports</div>
+          <div class="addon-price">$1.99<span class="addon-period">each</span></div>
+          <p class="addon-blurb">Specialized reports that take your assessment data deeper for a specific audience. Free for VictoryPath / Builder / VIP members.</p>
+          <ul class="addon-perks">
+            <li>Personal Action Plan Report</li>
+            <li>Counselor &amp; Coach Handoff Report</li>
+            <li>Company &amp; Team Analysis Report</li>
+          </ul>
+          <a href="/report" class="addon-cta">View Reports &rarr;</a>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Coaching Rates (canon) -->
     <div class="global-notes">
-      <div class="section-title">Coaching &amp; Consulting Rates</div>
-      <p><strong>1-on-1 Life/Business Coaching:</strong> $300/hr</p>
-      <p><strong>Real Estate Consulting:</strong> $300 (30 min) &bull; $500 (60 min)</p>
-      <p><strong>First-time clients:</strong> 20% off your first session &mdash; then become a member for ongoing discounts up to 50% off.</p>
-      <p style="color: #D4A847; margin-top: 1rem; font-style: italic;">Coaching sessions are subject to availability and scheduling. All pricing shown is introductory. Rates will double beginning 2027. Sign up today to lock in your current rate for the next 12 months.</p>
+      <div class="section-title">Coaching &amp; Consulting Rates (full reference)</div>
+      <p><strong>Personal Coaching (60 min):</strong> $300/hr regular &middot; <strong>$240 first session</strong> (20% off first-time)</p>
+      <p><strong>Real Estate Coaching/Consulting (30 min):</strong> $300 regular &middot; <strong>$240 first session</strong></p>
+      <p><strong>Real Estate Coaching/Consulting (60 min):</strong> $500 regular &middot; <strong>$400 first session</strong></p>
+      <p><strong>Member discounts on coaching &amp; select products:</strong> VictoryPath 10% &middot; Value Builder 15% &middot; Victory VIP 20%</p>
+      <p style="color: #D4A847; margin-top: 1rem; font-style: italic;">Coaching sessions are subject to availability and scheduling. Membership rates locked through 2026; rates increase 2027. Subscribe now to keep your current rate for 12 months.</p>
+    </div>
+
+    <!-- Out-of-stock paperback notice -->
+    <div class="oos-notice">
+      <div class="oos-title">Running From Miracles &mdash; Paperback ($11.97) is currently OUT OF STOCK</div>
+      <p class="oos-sub">While we restock, here are three ways to get the content right now:</p>
+      <div class="oos-trio">
+        <a href="/audiobook" class="oos-card">
+          <div class="oos-card-label">$9.97</div>
+          <div class="oos-card-name">Audiobook</div>
+          <div class="oos-card-desc">Listen anywhere. ~5 hours. Professional narration.</div>
+        </a>
+        <a href="/free-book" class="oos-card">
+          <div class="oos-card-label">FREE</div>
+          <div class="oos-card-name">Email E-Book Sample</div>
+          <div class="oos-card-desc">Get a free chapter sample via email signup.</div>
+        </a>
+        <a href="/daily-word" class="oos-card">
+          <div class="oos-card-label">FREE</div>
+          <div class="oos-card-name">Daily Devotionals</div>
+          <div class="oos-card-desc">60-day cycle delivered to your inbox.</div>
+        </a>
+      </div>
     </div>
 
     <!-- Program Notes -->
