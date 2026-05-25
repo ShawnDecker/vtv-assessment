@@ -44,13 +44,19 @@ Shawn E. Decker | valuetovictory@gmail.com | PIN: ${SHAWN_PIN}  # see .env.local
 Time, People, Influence, Numbers, Knowledge
 Score ranges: Crisis (<20%), Survival (20-40%), Growth (40-60%), Momentum (60-80%), Mastery (80%+)
 
-## Revenue Model
-- VictoryPath: $29/mo (promo) / $49/mo (regular)
-- Value Builder: $47/mo (promo) / $79/mo (regular)
-- Victory VIP: $497/mo (promo) / $697/mo (regular)
-- Coaching: $300/hr (20% off first session)
-- Skill Pack Bundle: $197 one-time
-- Book (LOAV Presale): $17.77
+## Revenue Model (locked 2026-05-21)
+- VictoryPath: $29/mo — members get 10% off coaching & select products
+- Value Builder: $47/mo — members get 15% off coaching & select products
+- Victory VIP: $497/mo — members get 20% off coaching & select products
+- Personal Coaching: $300/hr regular · $240 first session (20% off first for everyone)
+- RE Coaching/Consulting 30-min: $300 regular · $240 first session
+- RE Coaching/Consulting 60-min: $500 regular · $400 first session
+- Skill Pack Bundle: $197 one-time (with optional 30-day VTV trial → $29/mo opt-in)
+- LOAV E-Book Presale: $17.77 — Lost Art of Value (digital-only first 5,000, then print)
+- Running From Miracles audiobook: $9.97 (push) · paperback: $11.97 OUT OF STOCK
+- Reports: Action Plan / Counselor / Team Analysis — $1.99 each
+- Whitelabel AI Starter: $197 one-time + $47/mo opt-in (was $79, changed 2026-05-21)
+- RETIRED: Mastering Listings Course ($197) — removed from offer
 - Valuation: $1.5M, seeking 25% equity angel investment
 
 ## Known Issues & Lessons Learned

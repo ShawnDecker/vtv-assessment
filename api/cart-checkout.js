@@ -8,10 +8,13 @@ const PRICE_MAP = {
   'value-builder':      { priceId: 'price_1THT4tCaTyuNk1Mc1xzlrxu9', type: 'subscription' },
   'victory-vip':        { priceId: 'price_1TEhZ8CaTyuNk1McPoAJBpYW', type: 'subscription' },
   // One-time products
-  'loav-presale':       { priceId: 'price_1TI7KoCaTyuNk1McT6wNz2dp', type: 'one_time' },
+  // ⚠️ LOAV-presale: live buy-link uses $17.77 price (price_1TGJKpCaTyuNk1McinmAOTNR).
+  // The previously-referenced price_1TI7KoCaTyuNk1McT6wNz2dp is a $197 variant under the same
+  // product (prod_UAjjA6057soViC). Using the $197 ID here would charge customers 11x.
+  'loav-presale':       { priceId: 'price_1TGJKpCaTyuNk1McinmAOTNR', type: 'one_time' },
   'rfm-audiobook':      { priceId: 'price_1TI7qBCaTyuNk1McdWQWrir8', type: 'one_time' },
-  'rfm-paperback':      { priceId: 'price_1TI7qBCaTyuNk1Mcl4ZZmuQR', type: 'one_time' },
-  'mastering-listings': { priceId: 'price_1TCOG2CaTyuNk1Mc1NhmQM8h', type: 'one_time' },
+  // 'rfm-paperback' — OUT OF STOCK 2026-05-21. Slug remains for server-side rejection with alternatives.
+  // 'mastering-listings' — RETIRED 2026-05-21 per Shawn canon. Removed from sale.
   // Add-on reports ($1.99)
   'action-plan':        { priceId: 'price_1TFGSQCaTyuNk1McAAxcJv87', type: 'one_time' },
   'counselor-report':   { priceId: 'price_1TFGSXCaTyuNk1McoVIPrXFK', type: 'one_time' },
@@ -47,6 +50,20 @@ module.exports = async (req, res) => {
     let hasOneTime = false;
 
     for (const item of items) {
+      // OOS / retired slug rejections — surface to UI with alternatives
+      if (item.slug === 'rfm-paperback') {
+        return res.status(410).json({
+          error: 'Running From Miracles paperback is currently out of stock.',
+          alternatives: [
+            { slug: 'rfm-audiobook', name: 'Audiobook', price: '$9.97' },
+            { slug: 'free-book', name: 'Email Free E-Book Sample', price: 'Free', url: '/free-book' },
+            { slug: 'free-devotionals', name: 'Free Daily Devotionals (60-day cycle)', price: 'Free', url: '/daily-word' }
+          ]
+        });
+      }
+      if (item.slug === 'mastering-listings') {
+        return res.status(410).json({ error: 'Mastering Listings Course has been retired.' });
+      }
       const mapped = PRICE_MAP[item.slug];
       if (!mapped) {
         return res.status(400).json({ error: `Unknown product: ${item.slug}` });

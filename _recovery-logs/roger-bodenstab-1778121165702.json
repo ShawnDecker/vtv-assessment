@@ -1,0 +1,25 @@
+{
+  "case": "loav-misclick-roger-bodenstab",
+  "customer_email": "roger@ccfoursquare.org",
+  "customer_name": "Roger Bodenstab",
+  "payment_intent": "pi_3TUHHJCaTyuNk1Mc0dK5tQcH",
+  "executed_at": "2026-05-07T02:32:45.703Z",
+  "steps": [
+    {
+      "step": "refund",
+      "status": "ok",
+      "id": "re_3TUHHJCaTyuNk1Mc0kiFJ6OU",
+      "amount": 1777,
+      "refund_status": "succeeded"
+    },
+    {
+      "step": "email",
+      "status": "ok",
+      "messageId": "<bd6e20e5-2880-f49b-854d-1f367adb1f3c@gmail.com>",
+      "accepted": [
+        "roger@ccfoursquare.org"
+      ],
+      "rejected": []
+    }
+  ]
+}

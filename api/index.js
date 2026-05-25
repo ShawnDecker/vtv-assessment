@@ -486,8 +486,303 @@ function generatePrescription(a) {
 }
 
 // ============================
+// LOAV BOOK CITATION
+// ============================
+// Every reference to "the book" / "Lost Art of Value" in coaching emails or
+// recommendations MUST go through this helper. Rules in:
+//   ValueToVictory/13-Books/LOAV/RELEASE-PLAN.md
+//   - Release: 2026-12-01 (digital-only first 5,000 copies, print after)
+//   - Presale: $17.77 (price_1TGJKpCaTyuNk1McinmAOTNR)
+//   - No page numbers. Real quotes from manuscript-v4.md only.
+//   - Always pair with the presale CTA.
+const LOAV_PRESALE_URL = 'https://valuetovictory.com/loav-presale';
+function loavCitation(chapter, sectionTitle, quote) {
+  return `From Lost Art of Value · ${chapter}${sectionTitle ? ` · "${sectionTitle}"` : ''}:
+
+  "${quote}"
+
+Releasing December 1, 2026 · digital-only for the first 5,000 copies · presale $17.77.
+→ Lock in the presale: ${LOAV_PRESALE_URL}`;
+}
+
+// ============================
 // COACHING EMAIL ENGINE
 // ============================
+
+// ===== Coaching email body renderer =====
+// Parses the plain-text coaching body into devotional-style HTML cards.
+// Detects section headers (ALL-CAPS ending in colon) and routes each section
+// to a styled card: green for "YOUR MOVE", gold for challenges/numbered, muted
+// gold-bar for framework sections. Plain paragraphs render as body copy.
+function renderCoachingBody(body, weakest) {
+  const escHtml = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+  // Auto-link bare URLs (gold underlined). Operates on already-escaped HTML.
+  const autolinkHtml = (escaped) => escaped.replace(
+    /(https?:\/\/[^\s<&]+)/g,
+    (url) => `<a href="${url}" style="color:#D4A847;text-decoration:underline;">${url}</a>`
+  );
+
+  // Convert a multi-line block into HTML, preserving line breaks as <br/> and auto-linking URLs
+  const blockHtml = (text) => autolinkHtml(escHtml(text.trim()).replace(/\n/g, '<br/>'));
+
+  // Classify a header to pick the right card style
+  const classify = (header) => {
+    const h = header.toUpperCase();
+    if (/^YOUR MOVE\b|^YOUR FINAL MOVE\b/.test(h)) return 'action';
+    if (/CHALLENGE|10-MINUTE|90-MINUTE|DAILY SYSTEM|DAILY BLOCK|YOUR DAILY/.test(h)) return 'challenge';
+    if (/^YOUR \d/.test(h)) return 'numbered';
+    if (/^P\.?S\.?\b/i.test(h)) return 'ps';
+    return 'framework';
+  };
+
+  // Render a section card
+  const renderCard = (header, content) => {
+    const type = classify(header);
+    const headerEsc = escHtml(header.replace(/:\s*$/, ''));
+    // Outlook desktop strips rgba() and gradients — hex fallback first, rgba second
+    if (type === 'action') {
+      return `<div style="background:#152418;background:rgba(34,197,94,0.06);border:1px solid #1f4a2a;border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:18px 22px;margin:20px 0;">
+        <p style="color:#22c55e;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 10px;">${headerEsc}</p>
+        <p style="color:#e4e4e7;font-size:16px;line-height:1.7;margin:0;">${blockHtml(content)}</p>
+      </div>`;
+    }
+    if (type === 'challenge') {
+      return `<div style="background:#241f14;background:rgba(212,168,71,0.08);border:1px solid #4a3f1c;border:1px solid rgba(212,168,71,0.3);border-radius:8px;padding:18px 22px;margin:20px 0;">
+        <p style="color:#D4A847;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 10px;">${headerEsc}</p>
+        <p style="color:#e4e4e7;font-size:16px;line-height:1.7;margin:0;">${blockHtml(content)}</p>
+      </div>`;
+    }
+    if (type === 'numbered') {
+      return `<div style="background:#1f1c12;background:rgba(212,168,71,0.05);border:1px solid #3a3318;border:1px solid rgba(212,168,71,0.2);border-radius:8px;padding:16px 20px;margin:16px 0;">
+        <p style="color:#D4A847;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 8px;">${headerEsc}</p>
+        <p style="color:#e4e4e7;font-size:16px;line-height:1.7;margin:0;">${blockHtml(content)}</p>
+      </div>`;
+    }
+    if (type === 'ps') {
+      return `<div style="background:#1f1c12;background:rgba(212,168,71,0.05);border:1px solid #382f16;border:1px solid rgba(212,168,71,0.18);border-radius:8px;padding:14px 18px;margin:20px 0 0;">
+        <p style="color:#D4A847;font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 6px;">P.S.</p>
+        <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">${blockHtml(content)}</p>
+      </div>`;
+    }
+    // framework — muted card with gold left border, devotional-style
+    return `<div style="background:#111118;border-left:3px solid #D4A847;padding:16px 20px;margin:20px 0;border-radius:0 8px 8px 0;">
+      <p style="color:#D4A847;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 8px;">${headerEsc}</p>
+      <p style="color:#e4e4e7;font-size:16px;line-height:1.7;margin:0;">${blockHtml(content)}</p>
+    </div>`;
+  };
+
+  // Header detection: ALL-CAPS first word(s), then any content (incl. mixed-case in parens), ending with colon.
+  // Matches: "YOUR MOVE TODAY:", "YOUR 1 (The Massive Goal):", "THE 3-QUESTION ACCOUNTABILITY CHECK:".
+  // Rejects: "Cameron,", "Your 1 is clear.", "Question: How..."
+  const headerLine = /^[A-Z][A-Z0-9]+\b[^:]*:\s*$/;
+  // P.S. line: separate detection
+  const psLine = /^P\.?S\.?\b/i;
+  // Signature: "— Shawn" or "-- Shawn" or "- Shawn"
+  const sigLine = /^[—–\-]{1,2}\s*Shawn\s*$/;
+
+  const lines = body.split(/\n/);
+  let html = '';
+  let para = []; // accumulating non-section text
+  let i = 0;
+
+  const flushPara = () => {
+    const text = para.join('\n').trim();
+    para = [];
+    if (!text) return;
+    // Render as body paragraph(s) — split by blank lines into separate <p>
+    const blocks = text.split(/\n\s*\n/);
+    for (const b of blocks) {
+      const t = b.trim();
+      if (!t) continue;
+      if (sigLine.test(t)) {
+        html += `<p style="color:#D4A847;font-size:14px;font-style:italic;line-height:1.6;margin:28px 0 0;">&mdash; Shawn</p>`;
+      } else {
+        html += `<p style="color:#a1a1aa;font-size:16px;line-height:1.7;margin:0 0 16px;">${blockHtml(t)}</p>`;
+      }
+    }
+  };
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // P.S. block: consume from P.S. line to end (or next P.P.S, etc.)
+    if (psLine.test(trimmed)) {
+      flushPara();
+      const psBlock = lines.slice(i).join('\n').replace(/^P\.?S\.?\s*/i, '').trim();
+      html += renderCard('P.S.', psBlock);
+      break;
+    }
+
+    // Section header detection
+    if (headerLine.test(trimmed)) {
+      flushPara();
+      const header = trimmed;
+      // Collect content until next header or P.S. or signature or end
+      const contentLines = [];
+      i++;
+      while (i < lines.length) {
+        const l = lines[i];
+        const lt = l.trim();
+        if (headerLine.test(lt) || psLine.test(lt) || sigLine.test(lt)) break;
+        contentLines.push(l);
+        i++;
+      }
+      const content = contentLines.join('\n').trim();
+      if (content) html += renderCard(header, content);
+      continue;
+    }
+
+    // Signature line — render then stop accumulating
+    if (sigLine.test(trimmed)) {
+      flushPara();
+      html += `<p style="color:#D4A847;font-size:14px;font-style:italic;line-height:1.6;margin:28px 0 0;">&mdash; Shawn</p>`;
+      i++;
+      continue;
+    }
+
+    para.push(line);
+    i++;
+  }
+  flushPara();
+  return html;
+}
+
+// ===== Per-user rotation pools =====
+// Each pillar has 12 quick wins; pickFive returns 5 deterministic picks based on user.
+// Same user always sees the same 5 on the same day. Different users see different 5s.
+// {pillar} placeholder is substituted with the user's actual weakest pillar at render time.
+const QUICK_WINS_POOL = {
+  Time: [
+    "Open your {pillar} breakdown in your report. Don't fix it today. Just see it.",
+    "Walk 10 minutes after dinner tonight. No phone. Just steps.",
+    "Go to bed 15 minutes earlier tonight. Future-you needs the sleep.",
+    "Drink one glass of water before your first coffee tomorrow. Your body remembers.",
+    "Set your phone face-down for the next hour. One hour. That's it.",
+    "Eat lunch away from your desk today. Even 10 minutes counts.",
+    "Take the stairs once today instead of the elevator. Small choice. Real win.",
+    "Audit one hour of your day tomorrow — write down every minute. You'll find time you didn't know you had.",
+    "Block 30 minutes tomorrow morning before email opens. The first hour you protect is the one that pays.",
+    "Delete one recurring meeting this week — the one you keep dreading. You'll feel lighter by Friday.",
+    "Name the one task you keep avoiding — say it out loud. Naming it is half the battle.",
+    "Time-box your inbox to 2 sessions today. Most fires put themselves out when you stop fanning them.",
+    "Put your 90-minute focus block on tomorrow's calendar. Calendared = real. Wished-for = gone.",
+    "Set one 'no-meeting' window on next week's calendar. Future-you will thank present-you.",
+    "Tell one person your #1 priority this week. Saying it out loud is what makes it stick.",
+    "Turn off notifications for one app for 24 hours. You'll be surprised what comes back to you.",
+    "Decline one non-critical commitment this week. A clean 'no' is a gift to both sides.",
+    "Stretch for 5 minutes when you wake up tomorrow. Your back will write you a thank-you note.",
+    "Skip the screen for 30 minutes before bed tonight. Read a page. Pray. Just breathe.",
+    "Write down 3 things that don't deserve your time this week. The list is your permission slip."
+  ],
+  People: [
+    "Open your {pillar} breakdown in your report. Read it like a friend would.",
+    "Text one person 'thinking about you' — no reason needed. They'll smile.",
+    "Call your mom, dad, or sibling for 5 minutes today. Just to hear them.",
+    "Compliment one stranger today. Means more than you'd guess.",
+    "Hold the door for someone today. Slow down on purpose. The world needs more of that.",
+    "Hug someone for 6 seconds tonight. That's the science-backed minimum that helps.",
+    "Send one specific thank-you today. Name what they actually did — that's what lands.",
+    "Tell one person what you appreciate about them. Not 'you're great' — name the thing.",
+    "Reach out to someone you haven't talked to in 30+ days. They've been hoping you would.",
+    "Set one boundary you've been avoiding — say no to one ask. It gets easier after the first one.",
+    "Schedule one phone call (not text) with someone who matters. The voice carries what text can't.",
+    "Put your phone face-down at one meal today and make eye contact. Small move. Big signal.",
+    "Apologize to one person for something small you've been carrying. Five minutes can clear five months.",
+    "Ask one person 'how are you really?' and listen to the full answer. That's the whole skill.",
+    "Name your most draining relationship on paper. Awareness isn't a verdict — it's a starting line.",
+    "Plan one in-person interaction this week — coffee, walk, or dinner. Put it on the calendar now.",
+    "Write a handwritten note to someone who shaped you. They'll keep it. You'll feel better.",
+    "Smile first today at three people. Watch what comes back.",
+    "Listen — fully — to one person today without planning your reply. It's harder and better than it sounds.",
+    "Pray for, or send a good thought to, someone you're frustrated with. It changes you first."
+  ],
+  Influence: [
+    "Open your {pillar} breakdown in your report. See what you're actually carrying.",
+    "Stand up straight when you walk into your next meeting. Sounds small. Isn't.",
+    "Say one true thing in a meeting today even if it's awkward. Truth is the moat.",
+    "Comment thoughtfully on one person's post — not 'great post.' Actually engage.",
+    "Write one short post or insight today — even three sentences. Posted beats perfect.",
+    "Send one update on your work to someone whose opinion matters. Visibility starts with one share.",
+    "Ask for feedback on one specific thing. 'How could this be better?' opens more doors than 'what do you think?'",
+    "Name the one room you should be in but aren't. Next week, find a way in.",
+    "Lead one small thing this week — a meeting, a thread, a decision. Reps make leaders.",
+    "Teach one thing you know to one person — 10 minutes max. Teaching cements what you have.",
+    "Tell one person what you're building. Most people are rooting for you. Let them.",
+    "Write down your top 3 values, then check last week's calendar. The gap is the lesson, not the loss.",
+    "Ask someone ahead of you for 15 minutes. The worst answer is no — and even that's data.",
+    "Volunteer for one stretch assignment this week. The discomfort is the receipt that you grew.",
+    "Edit your bio to reflect what you actually do now. You've changed. Let the page catch up.",
+    "Make eye contact and use the other person's name in one conversation today. Small. Magnetic.",
+    "Show up 5 minutes early to one thing this week. People notice — even if they don't say it.",
+    "Dress one notch better than you'd planned for tomorrow. You'll feel it. So will they.",
+    "Share credit on something today, publicly. Generous gets remembered.",
+    "Speak slower in your next conversation. People who slow down sound like they belong."
+  ],
+  Numbers: [
+    "Open your {pillar} breakdown in your report. The number is information, not a judgment.",
+    "Skip the $6 coffee today. Make it at home. Feel the small win.",
+    "Don't buy the impulse item in the checkout line tomorrow. You won't remember it next week.",
+    "Eat what's in your fridge today before ordering takeout. Free meal, smaller wallet hit.",
+    "Pack your lunch tomorrow. Saves $15 and tastes better than you remember.",
+    "Skip one convenience purchase today. Just one. Small wins compound.",
+    "Cancel one subscription tonight you forgot you had. Instant momentum, real dollars.",
+    "Round up your next savings transfer by $5. Tiny moves teach the muscle.",
+    "Look at your last 3 online orders — anything you regret? Lesson taught for free.",
+    "Open your bank statement and calculate your real cost-per-hour. Starting line, not verdict.",
+    "Name the single biggest way {pillar} is costing you this week. Name the leak; the fix follows.",
+    "Block 30 minutes on tomorrow's calendar for {pillar} work. 30 min × 90 days changes the math.",
+    "Tell one person what you're working on this month. Saying it out loud is half the discipline.",
+    "Calculate your savings rate for last month — saved ÷ income. Don't judge it. Just see it.",
+    "Rank your top 3 income-producing activities. Most people skip this — it's the part that compounds.",
+    "Set one specific number-goal for the next 30 days. Numbers you write down move differently.",
+    "Look at your top 3 expense categories — circle anything you can't justify. Honest beats clever.",
+    "Build a 1-page tracker — income, expenses, savings, one number you watch. Simple wins because you'll use it.",
+    "Schedule a 30-minute 'Friday numbers review' as a recurring block. Same time, every week. That's how it sticks.",
+    "Drink water instead of buying a drink with lunch today. Your body and wallet both win."
+  ],
+  Knowledge: [
+    "Open your {pillar} breakdown in your report. Start with what's true.",
+    "Read one paragraph from a book on your shelf tonight. One paragraph counts.",
+    "Look up one word you've heard but never defined. Knowledge starts small.",
+    "Watch a 5-minute video on something outside your field today. Curiosity is the workout.",
+    "Ask 'why?' three times today when you'd normally just accept. The third 'why' is where it gets honest.",
+    "Open one book or course you've been meaning to start. Five pages counts. Beginning is the hard part.",
+    "Spend 30 minutes today on deliberate learning. One source, stay with it. Depth beats variety.",
+    "Apply one thing you learned this month to real work this week. Learning lands when it gets used.",
+    "Name the one skill that, if you doubled it, would change your trajectory. Then go work on it.",
+    "Teach one concept you know to someone else. Teaching is the test that proves you really know it.",
+    "Block 90 minutes this weekend for deep work on the gap you keep avoiding. Discomfort is the doorway.",
+    "Write down the 3 most important things you learned this month. Otherwise the lessons leak.",
+    "Ask one expert in your field one specific question this week. Most are flattered, not bothered.",
+    "Unsubscribe from one low-value information source today. Less noise = clearer signal.",
+    "Replace one hour of consumption with one hour of creation this week. Builders feel different than browsers.",
+    "Take one thing you're 'kinda good at' and commit to becoming great at it. Generalists pivot. Specialists compound.",
+    "Write down what you learned today — even just one sentence — before bed. That's how knowledge sticks.",
+    "Listen to a 20-minute audiobook on your next drive instead of music. One drive. See how it feels.",
+    "Bookmark one thing today that taught you something. Build the library, brick by brick.",
+    "Read one Bible verse, poem, or proverb today. Old wisdom holds up surprisingly well."
+  ],
+};
+
+// Deterministic 5-pick from a pool — same user + day = same 5 always
+function pickFiveQuickWins(weakest, contactId, day) {
+  const pool = QUICK_WINS_POOL[weakest] || QUICK_WINS_POOL.Time;
+  if (pool.length <= 5) return pool.slice();
+  const arr = [...pool];
+  const picked = [];
+  // Linear congruential generator seeded by (contactId, day) — stable per user
+  let seed = ((contactId || 1) * 9301 + day * 49297 + 100003) % 233280;
+  for (let i = 0; i < 5 && arr.length > 0; i++) {
+    seed = (seed * 9301 + 49297) % 233280;
+    const idx = seed % arr.length;
+    picked.push(arr.splice(idx, 1)[0].replace(/\{pillar\}/g, weakest));
+  }
+  return picked;
+}
 
 function generateCoachingEmail(day, assessmentData, prescription, email) {
   const a = assessmentData;
@@ -511,34 +806,103 @@ function generateCoachingEmail(day, assessmentData, prescription, email) {
   const retakeUrl = BASE_URL;
   const reportUrl = `${BASE_URL}/report/${a.id}`;
 
-  // Pillar-specific content for the Honest 24 framework (Day 2)
-  // The 8+8+8 is the IDEAL. The Reality Audit is what actually happens.
-  // The Dynamic Calculator personalizes it.
+  // Pillar-specific content for the Honest 24 framework (Day 2) — 3 variants per pillar, deterministic per user
+  // Variant 0 = original detailed framing · 1+2 = shorter action+payoff alternates
   const rule888 = {
-    Time: "Let's be real about your 24 hours. The 8+8+8 is the target — 8 hours of focused work, 8 hours for you, 8 hours of sleep. But here's what actually happens: 1-2 hours commuting, 1 hour getting ready, 1-2 hours on meals and chores. That leaves you maybe 4-5 hours 'for you' — not 8. Your Time score tells me you're not even protecting those 4-5. Tomorrow, draw four columns: WORK / OBLIGATIONS / ME / SLEEP. Track every hour. The gap between where your time goes and where it should go is your biggest opportunity.",
-    People: "The 8+8+8 says you get 8 hours for you — but in reality, commuting, cooking, errands, and household obligations eat 3-4 of those hours. That leaves maybe 4-5 hours of discretionary time. How much of that goes to the people who matter? Be honest — most of it goes to screens. One real hour with someone who matters is worth more than 4 hours of scrolling in the same room.",
-    Influence: "The 8+8+8 says 8 hours of work. Reality? You work 9-10 including commute and lunch. The question is: how many of those hours build influence vs. just maintain your position? Most people spend 90% on maintenance and 10% on growth. Flip that ratio in just one hour a day and your Influence score changes within 30 days.",
-    Numbers: "Let's do the real math. You work 8-10 hours including commute. Sleep 6-7. Spend 2-3 on obligations. That leaves 4-5 hours. Now divide your total daily expenses by your actual productive hours. That's your real cost-per-hour. Most people have never calculated this. Do it right now — the number will either motivate you or terrify you. Both are useful.",
-    Knowledge: "Here's the honest breakdown: after work (9-10 hrs with commute), sleep (7 hrs), and obligations (2-3 hrs), you have roughly 4-5 hours of discretionary time. If learning isn't carved out of those 4-5 hours with a specific block, it's not happening. You can't learn passively. Schedule 30 minutes of deliberate learning inside your real available time — not your fantasy schedule."
+    Time: [
+      "Let's be real about your 24 hours. The 8+8+8 is the target — 8 hours work, 8 hours for you, 8 hours sleep. But reality: 1-2 hours commuting, 1 hour getting ready, 1-2 hours on meals and chores. That leaves you 4-5 hours 'for you' — not 8. Tomorrow, draw four columns: WORK / OBLIGATIONS / ME / SLEEP. Track every hour. The truth is more useful than the goal.",
+      "The 8+8+8 is a lie until you track what's actually eating your day. Tomorrow, log every hour in four buckets — WORK, OBLIGATION, ME, SLEEP. The honesty changes how you spend the day after.",
+      "Your 24 has 4-5 discretionary hours, not 8. Steal one back tomorrow morning by blocking the first 30 minutes before your phone unlocks. That's where the change starts — small, repeatable, yours."
+    ],
+    People: [
+      "The 8+8+8 says you get 8 hours for you — but commuting, cooking, errands, and chores eat 3-4 of those. That leaves 4-5 hours of discretionary time. How much of it goes to the people who matter? Most goes to screens. One real hour with someone you love beats four hours of scrolling next to them.",
+      "Out of your 4-5 discretionary hours today, how many minutes were one-on-one with a real person — eye contact, no phone? If it's under 30, that's your audit answer. Start there tomorrow.",
+      "Most people give their best time to screens and their leftover time to the people who matter. Flip one hour tomorrow — phone away, presence on. The other person will feel it immediately."
+    ],
+    Influence: [
+      "The 8+8+8 says 8 hours of work. Reality? 9-10 including commute and lunch. The question: how many of those hours build influence vs. maintain your position? Most people spend 90% on maintenance, 10% on growth. Flip that ratio one hour a day and your Influence score moves in 30 days.",
+      "Track tomorrow: how many hours went to building your authority vs. just keeping the lights on? The gap is your Influence score — and it's also where the leverage hides.",
+      "If 90% of your work hours go to maintenance, your Influence won't move. Flip one hour into building, creating, or leading something visible. One hour, daily, for 30 days. Watch what happens."
+    ],
+    Numbers: [
+      "Let's do the real math. Work 8-10 hours with commute. Sleep 6-7. Obligations 2-3. That leaves 4-5 hours. Divide your total daily expenses by your actual productive hours. That's your real cost-per-hour. Most people have never calculated this — and the number will either motivate or terrify you. Both are useful.",
+      "Do the math you've been avoiding tomorrow morning: total daily expenses ÷ productive hours = your real cost-per-hour. Write it down. The number doesn't have to be good — it just has to be true.",
+      "If you don't know your income-per-hour AND your cost-per-hour, you're flying blind. 15 minutes tomorrow morning to calculate both. The number is just a starting line."
+    ],
+    Knowledge: [
+      "Here's the honest breakdown: after work (9-10 hrs with commute), sleep (7 hrs), obligations (2-3 hrs), you have 4-5 hours of discretionary time. If learning isn't carved out with a specific block, it's not happening. You can't learn passively — schedule 30 minutes inside your real available time, not a fantasy schedule.",
+      "Learning has to be carved out, not hoped for. Schedule 30 minutes tomorrow inside your 4-5 hour growth window — before screens, before noise. Deliberate beats accidental every time.",
+      "Pick the one skill that, doubled, would change your trajectory. Today: write it down. Tomorrow: 30 focused minutes on it. 90 days from now you won't recognize the gap."
+    ]
   };
 
-  // Pillar-specific 10-minute challenges (Day 4)
+  // Pillar-specific 10-minute challenges (Day 4) — 3 variants per pillar, deterministic per user
   const rule10min = {
-    Time: "Set a timer. 10 minutes. Open your calendar and delete or delegate ONE thing that isn't moving you forward. 2 minute break. Repeat. You'll be shocked at how much of your schedule exists out of habit, not intention.",
-    People: "Set a timer. 10 minutes. Text 3 people who matter with something real — not a meme, not small talk. Tell them something you appreciate about them. Something specific. 2 minute break. Repeat.",
-    Influence: "Set a timer. 10 minutes. Write down your 3 core values. Then pull up your last week's calendar — does it match? Where are the gaps between what you say matters and what you actually did? 2 minute break. Repeat.",
-    Numbers: "Set a timer. 10 minutes. Pull up your bank statement. Calculate your actual cost per hour this month. Total expenses divided by hours worked. 2 minute break. Write down the number. Let it sink in.",
-    Knowledge: `Set a timer. 10 minutes. Find one podcast, video, or book chapter that directly addresses ${weakestSub}. Consume it. 2 minute break. Apply one thing you learned immediately — even if it's small.`
+    Time: [
+      "Set a timer. 10 minutes. Open your calendar and delete or delegate ONE thing that isn't moving you forward. 2-minute break. Repeat. You'll be shocked at how much of your schedule exists out of habit, not intention.",
+      "10 minutes. Open your calendar and delete one recurring meeting that doesn't move the needle. The minute you delete it, you'll feel space open up.",
+      "10 minutes. Open your phone's screen-time report. Pick the app eating the most of your day and remove it from your home screen for 24 hours. Tiny friction, big result."
+    ],
+    People: [
+      "Set a timer. 10 minutes. Text 3 people who matter with something real — not a meme, not small talk. Tell them something specific you appreciate about them. 2-minute break. Repeat.",
+      "10 minutes. Voice-memo one friend a 60-second message — not text, not a meme. Real audio, real you. People hear the difference.",
+      "10 minutes. Send one specific thank-you to someone who's helped you recently. Name what they did. Specificity is what makes it land."
+    ],
+    Influence: [
+      "Set a timer. 10 minutes. Write down your 3 core values. Then pull up last week's calendar — does it match? Where are the gaps between what you say matters and what you actually did? 2-minute break. Repeat.",
+      "10 minutes. Draft one short post or insight to share publicly today — even three sentences. Posted is better than perfect.",
+      "10 minutes. Identify one person a year ahead of you and write them a specific, low-ask question. Most experts are flattered, not bothered."
+    ],
+    Numbers: [
+      "Set a timer. 10 minutes. Pull up your bank statement. Calculate your actual cost per hour this month. Total expenses divided by hours worked. 2-minute break. Write down the number. Let it sink in.",
+      "10 minutes. Open your bank statement and circle three expenses you can't justify. Don't cancel yet — just see them. Awareness is the first cut.",
+      "10 minutes. Calculate one number: your savings rate from last month. Total saved ÷ total income. Don't judge it — just write it down."
+    ],
+    Knowledge: [
+      `Set a timer. 10 minutes. Find one podcast, video, or book chapter that directly addresses ${weakestSub}. Consume it. 2-minute break. Apply one thing you learned immediately — even if it's small.`,
+      "10 minutes. Open the book or course you've been meaning to start. Read or listen to one section. Beginning is the hard part — and you just did it.",
+      "10 minutes. Teach one thing you already know to someone else — three bullet points, or a 60-second voice memo. Teaching is the test that proves the learning."
+    ]
   };
 
-  // Pillar-specific 90-minute daily blocks (Day 5)
+  // Pillar-specific 90-minute daily blocks (Day 5) — 3 variants per pillar, deterministic per user
   const rule9090 = {
-    Time: "90 minutes of calendar audit + priority restructuring every morning before email. Before you open a single notification, you decide what today is for.",
-    People: "90 minutes of intentional relationship investment — calls, meals, real conversations. Not networking. Not transactional. Real investment in the people who matter.",
-    Influence: "90 minutes of skill development and professional authority building. Writing, creating, teaching, leading — whatever builds your credibility in your space.",
-    Numbers: "90 minutes of financial review, tracking, goal-setting, and investment research. Know your numbers the way a CEO knows their P&L.",
-    Knowledge: "90 minutes of deliberate learning in your highest-ROI knowledge gap. Not scrolling articles. Not passive podcasts during commute. Deliberate, focused learning with application."
+    Time: [
+      "90 minutes of calendar audit + priority restructuring every morning before email. Before you open a single notification, you decide what today is for. The first protected hour is the one that pays the rest.",
+      "90 minutes every morning before email opens. Same time, every day. Calendared, not wished for. That's the difference.",
+      "90 minutes of pure 'today plan' work tomorrow morning. Delete what doesn't move you forward. Block what does. The discomfort is the proof you're growing."
+    ],
+    People: [
+      "90 minutes of intentional relationship investment — calls, meals, real conversations. Not networking. Not transactional. Real investment in the people who matter. Reps build connection.",
+      "90 minutes daily on the relationships your assessment said are under-invested. Behavior moves the score — and 90 days is enough to feel it.",
+      "90 minutes a day on the People work you've been avoiding: hard conversation, real check-in, in-person time. The hard ones move the score fastest."
+    ],
+    Influence: [
+      "90 minutes of skill development and professional authority building. Writing, creating, teaching, leading — whatever builds your credibility in your space. The reps compound.",
+      "90 minutes daily on the work that builds your authority. Visible work. Posted, taught, led, or built — not just consumed. Compounding is real.",
+      "90 minutes a day on one specific skill that, doubled, would change your professional trajectory. Don't generalize — specialize."
+    ],
+    Numbers: [
+      "90 minutes of financial review, tracking, goal-setting, and investment research. Know your numbers the way a CEO knows their P&L.",
+      "90 minutes of financial honesty every day. Track every dollar in and out. Most people can't say what they spent last week — make sure you can.",
+      "90 minutes a day on the ONE number that, if you moved it, would change your year. Savings rate, income-per-hour, profit margin — whatever it is for you. Move it deliberately."
+    ],
+    Knowledge: [
+      "90 minutes of deliberate learning in your highest-ROI knowledge gap. Not scrolling articles. Not passive podcasts during commute. Deliberate, focused learning with application.",
+      "90 minutes daily of deliberate learning — one source, deep focus, no podcasts on commute. Depth beats variety every time.",
+      "90 minutes a day on the one skill that, doubled, changes your trajectory. Pick it today. Don't change it for 90 days. Specialists compound; generalists pivot."
+    ]
   };
+
+  // Deterministic variant picker — same user + day = same variant always
+  function pickRule(pool, weakest, contactId, day) {
+    const variants = pool[weakest] || pool.Time;
+    if (!Array.isArray(variants)) return variants;
+    if (variants.length === 0) return '';
+    if (variants.length === 1) return variants[0];
+    let seed = ((contactId || 1) * 9301 + day * 49297 + 88) % 233280;
+    return variants[seed % variants.length];
+  }
 
   let subject, body;
 
@@ -547,7 +911,7 @@ function generateCoachingEmail(day, assessmentData, prescription, email) {
       subject = `Your ${weakest} isn't just low — it's costing your ${strongest}`;
       body = `${firstName},
 
-Yesterday you took the P.I.N.K.'s Value Engine Assessment. Your Master Score came in at ${masterScore} (${scoreRange}).
+Yesterday you took the Value Engine Assessment. Your Master Score came in at ${masterScore} (${scoreRange}).
 
 But here's what most people miss — and what I need you to understand right now:
 
@@ -557,9 +921,13 @@ ${crossHeadline}
 
 ${crossExplanation}
 
-This is what I call the cross-pillar bleed. A weakness doesn't stay in its lane. It spreads. And the longer you ignore it, the more it costs you in areas you think are strong.
+THE CROSS-PILLAR BLEED:
+A weakness doesn't stay in its lane. It spreads. And the longer you ignore it, the more it costs you in areas you think are strong. This is the thing most coaching programs miss — they treat pillars as separate scores. They're not. They're connected.
 
 This week, I'm going to show you exactly how to fix this using 4 rules that will restructure how you spend your time. Each one is simple. Each one is actionable. And each one is personalized to your exact scores.
+
+YOUR MOVE TODAY:
+Open your assessment report and look at your ${weakest} breakdown. Don't grade yourself — just read it. The point isn't to feel bad. It's to see the gap clearly so tomorrow's tool actually lands.
 
 Tomorrow: The 8+8+8 Rule — and why your ${weakest} is stealing from the wrong 8.
 
@@ -582,7 +950,7 @@ ACTUAL DISCRETIONARY TIME: 4-5 hours
 
 That's the truth. You don't have 8 hours "for you." You have 4-5. And if your ${weakest} score is ${weakestScore}/50, I can tell you exactly where those 4-5 hours are going — they're being wasted on things that don't compound.
 
-${rule888[weakest] || rule888.Time}
+${pickRule(rule888, weakest, a.contact_id, day)}
 
 THE THREE FRAMEWORKS COMBINED:
 1. THE IDEAL (8+8+8): This is the target you're building toward. Protect your sleep. Sharpen your work hours so 8 is enough. Guard your personal time ruthlessly.
@@ -618,11 +986,7 @@ YOUR 3 (Key Tasks):
 3. ${prescription.thirtyDay}
 
 YOUR 5 (Quick Wins for Today):
-1. Open your assessment report and re-read your ${weakest} breakdown
-2. Write down the single biggest way ${weakest} is costing you this week
-3. Block 30 minutes on your calendar tomorrow for ${weakest} work
-4. Tell one person what you're working on (accountability changes everything)
-5. Delete or cancel one thing this week that doesn't serve your ${weakest} improvement
+${pickFiveQuickWins(weakest, a.contact_id, day).map((w, i) => `${i + 1}. ${w}`).join('\n')}
 
 YOUR MOVE TODAY:
 Write your 1-3-5 list RIGHT NOW. Pin it where you'll see it every morning. On your bathroom mirror. On your phone lock screen. Wherever your eyes go first.
@@ -645,7 +1009,7 @@ Here's what I've learned coaching people through this: motivation is a lie. It s
 The 10-Minute Rule: Work with deadly focus for 10 minutes. Rest for 2 minutes. Repeat. That's it. It kills procrastination. It builds momentum. And it works especially well on the thing you've been avoiding.
 
 YOUR 10-MINUTE CHALLENGE:
-${rule10min[weakest] || rule10min.Time}
+${pickRule(rule10min, weakest, a.contact_id, day)}
 
 That's it. One round. 10 minutes of focused work on the thing your score says you've been avoiding.
 
@@ -676,7 +1040,7 @@ Remember — your ${weakest} isn't just holding you back in one area. It's dragg
 ${crossHeadline}
 
 YOUR 90-MINUTE DAILY BLOCK:
-${rule9090[weakest] || rule9090.Time}
+${pickRule(rule9090, weakest, a.contact_id, day)}
 
 HERE'S WHY THIS WORKS:
 Day 1-7: It feels forced. You'll want to skip.
@@ -685,7 +1049,7 @@ Day 22-60: You start seeing changes. In your behavior. In your relationships. In
 Day 61-90: Other people start noticing.
 
 YOUR MOVE TODAY:
-Block 90 minutes on your calendar RIGHT NOW. Same time, every day, for 90 days. Non-negotiable. This is the one thing that separates people who know their score from people who change it.
+Block 90 minutes on your calendar today. Same time, every day, for 90 days. Make it the one appointment you don't move. This is what separates people who know their score from people who change it.
 
 Retake the assessment on Day 90 to measure your shift: ${retakeUrl}
 
@@ -751,7 +1115,7 @@ You have approximately 4-5 hours of discretionary time today. Not 8. Accept that
 Write down your 1 goal (improve ${weakest}), your 3 key tasks for today, and 5 quick wins you can knock out. These must fit inside your REAL available time — not a fantasy schedule.
 
 6:30 AM — Start Your 90/90/1 Block
-${rule9090[weakest] || rule9090.Time}
+${pickRule(rule9090, weakest, a.contact_id, day)}
 This is your non-negotiable 90 minutes carved from your growth window. No phone. No email. No interruptions. This is 30-40% of your discretionary time — that's how much your ${weakest} matters.
 
 Throughout the Day — The 10-Minute Rule
@@ -1051,7 +1415,9 @@ THE VALUE PER HOUR FRAMEWORK:
 4. Systematically eliminate, delegate, or reduce low-value hours
 5. Replace them with high-value hours
 
-This is the Time Multiplier from the book. It's not about working more hours. It's about making each hour worth more.
+This is the Time Multiplier. It's not about working more hours. It's about making each hour worth more.
+
+${loavCitation('Chapter 1', 'Multiplying Your Time', 'You are granted twenty-four hours in a day. Fixed. Non-negotiable. But there is a skill that allows you to multiply the impact of those hours without adding a single second to the clock. As you grow in skill, in resources, and in leadership, you begin to discover a more powerful equation: using your resources to buy back your time.')}
 
 YOUR MOVE TODAY:
 Calculate your income per hour. Write it down. Look at it. Then ask: "What would have to change for this number to double?" The answer probably lives in your ${weakest} pillar.
@@ -1091,7 +1457,9 @@ Retake the assessment if you haven't already. Then visit your dashboard and look
 
 ${retakeUrl}
 
-— Shawn`;
+— Shawn
+
+P.S. If your ${weakest} pillar this month tied back to your professional context — sales, real estate, coaching, consulting, content, ministry, or service work — the VTV Top-10 Professionals Skill Pack ($197) gives you the specific playbooks for your field. 10 profession-specific tracks · instant download · includes a 30-day VTV Membership trial (opt-in only · auto-renews at $29/mo · cancel anytime). Optional, not required — the free system above works on its own. valuetovictory.com/professionals`;
       break;
 
     // ===== PHASE 4: WEEKLY ONGOING (Days 19+, sent weekly) =====
@@ -1219,60 +1587,75 @@ Write down your answers to the 3 questions above. Say them out loud. Share them 
       body = `${firstName},\n\nWeek ${weekNum} check-in. Day ${day} of your journey.\n\n${topic.content}\n\nYOUR MOVE THIS WEEK:\nOne action. One commitment. One thing you can point to on Friday and say "I did that for my ${weakest}."\n\nI'm still in your corner.\n\n— Shawn`;
   }
 
-  // Build HTML version with dark/gold styling matching existing emails
-  const htmlBody = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Value Engine Coaching — Day ${day}</title></head><body style="margin:0;padding:0;background:#111122;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;">
+  // Build HTML version — devotional-style structured cards, dark/gold palette
+  const phaseLabel = day <= 8 ? `Daily Coaching` : day <= 16 ? `Deep Dive` : day <= 20 ? `Advanced` : `Weekly Check-In`;
+  const phaseMeta = day <= 8 ? `Day ${day} of 8` : day <= 16 ? `Week ${Math.ceil(day/7)}` : day <= 20 ? `Week ${Math.ceil(day/7)}` : `Week ${Math.ceil(day/7)}`;
+  const greetingLine = `${firstName},`;
+  // Drop the leading "Firstname,\n\n" from body (we render it as its own line in the card)
+  const bodyAfterGreeting = body.replace(new RegExp(`^${firstName.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')},\\s*\\n+`), '');
+  const renderedBody = renderCoachingBody(bodyAfterGreeting, weakest);
+  const showRetakeCTA = day === 6 || day === 8 || day === 15 || day === 18 || day === 20 || ((day > 20) && ((day - 21) % 5 === 4));
+
+  const htmlBody = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Value Engine Coaching — Day ${day}</title></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#0a0a0a;padding:40px 16px;"><tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;width:100%;">
 
 <!-- Header -->
-<tr><td style="background:#1a1a2e;border-radius:4px 4px 0 0;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 40px 16px 40px;text-align:center;"><h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">VALUE <span style="color:#d4a853;">TO</span> VICTORY</h1><p style="margin:4px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8888a8;letter-spacing:3px;text-transform:uppercase;">${day <= 8 ? `Daily Coaching — Day ${day} of 8` : day <= 16 ? `Deep Dive — Week ${Math.ceil(day/7)}` : day <= 20 ? `Advanced — Week ${Math.ceil(day/7)}` : `Weekly Check-In — Week ${Math.ceil(day/7)}`}</p></td></tr></table>
-
-<!-- Pillar Score Bars -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:8px 40px 4px 40px;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#6a6a84;letter-spacing:1px;">
-<tr>
-<td width="20%" style="text-align:center;padding:2px;${weakest === 'Time' ? 'color:#d4a853;font-weight:bold;' : ''}">T</td>
-<td width="20%" style="text-align:center;padding:2px;${weakest === 'People' ? 'color:#d4a853;font-weight:bold;' : ''}">P</td>
-<td width="20%" style="text-align:center;padding:2px;${weakest === 'Influence' ? 'color:#d4a853;font-weight:bold;' : ''}">I</td>
-<td width="20%" style="text-align:center;padding:2px;${weakest === 'Numbers' ? 'color:#d4a853;font-weight:bold;' : ''}">N</td>
-<td width="20%" style="text-align:center;padding:2px;${weakest === 'Knowledge' ? 'color:#d4a853;font-weight:bold;' : ''}">K</td>
-</tr>
-<tr>
-<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.time_total || 0)/50)*100)}%;background:${weakest === 'Time' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
-<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.people_total || 0)/50)*100)}%;background:${weakest === 'People' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
-<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.influence_total || 0)/50)*100)}%;background:${weakest === 'Influence' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
-<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.numbers_total || 0)/50)*100)}%;background:${weakest === 'Numbers' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
-<td style="padding:2px;"><div style="background:#2a2a44;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.knowledge_total || 0)/50)*100)}%;background:${weakest === 'Knowledge' ? '#d4a853' : '#4a4a7a'};height:4px;border-radius:2px;"></div></div></td>
-</tr>
-</table>
-</td></tr></table>
-
-<!-- Gold Divider -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:4px 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#d4a853,transparent);"></div></td></tr></table>
-
-<!-- Body -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:28px 40px 32px 40px;">
-<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#c0c0d8;line-height:1.7;white-space:pre-wrap;">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\n/g, '</div><div style="height:16px;"></div><div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#c0c0d8;line-height:1.7;white-space:pre-wrap;">').replace(/YOUR MOVE TODAY:|YOUR 10-MINUTE CHALLENGE:|YOUR 90-MINUTE DAILY BLOCK:|YOUR DAILY SYSTEM:|YOUR 1 \(The Massive Goal\):|YOUR 3 \(Key Tasks\):|YOUR 5 \(Quick Wins for Today\):|YOUR FINAL MOVE:|THE CASCADE EFFECT:|THE TRUTH ABOUT SYSTEMS:|HERE'S WHY THIS WORKS:/g, match => `<strong style="color:#d4a853;text-transform:uppercase;letter-spacing:1px;font-size:13px;">${match}</strong>`)}</div>
-</td></tr></table>
-
-<!-- Check-In Reply Button -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px 16px 40px;text-align:center;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;border:2px solid #d4a853;" align="center"><a href="${BASE_URL}/coaching-reply?email=${encodeURIComponent(email)}&day=${day}" target="_blank" style="display:inline-block;padding:12px 32px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#d4a853;text-decoration:none;letter-spacing:1px;">Reply to Today's Challenge &rarr;</a></td></tr></table>
-</td></tr></table>
-
-${day === 6 || day === 8 || day === 15 || day === 18 || day === 20 || ((day > 20) && ((day - 21) % 5 === 4)) ? `<!-- Retake CTA -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px 32px 40px;text-align:center;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="border-radius:8px;background:linear-gradient(135deg,#d4a853,#c89030);" align="center"><a href="${retakeUrl}" target="_blank" style="display:inline-block;padding:14px 40px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:800;color:#1a1a2e;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Retake the Assessment &rarr;</a></td></tr></table>
-</td></tr></table>` : ''}
-
-<!-- Divider -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:0 40px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a44,transparent);"></div></td></tr></table>
-
-<!-- Footer -->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:24px 40px 32px 40px;text-align:center;"><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#4a4a64;letter-spacing:1.5px;text-transform:uppercase;">Value to Victory</p><p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#3a3a54;line-height:1.6;">Don't guess. Run the system.</p><p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3a3a54;">You're receiving this because you completed the P.I.N.K.'s Value Engine Assessment.</p><p style="margin:0 0 8px 0;"><a href="${unsubUrl}" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6a6a84;text-decoration:underline;">Unsubscribe from coaching emails</a></p><p style="margin:8px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#2a2a44;">&copy; 2026 Value to Victory | Goodview, VA | valuetovictory.com</p></td></tr></table>
-
+<tr><td style="text-align:center;padding-bottom:20px;">
+  <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;margin-bottom:6px;font-weight:bold;">VALUE ENGINE COACHING</div>
+  <div style="font-family:Georgia,serif;font-size:22px;font-style:italic;color:#ffffff;">${phaseLabel}</div>
+  <div style="font-size:12px;color:#71717a;margin-top:6px;">${phaseMeta} &middot; Focus: ${weakest} (${weakestScore}/50) &middot; Master: ${masterScore} (${scoreRange})</div>
 </td></tr>
+
+<!-- Pillar Score Bars (on-brand: zinc track + gold accent for the weakest pillar) -->
+<tr><td style="padding:0 16px 18px;">
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="font-size:11px;color:#a1a1aa;letter-spacing:1px;">
+<tr>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'Time' ? 'color:#D4A847;font-weight:bold;' : ''}">T:${a.time_total || 0}</td>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'People' ? 'color:#D4A847;font-weight:bold;' : ''}">P:${a.people_total || 0}</td>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'Influence' ? 'color:#D4A847;font-weight:bold;' : ''}">I:${a.influence_total || 0}</td>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'Numbers' ? 'color:#D4A847;font-weight:bold;' : ''}">N:${a.numbers_total || 0}</td>
+<td width="20%" style="text-align:center;padding:2px;${weakest === 'Knowledge' ? 'color:#D4A847;font-weight:bold;' : ''}">K:${a.knowledge_total || 0}</td>
+</tr>
+<tr>
+<td style="padding:2px;"><div style="background:#27272a;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.time_total || 0)/50)*100)}%;background:${weakest === 'Time' ? '#D4A847' : '#52525b'};height:4px;border-radius:2px;"></div></div></td>
+<td style="padding:2px;"><div style="background:#27272a;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.people_total || 0)/50)*100)}%;background:${weakest === 'People' ? '#D4A847' : '#52525b'};height:4px;border-radius:2px;"></div></div></td>
+<td style="padding:2px;"><div style="background:#27272a;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.influence_total || 0)/50)*100)}%;background:${weakest === 'Influence' ? '#D4A847' : '#52525b'};height:4px;border-radius:2px;"></div></div></td>
+<td style="padding:2px;"><div style="background:#27272a;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.numbers_total || 0)/50)*100)}%;background:${weakest === 'Numbers' ? '#D4A847' : '#52525b'};height:4px;border-radius:2px;"></div></div></td>
+<td style="padding:2px;"><div style="background:#27272a;border-radius:2px;overflow:hidden;height:4px;"><div style="width:${Math.round(((a.knowledge_total || 0)/50)*100)}%;background:${weakest === 'Knowledge' ? '#D4A847' : '#52525b'};height:4px;border-radius:2px;"></div></div></td>
+</tr>
 </table>
+<p style="text-align:center;color:#71717a;font-size:11px;margin:10px 0 0;letter-spacing:0.5px;">Focus this week: <span style="color:#D4A847;font-weight:bold;">${weakest}</span> &middot; ${scoreRange}</p>
+</td></tr>
+
+<!-- Body Card -->
+<tr><td style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:36px 28px;">
+  <p style="color:#e4e4e7;font-size:17px;line-height:1.6;margin:0 0 18px;">${greetingLine}</p>
+  ${renderedBody}
+</td></tr>
+
+<!-- Check-In Reply Button — hex fallback for Outlook desktop -->
+<tr><td style="text-align:center;padding:24px 0 0;">
+  <a href="${BASE_URL}/coaching-reply?email=${encodeURIComponent(email)}&day=${day}" style="display:inline-block;background:#D4A847;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:14px;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;letter-spacing:0.5px;">Reply to Today's Challenge &rarr;</a>
+</td></tr>
+
+${showRetakeCTA ? `<!-- Retake CTA -->
+<tr><td style="text-align:center;padding:14px 0 0;">
+  <a href="${retakeUrl}" style="display:inline-block;background:transparent;border:1px solid #D4A847;color:#D4A847;font-size:12px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:8px;letter-spacing:1px;text-transform:uppercase;">Retake the Assessment &rarr;</a>
+</td></tr>` : ''}
+
+<!-- Footer (WCAG AA contrast — all footer text at #71717a = 5.06:1 on #0a0a0a) -->
+<tr><td style="text-align:center;padding:28px 0 0;">
+  <div style="height:1px;background:linear-gradient(90deg,transparent,#27272a,transparent);margin:0 0 16px;"></div>
+  <p style="color:#a1a1aa;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:bold;margin:0 0 6px;">Value to Victory</p>
+  <p style="color:#71717a;font-size:12px;margin:0 0 10px;">Don't guess. Run the system.</p>
+  <p style="color:#71717a;font-size:11px;margin:0 0 8px;">You received this because you completed the Value Engine Assessment.</p>
+  <p style="margin:0 0 6px;"><a href="${unsubUrl}" style="color:#a1a1aa;font-size:11px;text-decoration:underline;">Unsubscribe from coaching emails</a></p>
+  <p style="color:#71717a;font-size:11px;margin:0;">&copy; 2026 Value to Victory &middot; Goodview, VA &middot; valuetovictory.com</p>
+</td></tr>
+
+</table></td></tr></table>
 </body></html>`;
 
   return { subject, html: htmlBody, text: body };
@@ -1327,6 +1710,104 @@ async function logEmail(sql, { recipient, emailType, subject, contactId, assessm
     await sql`INSERT INTO email_log (recipient, email_type, subject, contact_id, assessment_id, status, metadata)
       VALUES (${recipient}, ${emailType}, ${subject ?? null}, ${contactId ?? null}, ${assessmentId ?? null}, ${status || 'sent'}, ${metadata ? JSON.stringify(metadata) : null}::jsonb)`;
   } catch(e) { console.error('logEmail error (non-fatal):', e.message); }
+}
+
+// ========== COUNCIL IMPROVEMENTS 1+2+4: Per-cron-run audit row + auto-LEDGER on partial failure ==========
+// One row per cron fire: expected vs actual + recipient delta. Health endpoint reads this.
+let cronRunsTableReady = false;
+async function ensureCronRunsTable(sql) {
+  if (cronRunsTableReady) return;
+  try {
+    await sql`CREATE TABLE IF NOT EXISTS email_cron_runs (
+      id SERIAL PRIMARY KEY,
+      email_type TEXT NOT NULL,
+      run_at TIMESTAMP DEFAULT NOW(),
+      expected_count INTEGER NOT NULL DEFAULT 0,
+      sent_count INTEGER NOT NULL DEFAULT 0,
+      failed_count INTEGER NOT NULL DEFAULT 0,
+      skipped_count INTEGER NOT NULL DEFAULT 0,
+      missed_recipients JSONB DEFAULT '[]'::jsonb,
+      failed_recipients JSONB DEFAULT '[]'::jsonb,
+      duration_ms INTEGER,
+      notes TEXT
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_email_cron_runs_type_at ON email_cron_runs(email_type, run_at DESC)`;
+    // Also ensure devotional_progress exists here so any handler can create it on first run
+    await sql`CREATE TABLE IF NOT EXISTS devotional_progress (
+      id SERIAL PRIMARY KEY,
+      contact_id INTEGER UNIQUE NOT NULL,
+      current_day INTEGER DEFAULT 1,
+      last_sent_at TIMESTAMP,
+      total_sent INTEGER DEFAULT 0,
+      opted_out BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`;
+    cronRunsTableReady = true;
+  } catch(e) { console.error('ensureCronRunsTable error:', e.message); }
+}
+
+// Write one summary row per cron fire. If sent_count < expected_count, also writes a counselor LEDGER entry.
+async function logCronRun(sql, { emailType, expected, sent, failed, skipped, sentRecipients = [], failedRecipients = [], skippedRecipients = [], durationMs, notes }) {
+  try {
+    await ensureCronRunsTable(sql);
+    const expectedList = new Set(expected || []);
+    const sentSet = new Set(sentRecipients.map(e => (e || '').toLowerCase()));
+    // Council fix 2026-05-24: missed = expected − sent − SKIPPED. Cadence-skipped users (Days 9+ on every-2/3/7-day cadence) are NOT missed; they're correctly skipped per phase rules.
+    const skippedSet = new Set((skippedRecipients || []).map(s => ((s && s.email) || s || '').toString().toLowerCase()));
+    const failedSet = new Set((failedRecipients || []).map(f => ((f && f.email) || f || '').toString().toLowerCase()));
+    const missedRecipients = [...expectedList].filter(e => {
+      const lower = (e || '').toLowerCase();
+      return !sentSet.has(lower) && !skippedSet.has(lower) && !failedSet.has(lower);
+    });
+    const expectedCount = expectedList.size;
+    const sentCount = sent ?? sentRecipients.length;
+    const failedCount = failed ?? failedRecipients.length;
+    const skippedCount = skipped ?? skippedRecipients.length;
+    await sql`INSERT INTO email_cron_runs (email_type, expected_count, sent_count, failed_count, skipped_count, missed_recipients, failed_recipients, duration_ms, notes)
+      VALUES (${emailType}, ${expectedCount}, ${sentCount}, ${failedCount}, ${skippedCount}, ${JSON.stringify(missedRecipients)}::jsonb, ${JSON.stringify(failedRecipients)}::jsonb, ${durationMs ?? null}, ${notes ?? null})`;
+    // Council improvement 4: when send rate < 100%, surface to operator via counselor LEDGER
+    // (Skipped is OK — that's cadence-driven. Failed or missed is what we care about.)
+    if (failedCount > 0 || missedRecipients.length > 0) {
+      try {
+        await sql`INSERT INTO audit_log (action, actor, target_table, target_id, new_values) VALUES (
+          'cron_partial_send', 'system_health', 'email_cron_runs', NULL,
+          ${JSON.stringify({
+            emailType,
+            expected: expectedCount,
+            sent: sentCount,
+            failed: failedCount,
+            skipped: skippedCount,
+            missed: missedRecipients.slice(0, 20),
+            failedRecipients: failedRecipients.slice(0, 20),
+            note: 'Operator: check /api/admin/email-health for details. ' + (notes || '')
+          })}::jsonb
+        )`;
+      } catch(e) { /* audit_log may not exist yet */ }
+    }
+  } catch(e) { console.error('logCronRun error (non-fatal):', e.message); }
+}
+
+// ========== COUNCIL IMPROVEMENT 3 + 5: SMTP-tracked send + mailer abstraction ==========
+// Wraps transporter.sendMail() so we always capture the real SMTP response code.
+// Returns { sent: bool, response: string|null, error: string|null }.
+// Replace transporter.sendMail with sendMailTracked everywhere a real status is desired.
+async function sendMailTracked(transporter, mailOptions) {
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    // nodemailer SMTP returns: { messageId, response: '250 2.0.0 OK ...', accepted: [...], rejected: [...], envelope: {...} }
+    const accepted = Array.isArray(info?.accepted) ? info.accepted : [];
+    const rejected = Array.isArray(info?.rejected) ? info.rejected : [];
+    return {
+      sent: accepted.length > 0 && rejected.length === 0,
+      response: info?.response || null,
+      messageId: info?.messageId || null,
+      accepted,
+      rejected,
+      error: rejected.length > 0 ? `Gmail rejected: ${rejected.join(', ')}` : null,
+    };
+  } catch (e) {
+    return { sent: false, response: null, messageId: null, accepted: [], rejected: [], error: e.message };
+  }
 }
 
 // Authenticate cron/scheduled endpoints — accepts admin API key, Vercel cron secret, or x-vercel-cron header
@@ -2135,6 +2616,274 @@ module.exports = async (req, res) => {
       return res.json({ processed: results.length, results });
     }
 
+    // ========== COUNCIL IMPROVEMENT 1: /admin/email-health ==========
+    // GET — return JSON health report of last N days of cron sends vs expected.
+    // POST (cron-authorized) — same check, plus emails Shawn a digest if anomalies found.
+    if ((req.method === 'GET' || req.method === 'POST') && (url === '/admin/email-health' || url.startsWith('/admin/email-health'))) {
+      // Accept cron auth (Vercel cron uses GET) OR admin api key (manual operator access)
+      const fromCron = isCronAuthorized(req);
+      const apiKey = req.headers['x-api-key'] || new URL('http://x' + req.url).searchParams.get('key') || '';
+      const fromAdmin = !!process.env.ADMIN_API_KEY && apiKey === process.env.ADMIN_API_KEY;
+      if (!fromCron && !fromAdmin) return res.status(401).json({ error: 'Unauthorized — provide x-api-key, ?key=, or cron auth' });
+      try {
+        await ensureCronRunsTable(sql);
+        // Last 7 days of cron run audit rows
+        const runs = await sql`
+          SELECT id, email_type, run_at, expected_count, sent_count, failed_count, skipped_count,
+                 missed_recipients, failed_recipients, notes
+          FROM email_cron_runs
+          WHERE run_at >= CURRENT_DATE - INTERVAL '7 days'
+          ORDER BY run_at DESC
+        `;
+        // Today's expected subscriber count for each email_type — recompute live
+        const activeCoaching = await sql`SELECT COUNT(*) AS n FROM coaching_sequences WHERE unsubscribed = FALSE`;
+        const eligibleDevotional = await sql`
+          SELECT COUNT(DISTINCT c.id) AS n FROM contacts c
+          LEFT JOIN devotional_progress dp ON dp.contact_id = c.id
+          LEFT JOIN user_profiles up ON up.contact_id = c.id
+          LEFT JOIN coaching_sequences cs ON LOWER(cs.email) = LOWER(c.email)
+          WHERE c.email IS NOT NULL AND c.email != '' AND c.deleted_at IS NULL
+            AND (c.devotional_opt_out IS NULL OR c.devotional_opt_out = FALSE)
+            AND (dp.id IS NOT NULL OR up.membership_tier IN ('individual','couple','premium') OR (cs.id IS NOT NULL AND cs.unsubscribed = FALSE))
+            AND (dp.opted_out IS NULL OR dp.opted_out = FALSE)
+        `;
+        // Today's actual sends by type
+        const todayCounts = await sql`
+          SELECT email_type, status, COUNT(*) AS n FROM email_log
+          WHERE sent_at::date = CURRENT_DATE
+          GROUP BY email_type, status
+        `;
+        // Active subscribers who haven't received ANY email in 5+ days (no aggregation needed — subquery in WHERE)
+        const ghosted = await sql`
+          SELECT c.id, c.email, c.first_name, up.membership_tier,
+                 (SELECT MAX(sent_at) FROM email_log el WHERE LOWER(el.recipient) = LOWER(c.email) AND el.status IN ('sent','accepted')) AS last_email
+          FROM contacts c
+          LEFT JOIN user_profiles up ON up.contact_id = c.id
+          LEFT JOIN coaching_sequences cs ON LOWER(cs.email) = LOWER(c.email)
+          WHERE c.deleted_at IS NULL AND c.disabled = FALSE
+            AND ((cs.id IS NOT NULL AND cs.unsubscribed = FALSE) OR up.membership_tier IN ('individual','couple','premium'))
+            AND (c.devotional_opt_out IS NULL OR c.devotional_opt_out = FALSE)
+            AND (
+              (SELECT MAX(sent_at) FROM email_log el WHERE LOWER(el.recipient) = LOWER(c.email) AND el.status IN ('sent','accepted')) < CURRENT_DATE - INTERVAL '5 days'
+              OR (SELECT MAX(sent_at) FROM email_log el WHERE LOWER(el.recipient) = LOWER(c.email) AND el.status IN ('sent','accepted')) IS NULL
+            )
+          ORDER BY last_email NULLS FIRST
+          LIMIT 25
+        `;
+
+        const anomalies = [];
+        for (const r of runs) {
+          // Only flag as anomaly if there's a REAL failure (failed_count > 0 OR genuinely missed recipients).
+          // Cadence-skipped users (Days 9+ on every-2/3/7-day cadence) are correctly skipped, not missed.
+          const missedCount = Array.isArray(r.missed_recipients) ? r.missed_recipients.length : 0;
+          const failedCount = Number(r.failed_count || 0);
+          if (failedCount > 0 || missedCount > 0) {
+            anomalies.push({
+              when: r.run_at, type: r.email_type,
+              expected: r.expected_count, sent: r.sent_count, failed: r.failed_count,
+              skipped: r.skipped_count, missed: r.missed_recipients, failed_recipients: r.failed_recipients,
+            });
+          }
+        }
+        if (ghosted.length > 0) {
+          anomalies.push({ kind: 'ghosted_users_5d_plus', count: ghosted.length, users: ghosted });
+        }
+
+        // Council fix 2026-05-24: status grading uses REAL failures only (failed_count > 0 or missed > 0).
+        // Cadence-skipped users don't count; ghosted-5d+ users are a separate yellow signal.
+        const realFailureRuns = anomalies.filter(a => !a.kind && (Number(a.failed || 0) > 0 || (Array.isArray(a.missed) && a.missed.length > 0)));
+        const ghostedAnomaly = anomalies.find(a => a.kind === 'ghosted_users_5d_plus');
+        const computedStatus = realFailureRuns.length === 0
+          ? (ghostedAnomaly ? 'yellow' : 'green')
+          : (realFailureRuns.length <= 2 ? 'yellow' : 'red');
+        const report = {
+          generated_at: new Date().toISOString(),
+          status: computedStatus,
+          expected_today: {
+            coaching_active: Number(activeCoaching[0].n),
+            devotional_eligible: Number(eligibleDevotional[0].n),
+            accountability: Number(activeCoaching[0].n),
+          },
+          today_sends: todayCounts,
+          cron_runs_7d: runs,
+          ghosted_5d_plus: ghosted,
+          anomalies,
+        };
+
+        // Council fix 2026-05-24: only fire alerts on REAL failures (not cadence-skips or ghost users).
+        // Real failure = run had failed_count > 0 OR missed_recipients > 0 (now that skipped is excluded from missed).
+        const realFailures = anomalies.filter(a => !a.kind && (Number(a.failed || 0) > 0 || (Array.isArray(a.missed) && a.missed.length > 0)));
+        const ghostUsers = anomalies.find(a => a.kind === 'ghosted_users_5d_plus');
+        const alreadyAlertedToday = await sql`SELECT COUNT(*) AS n FROM email_log WHERE recipient = 'valuetovictory@gmail.com' AND email_type = 'health_alert' AND sent_at::date = CURRENT_DATE`;
+        const shouldAlert = fromCron && realFailures.length > 0 && Number(alreadyAlertedToday[0]?.n || 0) === 0;
+        if (shouldAlert && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+          try {
+            const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD } });
+            const dashUrl = `${BASE_URL}/api/admin/email-health?key=${encodeURIComponent(process.env.ADMIN_API_KEY || '')}`;
+            const failuresRows = realFailures.slice(0, 10).map(f => {
+              const when = f.when ? new Date(f.when).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
+              const missedList = (f.missed || []).slice(0, 6).map(m => escapeHtml(m)).join(', ');
+              const failedList = (f.failed_recipients || []).slice(0, 6).map(fr => escapeHtml((fr && fr.email) || fr)).join(', ');
+              return `<tr style="border-top:1px solid #27272a;">
+                <td style="padding:8px 12px;color:#71717a;font-size:12px;white-space:nowrap;">${escapeHtml(when)}</td>
+                <td style="padding:8px 12px;color:#e4e4e7;">${escapeHtml(f.type || '?')}</td>
+                <td style="padding:8px 12px;color:#22c55e;text-align:right;">${f.sent || 0}/${f.expected || 0}</td>
+                <td style="padding:8px 12px;color:#ef4444;text-align:right;">${f.failed || 0}</td>
+                <td style="padding:8px 12px;color:#a1a1aa;font-size:12px;">${failedList || missedList || '—'}</td>
+              </tr>`;
+            }).join('');
+            const ghostBlock = ghostUsers ? `
+              <div style="background:#241b1b;border:1px solid #5a2424;border-radius:8px;padding:14px 18px;margin:16px 0;">
+                <div style="color:#ef4444;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 6px;">${ghostUsers.count} user(s) no email in 5+ days</div>
+                <div style="color:#a1a1aa;font-size:13px;line-height:1.6;">${(ghostUsers.users || []).slice(0, 5).map(u => `${escapeHtml(u.first_name || '')} ${escapeHtml(u.email || '')} (${escapeHtml(u.membership_tier || 'none')})`).join('<br/>')}</div>
+              </div>` : '';
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="color-scheme" content="dark"/></head>
+<body style="margin:0;padding:32px 16px;background:#0a0a0a;color:#e4e4e7;font-family:Arial,Helvetica,sans-serif;">
+<div style="max-width:680px;margin:0 auto;">
+  <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;font-weight:bold;margin-bottom:4px;">VTV EMAIL HEALTH</div>
+  <div style="font-family:Georgia,serif;font-size:24px;font-style:italic;color:#fff;margin-bottom:6px;">${realFailures.length} real send failure(s) overnight</div>
+  <div style="font-size:12px;color:#71717a;margin-bottom:18px;">${new Date(report.generated_at).toLocaleString()}</div>
+  <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0 0 16px;">Cadence-skips are filtered out — these are emails that should have gone out but didn't.</p>
+  ${ghostBlock}
+  <div style="background:#18181b;border:1px solid #27272a;border-radius:8px;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="background:#0f0f12;">
+        <th style="padding:10px 12px;text-align:left;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">When</th>
+        <th style="padding:10px 12px;text-align:left;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Type</th>
+        <th style="padding:10px 12px;text-align:right;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Sent/Exp</th>
+        <th style="padding:10px 12px;text-align:right;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Failed</th>
+        <th style="padding:10px 12px;text-align:left;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Recipients</th>
+      </tr></thead>
+      <tbody>${failuresRows}</tbody>
+    </table>
+  </div>
+  <div style="text-align:center;margin:24px 0 0;">
+    <a href="${dashUrl}" style="display:inline-block;background:#D4A847;background:linear-gradient(135deg,#D4A847,#b8942e);color:#0a0a0a;font-size:13px;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;letter-spacing:0.5px;">Open Full Dashboard &rarr;</a>
+  </div>
+  <p style="color:#52525b;font-size:11px;text-align:center;margin:18px 0 0;">One alert per day, max &middot; only fires on real failures (not cadence-skips) &middot; auto-resolves when next cron is clean</p>
+</div>
+</body></html>`;
+            await transporter.sendMail({
+              from: `"VTV System Health" <${process.env.GMAIL_USER}>`,
+              to: 'valuetovictory@gmail.com',
+              subject: `VTV Email Health · ${realFailures.length} real send failure(s)`,
+              html,
+            });
+            await logEmail(sql, { recipient: 'valuetovictory@gmail.com', emailType: 'health_alert', subject: `Health · ${realFailures.length} real failure(s)`, status: 'sent', metadata: { failure_count: realFailures.length } });
+          } catch(e) { console.error('[email-health] alert send failed:', e.message); }
+        }
+
+        // If browser is asking (Accept: text/html), return a readable dashboard. Otherwise JSON.
+        const wantsHtml = (req.headers['accept'] || '').toLowerCase().includes('text/html');
+        if (wantsHtml) {
+          const statusColor = report.status === 'green' ? '#22c55e' : report.status === 'yellow' ? '#D4A847' : '#ef4444';
+          const statusLabel = report.status.toUpperCase();
+          const expectedRow = (k, v) => `<tr><td style="padding:6px 14px;color:#a1a1aa;">${k}</td><td style="padding:6px 14px;color:#e4e4e7;text-align:right;font-weight:bold;">${v}</td></tr>`;
+          const sendsRow = (s) => `<tr><td style="padding:6px 14px;color:#a1a1aa;">${escapeHtml(s.email_type)} (${escapeHtml(s.status)})</td><td style="padding:6px 14px;color:#e4e4e7;text-align:right;font-weight:bold;">${s.n}</td></tr>`;
+          const runsRow = (r) => {
+            // Council fix: only flag the row red if there are REAL failures or missed (non-skip) recipients.
+            const rMissed = Array.isArray(r.missed_recipients) ? r.missed_recipients.length : 0;
+            const partial = (Number(r.failed_count || 0) > 0) || rMissed > 0;
+            const rowBg = partial ? 'background:rgba(239,68,68,0.06);' : '';
+            return `<tr style="${rowBg}border-top:1px solid #27272a;">
+              <td style="padding:8px 12px;color:#71717a;font-size:12px;white-space:nowrap;">${new Date(r.run_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</td>
+              <td style="padding:8px 12px;color:#e4e4e7;">${escapeHtml(r.email_type)}</td>
+              <td style="padding:8px 12px;color:#22c55e;text-align:right;font-weight:bold;">${r.sent_count}</td>
+              <td style="padding:8px 12px;color:${(r.failed_count||0)>0?'#ef4444':'#52525b'};text-align:right;">${r.failed_count||0}</td>
+              <td style="padding:8px 12px;color:#a1a1aa;text-align:right;">${r.skipped_count||0}</td>
+              <td style="padding:8px 12px;color:#71717a;text-align:right;">${r.expected_count}</td>
+              <td style="padding:8px 12px;color:#71717a;font-size:11px;">${escapeHtml(r.notes||'')}</td>
+            </tr>`;
+          };
+          const ghostRow = (g) => `<tr style="border-top:1px solid #27272a;background:rgba(239,68,68,0.08);">
+            <td style="padding:8px 12px;color:#e4e4e7;">${escapeHtml(g.first_name||'')} ${escapeHtml(g.email||'')}</td>
+            <td style="padding:8px 12px;color:#a1a1aa;">${escapeHtml(g.membership_tier||'none')}</td>
+            <td style="padding:8px 12px;color:#ef4444;text-align:right;">${g.last_email ? new Date(g.last_email).toLocaleDateString() : 'never'}</td>
+          </tr>`;
+          const anomaliesHtml = anomalies.length === 0
+            ? `<p style="color:#22c55e;font-size:14px;">No anomalies detected in the last 7 days.</p>`
+            : `<ul style="color:#e4e4e7;font-size:14px;line-height:1.7;">` + anomalies.map(a => `<li style="margin:6px 0;">${escapeHtml(JSON.stringify(a))}</li>`).join('') + `</ul>`;
+          const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>VTV Email Health · ${statusLabel}</title></head>
+<body style="margin:0;padding:32px 16px;background:#0a0a0a;color:#e4e4e7;font-family:Arial,Helvetica,sans-serif;">
+<div style="max-width:980px;margin:0 auto;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <div>
+      <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#D4A847;font-weight:bold;">VTV EMAIL HEALTH</div>
+      <div style="font-family:Georgia,serif;font-size:28px;font-style:italic;color:#ffffff;margin-top:4px;">Monday Morning Dashboard</div>
+      <div style="font-size:12px;color:#71717a;margin-top:6px;">Generated ${new Date(report.generated_at).toLocaleString()}</div>
+    </div>
+    <div style="background:${statusColor};color:#0a0a0a;padding:10px 24px;border-radius:8px;font-size:16px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">${statusLabel}</div>
+  </div>
+
+  <!-- Today's expected vs actual -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px;">
+    <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:18px 20px;">
+      <div style="font-size:11px;color:#D4A847;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Expected Today</div>
+      <table style="width:100%;border-collapse:collapse;">
+        ${expectedRow('Coaching (active sequences)', report.expected_today.coaching_active)}
+        ${expectedRow('Devotional (eligible)', report.expected_today.devotional_eligible)}
+        ${expectedRow('Accountability (active)', report.expected_today.accountability)}
+      </table>
+    </div>
+    <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:18px 20px;">
+      <div style="font-size:11px;color:#22c55e;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Actually Sent Today</div>
+      <table style="width:100%;border-collapse:collapse;">
+        ${report.today_sends.map(sendsRow).join('') || '<tr><td style="padding:6px 14px;color:#71717a;">No sends yet today.</td></tr>'}
+      </table>
+    </div>
+  </div>
+
+  <!-- Anomalies -->
+  <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:18px 20px;margin-bottom:24px;">
+    <div style="font-size:11px;color:${anomalies.length===0?'#22c55e':'#ef4444'};font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Anomalies (Last 7 Days)</div>
+    ${anomaliesHtml}
+  </div>
+
+  <!-- Ghosted users -->
+  ${ghosted.length === 0 ? '' : `<div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:18px 20px;margin-bottom:24px;">
+    <div style="font-size:11px;color:#ef4444;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Ghosted Users · No Email in 5+ Days (${ghosted.length})</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr><th style="padding:8px 12px;text-align:left;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Member</th><th style="padding:8px 12px;text-align:left;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Tier</th><th style="padding:8px 12px;text-align:right;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Last Email</th></tr></thead>
+      <tbody>${ghosted.map(ghostRow).join('')}</tbody>
+    </table>
+  </div>`}
+
+  <!-- Cron runs table -->
+  <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:18px 20px;">
+    <div style="font-size:11px;color:#D4A847;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Cron Fires (Last 7 Days)</div>
+    ${runs.length === 0 ? '<p style="color:#71717a;font-size:13px;">No cron runs logged yet. First fire will populate this table.</p>' : `
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr>
+        <th style="padding:8px 12px;text-align:left;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">When</th>
+        <th style="padding:8px 12px;text-align:left;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Type</th>
+        <th style="padding:8px 12px;text-align:right;color:#22c55e;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Sent</th>
+        <th style="padding:8px 12px;text-align:right;color:#ef4444;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Failed</th>
+        <th style="padding:8px 12px;text-align:right;color:#a1a1aa;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Skip</th>
+        <th style="padding:8px 12px;text-align:right;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Expected</th>
+        <th style="padding:8px 12px;text-align:left;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Notes</th>
+      </tr></thead>
+      <tbody>${runs.map(runsRow).join('')}</tbody>
+    </table>`}
+  </div>
+
+  <div style="margin-top:24px;text-align:center;">
+    <a href="?key=${encodeURIComponent(req.headers['x-api-key'] || apiKey || '')}" style="color:#D4A847;font-size:12px;text-decoration:underline;">Refresh</a>
+    &middot;
+    <a href="?key=${encodeURIComponent(req.headers['x-api-key'] || apiKey || '')}&format=json" style="color:#71717a;font-size:12px;text-decoration:underline;">View JSON</a>
+  </div>
+  <p style="text-align:center;color:#52525b;font-size:11px;margin-top:24px;">Hourly cron also runs this check &middot; you get an email if anomalies appear &middot; dedup'd to 1/day</p>
+</div>
+</body></html>`;
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          return res.status(200).send(html);
+        }
+        return res.json(report);
+      } catch (e) {
+        console.error('[email-health] error:', e);
+        return res.status(500).json({ error: 'Health check failed', detail: e.message });
+      }
+    }
+
     // POST /api/member/preferences — Save user preferences (JWT required)
     if (req.method === 'POST' && url === '/member/preferences') {
       const jwtUser = extractUser(req);
@@ -2742,11 +3491,11 @@ module.exports = async (req, res) => {
           const eWeakestPillar = prescription.weakestPillar;
 
           const recTexts = {
-            Crisis: "YOUR NEXT STEP: You need the full system. Start with The Value Engine book — the diagnostic that shows you exactly where your life is undervalued. $29 at valuetovictory.com",
-            Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Value Engine book ($29) plus VictoryPath membership ($29/mo) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
-            Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($29/mo) — structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
-            Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($47/mo) or 1:1 coaching ($300/hr, 20% off your first session) will break through the ceiling. valuetovictory.com",
-            Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($497/mo) gives you 50% off coaching, a complimentary monthly session, and direct author access. valuetovictory.com",
+            Crisis: "YOUR NEXT STEP: You need the full system. Start with the Lost Art of Value e-book — the diagnostic that shows you exactly where your life is undervalued. $17.77 presale at valuetovictory.com",
+            Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Lost Art of Value e-book ($17.77) plus VictoryPath membership ($29/mo, 10% off coaching & select products) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
+            Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($29/mo · 10% off coaching & select products) — structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
+            Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($47/mo · 15% off coaching) or a Personal Coaching session ($240 first session, $300/hr regular) will break through the ceiling. valuetovictory.com",
+            Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($497/mo) gives you 20% off coaching + select products, a complimentary monthly session, and direct author access. valuetovictory.com",
           };
           const productRec = recTexts[eScoreRange] || recTexts.Growth;
 
@@ -4540,9 +5289,9 @@ Don't guess. Run the system.
       const productRecommendations = {
         Crisis: { title: 'Start Here', product: 'The Value Engine Book', price: '$29', description: 'The diagnostic that shows you exactly where your life is undervalued.' },
         Survival: { title: 'Build Your Foundation', product: 'Book + VictoryPath Membership', price: '$29 + $29/mo', description: 'The tools and community to move from Survival to Growth.' },
-        Growth: { title: 'Accelerate Your Growth', product: 'VictoryPath Membership', price: '$29/mo', description: 'Structured tools, community accountability, and monthly progress tracking.' },
-        Momentum: { title: 'Break Through', product: 'Value Builder or 1:1 Coaching', price: '$47/mo or $300/hr (20% off first session)', description: 'Direct coaching to break through the ceiling.' },
-        Mastery: { title: 'Go Elite', product: 'Victory VIP', price: '$497/mo', description: '50% off coaching, complimentary monthly session, and direct author access.' },
+        Growth: { title: 'Accelerate Your Growth', product: 'VictoryPath Membership', price: '$29/mo · 10% off coaching', description: 'Structured tools, community accountability, monthly progress tracking, 10% off coaching & select products.' },
+        Momentum: { title: 'Break Through', product: 'Value Builder or Personal Coaching', price: '$47/mo · 15% off coaching · or $240 first session', description: 'Value Builder ($47/mo, 15% off coaching) or a Personal Coaching session ($240 first session, $300/hr regular).' },
+        Mastery: { title: 'Go Elite', product: 'Victory VIP', price: '$497/mo · 20% off coaching', description: '20% off coaching & select products, complimentary monthly session, and direct author access.' },
       };
       const recommendation = productRecommendations[scoreRange] || productRecommendations.Growth;
 
@@ -4616,11 +5365,11 @@ Don't guess. Run the system.
 
       // Product recommendation text by range — HARD RULE PRICING
       const recTexts = {
-        Crisis: "YOUR NEXT STEP: You need the full system. Start with The Value Engine book \u2014 the diagnostic that shows you exactly where your life is undervalued. $29 at valuetovictory.com",
-        Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Value Engine book ($29) plus VictoryPath membership ($29/mo) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
-        Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($29/mo) \u2014 structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
-        Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($47/mo) or 1:1 coaching ($300/hr, 20% off your first session) will break through the ceiling. valuetovictory.com",
-        Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($497/mo) gives you 50% off coaching, a complimentary monthly session, and direct author access. valuetovictory.com",
+        Crisis: "YOUR NEXT STEP: You need the full system. Start with the Lost Art of Value e-book \u2014 the diagnostic that shows you exactly where your life is undervalued. $17.77 presale at valuetovictory.com",
+        Survival: "YOUR NEXT STEP: You have the awareness. Now build the foundation. The Lost Art of Value e-book ($17.77) plus VictoryPath membership ($29/mo \u00b7 10% off coaching & select products) gives you the tools and community to move from Survival to Growth. valuetovictory.com",
+        Growth: "YOUR NEXT STEP: You're past the foundation. Accelerate with VictoryPath membership ($29/mo \u00b7 10% off coaching & select products) \u2014 structured tools, community accountability, and monthly progress tracking. valuetovictory.com",
+        Momentum: "YOUR NEXT STEP: Your score says you're ready for direct coaching. Value Builder membership ($47/mo \u00b7 15% off coaching) or a Personal Coaching session ($240 first session, $300/hr regular) will break through the ceiling. valuetovictory.com",
+        Mastery: "YOUR NEXT STEP: You're operating at the highest level. Victory VIP ($497/mo) gives you 20% off coaching + select products, a complimentary monthly session, and direct author access. valuetovictory.com",
       };
       const productRec = recTexts[scoreRange] || recTexts.Growth;
 
@@ -6700,9 +7449,19 @@ This link expires in 24 hours.
           }
         }
 
+        // Council improvement 2/4: per-cron-run audit row + auto-LEDGER on partial fail
+        await logCronRun(sql, {
+          emailType: 'coaching',
+          expected: sequences.map(s => s.email),
+          sentRecipients: results.filter(r => r.status === 'sent').map(r => r.email),
+          failedRecipients: results.filter(r => r.status === 'error').map(r => ({ email: r.email, error: r.error })),
+          skippedRecipients: results.filter(r => r.status === 'skipped').map(r => ({ email: r.email, reason: r.reason })),
+          sent: sentCount, failed: results.filter(r => r.status === 'error').length, skipped: skippedCount,
+        });
         return res.json({ sent: sentCount, skipped: skippedCount, total: sequences.length, results });
       } catch (coachingSendErr) {
         console.error('[coaching/send] Handler error:', coachingSendErr);
+        await logCronRun(sql, { emailType: 'coaching', expected: [], sentRecipients: [], failedRecipients: [], sent: 0, failed: 0, notes: 'Handler threw: ' + coachingSendErr.message });
         return res.status(500).json({ error: 'Coaching send failed' });
       }
     }
@@ -7144,7 +7903,7 @@ This link expires in 24 hours.
             else if (lastReply && lastReply.mood === 'struggling') subject = `${firstName} — still here, still in your corner`;
             else if (lastReply && lastReply.action_completed) subject = `${firstName} — you showed up yesterday. How about today?`;
 
-            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+            let html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;"><tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
@@ -7243,9 +8002,18 @@ This link expires in 24 hours.
           }
         }
 
+        // Council improvement 2/4: per-cron-run audit row + auto-LEDGER on partial fail
+        await logCronRun(sql, {
+          emailType: 'accountability',
+          expected: members.map(m => m.email),
+          sentRecipients: results.filter(r => r.status === 'sent').map(r => r.email),
+          failedRecipients: results.filter(r => r.status === 'error').map(r => ({ email: r.email, error: r.error })),
+          sent: sentCount, failed: results.filter(r => r.status === 'error').length, skipped: 0,
+        });
         return res.json({ sent: sentCount, total: members.length, results });
       } catch (acctErr) {
         console.error('[accountability/send] Error:', acctErr);
+        await logCronRun(sql, { emailType: 'accountability', expected: [], sentRecipients: [], failedRecipients: [], sent: 0, failed: 0, notes: 'Handler threw: ' + acctErr.message });
         return res.status(500).json({ error: 'Accountability send failed', detail: acctErr.message });
       }
     }
@@ -9503,8 +10271,21 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
         const dayIndex = ((diffDays % 60) + 60) % 60;
         const dev = devotionals[dayIndex] || devotionals[0];
 
+        // Ensure devotional_progress table exists (used to be referenced without being created)
+        try {
+          await sql`CREATE TABLE IF NOT EXISTS devotional_progress (
+            id SERIAL PRIMARY KEY,
+            contact_id INTEGER UNIQUE NOT NULL,
+            current_day INTEGER DEFAULT 1,
+            last_sent_at TIMESTAMP,
+            total_sent INTEGER DEFAULT 0,
+            opted_out BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT NOW()
+          )`;
+        } catch(e) { /* non-fatal */ }
+
         // Get subscribers: active coaching users + paid members + explicit opt-ins
-        // Daily dedup — skip anyone already sent today
+        // Daily dedup — skip anyone already sent today (uses email_log.sent_at, the real column)
         let subscribers = [];
         try {
           subscribers = await sql`
@@ -9514,6 +10295,7 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
             LEFT JOIN user_profiles up ON up.contact_id = c.id
             LEFT JOIN coaching_sequences cs ON LOWER(cs.email) = LOWER(c.email)
             WHERE c.email IS NOT NULL AND c.email != ''
+              AND (c.devotional_opt_out IS NULL OR c.devotional_opt_out = false)
               AND (
                 dp.id IS NOT NULL
                 OR up.membership_tier IN ('individual','couple','premium')
@@ -9522,17 +10304,22 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
               AND (dp.opted_out IS NULL OR dp.opted_out = false)
               AND LOWER(c.email) NOT IN (
                 SELECT LOWER(recipient) FROM email_log
-                WHERE email_type = 'devotional' AND created_at::date = CURRENT_DATE
+                WHERE email_type = 'devotional' AND status = 'sent' AND sent_at::date = CURRENT_DATE
               )
             ORDER BY c.id ASC
           `;
         } catch(e) {
-          // Fallback: coaching_sequences members
+          // Fallback: coaching_sequences members, still apply daily dedup
           try {
             subscribers = await sql`
               SELECT DISTINCT c.id as contact_id, c.email, c.first_name FROM contacts c
               INNER JOIN coaching_sequences cs ON LOWER(cs.email) = LOWER(c.email)
               WHERE c.email IS NOT NULL AND c.email != '' AND cs.unsubscribed = false
+                AND (c.devotional_opt_out IS NULL OR c.devotional_opt_out = false)
+                AND LOWER(c.email) NOT IN (
+                  SELECT LOWER(recipient) FROM email_log
+                  WHERE email_type = 'devotional' AND status = 'sent' AND sent_at::date = CURRENT_DATE
+                )
               ORDER BY c.id ASC`;
           } catch(e2) {
             subscribers = [];
@@ -9668,10 +10455,20 @@ ${todayDevotional ? `<tr><td style="height:16px;"></td></tr>
           }
         }
 
+        // Council improvement 2/4: per-cron-run audit row + auto-LEDGER on partial fail
+        await logCronRun(sql, {
+          emailType: 'devotional',
+          expected: subscribers.map(s => s.email),
+          sentRecipients: results.filter(r => r.status === 'sent').map(r => r.email),
+          failedRecipients: results.filter(r => r.status === 'error').map(r => ({ email: r.email, error: r.error })),
+          sent: sentCount, failed: results.filter(r => r.status === 'error').length, skipped: 0,
+          notes: `Day ${dev.day_number} — ${dev.title}`,
+        });
         return res.json({ sent: sentCount, total: subscribers.length, day: dev.day_number, title: dev.title, results });
       } catch(devErr) {
         console.error('[devotional/send] Error:', devErr);
-        console.error('[devotional/send] Error:', devErr.message); return res.status(500).json({ error: 'Devotional send failed' });
+        await logCronRun(sql, { emailType: 'devotional', expected: [], sentRecipients: [], failedRecipients: [], sent: 0, failed: 0, notes: 'Handler threw: ' + devErr.message });
+        return res.status(500).json({ error: 'Devotional send failed' });
       }
     }
 

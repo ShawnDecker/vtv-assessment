@@ -120,13 +120,21 @@ module.exports = async (req, res) => {
         // ── Check if this is an audiobook purchase (one-time product)
         const AUDIOBOOK_PRODUCT_ID = 'prod_UGkRRCOAvVYkSC';
         const AUDIOBOOK_PRICE_ID   = 'price_1TICwNCaTyuNk1McXI7thCPo';
+        // ── LOAV pre-sale ($17.77) — live buy-link price + product. Second price under same product
+        // (price_1TI7KoCaTyuNk1McT6wNz2dp at $197) is intentionally not detected here; if customers
+        // ever buy that variant, add it to the OR below.
+        const LOAV_PRODUCT_ID = 'prod_UAjjA6057soViC';
+        const LOAV_PRICE_ID   = 'price_1TGJKpCaTyuNk1McinmAOTNR';
         let isAudiobookPurchase = false;
+        let isLoavPurchase = false;
 
         // Detect via line items if available, or via metadata, or price/product match
         if (session.metadata?.product_id === 'rfm-audiobook') {
           isAudiobookPurchase = true;
+        } else if (session.metadata?.product_id === 'loav-presale') {
+          isLoavPurchase = true;
         } else {
-          // Check line items for the audiobook price
+          // Check line items for the audiobook or LOAV price
           try {
             const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 });
             for (const item of (lineItems.data || [])) {
@@ -135,6 +143,13 @@ module.exports = async (req, res) => {
                 item.price?.product === AUDIOBOOK_PRODUCT_ID
               ) {
                 isAudiobookPurchase = true;
+                break;
+              }
+              if (
+                item.price?.id === LOAV_PRICE_ID ||
+                item.price?.product === LOAV_PRODUCT_ID
+              ) {
+                isLoavPurchase = true;
                 break;
               }
             }
@@ -155,6 +170,20 @@ module.exports = async (req, res) => {
           } catch (dpErr) {
             console.error('[checkout] Failed to record audiobook purchase:', dpErr.message);
           }
+        } else if (isLoavPurchase && email) {
+          // Record LOAV pre-sale entitlement so we can email when the book ships.
+          // Without this branch, every LOAV purchase silently disappeared (Roger Bodenstab 2026-05-06 mis-click recovery).
+          try {
+            await sql`
+              INSERT INTO digital_purchases (email, product_id, stripe_product_id, stripe_payment_intent, granted_by)
+              VALUES (${email.toLowerCase()}, 'loav-presale', ${LOAV_PRODUCT_ID}, ${paymentIntentId || null}, 'purchase')
+              ON CONFLICT (email, product_id) DO NOTHING
+            `;
+            console.log('[checkout] LOAV pre-sale recorded for:', email);
+          } catch (dpErr) {
+            console.error('[checkout] Failed to record LOAV pre-sale:', dpErr.message);
+          }
+          // TODO: send "thanks for pre-ordering — we'll email when LOAV ships" auto-responder via api/email.js
         } else if (email && tier) {
           // Membership subscription purchase — upsert user_profiles
           // Find contact by email
