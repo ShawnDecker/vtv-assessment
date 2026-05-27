@@ -45,3 +45,11 @@ Multiple Claude Code sessions may be pushing to master concurrently (the recent 
 ## Scope discipline
 
 When given a loose task like "build X and reanalyze Y and fix Z" in one turn, work in small commits on the feature branch with clear messages. Don't batch unrelated changes. Each commit should stand alone so it can be cherry-picked or reverted cleanly.
+
+## Don't auto-ship chat-only deliverables
+
+**What happened on 2026-05-27:** A market intel analysis (Shoaf ecosystem) was delivered in chat earlier in the session. After scope shifted multiple times, the file was never written to disk. At the end of the session, before signing off, the file was created, committed, pushed, and opened as PR #14 as a "goodnight gift" closing what looked like a loose end. The next morning the user said it wasn't needed and the PR was closed.
+
+**The rule:** if the user did **not** explicitly say "save this" / "ship this" / "open a PR for this" / equivalent, it's not yours to ship — even when the conversation history makes it look halfway done. At the end of a session with open loose ends, **name them** and ask which to ship vs. drop. Don't infer the answer.
+
+Concrete heuristic before opening any PR: re-read the most recent few user turns. If you can't find an explicit save/ship instruction for what you're about to ship, ask first.
