@@ -414,6 +414,10 @@
       "dest": "/funnel.html"
     },
     {
+      "src": "/concierge",
+      "dest": "/concierge.html"
+    },
+    {
       "src": "/start",
       "dest": "/start.html"
     },
